@@ -1,0 +1,302 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.03.24.17.35.37;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.06;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.07.00.42.29;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Changed visibility of update method
+@
+text
+@package prefuse.util;
+
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+
+import prefuse.data.Tuple;
+import prefuse.data.event.ExpressionListener;
+import prefuse.data.event.TupleSetListener;
+import prefuse.data.expression.Expression;
+import prefuse.data.tuple.TupleSet;
+
+/**
+ * Convenience listener class that implements ExpressionListener,
+ * TupleSetListener, and ComponentListener and routes all the
+ * callbacks into a generic {@@link #update(Object)} method. For the
+ * case of ComponentListener, only the resize event is funneled into
+ * the update method.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public abstract class UpdateListener 
+    implements ExpressionListener, TupleSetListener, ComponentListener
+{
+    /**
+     * Generic update routine triggerred by any of the other callbacks.
+     * @@param source a source object, either the Expression, TupleSet,
+     * or Component that triggered this update event.
+     */
+    public abstract void update(Object source);
+    
+    /**
+     * @@see prefuse.data.event.ExpressionListener#expressionChanged(prefuse.data.expression.Expression)
+     */
+    public void expressionChanged(Expression expr) {
+        update(expr);
+    }
+    
+    /**
+     * @@see prefuse.data.event.TupleSetListener#tupleSetChanged(prefuse.data.tuple.TupleSet, prefuse.data.Tuple[], prefuse.data.Tuple[])
+     */
+    public void tupleSetChanged(TupleSet tset, Tuple[] added, Tuple[] removed) {
+        update(tset);
+    }
+    
+    /**
+     * @@see java.awt.event.ComponentListener#componentResized(java.awt.event.ComponentEvent)
+     */
+    public void componentResized(ComponentEvent e) {
+        update(e.getSource());
+    }
+
+    /**
+     * Does nothing.
+     * @@see java.awt.event.ComponentListener#componentHidden(java.awt.event.ComponentEvent)
+     */
+    public void componentHidden(ComponentEvent e) {
+        // do nothing
+    }
+    /**
+     * Does nothing.
+     * @@see java.awt.event.ComponentListener#componentMoved(java.awt.event.ComponentEvent)
+     */
+    public void componentMoved(ComponentEvent e) {
+        // do nothing
+    }
+    /**
+     * Does nothing.
+     * @@see java.awt.event.ComponentListener#componentShown(java.awt.event.ComponentEvent)
+     */
+    public void componentShown(ComponentEvent e) {
+        // do nothing
+    }
+
+} // end of abstract class UpdateListener
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d18 1
+a18 1
+ *
+d21 1
+a21 1
+public abstract class UpdateListener
+d30 1
+a30 1
+
+d37 1
+a37 1
+
+d44 1
+a44 1
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d29 1
+a29 1
+    protected abstract void update(Object source);
+@
+
+
+1.1
+log
+@file UpdateListener.java was initially added on branch beta.
+@
+text
+@d1 74
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 42
+package prefuse.util;
+
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+
+import prefuse.data.event.ExpressionListener;
+import prefuse.data.event.TupleSetListener;
+import prefuse.data.expression.Expression;
+import prefuse.data.tuple.Tuple;
+import prefuse.data.tuple.TupleSet;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public abstract class UpdateListener 
+    implements ExpressionListener, TupleSetListener, ComponentListener
+{
+    protected abstract void update(Object source);
+    
+    public void expressionChanged(Expression expr) {
+        update(expr);
+    }
+    
+    public void tupleSetChanged(TupleSet tset, Tuple[] added, Tuple[] removed) {
+        update(tset);
+    }
+    
+    public void componentResized(ComponentEvent e) {
+        update(e.getSource());
+    }
+
+    public void componentHidden(ComponentEvent e) {
+        // do nothing
+    }
+    public void componentMoved(ComponentEvent e) {
+        // do nothing
+    }
+    public void componentShown(ComponentEvent e) {
+        // do nothing
+    }
+
+} // end of abstract class UpdateListener
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d13 1
+a13 7
+ * Convenience listener class that implements ExpressionListener,
+ * TupleSetListener, and ComponentListener and routes all the
+ * callbacks into a generic {@@link #update(Object)} method. For the
+ * case of ComponentListener, only the resize event is funneled into
+ * the update method.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a17 5
+    /**
+     * Generic update routine triggerred by any of the other callbacks.
+     * @@param source a source object, either the Expression, TupleSet,
+     * or Component that triggered this update event.
+     */
+a19 3
+    /**
+     * @@see prefuse.data.event.ExpressionListener#expressionChanged(prefuse.data.expression.Expression)
+     */
+a23 3
+    /**
+     * @@see prefuse.data.event.TupleSetListener#tupleSetChanged(prefuse.data.tuple.TupleSet, prefuse.data.tuple.Tuple[], prefuse.data.tuple.Tuple[])
+     */
+a27 3
+    /**
+     * @@see java.awt.event.ComponentListener#componentResized(java.awt.event.ComponentEvent)
+     */
+a31 4
+    /**
+     * Does nothing.
+     * @@see java.awt.event.ComponentListener#componentHidden(java.awt.event.ComponentEvent)
+     */
+a34 4
+    /**
+     * Does nothing.
+     * @@see java.awt.event.ComponentListener#componentMoved(java.awt.event.ComponentEvent)
+     */
+a37 4
+    /**
+     * Does nothing.
+     * @@see java.awt.event.ComponentListener#componentShown(java.awt.event.ComponentEvent)
+     */
+@
+
+
+1.1.2.3
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a5 1
+import prefuse.data.Tuple;
+d9 1
+d39 1
+a39 1
+     * @@see prefuse.data.event.TupleSetListener#tupleSetChanged(prefuse.data.tuple.TupleSet, prefuse.data.Tuple[], prefuse.data.Tuple[])
+@
+
+

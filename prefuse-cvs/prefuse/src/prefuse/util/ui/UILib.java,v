@@ -1,0 +1,685 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.51;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	2.0.4.2;
+
+2.0.4.2
+date	2008.02.29.05.31.57;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.ui;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.ComponentOrientation;
+import java.awt.Container;
+import java.awt.Font;
+import java.awt.event.InputEvent;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.UIManager;
+
+/**
+ * Library routines for user interface tasks.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class UILib {
+
+//    private static Image s_appIcon;
+    
+    /**
+     * Not instantiable.
+     */
+    private UILib() {
+        // prevent instantiation
+    }
+    
+//    public static synchronized Image getApplicationIcon() {
+//        if ( s_appIcon == null ) {
+//            try {
+//                s_appIcon = new ImageIcon(
+//                        UILib.class.getResource("icon.gif")).getImage();
+//            } catch ( Exception e ) {
+//                e.printStackTrace();
+//            }
+//        }
+//        return s_appIcon;
+//    }
+    
+    /**
+     * Indicates if a given mouse button is being pressed.
+     * @@param e the InputEvent to check
+     * @@param button the mouse button to look for
+     * @@return true if the button is being pressed, false otherwise
+     * @@see prefuse.controls.Control
+     */
+    public static boolean isButtonPressed(InputEvent e, int button) {
+        return (e.getModifiers() & button) == button;
+    }
+
+    /**
+     * Set the look and feel of Java Swing user interface components to match
+     * that of the platform (Windows, Mac, Linux, etc) on which it is
+     * currently running.
+     */
+    public static final void setPlatformLookAndFeel() {
+        try {
+            String laf = UIManager.getSystemLookAndFeelClassName();             
+            UIManager.setLookAndFeel(laf);  
+        } catch ( Exception e ) {}
+    }
+
+    /**
+     * Convenience method for creating a Box user interface widget container.
+     * @@param c an array of components to include in the box
+     * @@param horiz indicated is the box should be horizontal (true) or
+     * vertical (false)
+     * @@param margin the margins, in pixels, to use on the sides of the box
+     * @@param spacing the minimum spacing, in pixels, to use between
+     * components
+     * @@return a new Box instance with the given properties.
+     * @@see javax.swing.Box
+     */
+    public static Box getBox(Component[] c, boolean horiz, 
+            int margin, int spacing)
+    {
+        return getBox(c, horiz, margin, margin, spacing);
+    }
+    
+    /**
+     * Convenience method for creating a Box user interface widget container.
+     * @@param c an array of components to include in the box
+     * @@param horiz indicated is the box should be horizontal (true) or
+     * vertical (false)
+     * @@param margin1 the margin, in pixels, for the left or top side
+     * @@param margin2 the margin, in pixels, for the right or bottom side
+     * @@param spacing the minimum spacing, in pixels, to use between
+     * components
+     * @@return a new Box instance with the given properties.
+     * @@see javax.swing.Box
+     */
+    public static Box getBox(Component[] c, boolean horiz,
+            int margin1, int margin2, int spacing)
+    {
+        Box b = new Box(horiz ? BoxLayout.X_AXIS : BoxLayout.Y_AXIS);
+        addStrut(b, horiz, margin1);
+        for ( int i=0; i<c.length; ++i ) {
+            if ( i > 0 ) {
+                addStrut(b, horiz, spacing);
+                addGlue(b, horiz);
+            }
+            b.add(c[i]);
+        }
+        addStrut(b, horiz, margin2);
+        return b;
+    }
+    
+    /**
+     * Add a strut, or rigid spacing, to a UI component
+     * @@param b the component to add the strut to, should be either a Box or a
+     * Container using a BoxLayout.
+     * @@param horiz indicates if the strust should horizontal (true) or vertical
+     * (false)
+     * @@param size the length, in pixels, of the strut
+     */
+    public static void addStrut(JComponent b, boolean horiz, int size) {
+        if ( size < 1 ) return;
+        b.add(horiz ? Box.createHorizontalStrut(size)
+                    : Box.createVerticalStrut(size) );
+    }
+    
+    /**
+     * Add a glue, or variable spacing, to a UI component
+     * @@param b the component to add the glue to, should be either a Box or a
+     * Container using a BoxLayout.
+     * @@param horiz indicates if the glue should horizontal (true) or vertical
+     * (false)
+     */
+    public static void addGlue(JComponent b, boolean horiz) {
+        b.add(horiz ? Box.createHorizontalGlue()
+                    : Box.createVerticalGlue());
+    }
+    
+    /**
+     * Add a strut, or rigid spacing, to a UI component
+     * @@param b the component to add the strut to, should be either a Box or a
+     * Container using a BoxLayout.
+     * @@param layout the desired layout orientation of the strut. One of
+     * {@@link javax.swing.BoxLayout#X_AXIS},
+     * {@@link javax.swing.BoxLayout#Y_AXIS},
+     * {@@link javax.swing.BoxLayout#LINE_AXIS}, or
+     * {@@link javax.swing.BoxLayout#PAGE_AXIS}.
+     * @@param size the length, in pixels, of the strut
+     */
+    public static void addStrut(JComponent b, int layout, int size) {
+        if ( size < 1 ) return;
+        b.add( getAxis(b, layout) == BoxLayout.X_AXIS
+                ? Box.createHorizontalStrut(size)
+                : Box.createVerticalStrut(size) );
+    }
+    
+    /**
+     * Add a glue, or variable spacing, to a UI component
+     * @@param b the component to add the glue to, should be either a Box or a
+     * Container using a BoxLayout.
+     * @@param layout the desired layout orientation of the glue. One of
+     * {@@link javax.swing.BoxLayout#X_AXIS},
+     * {@@link javax.swing.BoxLayout#Y_AXIS},
+     * {@@link javax.swing.BoxLayout#LINE_AXIS}, or
+     * {@@link javax.swing.BoxLayout#PAGE_AXIS}.
+     */
+    public static void addGlue(JComponent b, int layout) {
+        b.add( getAxis(b, layout) == BoxLayout.X_AXIS 
+                ? Box.createHorizontalGlue()
+                : Box.createVerticalGlue());
+    }
+    
+    /**
+     * Resolve the axis type of a component, given a layout orientation
+     * @@param c a Swing Component, should be either a Box or a Container
+     * using a BoxLayout.
+     * @@param layout the layout orientation of the component. One of
+     * {@@link javax.swing.BoxLayout#X_AXIS},
+     * {@@link javax.swing.BoxLayout#Y_AXIS},
+     * {@@link javax.swing.BoxLayout#LINE_AXIS}, or
+     * {@@link javax.swing.BoxLayout#PAGE_AXIS}.
+     * @@return one of {@@link javax.swing.BoxLayout#X_AXIS}, or
+     * {@@link javax.swing.BoxLayout#Y_AXIS},
+     */
+    public static int getAxis(JComponent c, int layout) {
+        ComponentOrientation o = c.getComponentOrientation();
+        switch ( layout ) {
+        case BoxLayout.LINE_AXIS:
+            return o.isHorizontal() ? BoxLayout.X_AXIS : BoxLayout.Y_AXIS;
+        case BoxLayout.PAGE_AXIS:
+            return o.isHorizontal() ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS;
+        default:
+            return layout;
+        }
+    }
+    
+    /**
+     * Sets the foreground and background color for a component and all
+     * components contained within it.
+     * @@param c the parent component of the component subtree to set
+     * @@param back the background color to set
+     * @@param fore the foreground color to set
+     */
+    public static void setColor(Component c, Color back, Color fore) {
+        c.setBackground(back);
+        c.setForeground(fore);
+        if ( c instanceof Container ) {
+            Container con = (Container)c;
+            for ( int i=0; i<con.getComponentCount(); ++i )
+                setColor(con.getComponent(i), back, fore);
+        }
+    }
+    
+    /**
+     * Sets the font for a component and all
+     * components contained within it.
+     * @@param c the parent component of the component subtree to set
+     * @@param font the font to set
+     */
+    public static void setFont(Component c, Font font) {
+        c.setFont(font);
+        if ( c instanceof Container ) {
+            Container con = (Container)c;
+            for ( int i=0; i<con.getComponentCount(); ++i )
+                setFont(con.getComponent(i), font);
+        }
+    }
+    
+} // end of class UILib
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d17 1
+a17 1
+ *
+d23 1
+a23 1
+
+d30 1
+a30 1
+
+d42 1
+a42 1
+
+d61 2
+a62 2
+            String laf = UIManager.getSystemLookAndFeelClassName();
+            UIManager.setLookAndFeel(laf);
+d77 1
+a77 1
+    public static Box getBox(Component[] c, boolean horiz,
+d82 1
+a82 1
+
+d110 1
+a110 1
+
+d120 1
+a120 3
+        if ( size < 1 ) {
+			return;
+		}
+d124 1
+a124 1
+
+d136 1
+a136 1
+
+d149 1
+a149 3
+        if ( size < 1 ) {
+			return;
+		}
+d154 1
+a154 1
+
+d166 1
+a166 1
+        b.add( getAxis(b, layout) == BoxLayout.X_AXIS
+d170 1
+a170 1
+
+d194 1
+a194 1
+
+d207 2
+a208 3
+            for ( int i=0; i<con.getComponentCount(); ++i ) {
+				setColor(con.getComponent(i), back, fore);
+			}
+d211 1
+a211 1
+
+d222 2
+a223 3
+            for ( int i=0; i<con.getComponentCount(); ++i ) {
+				setFont(con.getComponent(i), font);
+			}
+d226 1
+a226 1
+
+@
+
+
+2.0.4.2
+log
+@fixed a typo
+@
+text
+@d115 1
+a115 1
+     * @@param horiz indicates if the struts should horizontal (true) or vertical
+@
+
+
+1.1
+log
+@file UILib.java was initially added on branch beta.
+@
+text
+@d1 227
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 135
+package prefuse.util.ui;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.ComponentOrientation;
+import java.awt.Container;
+import java.awt.Font;
+import java.awt.Image;
+import java.awt.event.InputEvent;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
+import javax.swing.UIManager;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class UILib {
+
+    private static Image s_appIcon;
+    
+    private UILib() {
+        // prevent instantiation
+    }
+    
+    public static synchronized Image getApplicationIcon() {
+        if ( s_appIcon == null ) {
+            try {
+                s_appIcon = new ImageIcon(
+                        UILib.class.getResource("icon.gif")).getImage();
+            } catch ( Exception e ) {
+                e.printStackTrace();
+            }
+        }
+        return s_appIcon;
+    }
+    
+    public static boolean isButtonPressed(InputEvent e, int button) {
+        return (e.getModifiers() & button) == button;
+    }
+
+    public static final void setPlatformLookAndFeel() {
+        try {
+            String laf = UIManager.getSystemLookAndFeelClassName();             
+            UIManager.setLookAndFeel(laf);  
+        } catch ( Exception e ) {}
+    }
+
+    public static Box getBox(Component[] c, boolean horiz, 
+            int margin, int spacing)
+    {
+        return getBox(c, horiz, margin, margin, spacing);
+    }
+    
+    public static Box getBox(Component[] c, boolean horiz,
+            int margin1, int margin2, int spacing)
+    {
+        Box b = new Box(horiz ? BoxLayout.X_AXIS : BoxLayout.Y_AXIS);
+        addStrut(b, horiz, margin1);
+        for ( int i=0; i<c.length; ++i ) {
+            if ( i > 0 ) {
+                addStrut(b, horiz, spacing);
+                addGlue(b, horiz);
+            }
+            b.add(c[i]);
+        }
+        addStrut(b, horiz, margin2);
+        return b;
+    }
+    
+    public static void addStrut(JComponent b, boolean horiz, int size) {
+        if ( size < 1 ) return;
+        b.add(horiz ? Box.createHorizontalStrut(size)
+                    : Box.createVerticalStrut(size) );
+    }
+    
+    public static void addGlue(JComponent b, boolean horiz) {
+        b.add(horiz ? Box.createHorizontalGlue()
+                    : Box.createVerticalGlue());
+    }
+    
+    public static void addStrut(JComponent b, int layout, int size) {
+        if ( size < 1 ) return;
+        b.add( getAxis(b, layout) == BoxLayout.X_AXIS
+                ? Box.createHorizontalStrut(size)
+                : Box.createVerticalStrut(size) );
+    }
+    
+    public static void addGlue(JComponent b, int layout, boolean horiz) {
+        b.add( getAxis(b, layout) == BoxLayout.X_AXIS 
+                ? Box.createHorizontalGlue()
+                : Box.createVerticalGlue());
+    }
+    
+    public static int getAxis(JComponent c, int layout) {
+        ComponentOrientation o = c.getComponentOrientation();
+        switch ( layout ) {
+        case BoxLayout.LINE_AXIS:
+            return o.isHorizontal() ? BoxLayout.X_AXIS : BoxLayout.Y_AXIS;
+        case BoxLayout.PAGE_AXIS:
+            return o.isHorizontal() ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS;
+        default:
+            return layout;
+        }
+    }
+    
+    /**
+     * Sets the foreground and background color for a component and all
+     * components contained within it.
+     * @@param c
+     * @@param back
+     * @@param fore
+     */
+    public static void setColor(Component c, Color back, Color fore) {
+        c.setBackground(back);
+        c.setForeground(fore);
+        if ( c instanceof Container ) {
+            Container con = (Container)c;
+            for ( int i=0; i<con.getComponentCount(); ++i )
+                setColor(con.getComponent(i), back, fore);
+        }
+    }
+    
+    public static void setFont(Component c, Font font) {
+        c.setFont(font);
+        if ( c instanceof Container ) {
+            Container con = (Container)c;
+            for ( int i=0; i<con.getComponentCount(); ++i )
+                setFont(con.getComponent(i), font);
+        }
+    }
+    
+} // end of class UILib
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d8 1
+d13 1
+a17 2
+ * Library routines for user interface tasks.
+ * 
+d22 1
+a22 1
+//    private static Image s_appIcon;
+a23 3
+    /**
+     * Not instantiable.
+     */
+d28 11
+a38 11
+//    public static synchronized Image getApplicationIcon() {
+//        if ( s_appIcon == null ) {
+//            try {
+//                s_appIcon = new ImageIcon(
+//                        UILib.class.getResource("icon.gif")).getImage();
+//            } catch ( Exception e ) {
+//                e.printStackTrace();
+//            }
+//        }
+//        return s_appIcon;
+//    }
+a39 7
+    /**
+     * Indicates if a given mouse button is being pressed.
+     * @@param e the InputEvent to check
+     * @@param button the mouse button to look for
+     * @@return true if the button is being pressed, false otherwise
+     * @@see prefuse.controls.Control
+     */
+a43 5
+    /**
+     * Set the look and feel of Java Swing user interface components to match
+     * that of the platform (Windows, Mac, Linux, etc) on which it is
+     * currently running.
+     */
+a50 11
+    /**
+     * Convenience method for creating a Box user interface widget container.
+     * @@param c an array of components to include in the box
+     * @@param horiz indicated is the box should be horizontal (true) or
+     * vertical (false)
+     * @@param margin the margins, in pixels, to use on the sides of the box
+     * @@param spacing the minimum spacing, in pixels, to use between
+     * components
+     * @@return a new Box instance with the given properties.
+     * @@see javax.swing.Box
+     */
+a56 12
+    /**
+     * Convenience method for creating a Box user interface widget container.
+     * @@param c an array of components to include in the box
+     * @@param horiz indicated is the box should be horizontal (true) or
+     * vertical (false)
+     * @@param margin1 the margin, in pixels, for the left or top side
+     * @@param margin2 the margin, in pixels, for the right or bottom side
+     * @@param spacing the minimum spacing, in pixels, to use between
+     * components
+     * @@return a new Box instance with the given properties.
+     * @@see javax.swing.Box
+     */
+a72 8
+    /**
+     * Add a strut, or rigid spacing, to a UI component
+     * @@param b the component to add the strut to, should be either a Box or a
+     * Container using a BoxLayout.
+     * @@param horiz indicates if the strust should horizontal (true) or vertical
+     * (false)
+     * @@param size the length, in pixels, of the strut
+     */
+a78 7
+    /**
+     * Add a glue, or variable spacing, to a UI component
+     * @@param b the component to add the glue to, should be either a Box or a
+     * Container using a BoxLayout.
+     * @@param horiz indicates if the glue should horizontal (true) or vertical
+     * (false)
+     */
+a83 11
+    /**
+     * Add a strut, or rigid spacing, to a UI component
+     * @@param b the component to add the strut to, should be either a Box or a
+     * Container using a BoxLayout.
+     * @@param layout the desired layout orientation of the strut. One of
+     * {@@link javax.swing.BoxLayout#X_AXIS},
+     * {@@link javax.swing.BoxLayout#Y_AXIS},
+     * {@@link javax.swing.BoxLayout#LINE_AXIS}, or
+     * {@@link javax.swing.BoxLayout#PAGE_AXIS}.
+     * @@param size the length, in pixels, of the strut
+     */
+d91 1
+a91 11
+    /**
+     * Add a glue, or variable spacing, to a UI component
+     * @@param b the component to add the glue to, should be either a Box or a
+     * Container using a BoxLayout.
+     * @@param layout the desired layout orientation of the glue. One of
+     * {@@link javax.swing.BoxLayout#X_AXIS},
+     * {@@link javax.swing.BoxLayout#Y_AXIS},
+     * {@@link javax.swing.BoxLayout#LINE_AXIS}, or
+     * {@@link javax.swing.BoxLayout#PAGE_AXIS}.
+     */
+    public static void addGlue(JComponent b, int layout) {
+a96 12
+    /**
+     * Resolve the axis type of a component, given a layout orientation
+     * @@param c a Swing Component, should be either a Box or a Container
+     * using a BoxLayout.
+     * @@param layout the layout orientation of the component. One of
+     * {@@link javax.swing.BoxLayout#X_AXIS},
+     * {@@link javax.swing.BoxLayout#Y_AXIS},
+     * {@@link javax.swing.BoxLayout#LINE_AXIS}, or
+     * {@@link javax.swing.BoxLayout#PAGE_AXIS}.
+     * @@return one of {@@link javax.swing.BoxLayout#X_AXIS}, or
+     * {@@link javax.swing.BoxLayout#Y_AXIS},
+     */
+d112 3
+a114 3
+     * @@param c the parent component of the component subtree to set
+     * @@param back the background color to set
+     * @@param fore the foreground color to set
+a125 6
+    /**
+     * Sets the font for a component and all
+     * components contained within it.
+     * @@param c the parent component of the component subtree to set
+     * @@param font the font to set
+     */
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d18 1
+a18 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

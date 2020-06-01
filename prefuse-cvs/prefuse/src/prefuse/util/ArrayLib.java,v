@@ -1,0 +1,4181 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.07.15.17.33.58;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.03.01.08.16.18;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.30.09.08.06;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Added array summation method
+@
+text
+@package prefuse.util;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.Comparator;
+import java.util.Random;
+import java.util.StringTokenizer;
+
+/**
+ * Library of supplementary array routines not 
+ *  supported by the java.util.Arrays class.
+ *
+ * @@author jeffrey heer
+ */
+public abstract class ArrayLib {
+    
+    /**
+     * Arrays with lengths beneath this value will be insertion sorted.
+     */
+    public static final int SORT_THRESHOLD = 30;
+    
+    // ------------------------------------------------------------------------
+    // Shuffle
+    
+    /**
+     * Randomly permute the contents of an array.
+     * @@param a the array to shuffle
+     * @@param r the source of randomness to use
+     */
+    public static final void shuffle(int[] a, Random r) {
+        shuffle(a, 0, a.length, r);
+    }
+    
+    /**
+     * Randomly permute the contents of a range an array.
+     * @@param a the array to shuffle
+     * @@param start the starting index of the range to shuffle
+     * @@param len then length of the range to shuffle
+     * @@param r the source of randomness to use
+     */
+    public static final void shuffle(int[] a, int start, int len, Random r) {
+        for ( int i=start+len; --i>0; ) {
+            int t = a[i], j = r.nextInt(i);
+            a[i] = a[j];
+            a[j] = t;
+        }
+    }
+    
+    /**
+     * Randomly permute the contents of an array.
+     * @@param a the array to shuffle
+     * @@param r the source of randomness to use
+     */
+    public static final void shuffle(long[] a, Random r) {
+        shuffle(a, 0, a.length, r);
+    }
+    
+    /**
+     * Randomly permute the contents of a range an array.
+     * @@param a the array to shuffle
+     * @@param start the starting index of the range to shuffle
+     * @@param len then length of the range to shuffle
+     * @@param r the source of randomness to use
+     */
+    public static final void shuffle(long[] a, int start, int len, Random r) {
+        for ( int i=start+len; i>1; --i ) {
+            long t = a[i];
+            int j = r.nextInt(i);
+            a[i] = a[j];
+            a[j] = t;
+        }
+    }
+    
+    /**
+     * Randomly permute the contents of an array.
+     * @@param a the array to shuffle
+     * @@param r the source of randomness to use
+     */
+    public static final void shuffle(float[] a, Random r) {
+        shuffle(a, 0, a.length, r);
+    }
+    
+    /**
+     * Randomly permute the contents of a range an array.
+     * @@param a the array to shuffle
+     * @@param start the starting index of the range to shuffle
+     * @@param len then length of the range to shuffle
+     * @@param r the source of randomness to use
+     */
+    public static final void shuffle(float[] a, int start, int len, Random r) {
+        for ( int i=start+len; i>1; --i ) {
+            float t = a[i];
+            int j = r.nextInt(i);
+            a[i] = a[j];
+            a[j] = t;
+        }
+    }
+    
+    /**
+     * Randomly permute the contents of an array.
+     * @@param a the array to shuffle
+     * @@param r the source of randomness to use
+     */
+    public static final void shuffle(double[] a, Random r) {
+        shuffle(a, 0, a.length, r);
+    }
+    
+    /**
+     * Randomly permute the contents of a range an array.
+     * @@param a the array to shuffle
+     * @@param start the starting index of the range to shuffle
+     * @@param len then length of the range to shuffle
+     * @@param r the source of randomness to use
+     */
+    public static final void shuffle(double[] a, int start, int len, Random r) {
+        for ( int i=start+len; i>1; --i ) {
+            double t = a[i];
+            int j = r.nextInt(i);
+            a[i] = a[j];
+            a[j] = t;
+        }
+    }
+    
+    /**
+     * Randomly permute the contents of an array.
+     * @@param a the array to shuffle
+     * @@param r the source of randomness to use
+     */
+    public static final void shuffle(Object[] a, Random r) {
+        shuffle(a, 0, a.length, r);
+    }
+    
+    /**
+     * Randomly permute the contents of a range an array.
+     * @@param a the array to shuffle
+     * @@param start the starting index of the range to shuffle
+     * @@param len then length of the range to shuffle
+     * @@param r the source of randomness to use
+     */
+    public static final void shuffle(Object[] a, int start, int len, Random r) {
+        for ( int i=start+len; i>1; --i ) {
+            Object t = a[i];
+            int j = r.nextInt(i);
+            a[i] = a[j];
+            a[j] = t;
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Max / Min / Sum
+    
+    /**
+     * Find the maximum value in an array.
+     * @@param a the array
+     * @@return the maximum value in the array
+     */
+    public static final double max(double[] a) {
+        double max = Double.NEGATIVE_INFINITY;
+        for ( int i=0; i<a.length; ++i ) {
+            if ( a[i] > max )
+                max = a[i];
+        }
+        return max;
+    }
+
+    /**
+     * Find the minimum value in an array.
+     * @@param a the array
+     * @@return the minimum value in the array
+     */
+    public static final double min(double[] a) {
+        double min = Double.POSITIVE_INFINITY;
+        for ( int i=0; i<a.length; ++i ) {
+            if ( a[i] < min )
+                min = a[i];
+        }
+        return min;
+    }
+    
+    /**
+     * Compute the sum of the values in an array.
+     * @@param a the array
+     * @@return the sum of the values in the array
+     */
+    public static final double sum(double[] a) {
+        double sum = 0;
+        for ( int i=0; i<a.length; ++i ) {
+            sum += a[i];
+        }
+        return sum;
+    }
+    
+    //// -----------------------------------------------
+    //// -- Searching Functions ------------------------
+
+    /**
+     * Perform a binary search over a sorted array for the given key.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+    public static final int binarySearch(int[] a, int key) {
+        int x1 = 0;
+        int x2 = a.length;
+        int i = x2 / 2;
+        while (x1 < x2) {
+            if (a[i] == key) {
+                return i;
+            } else if (a[i] < key) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return -1*(i+1);
+    }
+
+    /**
+     * Perform a binary search over a sorted range of an array for the given
+     * key. The range is assumed to start at index 0.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param length the the length of the range to search over.
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+    public static final int binarySearch(int[] a, int key, int length) {
+        int x1 = 0;
+        int x2 = length;
+        int i = x2 / 2;
+
+        while (x1 < x2) {
+            if (a[i] == key) {
+                return i;
+            } else if (a[i] < key) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return -1*(i+1);
+    }
+
+    /**
+     * Perform a binary search over a sorted range of an array for the given
+     * key.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param begin the starting index of the range
+     * @@param end the ending index of the range, exclusive
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+    public static final int binarySearch(int[] a, int key, int begin, int end) {
+        int x1 = begin;
+        int x2 = end;
+        int i = x1 + (x2 - x1) / 2;
+
+        while (x1 < x2) {
+            if (a[i] == key) {
+                return i;
+            } else if (a[i] < key) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+
+        return -1*(i+1);
+    }
+
+    /**
+     * Perform a binary search over a sorted array for the given key.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+    public static final int binarySearch(Object[] a, Object key) {
+        int x1 = 0;
+        int x2 = a.length;
+        int i = x2 / 2, c;
+        while (x1 < x2) {
+            c = ((Comparable)a[i]).compareTo(key);
+            if (c == 0) {
+                return i;
+            } else if (c < 0) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return -1*(i+1);
+    }
+
+    /**
+     * Perform a binary search over a sorted range of an array for the given
+     * key. The range is assumed to start at index 0.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param length the the length of the range to search over.
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+    public static final int binarySearch(Object[] a, Object key, int length) {
+        int x1 = 0;
+        int x2 = length;
+        int i = x2 / 2, c;
+
+        while (x1 < x2) {
+            c = ((Comparable)a[i]).compareTo(key);
+            if (c == 0) {
+                return i;
+            } else if (c < 0) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return -1*(i+1);
+    }
+
+    /**
+     * Perform a binary search over a sorted range of an array for the given
+     * key.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param begin the starting index of the range
+     * @@param end the ending index of the range, exclusive
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+    public static final int binarySearch(Object[] a, Object key, int begin, int end) {
+        int x1 = begin;
+        int x2 = end;
+        int i = x1 + (x2 - x1) / 2, c;
+
+        while (x1 < x2) {
+            c = ((Comparable)a[i]).compareTo(key);
+            if (c == 0) {
+                return i;
+            } else if (c < 0) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+
+        return -1*(i+1);
+    }
+
+    /**
+     * Perform a binary search over a sorted array for the given key.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param cp the comparator to use to compare key values
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+    public static final int binarySearch(Object[] a, Object key, Comparator cp) {
+        int x1 = 0;
+        int x2 = a.length;
+        int i = x2 / 2, c;
+        while (x1 < x2) {
+            c = cp.compare(a[i], key);
+            if (c == 0) {
+                return i;
+            } else if (c < 0) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return -1*(i+1);
+    }
+
+    /**
+     * Perform a binary search over a sorted range of an array for the given
+     * key. The range is assumed to start at index 0.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param cp the comparator to use to compare key values
+     * @@param length the the length of the range to search over.
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+    public static final int binarySearch(Object[] a, Object key, Comparator cp, int length) {
+        int x1 = 0;
+        int x2 = length;
+        int i = x2 / 2, c;
+
+        while (x1 < x2) {
+            c = cp.compare(a[i], key);
+            if (c == 0) {
+                return i;
+            } else if (c < 0) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return -1*(i+1);
+    }
+
+    /**
+     * Perform a binary search over a sorted range of an array for the given
+     * key.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param cp the comparator to use to compare key values
+     * @@param begin the starting index of the range
+     * @@param end the ending index of the range, exclusive
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+    public static final int binarySearch(Object[] a, Object key, Comparator cp, int begin, int end) {
+        int x1 = begin;
+        int x2 = end;
+        int i = x1 + (x2 - x1) / 2, c;
+
+        while (x1 < x2) {
+            c = cp.compare(a[i], key);
+            if (c == 0) {
+                return i;
+            } else if (c < 0) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+
+        return -1*(i+1);
+    }
+
+    //// -----------------------------------------------
+    //// -- Finding Functions --------------------------
+
+    /**
+     * Linearly search an array for a given key value.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@return the index of the first occurrence of the key in the array,
+     * of -1 if the key is not found.
+     */
+    public static final int find(int[] a, int key) {
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] == key) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Linearly search an array range for a given key value. Assumes that
+     * the range begins at index 0.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param length the length of the range to search over
+     * @@return the index of the first occurrence of the key in the array,
+     * of -1 if the key is not found.
+     */
+    public static final int find(int[] a, int key, int length) {
+        for (int i = 0; i < length; i++) {
+            if (a[i] == key) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Linearly search an array range for a given key value.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param begin the starting index of the range
+     * @@param end the ending index of the range, exclusive
+     * @@return the index of the first occurrence of the key in the array,
+     * of -1 if the key is not found.
+     */
+    public static final int find(int[] a, int key, int begin, int end) {
+        for (int i = begin; i < end; i++) {
+            if (a[i] == key) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    //// -----------------------------------------------
+    //// -- Resizing Functions -------------------------
+
+    /**
+     * Resize the given array as needed to meet a target size.
+     * @@param a the array to potentially resize
+     * @@param size the minimum size of the target array
+     * @@return the resized array, if the original array meets the size
+     * requirement, it is simply return, otherwise a new array is
+     * allocated and the contents of the original array are copied over.
+     */
+    public static final int[] resize(int[] a, int size) {
+        if ( a.length >= size ) return a;
+        int[] b = new int[size];
+        System.arraycopy(a, 0, b, 0, a.length);
+        return b;
+    }
+    
+    /**
+     * Resize the given array as needed to meet a target size.
+     * @@param a the array to potentially resize
+     * @@param size the minimum size of the target array
+     * @@return the resized array, if the original array meets the size
+     * requirement, it is simply return, otherwise a new array is
+     * allocated and the contents of the original array are copied over.
+     */
+    public static final float[] resize(float[] a, int size) {
+        if ( a.length >= size ) return a;
+        float[] b = new float[size];
+        System.arraycopy(a, 0, b, 0, a.length);
+        return b;
+    }
+    
+    /**
+     * Resize the given array as needed to meet a target size.
+     * @@param a the array to potentially resize
+     * @@param size the minimum size of the target array
+     * @@return the resized array, if the original array meets the size
+     * requirement, it is simply return, otherwise a new array is
+     * allocated and the contents of the original array are copied over.
+     */
+    public static final double[] resize(double[] a, int size) {
+        if ( a.length >= size ) return a;
+        double[] b = new double[size];
+        System.arraycopy(a, 0, b, 0, a.length);
+        return b;
+    }
+    
+    /**
+     * Resize the given array as needed to meet a target size.
+     * @@param a the array to potentially resize
+     * @@param size the minimum size of the target array
+     * @@return the resized array, if the original array meets the size
+     * requirement, it is simply return, otherwise a new array is
+     * allocated and the contents of the original array are copied over.
+     */
+    public static final Object[] resize(Object[] a, int size) {
+        if ( a.length >= size ) return a;
+        Object[] b = new Object[size];
+        System.arraycopy(a, 0, b, 0, a.length);
+        return b;
+    }
+
+    /**
+     * Trims an array to be exactly the target a size.
+     * @@param a the array to trim
+     * @@param size the desired size of the array. This value must be lesser
+     * than or equal to the size of the input array.
+     * @@return a trimmed array instance
+     */
+    public static final int[] trim(int[] a, int size) {
+        //assert (size <= a.length);
+        if ( a.length == size ) {
+            return a;
+        } else {
+            int[] b = new int[size];
+            System.arraycopy(a, 0, b, 0, size);
+            return b;
+        }
+    }
+
+    /**
+     * Trims an array to be exactly the target a size.
+     * @@param a the array to trim
+     * @@param size the desired size of the array. This value must be lesser
+     * than or equal to the size of the input array.
+     * @@return a trimmed array instance
+     */
+    public static final float[] trim(float[] a, int size) {
+        //assert (size <= a.length);
+        if ( a.length == size ) {
+            return a;
+        } else {
+            float[] b = new float[size];
+            System.arraycopy(a, 0, b, 0, size);
+            return b;
+        }
+    }
+    
+    /**
+     * Trims an array to be exactly the target a size.
+     * @@param a the array to trim
+     * @@param size the desired size of the array. This value must be lesser
+     * than or equal to the size of the input array.
+     * @@return a trimmed array instance
+     */
+    public static final double[] trim(double[] a, int size) {
+        //assert (size <= a.length);
+        if ( a.length == size ) {
+            return a;
+        } else {
+            double[] b = new double[size];
+            System.arraycopy(a, 0, b, 0, size);
+            return b;
+        }
+    }
+    
+    /**
+     * Trims an array to be exactly the target a size.
+     * @@param a the array to trim
+     * @@param size the desired size of the array. This value must be lesser
+     * than or equal to the size of the input array.
+     * @@return a trimmed array instance
+     */
+    public static final Object[] trim(Object[] a, int size) {
+        //assert (size <= a.length);
+        if ( a.length == size ) {
+            return a;
+        } else {
+            Object[] b = new Object[size];
+            System.arraycopy(a, 0, b, 0, size);
+            return b;
+        }
+    }
+    
+    //// -----------------------------------------------
+    //// -- Sorting Functions --------------------------
+
+    // -- int / double sorting ------------------------------------------
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     */
+    public static final void sort(int[] a, double[] b) {
+        mergesort(a, b, 0, a.length - 1);
+    }
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param length the array range length to sort over
+     */
+    public static final void sort(int[] a, double[] b, int length) {
+        mergesort(a, b, 0, length - 1);
+    }
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     */
+    public static final void sort(int[] a, double[] b, int begin, int end) {
+        mergesort(a, b, begin, end - 1);
+    }
+
+    // -- Insertion Sort --
+
+    protected static final void insertionsort(int[] a, double[] b, int p, int r) {
+        for (int j = p + 1; j <= r; ++j) {
+            int key = a[j];
+            double val = b[j];
+            int i = j - 1;
+            while (i >= p && a[i] > key) {
+                a[i + 1] = a[i];
+                b[i + 1] = b[i];
+                i--;
+            }
+            a[i + 1] = key;
+            b[i + 1] = val;
+        }
+    }
+
+    // -- Mergesort --
+
+    protected static final void mergesort(int[] a, double[] b, int p, int r) {
+        if (p >= r) {
+            return;
+        }
+        if (r - p + 1 < SORT_THRESHOLD) {
+            insertionsort(a, b, p, r);
+        } else {
+            int q = (p + r) / 2;
+            mergesort(a, b, p, q);
+            mergesort(a, b, q + 1, r);
+            merge(a, b, p, q, r);
+        }
+    }
+
+    protected static final void merge(int[] a, double[] b, int p, int q, int r) {
+        int[] t = new int[r - p + 1];
+        double[] v = new double[r - p + 1];
+        int i, p1 = p, p2 = q + 1;
+        for (i = 0; p1 <= q && p2 <= r; ++i) {
+            if (a[p1] < a[p2]) {
+                v[i] = b[p1];
+                t[i] = a[p1++];
+            } else {
+                v[i] = b[p2];
+                t[i] = a[p2++];
+            }
+        }
+        for (; p1 <= q; ++p1, ++i) {
+            v[i] = b[p1];
+            t[i] = a[p1];
+        }
+        for (; p2 <= r; ++p2, ++i) {
+            v[i] = b[p2];
+            t[i] = a[p2];
+        }
+        for (i = 0, p1 = p; i < t.length; ++i, ++p1) {
+            b[p1] = v[i];
+            a[p1] = t[i];
+        }
+    }
+
+    // -- int / int sorting ---------------------------------------------
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     */
+    public static final void sort(int[] a, int[] b) {
+        mergesort(a, b, 0, a.length - 1);
+    }
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param length the array range length to sort over
+     */
+    public static final void sort(int[] a, int[] b, int length) {
+        mergesort(a, b, 0, length - 1);
+    }
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     */
+    public static final void sort(int[] a, int[] b, int begin, int end) {
+        mergesort(a, b, begin, end - 1);
+    }
+
+    // -- Insertion Sort --
+
+    protected static final void insertionsort(int[] a, int[] b, int p, int r) {
+        for (int j = p + 1; j <= r; ++j) {
+            int key = a[j];
+            int val = b[j];
+            int i = j - 1;
+            while (i >= p && a[i] > key) {
+                a[i + 1] = a[i];
+                b[i + 1] = b[i];
+                i--;
+            }
+            a[i + 1] = key;
+            b[i + 1] = val;
+        }
+    }
+
+    // -- Mergesort --
+
+    protected static final void mergesort(int[] a, int[] b, int p, int r) {
+        if (p >= r) {
+            return;
+        }
+        if (r - p + 1 < SORT_THRESHOLD) {
+            insertionsort(a, b, p, r);
+        } else {
+            int q = (p + r) / 2;
+            mergesort(a, b, p, q);
+            mergesort(a, b, q + 1, r);
+            merge(a, b, p, q, r);
+        }
+    }
+
+    protected static final void merge(int[] a, int[] b, int p, int q, int r) {
+        int[] t = new int[r - p + 1];
+        int[] v = new int[r - p + 1];
+        int i, p1 = p, p2 = q + 1;
+        for (i = 0; p1 <= q && p2 <= r; ++i) {
+            if (a[p1] < a[p2]) {
+                v[i] = b[p1];
+                t[i] = a[p1++];
+            } else {
+                v[i] = b[p2];
+                t[i] = a[p2++];
+            }
+        }
+        for (; p1 <= q; ++p1, ++i) {
+            v[i] = b[p1];
+            t[i] = a[p1];
+        }
+        for (; p2 <= r; ++p2, ++i) {
+            v[i] = b[p2];
+            t[i] = a[p2];
+        }
+        for (i = 0, p1 = p; i < t.length; ++i, ++p1) {
+            b[p1] = v[i];
+            a[p1] = t[i];
+        }
+    }
+
+    // -- int / Object sorting ---------------------------------------------
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     */
+    public static final void sort(int[] a, Object[] b, int begin, int end) {
+        int length = end-begin;
+        
+        if ( length < SORT_THRESHOLD ) {
+            insertionsort(a, b, begin, end-1);
+            return;
+        }
+        
+        // allocate source arrays
+        int[] ks = new int[length];
+        Object[] vs = new Object[length];
+        for ( int i=0, idx=begin; i<length; ++i, ++idx ) {
+            ks[i] = a[idx];
+            vs[i] = b[idx];
+        }
+        mergesort(ks, a, vs, b, begin, end, -begin);
+    }
+    
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param abuf a buffer array to perform the sorting without
+     * allocating any additional memory
+     * @@param bbuf a buffer array to perform the sorting without
+     * allocating any additional memory
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     */
+    public static final void sort(int[] a, Object[] b, 
+            int[] abuf, Object[] bbuf, int begin, int end)
+    {
+        int length = end-begin;
+        
+        if ( length < SORT_THRESHOLD ) {
+            insertionsort(a, b, begin, end-1);
+            return;
+        }
+        
+        // allocate source arrays
+        for ( int i=0, idx=begin; i<length; ++i, ++idx ) {
+            abuf[i] = a[idx];
+            bbuf[i] = b[idx];
+        }
+        mergesort(abuf, a, bbuf, b, begin, end, -begin);
+    }
+
+    // -- Insertion Sort --
+
+    protected static final void insertionsort(int[] a, Object[] b, int p, int r) {
+        int i, key;
+        Object val;
+        for (int j = p + 1; j <= r; ++j) {
+            key = a[j];
+            val = b[j];
+            i = j - 1;
+            while (i >= p && a[i] > key) {
+                a[i + 1] = a[i];
+                b[i + 1] = b[i];
+                i--;
+            }
+            a[i + 1] = key;
+            b[i + 1] = val;
+        }
+    }
+
+    // -- Mergesort --
+    
+    protected static void mergesort(int ks[], int kd[], Object[] vs,
+            Object[] vd, int lo, int hi, int off)
+    {
+        int length = hi-lo;
+
+        if (length < SORT_THRESHOLD) {
+            insertionsort(kd, vd, lo, hi-1);
+            return;
+        }
+
+        // Recursively sort halves of dest into src
+        int dlo = lo;
+        int dhi = hi;
+        lo += off;
+        hi += off;
+        int mid = (lo + hi) >> 1;
+        mergesort(kd, ks, vd, vs, lo, mid, -off);
+        mergesort(kd, ks, vd, vs, mid, hi, -off);
+
+        // If list is already sorted, just copy from src to dest. This is an
+        // optimization that results in faster sorts for nearly ordered lists.
+        if ( ks[mid-1] <= ks[mid] ) {
+            System.arraycopy(ks, lo, kd, dlo, length);
+            System.arraycopy(vs, lo, vd, dlo, length);
+            return;
+        }
+
+        // Merge sorted halves (now in src) into dest
+        for (int i = dlo, p = lo, q = mid; i < dhi; i++) {
+            if (q >= hi || p < mid && ks[p] <= ks[q] ) {
+                vd[i] = vs[p];
+                kd[i] = ks[p++];
+            } else {
+                vd[i] = vs[q];
+                kd[i] = ks[q++];
+            }
+        }
+    }
+    
+    protected static final void merge(int[] a, Object[] b, int p, int q, int r) {
+        int[] t = new int[r - p + 1];
+        Object[] v = new Object[r - p + 1];
+        int i, p1 = p, p2 = q + 1;
+        for (i = 0; p1 <= q && p2 <= r; ++i) {
+            if (a[p1] < a[p2]) {
+                v[i] = b[p1];
+                t[i] = a[p1++];
+            } else {
+                v[i] = b[p2];
+                t[i] = a[p2++];
+            }
+        }
+        for (; p1 <= q; ++p1, ++i) {
+            v[i] = b[p1];
+            t[i] = a[p1];
+        }
+        for (; p2 <= r; ++p2, ++i) {
+            v[i] = b[p2];
+            t[i] = a[p2];
+        }
+        for (i = 0, p1 = p; i < t.length; ++i, ++p1) {
+            b[p1] = v[i];
+            a[p1] = t[i];
+        }
+    }
+
+    // -- double / int sorting -------------------------------------------
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     */
+    public static final void sort(double[] a, int[] b) {
+        mergesort(a, b, 0, a.length - 1);
+    }
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param length the length of the range to be sorted
+     */
+    public static final void sort(double[] a, int[] b, int length) {
+        mergesort(a, b, 0, length - 1);
+    }
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     */
+    public static final void sort(double[] a, int[] b, int begin, int end) {
+        mergesort(a, b, begin, end - 1);
+    }
+
+    // -- Insertion Sort --
+
+    protected static final void insertionsort(double[] a, int[] b, int p, int r) {
+        for (int j = p + 1; j <= r; ++j) {
+            double key = a[j];
+            int val = b[j];
+            int i = j - 1;
+            while (i >= p && a[i] > key) {
+                a[i + 1] = a[i];
+                b[i + 1] = b[i];
+                --i;
+            }
+            a[i + 1] = key;
+            b[i + 1] = val;
+        }
+    }
+
+    // -- Mergesort --
+
+    protected static final void mergesort(double[] a, int[] b, int p, int r) {
+        if (p >= r) {
+            return;
+        }
+        if (r - p + 1 < SORT_THRESHOLD) {
+            insertionsort(a, b, p, r);
+        } else {
+            int q = (p + r) / 2;
+            mergesort(a, b, p, q);
+            mergesort(a, b, q + 1, r);
+            merge(a, b, p, q, r);
+        }
+    }
+
+    protected static final void merge(double[] a, int[] b, int p, int q, int r) {
+        double[] t = new double[r - p + 1];
+        int[] v = new int[r - p + 1];
+        int i, p1 = p, p2 = q + 1;
+        for (i = 0; p1 <= q && p2 <= r; ++i) {
+            if (a[p1] < a[p2]) {
+                v[i] = b[p1];
+                t[i] = a[p1++];
+            } else {
+                v[i] = b[p2];
+                t[i] = a[p2++];
+            }
+        }
+        for (; p1 <= q; ++p1, ++i) {
+            v[i] = b[p1];
+            t[i] = a[p1];
+        }
+        for (; p2 <= r; ++p2, ++i) {
+            v[i] = b[p2];
+            t[i] = a[p2];
+        }
+        for (i = 0, p1 = p; i < t.length; i++, p1++) {
+            b[p1] = v[i];
+            a[p1] = t[i];
+        }
+    }    
+    
+    // -- float / int sorting -------------------------------------------
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     */
+    public static final void sort(float[] a, int[] b) {
+        mergesort(a, b, 0, a.length - 1);
+    }
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param length the length of the range to be sorted
+     */
+    public static final void sort(float[] a, int[] b, int length) {
+        mergesort(a, b, 0, length - 1);
+    }
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     */
+    public static final void sort(float[] a, int[] b, int begin, int end) {
+        mergesort(a, b, begin, end - 1);
+    }
+
+    // -- Insertion Sort --
+
+    protected static final void insertionsort(float[] a, int[] b, int p, int r) {
+        for (int j = p + 1; j <= r; ++j) {
+            float key = a[j];
+            int val = b[j];
+            int i = j - 1;
+            while (i >= p && a[i] > key) {
+                a[i + 1] = a[i];
+                b[i + 1] = b[i];
+                --i;
+            }
+            a[i + 1] = key;
+            b[i + 1] = val;
+        }
+    }
+
+    // -- Mergesort --
+
+    protected static final void mergesort(float[] a, int[] b, int p, int r) {
+        if (p >= r) {
+            return;
+        }
+        if (r - p + 1 < SORT_THRESHOLD) {
+            insertionsort(a, b, p, r);
+        } else {
+            int q = (p + r) / 2;
+            mergesort(a, b, p, q);
+            mergesort(a, b, q + 1, r);
+            merge(a, b, p, q, r);
+        }
+    }
+
+    protected static final void merge(float[] a, int[] b, int p, int q, int r) {
+        float[] t = new float[r - p + 1];
+        int[] v = new int[r - p + 1];
+        int i, p1 = p, p2 = q + 1;
+        for (i = 0; p1 <= q && p2 <= r; ++i) {
+            if (a[p1] < a[p2]) {
+                v[i] = b[p1];
+                t[i] = a[p1++];
+            } else {
+                v[i] = b[p2];
+                t[i] = a[p2++];
+            }
+        }
+        for (; p1 <= q; ++p1, ++i) {
+            v[i] = b[p1];
+            t[i] = a[p1];
+        }
+        for (; p2 <= r; ++p2, ++i) {
+            v[i] = b[p2];
+            t[i] = a[p2];
+        }
+        for (i = 0, p1 = p; i < t.length; i++, p1++) {
+            b[p1] = v[i];
+            a[p1] = t[i];
+        }
+    }
+
+    // -- Object / int sorting ------------------------------------------------
+    
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param cmp the comparator to use to compare key values
+     */
+    public static final void sort(Object[] a, int[] b, Comparator cmp) {
+        mergesort(a, b, 0, a.length - 1, cmp);
+    }
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param length the length of the range to be sorted
+     * @@param cmp the comparator to use to compare key values
+     */
+    public static final void sort(Object[] a, int[] b, int length, 
+            Comparator cmp)
+    {
+        mergesort(a, b, 0, length - 1, cmp);
+    }
+
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     * @@param cmp the comparator to use to compare key values
+     */
+    public static final void sort(Object[] a, int[] b, int begin, int end, 
+            Comparator cmp)
+    {
+        mergesort(a, b, begin, end - 1, cmp);
+    }
+
+    // -- Insertion Sort --
+
+    protected static final void insertionsort(Object[] a, int[] b, int p, int r,
+            Comparator cmp)
+    {
+        for (int j = p + 1; j <= r; ++j) {
+            Object key = a[j];
+            int val = b[j];
+            int i = j - 1;
+            while (i >= p && cmp.compare(a[i],key) > 0 ) {
+                a[i + 1] = a[i];
+                b[i + 1] = b[i];
+                --i;
+            }
+            a[i + 1] = key;
+            b[i + 1] = val;
+        }
+    }
+
+    // -- Mergesort --
+
+    protected static final void mergesort(Object[] a, int[] b, int p, int r,
+            Comparator cmp)
+    {
+        if (p >= r) {
+            return;
+        }
+        if (r - p + 1 < SORT_THRESHOLD) {
+            insertionsort(a, b, p, r, cmp);
+        } else {
+            int q = (p + r) / 2;
+            mergesort(a, b, p, q, cmp);
+            mergesort(a, b, q + 1, r, cmp);
+            merge(a, b, p, q, r, cmp);
+        }
+    }
+
+    protected static final void merge(Object[] a, int[] b, int p, int q, int r,
+            Comparator cmp)
+    {
+        Object[] t = new Object[r - p + 1];
+        int[] v = new int[r - p + 1];
+        int i, p1 = p, p2 = q + 1;
+        for (i = 0; p1 <= q && p2 <= r; ++i) {
+            if ( cmp.compare(a[p1],a[p2]) < 0 ) {
+                v[i] = b[p1];
+                t[i] = a[p1++];
+            } else {
+                v[i] = b[p2];
+                t[i] = a[p2++];
+            }
+        }
+        for (; p1 <= q; ++p1, ++i) {
+            v[i] = b[p1];
+            t[i] = a[p1];
+        }
+        for (; p2 <= r; ++p2, ++i) {
+            v[i] = b[p2];
+            t[i] = a[p2];
+        }
+        for (i = 0, p1 = p; i < t.length; i++, p1++) {
+            b[p1] = v[i];
+            a[p1] = t[i];
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Array File I/O
+    
+    /**
+     * Read in a text file as an array of integers. Uses the default java
+     * StringTokenizer to segment the text file. Additionally, tokens beginning
+     * with the '#' character are ignored.
+     * @@param filename the name of the file to read in
+     * @@return an array of integers parsed from the file
+     */
+    public static int[] getIntArray(String filename) {
+        int[] array = null;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(filename));
+            String line = br.readLine();
+            StringTokenizer st = new StringTokenizer(line);
+            int maxlen = st.countTokens();
+            int len = 0;
+            array = new int[maxlen];            
+            while ( st.hasMoreTokens() ) {
+                String tok = st.nextToken();
+                if ( tok.startsWith("#") ) // commented int
+                    continue;
+                array[len++] = Integer.parseInt(tok);
+            }
+            if ( len != maxlen )
+                array = ArrayLib.trim(array, len);
+            return array;
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+} // end of class ArrayLib
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d10 1
+a10 1
+ * Library of supplementary array routines not
+d16 1
+a16 1
+
+d21 1
+a21 1
+
+d24 1
+a24 1
+
+d33 1
+a33 1
+
+d48 1
+a48 1
+
+d57 1
+a57 1
+
+d73 1
+a73 1
+
+d82 1
+a82 1
+
+d98 1
+a98 1
+
+d107 1
+a107 1
+
+d123 1
+a123 1
+
+d132 1
+a132 1
+
+d148 1
+a148 1
+
+d151 1
+a151 1
+
+d160 2
+a161 3
+            if ( a[i] > max ) {
+				max = a[i];
+			}
+d174 2
+a175 3
+            if ( a[i] < min ) {
+				min = a[i];
+			}
+d179 1
+a179 1
+
+d192 1
+a192 1
+
+d202 1
+a202 1
+     * would be used if the key were added to the array.
+d229 1
+a229 1
+     * would be used if the key were added to the array.
+d258 1
+a258 1
+     * would be used if the key were added to the array.
+d285 1
+a285 1
+     * would be used if the key were added to the array.
+d313 1
+a313 1
+     * would be used if the key were added to the array.
+d343 1
+a343 1
+     * would be used if the key were added to the array.
+d372 1
+a372 1
+     * would be used if the key were added to the array.
+d401 1
+a401 1
+     * would be used if the key were added to the array.
+d432 1
+a432 1
+     * would be used if the key were added to the array.
+d521 1
+a521 3
+        if ( a.length >= size ) {
+			return a;
+		}
+d526 1
+a526 1
+
+d536 1
+a536 3
+        if ( a.length >= size ) {
+			return a;
+		}
+d541 1
+a541 1
+
+d551 1
+a551 3
+        if ( a.length >= size ) {
+			return a;
+		}
+d556 1
+a556 1
+
+d566 1
+a566 3
+        if ( a.length >= size ) {
+			return a;
+		}
+d607 1
+a607 1
+
+d625 1
+a625 1
+
+d643 1
+a643 1
+
+d856 1
+a856 1
+
+d861 1
+a861 1
+
+d871 1
+a871 1
+
+d885 1
+a885 1
+    public static final void sort(int[] a, Object[] b,
+d889 1
+a889 1
+
+d894 1
+a894 1
+
+d923 1
+a923 1
+
+d939 1
+a939 1
+        int mid = lo + hi >> 1;
+d962 1
+a962 1
+
+d1086 2
+a1087 2
+    }
+
+d1187 1
+a1187 1
+
+d1196 1
+a1196 1
+    public static final void sort(Object[] a, int[] b, Comparator<Object> cmp) {
+d1209 2
+a1210 2
+    public static final void sort(Object[] a, int[] b, int length,
+            Comparator<Object> cmp)
+d1225 2
+a1226 2
+    public static final void sort(Object[] a, int[] b, int begin, int end,
+            Comparator<Object> cmp)
+d1234 1
+a1234 1
+            Comparator<Object> cmp)
+d1253 1
+a1253 1
+            Comparator<Object> cmp)
+d1269 1
+a1269 1
+            Comparator<Object> cmp)
+d1296 1
+a1296 1
+
+d1299 1
+a1299 1
+
+d1315 1
+a1315 1
+            array = new int[maxlen];
+d1318 2
+a1319 3
+                if ( tok.startsWith("#") ) {
+					continue;
+				}
+d1322 2
+a1323 3
+            if ( len != maxlen ) {
+				array = ArrayLib.trim(array, len);
+			}
+@
+
+
+2.1
+log
+@Added trim() method for Object arrays
+@
+text
+@d150 1
+a150 1
+    // Max / Min
+d180 13
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d612 19
+@
+
+
+1.1
+log
+@file ArrayLib.java was initially added on branch beta.
+@
+text
+@d1 1299
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 986
+package prefuse.util;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.Comparator;
+import java.util.Random;
+import java.util.StringTokenizer;
+
+/**
+ * A number of supplementary array routines not 
+ *  supported by the java.util.Arrays class.
+ *
+ * @@author Jeffrey Heer
+ * @@version 1.0
+ */
+public abstract class ArrayLib {
+    
+    // ------------------------------------------------------------------------
+    // Shuffle
+    
+    public static final void shuffle(int[] a, Random r) {
+        shuffle(a, 0, a.length, r);
+    }
+    
+    public static final void shuffle(int[] a, int start, int len, Random r) {
+        for ( int i=start+len; --i>0; ) {
+            int t = a[i], j = r.nextInt(i);
+            a[i] = a[j];
+            a[j] = t;
+        }
+    }
+    
+    public static final void shuffle(long[] a, Random r) {
+        shuffle(a, 0, a.length, r);
+    }
+    
+    public static final void shuffle(long[] a, int start, int len, Random r) {
+        for ( int i=start+len; i>1; --i ) {
+            long t = a[i];
+            int j = r.nextInt(i);
+            a[i] = a[j];
+            a[j] = t;
+        }
+    }
+    
+    public static final void shuffle(float[] a, Random r) {
+        shuffle(a, 0, a.length, r);
+    }
+    
+    public static final void shuffle(float[] a, int start, int len, Random r) {
+        for ( int i=start+len; i>1; --i ) {
+            float t = a[i];
+            int j = r.nextInt(i);
+            a[i] = a[j];
+            a[j] = t;
+        }
+    }
+    
+    public static final void shuffle(double[] a, Random r) {
+        shuffle(a, 0, a.length, r);
+    }
+    
+    public static final void shuffle(double[] a, int start, int len, Random r) {
+        for ( int i=start+len; i>1; --i ) {
+            double t = a[i];
+            int j = r.nextInt(i);
+            a[i] = a[j];
+            a[j] = t;
+        }
+    }
+    
+    public static final void shuffle(Object[] a, Random r) {
+        shuffle(a, 0, a.length, r);
+    }
+    
+    public static final void shuffle(Object[] a, int start, int len, Random r) {
+        for ( int i=start+len; i>1; --i ) {
+            Object t = a[i];
+            int j = r.nextInt(i);
+            a[i] = a[j];
+            a[j] = t;
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Max / Min
+    
+    // TODO: implement for each type
+    public static final double max(double[] a) {
+        double max = Double.NEGATIVE_INFINITY;
+        for ( int i=0; i<a.length; ++i ) {
+            if ( a[i] > max )
+                max = a[i];
+        }
+        return max;
+    }
+    
+    public static final double min(double[] a) {
+        double min = Double.POSITIVE_INFINITY;
+        for ( int i=0; i<a.length; ++i ) {
+            if ( a[i] < min )
+                min = a[i];
+        }
+        return min;
+    }
+    
+    
+    public static final int MERGE_THRESHOLD = 30;
+    
+	//// -----------------------------------------------
+	//// -- Searching Functions ------------------------
+
+	public static final int binarySearch(int[] a, int key) {
+		int x1 = 0;
+		int x2 = a.length;
+		int i = x2 / 2;
+		while (x1 < x2) {
+			if (a[i] == key) {
+				return i;
+			} else if (a[i] < key) {
+				x1 = i + 1;
+			} else {
+				x2 = i;
+			}
+			i = x1 + (x2 - x1) / 2;
+		}
+		return -1*(i+1);
+	} //
+
+	public static final int binarySearch(int[] a, int key, int length) {
+		int x1 = 0;
+		int x2 = length;
+		int i = x2 / 2;
+
+		while (x1 < x2) {
+			if (a[i] == key) {
+				return i;
+			} else if (a[i] < key) {
+				x1 = i + 1;
+			} else {
+				x2 = i;
+			}
+			i = x1 + (x2 - x1) / 2;
+		}
+		return -1*(i+1);
+	} //
+
+	public static final int binarySearch(int[] a, int key, int begin, int end) {
+		int x1 = begin;
+		int x2 = end;
+		int i = x1 + (x2 - x1) / 2;
+
+		while (x1 < x2) {
+			if (a[i] == key) {
+				return i;
+			} else if (a[i] < key) {
+				x1 = i + 1;
+			} else {
+				x2 = i;
+			}
+			i = x1 + (x2 - x1) / 2;
+		}
+
+		return -1*(i+1);
+	} //
+
+
+	public static final int binarySearch(Object[] a, Object key) {
+		int x1 = 0;
+		int x2 = a.length;
+		int i = x2 / 2, c;
+		while (x1 < x2) {
+			c = ((Comparable)a[i]).compareTo(key);
+			if (c == 0) {
+				return i;
+			} else if (c < 0) {
+				x1 = i + 1;
+			} else {
+				x2 = i;
+			}
+			i = x1 + (x2 - x1) / 2;
+		}
+		return -1*(i+1);
+	} //
+
+	public static final int binarySearch(Object[] a, Object key, int length) {
+		int x1 = 0;
+		int x2 = length;
+		int i = x2 / 2, c;
+
+		while (x1 < x2) {
+			c = ((Comparable)a[i]).compareTo(key);
+			if (c == 0) {
+				return i;
+			} else if (c < 0) {
+				x1 = i + 1;
+			} else {
+				x2 = i;
+			}
+			i = x1 + (x2 - x1) / 2;
+		}
+		return -1*(i+1);
+	} //
+
+	public static final int binarySearch(Object[] a, Object key, int begin, int end) {
+		int x1 = begin;
+		int x2 = end;
+		int i = x1 + (x2 - x1) / 2, c;
+
+		while (x1 < x2) {
+			c = ((Comparable)a[i]).compareTo(key);
+			if (c == 0) {
+				return i;
+			} else if (c < 0) {
+				x1 = i + 1;
+			} else {
+				x2 = i;
+			}
+			i = x1 + (x2 - x1) / 2;
+		}
+
+		return -1*(i+1);
+	} //
+
+	public static final int binarySearch(Object[] a, Object key, Comparator cp) {
+		int x1 = 0;
+		int x2 = a.length;
+		int i = x2 / 2, c;
+		while (x1 < x2) {
+			c = cp.compare(a[i], key);
+			if (c == 0) {
+				return i;
+			} else if (c < 0) {
+				x1 = i + 1;
+			} else {
+				x2 = i;
+			}
+			i = x1 + (x2 - x1) / 2;
+		}
+		return -1*(i+1);
+	} //
+
+	public static final int binarySearch(Object[] a, Object key, Comparator cp, int length) {
+		int x1 = 0;
+		int x2 = length;
+		int i = x2 / 2, c;
+
+		while (x1 < x2) {
+			c = cp.compare(a[i], key);
+			if (c == 0) {
+				return i;
+			} else if (c < 0) {
+				x1 = i + 1;
+			} else {
+				x2 = i;
+			}
+			i = x1 + (x2 - x1) / 2;
+		}
+		return -1*(i+1);
+	} //
+
+	public static final int binarySearch(Object[] a, Object key, Comparator cp, int begin, int end) {
+		int x1 = begin;
+		int x2 = end;
+		int i = x1 + (x2 - x1) / 2, c;
+
+		while (x1 < x2) {
+			c = cp.compare(a[i], key);
+			if (c == 0) {
+				return i;
+			} else if (c < 0) {
+				x1 = i + 1;
+			} else {
+				x2 = i;
+			}
+			i = x1 + (x2 - x1) / 2;
+		}
+
+		return -1*(i+1);
+	} //
+
+	//// -----------------------------------------------
+	//// -- Finding Functions --------------------------
+
+	public static final int find(int[] a, int key) {
+		for (int i = 0; i < a.length; i++) {
+			if (a[i] == key) {
+				return i;
+			}
+		}
+		return -1;
+	} //
+
+	public static final int find(int[] a, int key, int length) {
+		for (int i = 0; i < length; i++) {
+			if (a[i] == key) {
+				return i;
+			}
+		}
+		return -1;
+	} //
+
+	public static final int find(int[] a, int key, int begin, int end) {
+		for (int i = begin; i < end; i++) {
+			if (a[i] == key) {
+				return i;
+			}
+		}
+		return -1;
+	} //
+
+	//// -----------------------------------------------
+	//// -- Resizing Functions -------------------------
+
+	public static final int[] resize(int[] a, int size) {
+		//assert (size > a.length);
+		int[] b = new int[size];
+		System.arraycopy(a, 0, b, 0, a.length);
+		return b;
+	} //
+	
+	public static final float[] resize(float[] a, int size) {
+		//assert (size > a.length);
+		float[] b = new float[size];
+		System.arraycopy(a, 0, b, 0, a.length);
+		return b;
+	} //
+	
+	public static final double[] resize(double[] a, int size) {
+		//assert (size > a.length);
+		double[] b = new double[size];
+		System.arraycopy(a, 0, b, 0, a.length);
+		return b;
+	} //
+	
+	public static final Object[] resize(Object[] a, int size) {
+		//assert (size > a.length);
+		Object[] b = new Object[size];
+		System.arraycopy(a, 0, b, 0, a.length);
+		return b;
+	} //
+
+	public static final int[] trim(int[] a, int size) {
+		//assert (size <= a.length);
+		if ( a.length == size ) {
+			return a;
+		} else {
+			int[] b = new int[size];
+			System.arraycopy(a, 0, b, 0, size);
+			return b;
+		}
+	} //
+
+	public static final float[] trim(float[] a, int size) {
+		//assert (size <= a.length);
+		if ( a.length == size ) {
+			return a;
+		} else {
+			float[] b = new float[size];
+			System.arraycopy(a, 0, b, 0, size);
+			return b;
+		}
+	} //
+	
+	public static final double[] trim(double[] a, int size) {
+		//assert (size <= a.length);
+		if ( a.length == size ) {
+			return a;
+		} else {
+			double[] b = new double[size];
+			System.arraycopy(a, 0, b, 0, size);
+			return b;
+		}
+	} //
+	//// -----------------------------------------------
+	//// -- Sorting Functions --------------------------
+
+	// -- int / double sorting ------------------------------------------
+
+	public static final void sort(int[] a, double[] b) {
+		mergesort(a, b, 0, a.length - 1);
+	} //
+
+	public static final void sort(int[] a, double[] b, int length) {
+		mergesort(a, b, 0, length - 1);
+	} //
+
+	public static final void sort(int[] a, double[] b, int begin, int end) {
+		mergesort(a, b, begin, end - 1);
+	} //
+
+	// -- Insertion Sort --
+
+	public static final void insertionsort(int[] a, double[] b, int p, int r) {
+		for (int j = p + 1; j <= r; ++j) {
+			int key = a[j];
+			double val = b[j];
+			int i = j - 1;
+			while (i >= p && a[i] > key) {
+				a[i + 1] = a[i];
+				b[i + 1] = b[i];
+				i--;
+			}
+			a[i + 1] = key;
+			b[i + 1] = val;
+		}
+	} //
+
+	// -- Mergesort --
+
+	public static final void mergesort(int[] a, double[] b, int p, int r) {
+		if (p >= r) {
+			return;
+		}
+		if (r - p + 1 < MERGE_THRESHOLD) {
+			insertionsort(a, b, p, r);
+		} else {
+			int q = (p + r) / 2;
+			mergesort(a, b, p, q);
+			mergesort(a, b, q + 1, r);
+			merge(a, b, p, q, r);
+		}
+	} //
+
+	public static final void merge(int[] a, double[] b, int p, int q, int r) {
+		int[] t = new int[r - p + 1];
+		double[] v = new double[r - p + 1];
+		int i, p1 = p, p2 = q + 1;
+		for (i = 0; p1 <= q && p2 <= r; ++i) {
+			if (a[p1] < a[p2]) {
+				v[i] = b[p1];
+				t[i] = a[p1++];
+			} else {
+				v[i] = b[p2];
+				t[i] = a[p2++];
+			}
+		}
+		for (; p1 <= q; ++p1, ++i) {
+			v[i] = b[p1];
+			t[i] = a[p1];
+		}
+		for (; p2 <= r; ++p2, ++i) {
+			v[i] = b[p2];
+			t[i] = a[p2];
+		}
+		for (i = 0, p1 = p; i < t.length; ++i, ++p1) {
+			b[p1] = v[i];
+			a[p1] = t[i];
+		}
+	} //
+
+	// -- Quicksort --
+
+	public static final void quicksort(int[] a, double[] b, int p, int r) {
+		if (p >= r) {
+			return;
+		}
+		int q = partition(a, b, p, r);
+		quicksort(a, b, p, q);
+		quicksort(a, b, q + 1, r);
+	} //
+
+	private static final int partition(int[] a, double[] b, int p, int r) {
+		int x = a[p];
+		int i = p;
+		int j = r;
+
+		while (true) {
+			while (a[j] > x) {
+				--j;
+			}
+			while (a[i] < x) {
+				++i;
+			}
+			if (i < j) {
+				int ti = a[i];
+				double td = b[i];
+				a[i] = a[j];
+				b[i] = b[j];
+				a[j] = ti;
+				b[j] = td;
+			} else {
+				return j;
+			}
+		}
+	} //
+
+	// -- int / int sorting ---------------------------------------------
+
+	public static final void sort(int[] a, int[] b) {
+		mergesort(a, b, 0, a.length - 1);
+	} //
+
+	public static final void sort(int[] a, int[] b, int length) {
+		mergesort(a, b, 0, length - 1);
+	} //
+
+	public static final void sort(int[] a, int[] b, int begin, int end) {
+		mergesort(a, b, begin, end - 1);
+	} //
+
+	// -- Insertion Sort --
+
+	public static final void insertionsort(int[] a, int[] b, int p, int r) {
+		for (int j = p + 1; j <= r; ++j) {
+			int key = a[j];
+			int val = b[j];
+			int i = j - 1;
+			while (i >= p && a[i] > key) {
+				a[i + 1] = a[i];
+				b[i + 1] = b[i];
+				i--;
+			}
+			a[i + 1] = key;
+			b[i + 1] = val;
+		}
+	} //
+
+	// -- Mergesort --
+
+	public static final void mergesort(int[] a, int[] b, int p, int r) {
+		if (p >= r) {
+			return;
+		}
+		if (r - p + 1 < MERGE_THRESHOLD) {
+			insertionsort(a, b, p, r);
+		} else {
+			int q = (p + r) / 2;
+			mergesort(a, b, p, q);
+			mergesort(a, b, q + 1, r);
+			merge(a, b, p, q, r);
+		}
+	} //
+
+	public static final void merge(int[] a, int[] b, int p, int q, int r) {
+		int[] t = new int[r - p + 1];
+		int[] v = new int[r - p + 1];
+		int i, p1 = p, p2 = q + 1;
+		for (i = 0; p1 <= q && p2 <= r; ++i) {
+			if (a[p1] < a[p2]) {
+				v[i] = b[p1];
+				t[i] = a[p1++];
+			} else {
+				v[i] = b[p2];
+				t[i] = a[p2++];
+			}
+		}
+		for (; p1 <= q; ++p1, ++i) {
+			v[i] = b[p1];
+			t[i] = a[p1];
+		}
+		for (; p2 <= r; ++p2, ++i) {
+			v[i] = b[p2];
+			t[i] = a[p2];
+		}
+		for (i = 0, p1 = p; i < t.length; ++i, ++p1) {
+			b[p1] = v[i];
+			a[p1] = t[i];
+		}
+	} //
+
+	// -- Quicksort --
+
+	public static final void quicksort(int[] a, int[] b, int p, int r) {
+		if (p >= r) {
+			return;
+		}
+		int q = partition(a, b, p, r);
+		quicksort(a, b, p, q);
+		quicksort(a, b, q + 1, r);
+	} //
+
+	private static final int partition(int[] a, int[] b, int p, int r) {
+		int x = a[p];
+		int i = p;
+		int j = r;
+
+		while (true) {
+			while (a[j] > x) {
+				--j;
+			}
+			while (a[i] < x) {
+				++i;
+			}
+			if (i < j) {
+				int ti = a[i];
+				int td = b[i];
+				a[i] = a[j];
+				b[i] = b[j];
+				a[j] = ti;
+				b[j] = td;
+			} else {
+				return j;
+			}
+		}
+	} //
+
+    // -- int / Object sorting ---------------------------------------------
+
+    public static final void sort(int[] a, Object[] b, int begin, int end) {
+        int length = end-begin;
+        
+        if ( length < MERGE_THRESHOLD ) {
+            insertionsort(a, b, begin, end-1);
+            return;
+        }
+        
+        // allocate source arrays
+        int[] ks = new int[length];
+        Object[] vs = new Object[length];
+        for ( int i=0, idx=begin; i<length; ++i, ++idx ) {
+            ks[i] = a[idx];
+            vs[i] = b[idx];
+        }
+        mergesort(ks, a, vs, b, begin, end, -begin);
+    } //
+    
+    public static final void sort(int[] a, Object[] b, 
+            int[] abuf, Object[] bbuf, int begin, int end)
+    {
+        int length = end-begin;
+        
+        if ( length < MERGE_THRESHOLD ) {
+            insertionsort(a, b, begin, end-1);
+            return;
+        }
+        
+        // allocate source arrays
+        for ( int i=0, idx=begin; i<length; ++i, ++idx ) {
+            abuf[i] = a[idx];
+            bbuf[i] = b[idx];
+        }
+        mergesort(abuf, a, bbuf, b, begin, end, -begin);
+    } //
+
+    // -- Insertion Sort --
+
+    public static final void insertionsort(int[] a, Object[] b, int p, int r) {
+        int i, key;
+        Object val;
+        for (int j = p + 1; j <= r; ++j) {
+            key = a[j];
+            val = b[j];
+            i = j - 1;
+            while (i >= p && a[i] > key) {
+                a[i + 1] = a[i];
+                b[i + 1] = b[i];
+                i--;
+            }
+            a[i + 1] = key;
+            b[i + 1] = val;
+        }
+    } //
+
+    // -- Mergesort --
+
+    
+    public static void mergesort(int ks[], int kd[], Object[] vs, Object[] vd, 
+            int lo, int hi, int off)
+    {
+        int length = hi-lo;
+
+        // Insertion sort on smallest arrays TODO: use better insertionsort
+        if (length < MERGE_THRESHOLD) {
+            insertionsort(kd, vd, lo, hi-1);
+            return;
+        }
+
+        // Recursively sort halves of dest into src
+        int dlo = lo;
+        int dhi = hi;
+        lo += off;
+        hi += off;
+        int mid = (lo + hi) >> 1;
+        mergesort(kd, ks, vd, vs, lo, mid, -off);
+        mergesort(kd, ks, vd, vs, mid, hi, -off);
+
+        // If list is already sorted, just copy from src to dest. This is an
+        // optimization that results in faster sorts for nearly ordered lists.
+        if ( ks[mid-1] <= ks[mid] ) {
+            System.arraycopy(ks, lo, kd, dlo, length);
+            System.arraycopy(vs, lo, vd, dlo, length);
+            return;
+        }
+
+        // Merge sorted halves (now in src) into dest
+        for (int i = dlo, p = lo, q = mid; i < dhi; i++) {
+            if (q >= hi || p < mid && ks[p] <= ks[q] ) {
+                vd[i] = vs[p];
+                kd[i] = ks[p++];
+            } else {
+                vd[i] = vs[q];
+                kd[i] = ks[q++];
+            }
+        }
+    }
+    
+    public static final void merge(int[] a, Object[] b, int p, int q, int r) {
+        int[] t = new int[r - p + 1];
+        Object[] v = new Object[r - p + 1];
+        int i, p1 = p, p2 = q + 1;
+        for (i = 0; p1 <= q && p2 <= r; ++i) {
+            if (a[p1] < a[p2]) {
+                v[i] = b[p1];
+                t[i] = a[p1++];
+            } else {
+                v[i] = b[p2];
+                t[i] = a[p2++];
+            }
+        }
+        for (; p1 <= q; ++p1, ++i) {
+            v[i] = b[p1];
+            t[i] = a[p1];
+        }
+        for (; p2 <= r; ++p2, ++i) {
+            v[i] = b[p2];
+            t[i] = a[p2];
+        }
+        for (i = 0, p1 = p; i < t.length; ++i, ++p1) {
+            b[p1] = v[i];
+            a[p1] = t[i];
+        }
+    } //
+    
+	// -- float / int sorting -------------------------------------------
+
+	public static final void sort(float[] a, int[] b) {
+		mergesort(a, b, 0, a.length - 1);
+	} //
+
+	public static final void sort(float[] a, int[] b, int length) {
+		mergesort(a, b, 0, length - 1);
+	} //
+
+	public static final void sort(float[] a, int[] b, int begin, int end) {
+		mergesort(a, b, begin, end - 1);
+	} //
+
+	// -- Insertion Sort --
+
+	public static final void insertionsort(float[] a, int[] b, int p, int r) {
+		for (int j = p + 1; j <= r; ++j) {
+			float key = a[j];
+			int val = b[j];
+			int i = j - 1;
+			while (i >= p && a[i] > key) {
+				a[i + 1] = a[i];
+				b[i + 1] = b[i];
+				--i;
+			}
+			a[i + 1] = key;
+			b[i + 1] = val;
+		}
+	} //
+
+	// -- Mergesort --
+
+	public static final void mergesort(float[] a, int[] b, int p, int r) {
+		if (p >= r) {
+			return;
+		}
+		if (r - p + 1 < MERGE_THRESHOLD) {
+			insertionsort(a, b, p, r);
+		} else {
+			int q = (p + r) / 2;
+			mergesort(a, b, p, q);
+			mergesort(a, b, q + 1, r);
+			merge(a, b, p, q, r);
+		}
+	} //
+
+	public static final void merge(float[] a, int[] b, int p, int q, int r) {
+		float[] t = new float[r - p + 1];
+		int[] v = new int[r - p + 1];
+		int i, p1 = p, p2 = q + 1;
+		for (i = 0; p1 <= q && p2 <= r; ++i) {
+			if (a[p1] < a[p2]) {
+				v[i] = b[p1];
+				t[i] = a[p1++];
+			} else {
+				v[i] = b[p2];
+				t[i] = a[p2++];
+			}
+		}
+		for (; p1 <= q; ++p1, ++i) {
+			v[i] = b[p1];
+			t[i] = a[p1];
+		}
+		for (; p2 <= r; ++p2, ++i) {
+			v[i] = b[p2];
+			t[i] = a[p2];
+		}
+		for (i = 0, p1 = p; i < t.length; i++, p1++) {
+			b[p1] = v[i];
+			a[p1] = t[i];
+		}
+	} //
+
+	// -- Quicksort --
+
+	public static final void quicksort(float[] a, int[] b, int p, int r) {
+		if (p >= r) {
+			return;
+		}
+		int q = partition(a, b, p, r);
+		quicksort(a, b, p, q);
+		quicksort(a, b, q + 1, r);
+	} //
+
+	private static final int partition(float[] a, int[] b, int p, int r) {
+		float x = a[p];
+		int i = p;
+		int j = r;
+
+		while (true) {
+			while (a[j] > x) {
+				--j;
+			}
+			while (a[i] < x) {
+				++i;
+			}
+			if (i < j) {
+				float ti = a[i];
+				int td = b[i];
+				a[i] = a[j];
+				b[i] = b[j];
+				a[j] = ti;
+				b[j] = td;
+			} else {
+				return j;
+			}
+		}
+	} //
+
+    // -- Object / int sorting ------------------------------------------------
+    
+    public static final void sort(Object[] a, int[] b, Comparator cmp) {
+        mergesort(a, b, 0, a.length - 1, cmp);
+    } //
+
+    public static final void sort(Object[] a, int[] b, int length, 
+            Comparator cmp)
+    {
+        mergesort(a, b, 0, length - 1, cmp);
+    } //
+
+    public static final void sort(Object[] a, int[] b, int begin, int end, 
+            Comparator cmp)
+    {
+        mergesort(a, b, begin, end - 1, cmp);
+    } //
+
+    // -- Insertion Sort --
+
+    public static final void insertionsort(Object[] a, int[] b, int p, int r,
+            Comparator cmp)
+    {
+        for (int j = p + 1; j <= r; ++j) {
+            Object key = a[j];
+            int val = b[j];
+            int i = j - 1;
+            while (i >= p && cmp.compare(a[i],key) > 0 ) {
+                a[i + 1] = a[i];
+                b[i + 1] = b[i];
+                --i;
+            }
+            a[i + 1] = key;
+            b[i + 1] = val;
+        }
+    } //
+
+    // -- Mergesort --
+
+    public static final void mergesort(Object[] a, int[] b, int p, int r,
+            Comparator cmp)
+    {
+        if (p >= r) {
+            return;
+        }
+        if (r - p + 1 < MERGE_THRESHOLD) {
+            insertionsort(a, b, p, r, cmp);
+        } else {
+            int q = (p + r) / 2;
+            mergesort(a, b, p, q, cmp);
+            mergesort(a, b, q + 1, r, cmp);
+            merge(a, b, p, q, r, cmp);
+        }
+    } //
+
+    public static final void merge(Object[] a, int[] b, int p, int q, int r,
+            Comparator cmp)
+    {
+        Object[] t = new Object[r - p + 1];
+        int[] v = new int[r - p + 1];
+        int i, p1 = p, p2 = q + 1;
+        for (i = 0; p1 <= q && p2 <= r; ++i) {
+            if ( cmp.compare(a[p1],a[p2]) < 0 ) {
+                v[i] = b[p1];
+                t[i] = a[p1++];
+            } else {
+                v[i] = b[p2];
+                t[i] = a[p2++];
+            }
+        }
+        for (; p1 <= q; ++p1, ++i) {
+            v[i] = b[p1];
+            t[i] = a[p1];
+        }
+        for (; p2 <= r; ++p2, ++i) {
+            v[i] = b[p2];
+            t[i] = a[p2];
+        }
+        for (i = 0, p1 = p; i < t.length; i++, p1++) {
+            b[p1] = v[i];
+            a[p1] = t[i];
+        }
+    } //
+
+    // -- Quicksort --
+
+    public static final void quicksort(Object[] a, int[] b, int p, int r,
+            Comparator cmp)
+    {
+        if (p >= r) {
+            return;
+        }
+        int q = partition(a, b, p, r, cmp);
+        quicksort(a, b, p, q, cmp);
+        quicksort(a, b, q + 1, r, cmp);
+    } //
+
+    private static final int partition(Object[] a, int[] b, int p, int r,
+            Comparator cmp)
+    {
+        Object x = a[p];
+        int i = p;
+        int j = r;
+
+        while (true) {
+            while ( cmp.compare(a[j],x) > 0 ) {
+                --j;
+            }
+            while ( cmp.compare(a[i],x) > 0 ) {
+                ++i;
+            }
+            if (i < j) {
+                Object ti = a[i];
+                int td = b[i];
+                a[i] = a[j];
+                b[i] = b[j];
+                a[j] = ti;
+                b[j] = td;
+            } else {
+                return j;
+            }
+        }
+    } //
+    
+    // ------------------------------------------------------------------------
+	// Array File I/O
+	
+	public static int[] getIntArray(String filename) {
+		int[] array = null;
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(filename));
+			String line = br.readLine();
+			StringTokenizer st = new StringTokenizer(line);
+			int maxlen = st.countTokens();
+			int len = 0;
+			array = new int[maxlen];			
+			while ( st.hasMoreTokens() ) {
+				String tok = st.nextToken();
+				if ( tok.startsWith("#") ) // commented int
+					continue;
+				array[len++] = Integer.parseInt(tok);
+			}
+			if ( len != maxlen )
+				array = ArrayLib.trim(array, len);
+			return array;
+		} catch ( Exception e ) {
+			e.printStackTrace();
+			return null;
+		}
+	} //
+
+} // end of class ArrayLib
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a17 4
+	// array sizes below or beneath this value will be insertion sorted
+	// anything over will get a mergesort
+    public static final int SORT_THRESHOLD = 30;
+	
+d107 3
+d415 1
+a415 1
+		if (r - p + 1 < SORT_THRESHOLD) {
+d525 1
+a525 1
+		if (r - p + 1 < SORT_THRESHOLD) {
+d603 1
+a603 1
+        if ( length < SORT_THRESHOLD ) {
+d623 1
+a623 1
+        if ( length < SORT_THRESHOLD ) {
+d664 1
+a664 1
+        if (length < SORT_THRESHOLD) {
+a723 74
+
+	// -- double / int sorting -------------------------------------------
+
+	public static final void sort(double[] a, int[] b) {
+		mergesort(a, b, 0, a.length - 1);
+	} //
+
+	public static final void sort(double[] a, int[] b, int length) {
+		mergesort(a, b, 0, length - 1);
+	} //
+
+	public static final void sort(double[] a, int[] b, int begin, int end) {
+		mergesort(a, b, begin, end - 1);
+	} //
+
+	// -- Insertion Sort --
+
+	public static final void insertionsort(double[] a, int[] b, int p, int r) {
+		for (int j = p + 1; j <= r; ++j) {
+			double key = a[j];
+			int val = b[j];
+			int i = j - 1;
+			while (i >= p && a[i] > key) {
+				a[i + 1] = a[i];
+				b[i + 1] = b[i];
+				--i;
+			}
+			a[i + 1] = key;
+			b[i + 1] = val;
+		}
+	} //
+
+	// -- Mergesort --
+
+	public static final void mergesort(double[] a, int[] b, int p, int r) {
+		if (p >= r) {
+			return;
+		}
+		if (r - p + 1 < SORT_THRESHOLD) {
+			insertionsort(a, b, p, r);
+		} else {
+			int q = (p + r) / 2;
+			mergesort(a, b, p, q);
+			mergesort(a, b, q + 1, r);
+			merge(a, b, p, q, r);
+		}
+	} //
+
+	public static final void merge(double[] a, int[] b, int p, int q, int r) {
+		double[] t = new double[r - p + 1];
+		int[] v = new int[r - p + 1];
+		int i, p1 = p, p2 = q + 1;
+		for (i = 0; p1 <= q && p2 <= r; ++i) {
+			if (a[p1] < a[p2]) {
+				v[i] = b[p1];
+				t[i] = a[p1++];
+			} else {
+				v[i] = b[p2];
+				t[i] = a[p2++];
+			}
+		}
+		for (; p1 <= q; ++p1, ++i) {
+			v[i] = b[p1];
+			t[i] = a[p1];
+		}
+		for (; p2 <= r; ++p2, ++i) {
+			v[i] = b[p2];
+			t[i] = a[p2];
+		}
+		for (i = 0, p1 = p; i < t.length; i++, p1++) {
+			b[p1] = v[i];
+			a[p1] = t[i];
+		}
+	} //    
+d762 1
+a762 1
+		if (r - p + 1 < SORT_THRESHOLD) {
+d880 1
+a880 1
+        if (r - p + 1 < SORT_THRESHOLD) {
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d18 2
+a19 2
+    // array sizes below or beneath this value will be insertion sorted
+    // anything over will get a mergesort
+d21 1
+a21 1
+    
+d111 2
+a112 451
+    //// -----------------------------------------------
+    //// -- Searching Functions ------------------------
+
+    public static final int binarySearch(int[] a, int key) {
+        int x1 = 0;
+        int x2 = a.length;
+        int i = x2 / 2;
+        while (x1 < x2) {
+            if (a[i] == key) {
+                return i;
+            } else if (a[i] < key) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return -1*(i+1);
+    } //
+
+    public static final int binarySearch(int[] a, int key, int length) {
+        int x1 = 0;
+        int x2 = length;
+        int i = x2 / 2;
+
+        while (x1 < x2) {
+            if (a[i] == key) {
+                return i;
+            } else if (a[i] < key) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return -1*(i+1);
+    } //
+
+    public static final int binarySearch(int[] a, int key, int begin, int end) {
+        int x1 = begin;
+        int x2 = end;
+        int i = x1 + (x2 - x1) / 2;
+
+        while (x1 < x2) {
+            if (a[i] == key) {
+                return i;
+            } else if (a[i] < key) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+
+        return -1*(i+1);
+    } //
+
+
+    public static final int binarySearch(Object[] a, Object key) {
+        int x1 = 0;
+        int x2 = a.length;
+        int i = x2 / 2, c;
+        while (x1 < x2) {
+            c = ((Comparable)a[i]).compareTo(key);
+            if (c == 0) {
+                return i;
+            } else if (c < 0) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return -1*(i+1);
+    } //
+
+    public static final int binarySearch(Object[] a, Object key, int length) {
+        int x1 = 0;
+        int x2 = length;
+        int i = x2 / 2, c;
+
+        while (x1 < x2) {
+            c = ((Comparable)a[i]).compareTo(key);
+            if (c == 0) {
+                return i;
+            } else if (c < 0) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return -1*(i+1);
+    } //
+
+    public static final int binarySearch(Object[] a, Object key, int begin, int end) {
+        int x1 = begin;
+        int x2 = end;
+        int i = x1 + (x2 - x1) / 2, c;
+
+        while (x1 < x2) {
+            c = ((Comparable)a[i]).compareTo(key);
+            if (c == 0) {
+                return i;
+            } else if (c < 0) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+
+        return -1*(i+1);
+    } //
+
+    public static final int binarySearch(Object[] a, Object key, Comparator cp) {
+        int x1 = 0;
+        int x2 = a.length;
+        int i = x2 / 2, c;
+        while (x1 < x2) {
+            c = cp.compare(a[i], key);
+            if (c == 0) {
+                return i;
+            } else if (c < 0) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return -1*(i+1);
+    } //
+
+    public static final int binarySearch(Object[] a, Object key, Comparator cp, int length) {
+        int x1 = 0;
+        int x2 = length;
+        int i = x2 / 2, c;
+
+        while (x1 < x2) {
+            c = cp.compare(a[i], key);
+            if (c == 0) {
+                return i;
+            } else if (c < 0) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return -1*(i+1);
+    } //
+
+    public static final int binarySearch(Object[] a, Object key, Comparator cp, int begin, int end) {
+        int x1 = begin;
+        int x2 = end;
+        int i = x1 + (x2 - x1) / 2, c;
+
+        while (x1 < x2) {
+            c = cp.compare(a[i], key);
+            if (c == 0) {
+                return i;
+            } else if (c < 0) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+
+        return -1*(i+1);
+    } //
+
+    //// -----------------------------------------------
+    //// -- Finding Functions --------------------------
+
+    public static final int find(int[] a, int key) {
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] == key) {
+                return i;
+            }
+        }
+        return -1;
+    } //
+
+    public static final int find(int[] a, int key, int length) {
+        for (int i = 0; i < length; i++) {
+            if (a[i] == key) {
+                return i;
+            }
+        }
+        return -1;
+    } //
+
+    public static final int find(int[] a, int key, int begin, int end) {
+        for (int i = begin; i < end; i++) {
+            if (a[i] == key) {
+                return i;
+            }
+        }
+        return -1;
+    } //
+
+    //// -----------------------------------------------
+    //// -- Resizing Functions -------------------------
+
+    public static final int[] resize(int[] a, int size) {
+        //assert (size > a.length);
+        int[] b = new int[size];
+        System.arraycopy(a, 0, b, 0, a.length);
+        return b;
+    } //
+    
+    public static final float[] resize(float[] a, int size) {
+        //assert (size > a.length);
+        float[] b = new float[size];
+        System.arraycopy(a, 0, b, 0, a.length);
+        return b;
+    } //
+    
+    public static final double[] resize(double[] a, int size) {
+        //assert (size > a.length);
+        double[] b = new double[size];
+        System.arraycopy(a, 0, b, 0, a.length);
+        return b;
+    } //
+    
+    public static final Object[] resize(Object[] a, int size) {
+        //assert (size > a.length);
+        Object[] b = new Object[size];
+        System.arraycopy(a, 0, b, 0, a.length);
+        return b;
+    } //
+
+    public static final int[] trim(int[] a, int size) {
+        //assert (size <= a.length);
+        if ( a.length == size ) {
+            return a;
+        } else {
+            int[] b = new int[size];
+            System.arraycopy(a, 0, b, 0, size);
+            return b;
+        }
+    } //
+
+    public static final float[] trim(float[] a, int size) {
+        //assert (size <= a.length);
+        if ( a.length == size ) {
+            return a;
+        } else {
+            float[] b = new float[size];
+            System.arraycopy(a, 0, b, 0, size);
+            return b;
+        }
+    } //
+    
+    public static final double[] trim(double[] a, int size) {
+        //assert (size <= a.length);
+        if ( a.length == size ) {
+            return a;
+        } else {
+            double[] b = new double[size];
+            System.arraycopy(a, 0, b, 0, size);
+            return b;
+        }
+    } //
+    //// -----------------------------------------------
+    //// -- Sorting Functions --------------------------
+
+    // -- int / double sorting ------------------------------------------
+
+    public static final void sort(int[] a, double[] b) {
+        mergesort(a, b, 0, a.length - 1);
+    } //
+
+    public static final void sort(int[] a, double[] b, int length) {
+        mergesort(a, b, 0, length - 1);
+    } //
+
+    public static final void sort(int[] a, double[] b, int begin, int end) {
+        mergesort(a, b, begin, end - 1);
+    } //
+
+    // -- Insertion Sort --
+
+    public static final void insertionsort(int[] a, double[] b, int p, int r) {
+        for (int j = p + 1; j <= r; ++j) {
+            int key = a[j];
+            double val = b[j];
+            int i = j - 1;
+            while (i >= p && a[i] > key) {
+                a[i + 1] = a[i];
+                b[i + 1] = b[i];
+                i--;
+            }
+            a[i + 1] = key;
+            b[i + 1] = val;
+        }
+    } //
+
+    // -- Mergesort --
+
+    public static final void mergesort(int[] a, double[] b, int p, int r) {
+        if (p >= r) {
+            return;
+        }
+        if (r - p + 1 < SORT_THRESHOLD) {
+            insertionsort(a, b, p, r);
+        } else {
+            int q = (p + r) / 2;
+            mergesort(a, b, p, q);
+            mergesort(a, b, q + 1, r);
+            merge(a, b, p, q, r);
+        }
+    } //
+
+    public static final void merge(int[] a, double[] b, int p, int q, int r) {
+        int[] t = new int[r - p + 1];
+        double[] v = new double[r - p + 1];
+        int i, p1 = p, p2 = q + 1;
+        for (i = 0; p1 <= q && p2 <= r; ++i) {
+            if (a[p1] < a[p2]) {
+                v[i] = b[p1];
+                t[i] = a[p1++];
+            } else {
+                v[i] = b[p2];
+                t[i] = a[p2++];
+            }
+        }
+        for (; p1 <= q; ++p1, ++i) {
+            v[i] = b[p1];
+            t[i] = a[p1];
+        }
+        for (; p2 <= r; ++p2, ++i) {
+            v[i] = b[p2];
+            t[i] = a[p2];
+        }
+        for (i = 0, p1 = p; i < t.length; ++i, ++p1) {
+            b[p1] = v[i];
+            a[p1] = t[i];
+        }
+    } //
+
+    // -- Quicksort --
+
+    public static final void quicksort(int[] a, double[] b, int p, int r) {
+        if (p >= r) {
+            return;
+        }
+        int q = partition(a, b, p, r);
+        quicksort(a, b, p, q);
+        quicksort(a, b, q + 1, r);
+    } //
+
+    private static final int partition(int[] a, double[] b, int p, int r) {
+        int x = a[p];
+        int i = p;
+        int j = r;
+
+        while (true) {
+            while (a[j] > x) {
+                --j;
+            }
+            while (a[i] < x) {
+                ++i;
+            }
+            if (i < j) {
+                int ti = a[i];
+                double td = b[i];
+                a[i] = a[j];
+                b[i] = b[j];
+                a[j] = ti;
+                b[j] = td;
+            } else {
+                return j;
+            }
+        }
+    } //
+
+    // -- int / int sorting ---------------------------------------------
+
+    public static final void sort(int[] a, int[] b) {
+        mergesort(a, b, 0, a.length - 1);
+    } //
+
+    public static final void sort(int[] a, int[] b, int length) {
+        mergesort(a, b, 0, length - 1);
+    } //
+
+    public static final void sort(int[] a, int[] b, int begin, int end) {
+        mergesort(a, b, begin, end - 1);
+    } //
+
+    // -- Insertion Sort --
+
+    public static final void insertionsort(int[] a, int[] b, int p, int r) {
+        for (int j = p + 1; j <= r; ++j) {
+            int key = a[j];
+            int val = b[j];
+            int i = j - 1;
+            while (i >= p && a[i] > key) {
+                a[i + 1] = a[i];
+                b[i + 1] = b[i];
+                i--;
+            }
+            a[i + 1] = key;
+            b[i + 1] = val;
+        }
+    } //
+
+    // -- Mergesort --
+
+    public static final void mergesort(int[] a, int[] b, int p, int r) {
+        if (p >= r) {
+            return;
+        }
+        if (r - p + 1 < SORT_THRESHOLD) {
+            insertionsort(a, b, p, r);
+        } else {
+            int q = (p + r) / 2;
+            mergesort(a, b, p, q);
+            mergesort(a, b, q + 1, r);
+            merge(a, b, p, q, r);
+        }
+    } //
+
+    public static final void merge(int[] a, int[] b, int p, int q, int r) {
+        int[] t = new int[r - p + 1];
+        int[] v = new int[r - p + 1];
+        int i, p1 = p, p2 = q + 1;
+        for (i = 0; p1 <= q && p2 <= r; ++i) {
+            if (a[p1] < a[p2]) {
+                v[i] = b[p1];
+                t[i] = a[p1++];
+            } else {
+                v[i] = b[p2];
+                t[i] = a[p2++];
+            }
+        }
+        for (; p1 <= q; ++p1, ++i) {
+            v[i] = b[p1];
+            t[i] = a[p1];
+        }
+        for (; p2 <= r; ++p2, ++i) {
+            v[i] = b[p2];
+            t[i] = a[p2];
+        }
+        for (i = 0, p1 = p; i < t.length; ++i, ++p1) {
+            b[p1] = v[i];
+            a[p1] = t[i];
+        }
+    } //
+d114 484
+a597 35
+    // -- Quicksort --
+
+    public static final void quicksort(int[] a, int[] b, int p, int r) {
+        if (p >= r) {
+            return;
+        }
+        int q = partition(a, b, p, r);
+        quicksort(a, b, p, q);
+        quicksort(a, b, q + 1, r);
+    } //
+
+    private static final int partition(int[] a, int[] b, int p, int r) {
+        int x = a[p];
+        int i = p;
+        int j = r;
+
+        while (true) {
+            while (a[j] > x) {
+                --j;
+            }
+            while (a[i] < x) {
+                ++i;
+            }
+            if (i < j) {
+                int ti = a[i];
+                int td = b[i];
+                a[i] = a[j];
+                b[i] = b[j];
+                a[j] = ti;
+                b[j] = td;
+            } else {
+                return j;
+            }
+        }
+    } //
+d726 1
+a726 106
+    // -- double / int sorting -------------------------------------------
+
+    public static final void sort(double[] a, int[] b) {
+        mergesort(a, b, 0, a.length - 1);
+    } //
+
+    public static final void sort(double[] a, int[] b, int length) {
+        mergesort(a, b, 0, length - 1);
+    } //
+
+    public static final void sort(double[] a, int[] b, int begin, int end) {
+        mergesort(a, b, begin, end - 1);
+    } //
+
+    // -- Insertion Sort --
+
+    public static final void insertionsort(double[] a, int[] b, int p, int r) {
+        for (int j = p + 1; j <= r; ++j) {
+            double key = a[j];
+            int val = b[j];
+            int i = j - 1;
+            while (i >= p && a[i] > key) {
+                a[i + 1] = a[i];
+                b[i + 1] = b[i];
+                --i;
+            }
+            a[i + 1] = key;
+            b[i + 1] = val;
+        }
+    } //
+
+    // -- Mergesort --
+
+    public static final void mergesort(double[] a, int[] b, int p, int r) {
+        if (p >= r) {
+            return;
+        }
+        if (r - p + 1 < SORT_THRESHOLD) {
+            insertionsort(a, b, p, r);
+        } else {
+            int q = (p + r) / 2;
+            mergesort(a, b, p, q);
+            mergesort(a, b, q + 1, r);
+            merge(a, b, p, q, r);
+        }
+    } //
+
+    public static final void merge(double[] a, int[] b, int p, int q, int r) {
+        double[] t = new double[r - p + 1];
+        int[] v = new int[r - p + 1];
+        int i, p1 = p, p2 = q + 1;
+        for (i = 0; p1 <= q && p2 <= r; ++i) {
+            if (a[p1] < a[p2]) {
+                v[i] = b[p1];
+                t[i] = a[p1++];
+            } else {
+                v[i] = b[p2];
+                t[i] = a[p2++];
+            }
+        }
+        for (; p1 <= q; ++p1, ++i) {
+            v[i] = b[p1];
+            t[i] = a[p1];
+        }
+        for (; p2 <= r; ++p2, ++i) {
+            v[i] = b[p2];
+            t[i] = a[p2];
+        }
+        for (i = 0, p1 = p; i < t.length; i++, p1++) {
+            b[p1] = v[i];
+            a[p1] = t[i];
+        }
+    } //    
+    
+    // -- float / int sorting -------------------------------------------
+
+    public static final void sort(float[] a, int[] b) {
+        mergesort(a, b, 0, a.length - 1);
+    } //
+
+    public static final void sort(float[] a, int[] b, int length) {
+        mergesort(a, b, 0, length - 1);
+    } //
+
+    public static final void sort(float[] a, int[] b, int begin, int end) {
+        mergesort(a, b, begin, end - 1);
+    } //
+
+    // -- Insertion Sort --
+
+    public static final void insertionsort(float[] a, int[] b, int p, int r) {
+        for (int j = p + 1; j <= r; ++j) {
+            float key = a[j];
+            int val = b[j];
+            int i = j - 1;
+            while (i >= p && a[i] > key) {
+                a[i + 1] = a[i];
+                b[i + 1] = b[i];
+                --i;
+            }
+            a[i + 1] = key;
+            b[i + 1] = val;
+        }
+    } //
+
+    // -- Mergesort --
+d728 181
+a908 76
+    public static final void mergesort(float[] a, int[] b, int p, int r) {
+        if (p >= r) {
+            return;
+        }
+        if (r - p + 1 < SORT_THRESHOLD) {
+            insertionsort(a, b, p, r);
+        } else {
+            int q = (p + r) / 2;
+            mergesort(a, b, p, q);
+            mergesort(a, b, q + 1, r);
+            merge(a, b, p, q, r);
+        }
+    } //
+
+    public static final void merge(float[] a, int[] b, int p, int q, int r) {
+        float[] t = new float[r - p + 1];
+        int[] v = new int[r - p + 1];
+        int i, p1 = p, p2 = q + 1;
+        for (i = 0; p1 <= q && p2 <= r; ++i) {
+            if (a[p1] < a[p2]) {
+                v[i] = b[p1];
+                t[i] = a[p1++];
+            } else {
+                v[i] = b[p2];
+                t[i] = a[p2++];
+            }
+        }
+        for (; p1 <= q; ++p1, ++i) {
+            v[i] = b[p1];
+            t[i] = a[p1];
+        }
+        for (; p2 <= r; ++p2, ++i) {
+            v[i] = b[p2];
+            t[i] = a[p2];
+        }
+        for (i = 0, p1 = p; i < t.length; i++, p1++) {
+            b[p1] = v[i];
+            a[p1] = t[i];
+        }
+    } //
+
+    // -- Quicksort --
+
+    public static final void quicksort(float[] a, int[] b, int p, int r) {
+        if (p >= r) {
+            return;
+        }
+        int q = partition(a, b, p, r);
+        quicksort(a, b, p, q);
+        quicksort(a, b, q + 1, r);
+    } //
+
+    private static final int partition(float[] a, int[] b, int p, int r) {
+        float x = a[p];
+        int i = p;
+        int j = r;
+
+        while (true) {
+            while (a[j] > x) {
+                --j;
+            }
+            while (a[i] < x) {
+                ++i;
+            }
+            if (i < j) {
+                float ti = a[i];
+                int td = b[i];
+                a[i] = a[j];
+                b[i] = b[j];
+                a[j] = ti;
+                b[j] = td;
+            } else {
+                return j;
+            }
+        }
+    } //
+d1035 25
+a1059 25
+    // Array File I/O
+    
+    public static int[] getIntArray(String filename) {
+        int[] array = null;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(filename));
+            String line = br.readLine();
+            StringTokenizer st = new StringTokenizer(line);
+            int maxlen = st.countTokens();
+            int len = 0;
+            array = new int[maxlen];            
+            while ( st.hasMoreTokens() ) {
+                String tok = st.nextToken();
+                if ( tok.startsWith("#") ) // commented int
+                    continue;
+                array[len++] = Integer.parseInt(tok);
+            }
+            if ( len != maxlen )
+                array = ArrayLib.trim(array, len);
+            return array;
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            return null;
+        }
+    } //
+@
+
+
+1.1.2.4
+log
+@Much more javadoc
+@
+text
+@d10 1
+a10 1
+ * Library of supplementary array routines not 
+d13 2
+a14 1
+ * @@author jeffrey heer
+d18 2
+a19 3
+    /**
+     * Arrays with lengths beneath this value will be insertion sorted.
+     */
+a24 5
+    /**
+     * Randomly permute the contents of an array.
+     * @@param a the array to shuffle
+     * @@param r the source of randomness to use
+     */
+a28 7
+    /**
+     * Randomly permute the contents of a range an array.
+     * @@param a the array to shuffle
+     * @@param start the starting index of the range to shuffle
+     * @@param len then length of the range to shuffle
+     * @@param r the source of randomness to use
+     */
+a36 5
+    /**
+     * Randomly permute the contents of an array.
+     * @@param a the array to shuffle
+     * @@param r the source of randomness to use
+     */
+a40 7
+    /**
+     * Randomly permute the contents of a range an array.
+     * @@param a the array to shuffle
+     * @@param start the starting index of the range to shuffle
+     * @@param len then length of the range to shuffle
+     * @@param r the source of randomness to use
+     */
+a49 5
+    /**
+     * Randomly permute the contents of an array.
+     * @@param a the array to shuffle
+     * @@param r the source of randomness to use
+     */
+a53 7
+    /**
+     * Randomly permute the contents of a range an array.
+     * @@param a the array to shuffle
+     * @@param start the starting index of the range to shuffle
+     * @@param len then length of the range to shuffle
+     * @@param r the source of randomness to use
+     */
+a62 5
+    /**
+     * Randomly permute the contents of an array.
+     * @@param a the array to shuffle
+     * @@param r the source of randomness to use
+     */
+a66 7
+    /**
+     * Randomly permute the contents of a range an array.
+     * @@param a the array to shuffle
+     * @@param start the starting index of the range to shuffle
+     * @@param len then length of the range to shuffle
+     * @@param r the source of randomness to use
+     */
+a75 5
+    /**
+     * Randomly permute the contents of an array.
+     * @@param a the array to shuffle
+     * @@param r the source of randomness to use
+     */
+a79 7
+    /**
+     * Randomly permute the contents of a range an array.
+     * @@param a the array to shuffle
+     * @@param start the starting index of the range to shuffle
+     * @@param len then length of the range to shuffle
+     * @@param r the source of randomness to use
+     */
+d92 1
+a92 5
+    /**
+     * Find the maximum value in an array.
+     * @@param a the array
+     * @@return the maximum value in the array
+     */
+d101 1
+a101 6
+
+    /**
+     * Find the minimum value in an array.
+     * @@param a the array
+     * @@return the minimum value in the array
+     */
+a113 8
+    /**
+     * Perform a binary search over a sorted array for the given key.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+d129 1
+a129 1
+    }
+a130 10
+    /**
+     * Perform a binary search over a sorted range of an array for the given
+     * key. The range is assumed to start at index 0.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param length the the length of the range to search over.
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+d147 1
+a147 1
+    }
+a148 11
+    /**
+     * Perform a binary search over a sorted range of an array for the given
+     * key.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param begin the starting index of the range
+     * @@param end the ending index of the range, exclusive
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+d166 2
+a167 1
+    }
+a168 8
+    /**
+     * Perform a binary search over a sorted array for the given key.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+d185 1
+a185 1
+    }
+a186 10
+    /**
+     * Perform a binary search over a sorted range of an array for the given
+     * key. The range is assumed to start at index 0.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param length the the length of the range to search over.
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+d204 1
+a204 1
+    }
+a205 11
+    /**
+     * Perform a binary search over a sorted range of an array for the given
+     * key.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param begin the starting index of the range
+     * @@param end the ending index of the range, exclusive
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+d224 1
+a224 1
+    }
+a225 9
+    /**
+     * Perform a binary search over a sorted array for the given key.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param cp the comparator to use to compare key values
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+d242 1
+a242 1
+    }
+a243 11
+    /**
+     * Perform a binary search over a sorted range of an array for the given
+     * key. The range is assumed to start at index 0.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param cp the comparator to use to compare key values
+     * @@param length the the length of the range to search over.
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+d261 1
+a261 1
+    }
+a262 12
+    /**
+     * Perform a binary search over a sorted range of an array for the given
+     * key.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param cp the comparator to use to compare key values
+     * @@param begin the starting index of the range
+     * @@param end the ending index of the range, exclusive
+     * @@return the index of the given key if it exists in the array,
+     * otherwise -1 times the index value at the insertion point that
+     * would be used if the key were added to the array. 
+     */
+d281 1
+a281 1
+    }
+a285 7
+    /**
+     * Linearly search an array for a given key value.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@return the index of the first occurrence of the key in the array,
+     * of -1 if the key is not found.
+     */
+d293 1
+a293 1
+    }
+a294 9
+    /**
+     * Linearly search an array range for a given key value. Assumes that
+     * the range begins at index 0.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param the length of the range to search over
+     * @@return the index of the first occurrence of the key in the array,
+     * of -1 if the key is not found.
+     */
+d302 1
+a302 1
+    }
+a303 9
+    /**
+     * Linearly search an array range for a given key value.
+     * @@param a the array to search
+     * @@param key the key to search for
+     * @@param begin the starting index of the range
+     * @@param end the ending index of the range, exclusive
+     * @@return the index of the first occurrence of the key in the array,
+     * of -1 if the key is not found.
+     */
+d311 1
+a311 1
+    }
+a315 8
+    /**
+     * Resize the given array as needed to meet a target size.
+     * @@param a the array to potentially resize
+     * @@param size the minimum size of the target array
+     * @@return the resized array, if the original array meets the size
+     * requirement, it is simply return, otherwise a new array is
+     * allocated and the contents of the original array are copied over.
+     */
+d317 1
+a317 1
+        if ( a.length >= size ) return a;
+d321 1
+a321 1
+    }
+a322 8
+    /**
+     * Resize the given array as needed to meet a target size.
+     * @@param a the array to potentially resize
+     * @@param size the minimum size of the target array
+     * @@return the resized array, if the original array meets the size
+     * requirement, it is simply return, otherwise a new array is
+     * allocated and the contents of the original array are copied over.
+     */
+d324 1
+a324 1
+        if ( a.length >= size ) return a;
+d328 1
+a328 1
+    }
+a329 8
+    /**
+     * Resize the given array as needed to meet a target size.
+     * @@param a the array to potentially resize
+     * @@param size the minimum size of the target array
+     * @@return the resized array, if the original array meets the size
+     * requirement, it is simply return, otherwise a new array is
+     * allocated and the contents of the original array are copied over.
+     */
+d331 1
+a331 1
+        if ( a.length >= size ) return a;
+d335 1
+a335 1
+    }
+a336 8
+    /**
+     * Resize the given array as needed to meet a target size.
+     * @@param a the array to potentially resize
+     * @@param size the minimum size of the target array
+     * @@return the resized array, if the original array meets the size
+     * requirement, it is simply return, otherwise a new array is
+     * allocated and the contents of the original array are copied over.
+     */
+d338 1
+a338 1
+        if ( a.length >= size ) return a;
+d342 1
+a342 1
+    }
+a343 7
+    /**
+     * Trims an array to be exactly the target a size.
+     * @@param a the array to trim
+     * @@param size the desired size of the array. This value must be lesser
+     * than or equal to the size of the input array.
+     * @@return a trimmed array instance
+     */
+d353 1
+a353 1
+    }
+a354 7
+    /**
+     * Trims an array to be exactly the target a size.
+     * @@param a the array to trim
+     * @@param size the desired size of the array. This value must be lesser
+     * than or equal to the size of the input array.
+     * @@return a trimmed array instance
+     */
+d364 1
+a364 1
+    }
+a365 7
+    /**
+     * Trims an array to be exactly the target a size.
+     * @@param a the array to trim
+     * @@param size the desired size of the array. This value must be lesser
+     * than or equal to the size of the input array.
+     * @@return a trimmed array instance
+     */
+d375 1
+a375 1
+    }
+a380 7
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     */
+d383 1
+a383 1
+    }
+a384 8
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param length the array range length to sort over
+     */
+d387 1
+a387 1
+    }
+a388 9
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     */
+d391 1
+a391 1
+    }
+d395 1
+a395 1
+    protected static final void insertionsort(int[] a, double[] b, int p, int r) {
+d408 1
+a408 1
+    }
+d412 1
+a412 1
+    protected static final void mergesort(int[] a, double[] b, int p, int r) {
+d424 1
+a424 1
+    }
+d426 1
+a426 1
+    protected static final void merge(int[] a, double[] b, int p, int q, int r) {
+d451 37
+a487 1
+    }
+a490 7
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     */
+d493 1
+a493 1
+    }
+a494 8
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param length the array range length to sort over
+     */
+d497 1
+a497 1
+    }
+a498 9
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     */
+d501 1
+a501 1
+    }
+d505 1
+a505 1
+    protected static final void insertionsort(int[] a, int[] b, int p, int r) {
+d518 1
+a518 1
+    }
+d522 1
+a522 1
+    protected static final void mergesort(int[] a, int[] b, int p, int r) {
+d534 1
+a534 1
+    }
+d536 1
+a536 1
+    protected static final void merge(int[] a, int[] b, int p, int q, int r) {
+d561 37
+a597 1
+    }
+a600 9
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     */
+d617 1
+a617 1
+    }
+a618 13
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param abuf a buffer array to perform the sorting without
+     * allocating any additional memory
+     * @@param bbuf a buffer array to perform the sorting without
+     * allocating any additional memory
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     */
+d635 1
+a635 1
+    }
+d639 1
+a639 1
+    protected static final void insertionsort(int[] a, Object[] b, int p, int r) {
+d654 1
+a654 1
+    }
+d657 1
+d659 2
+a660 2
+    protected static void mergesort(int ks[], int kd[], Object[] vs,
+            Object[] vd, int lo, int hi, int off)
+d664 1
+d699 1
+a699 1
+    protected static final void merge(int[] a, Object[] b, int p, int q, int r) {
+d724 1
+a724 1
+    }
+a727 7
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     */
+d730 1
+a730 1
+    }
+a731 8
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param length the length of the range to be sorted
+     */
+d734 1
+a734 1
+    }
+a735 9
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     */
+d738 1
+a738 1
+    }
+d742 1
+a742 1
+    protected static final void insertionsort(double[] a, int[] b, int p, int r) {
+d755 1
+a755 1
+    }
+d759 1
+a759 1
+    protected static final void mergesort(double[] a, int[] b, int p, int r) {
+d771 1
+a771 1
+    }
+d773 1
+a773 1
+    protected static final void merge(double[] a, int[] b, int p, int q, int r) {
+d798 1
+a798 1
+    }    
+a801 7
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     */
+d804 1
+a804 1
+    }
+a805 8
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param length the length of the range to be sorted
+     */
+d808 1
+a808 1
+    }
+a809 9
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     */
+d812 1
+a812 1
+    }
+d816 1
+a816 1
+    protected static final void insertionsort(float[] a, int[] b, int p, int r) {
+d829 1
+a829 1
+    }
+d833 1
+a833 1
+    protected static final void mergesort(float[] a, int[] b, int p, int r) {
+d845 1
+a845 1
+    }
+d847 1
+a847 1
+    protected static final void merge(float[] a, int[] b, int p, int q, int r) {
+d872 37
+a908 1
+    }
+a911 8
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param cmp the comparator to use to compare key values
+     */
+d914 1
+a914 1
+    }
+a915 9
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param length the length of the range to be sorted
+     * @@param cmp the comparator to use to compare key values
+     */
+d920 1
+a920 1
+    }
+a921 10
+    /**
+     * Sort two arrays simultaneously, using the sort order of the values
+     * in the first array to determine the sort order for both arrays.
+     * @@param a the array to sort by
+     * @@param b the array to re-arrange based on the sort order of the
+     * first array.
+     * @@param begin the start index of the range to sort
+     * @@param end the end index, exclusive, of the range to sort
+     * @@param cmp the comparator to use to compare key values
+     */
+d926 1
+a926 1
+    }
+d930 1
+a930 1
+    protected static final void insertionsort(Object[] a, int[] b, int p, int r,
+d945 1
+a945 1
+    }
+d949 1
+a949 1
+    protected static final void mergesort(Object[] a, int[] b, int p, int r,
+d963 1
+a963 1
+    }
+d965 1
+a965 1
+    protected static final void merge(Object[] a, int[] b, int p, int q, int r,
+d992 41
+a1032 1
+    }
+a1036 7
+    /**
+     * Read in a text file as an array of integers. Uses the default java
+     * StringTokenizer to segment the text file. Additionally, tokens beginning
+     * with the '#' character are ignored.
+     * @@param filename the name of the file to read in
+     * @@return an array of integers parsed from the file
+     */
+d1059 1
+a1059 1
+    }
+@
+
+
+1.1.2.5
+log
+@Javadoc'd.
+@
+text
+@d465 1
+a465 1
+     * @@param length the length of the range to search over
+@
+
+

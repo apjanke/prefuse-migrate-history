@@ -1,0 +1,619 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.24.02.32.36;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action.distortion;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+
+/**
+ * <p>
+ * Computes a graphical fisheye distortion of a graph view. This distortion 
+ * allocates more space to items near the layout anchor and less space to 
+ * items further away, magnifying space near the anchor and demagnifying 
+ * distant space in a continuous fashion.
+ * </p>
+ * 
+ * <p>
+ * For more details on this form of transformation, see Manojit Sarkar and 
+ * Marc H. Brown, "Graphical Fisheye Views of Graphs", in Proceedings of 
+ * CHI'92, Human Factors in Computing Systems, p. 83-91, 1992. Available
+ * online at <a href="http://citeseer.ist.psu.edu/sarkar92graphical.html">
+ * http://citeseer.ist.psu.edu/sarkar92graphical.html</a>. 
+ * </p>
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class FisheyeDistortion extends Distortion {
+
+    private double  dx, dy;   // distortion factors
+    private double  sz = 3.0; // size factor
+    
+    /**
+     * Create a new FisheyeDistortion with default distortion factor.
+     */
+    public FisheyeDistortion() {
+        this(4);
+    }
+    
+    /**
+     * Create a new FisheyeDistortion with the given distortion factor
+     * for use along both the x and y directions.
+     * @@param dfactor the distortion factor (same for both axes)
+     */
+    public FisheyeDistortion(double dfactor) {
+        this(dfactor, dfactor);
+    }
+    
+    /**
+     * Create a new FisheyeDistortion with the given distortion factors
+     * along the x and y directions.
+     * @@param xfactor the distortion factor along the x axis
+     * @@param yfactor the distortion factor along the y axis
+     */
+    public FisheyeDistortion(double xfactor, double yfactor) {
+        super();
+        dx = xfactor;
+        dy = yfactor;
+        m_distortX = dx > 0;
+        m_distortY = dy > 0;
+    }
+    
+    /**
+     * Returns the distortion factor for the x-axis.
+     * @@return returns the distortion factor for the x-axis.
+     */
+    public double getXDistortionFactor() {
+        return dx;
+    }
+
+    /**
+     * Sets the distortion factor for the x-axis.
+     * @@param d The distortion factor to set.
+     */
+    public void setXDistortionFactor(double d) {
+        dx = d;
+        m_distortX = dx > 0;
+    }
+    
+    /**
+     * Returns the distortion factor for the y-axis.
+     * @@return returns the distortion factor for the y-axis.
+     */
+    public double getYDistortionFactor() {
+        return dy;
+    }
+
+    /**
+     * Sets the distortion factor for the y-axis.
+     * @@param d The distortion factor to set.
+     */
+    public void setYDistortionFactor(double d) {
+        dy = d;
+        m_distortY = dy > 0;
+    }
+    
+    /**
+     * @@see prefuse.action.distortion.Distortion#distortX(double, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+     */
+    protected double distortX(double x, Point2D anchor, Rectangle2D bounds) {
+        return fisheye(x,anchor.getX(),dx,bounds.getMinX(),bounds.getMaxX());
+    }
+    
+    /**
+     * @@see prefuse.action.distortion.Distortion#distortY(double, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+     */
+    protected double distortY(double y, Point2D anchor, Rectangle2D bounds) {
+        return fisheye(y,anchor.getY(),dy,bounds.getMinY(),bounds.getMaxY());
+    }
+    
+    /**
+     * @@see prefuse.action.distortion.Distortion#distortSize(java.awt.geom.Rectangle2D, double, double, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+     */
+    protected double distortSize(Rectangle2D bbox, double x, double y, 
+            Point2D anchor, Rectangle2D bounds)
+    { 
+        if ( !m_distortX && !m_distortY ) return 1.;
+        double fx=1, fy=1;
+
+        if ( m_distortX ) {
+            double ax = anchor.getX();
+            double minX = bbox.getMinX(), maxX = bbox.getMaxX();
+            double xx = (Math.abs(minX-ax) > Math.abs(maxX-ax) ? minX : maxX);
+            if ( xx < bounds.getMinX() || xx > bounds.getMaxX() )
+                xx = (xx==minX ? maxX : minX);
+            fx = fisheye(xx,ax,dx,bounds.getMinX(),bounds.getMaxX());
+            fx = Math.abs(x-fx)/bbox.getWidth();
+        }
+
+        if ( m_distortY ) {
+            double ay = anchor.getY();
+            double minY = bbox.getMinY(), maxY = bbox.getMaxY();
+            double yy = (Math.abs(minY-ay) > Math.abs(maxY-ay) ? minY : maxY);
+            if ( yy < bounds.getMinY() || yy > bounds.getMaxY() )
+                yy = (yy==minY ? maxY : minY);
+            fy = fisheye(yy,ay,dy,bounds.getMinY(),bounds.getMaxY());
+            fy = Math.abs(y-fy)/bbox.getHeight();
+        }
+        
+        double sf = (!m_distortY ? fx : (!m_distortX ? fy : Math.min(fx,fy)));
+        if (Double.isInfinite(sf) || Double.isNaN(sf)) {
+            return 1.;
+        } else {
+            return sz*sf;
+        }
+    }
+    
+    private double fisheye(double x, double a, double d, double min, double max) {
+        if ( d != 0 ) {
+            boolean left = x<a;
+            double v, m = (left ? a-min : max-a);
+            if ( m == 0 ) m = max-min;
+            v = Math.abs(x - a) / m;
+            v = (d+1)/(d+(1/v));
+            return (left?-1:1)*m*v + a;
+        } else {
+            return x;
+        }
+    }
+    
+} // end of class FisheyeDistortion
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d9 3
+a11 3
+ * Computes a graphical fisheye distortion of a graph view. This distortion
+ * allocates more space to items near the layout anchor and less space to
+ * items further away, magnifying space near the anchor and demagnifying
+d14 1
+a14 1
+ *
+d16 2
+a17 2
+ * For more details on this form of transformation, see Manojit Sarkar and
+ * Marc H. Brown, "Graphical Fisheye Views of Graphs", in Proceedings of
+d20 1
+a20 1
+ * http://citeseer.ist.psu.edu/sarkar92graphical.html</a>.
+d28 2
+a29 2
+    private final double  sz = 3.0; // size factor
+
+d36 1
+a36 1
+
+d45 1
+a45 1
+
+d59 1
+a59 1
+
+d76 1
+a76 1
+
+d93 1
+a93 1
+
+d97 1
+a97 2
+    @@Override
+	protected double distortX(double x, Point2D anchor, Rectangle2D bounds) {
+d100 1
+a100 1
+
+d104 1
+a104 2
+    @@Override
+	protected double distortY(double y, Point2D anchor, Rectangle2D bounds) {
+d107 1
+a107 1
+
+d111 1
+a111 2
+    @@Override
+	protected double distortSize(Rectangle2D bbox, double x, double y,
+d113 2
+a114 4
+    {
+        if ( !m_distortX && !m_distortY ) {
+			return 1.;
+		}
+d120 3
+a122 4
+            double xx = Math.abs(minX-ax) > Math.abs(maxX-ax) ? minX : maxX;
+            if ( xx < bounds.getMinX() || xx > bounds.getMaxX() ) {
+				xx = xx==minX ? maxX : minX;
+			}
+d130 3
+a132 4
+            double yy = Math.abs(minY-ay) > Math.abs(maxY-ay) ? minY : maxY;
+            if ( yy < bounds.getMinY() || yy > bounds.getMaxY() ) {
+				yy = yy==minY ? maxY : minY;
+			}
+d136 2
+a137 2
+
+        double sf = !m_distortY ? fx : !m_distortX ? fy : Math.min(fx,fy);
+d144 1
+a144 1
+
+d148 2
+a149 4
+            double v, m = left ? a-min : max-a;
+            if ( m == 0 ) {
+				m = max-min;
+			}
+d151 1
+a151 1
+            v = (d+1)/(d+1/v);
+d157 1
+a157 1
+
+@
+
+
+1.1
+log
+@file FisheyeDistortion.java was initially added on branch beta.
+@
+text
+@d1 158
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 159
+package prefuse.action.distortion;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+
+/**
+ * <p>
+ * Creates a graphical fisheye distortion of a graph view. This distortion 
+ * allocates more space to items near the layout anchor and less space to 
+ * items further away, magnifying space near the anchor and demagnifying 
+ * distant space.
+ * </p>
+ * 
+ * <p>
+ * For more details on this form of transformation, see Manojit Sarkar and 
+ * Marc H. Brown, "Graphical Fisheye Views of Graphs", in Proceedings of 
+ * CHI'92, Human Factors in Computing Systems, p. 83-91, 1992. Available
+ * online at <a href="http://citeseer.ist.psu.edu/sarkar92graphical.html">
+ * http://citeseer.ist.psu.edu/sarkar92graphical.html</a>. 
+ * </p>
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class FisheyeDistortion extends Distortion {
+
+    private double  dx, dy;   // distortion factors
+    private double  sz = 3.0; // size factor
+    
+    /**
+     * Creates a new FisheyeDistortion with default distortion factor.
+     */
+    public FisheyeDistortion() {
+        this(4);
+    } //
+    
+    /**
+     * Creates a new FisheyeDistortion with the given distortion factor
+     * for use along both the x and y directions.
+     * @@param dfactor the distortion factor (same for both axes)
+     */
+    public FisheyeDistortion(double dfactor) {
+        this(dfactor, dfactor);
+    }
+    
+    /**
+     * Creates a new FisheyeDistortion with the given distortion factors
+     * along the x and y directions.
+     * @@param xfactor the distortion factor along the x axis
+     * @@param yfactor the distortion factor along the y axis
+     */
+    public FisheyeDistortion(double xfactor, double yfactor) {
+        super();
+        dx = xfactor;
+        dy = yfactor;
+        m_distortX = dx > 0;
+        m_distortY = dy > 0;
+    }
+    
+    /**
+     * Returns the distortion factor for the x-axis.
+     * @@return returns the distortion factor for the x-axis.
+     */
+    public double getXDistortionFactor() {
+        return dx;
+    } //
+
+    /**
+     * Sets the distortion factor for the x-axis.
+     * @@param d The distortion factor to set.
+     */
+    public void setXDistortionFactor(double d) {
+        dx = d;
+        m_distortX = dx > 0;
+    } //
+    
+    /**
+     * Returns the distortion factor for the y-axis.
+     * @@return returns the distortion factor for the y-axis.
+     */
+    public double getYDistortionFactor() {
+        return dy;
+    } //
+
+    /**
+     * Sets the distortion factor for the y-axis.
+     * @@param d The distortion factor to set.
+     */
+    public void setYDistortionFactor(double d) {
+        dy = d;
+        m_distortY = dy > 0;
+    } //
+    
+    /**
+     * Calculates a Cartesian graphical fisheye distortion.
+     */
+    protected double distortX(double x, Point2D anchor, Rectangle2D bounds) {
+        return fisheye(x,anchor.getX(),dx,bounds.getMinX(),bounds.getMaxX());
+    } //
+    
+    /**
+     * Calculates a Cartesian graphical fisheye distortion.
+     */
+    protected double distortY(double y, Point2D anchor, Rectangle2D bounds) {
+        return fisheye(y,anchor.getY(),dy,bounds.getMinY(),bounds.getMaxY());
+    } //
+    
+    /**
+     * Calculates size factor for a Cartesian graphical fisheye distortion.
+     */
+    protected double distortSize(Rectangle2D bbox, double x, double y, 
+            Point2D anchor, Rectangle2D bounds)
+    { 
+        if ( !m_distortX && !m_distortY ) return 1.;
+        double fx=1, fy=1;
+
+        if ( m_distortX ) {
+            double ax = anchor.getX();
+            double minX = bbox.getX(), maxX = bbox.getMaxX();
+            double xx = (Math.abs(minX-ax) > Math.abs(maxX-ax) ? minX : maxX);
+            if ( xx < bounds.getMinX() || xx > bounds.getMaxX() )
+                xx = (xx==minX ? maxX : minX);
+            fx = fisheye(xx,ax,dx,bounds.getMinX(),bounds.getMaxX());
+            fx = Math.abs(x-fx)/bbox.getWidth();
+        }
+
+        if ( m_distortY ) {
+            double ay = anchor.getY();
+            double minY = bbox.getY(), maxY = bbox.getMaxY();
+            double yy = (Math.abs(minY-ay) > Math.abs(maxY-ay) ? minY : maxY);
+            if ( yy < bounds.getMinY() || yy > bounds.getMaxY() )
+                yy = (yy==minY ? maxY : minY);
+            fy = fisheye(yy,ay,dy,bounds.getMinY(),bounds.getMaxY());
+            fy = Math.abs(y-fy)/bbox.getHeight();
+        }
+        
+        double sf = (!m_distortY ? fx : (!m_distortX ? fy : Math.min(fx,fy)));
+        if (Double.isInfinite(sf) || Double.isNaN(sf)) {
+            return 1.;
+        } else {
+            return sz*sf;
+        }
+    } //
+    
+    private double fisheye(double x, double a, double d, double min, double max) {
+        if ( d != 0 ) {
+            boolean left = x<a;
+            double v, m = (left ? a-min : max-a);
+            if ( m == 0 ) m = max-min;
+            v = Math.abs(x - a) / m;
+            v = (d+1)/(d+(1/v));
+            return (left?-1:1)*m*v + a;
+        } else {
+            return x;
+        }
+    } //
+    
+} // end of class FisheyeDistortion@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d159 1
+a159 1
+} // end of class FisheyeDistortion
+@
+
+
+1.1.2.3
+log
+@Updated distortion mechanisms
+@
+text
+@d36 1
+a36 1
+    }
+d67 1
+a67 1
+    }
+d76 1
+a76 1
+    }
+d84 1
+a84 1
+    }
+d93 1
+a93 1
+    }
+d100 1
+a100 1
+    }
+d107 1
+a107 36
+    }
+    
+    
+//    protected double transformSize(Rectangle2D bbox, Point2D pf, 
+//            Point2D anchor, Rectangle2D bounds)
+//    {   
+//        if ( !bx && !by ) return 1.;
+//        double fx=1, fy=1;
+//
+//        if ( bx ) {
+//            double ax = anchor.getX();
+//            double minX = bbox.getX(), maxX = bbox.getMaxX();
+//            double x = (Math.abs(minX-ax) > Math.abs(maxX-ax) ? minX : maxX);
+//            if ( x < bounds.getMinX() || x > bounds.getMaxX() )
+//                x = (x==minX ? maxX : minX);
+//            fx = fisheye(x,ax,dx,bounds.getMinX(),bounds.getMaxX());
+//            fx = Math.abs(pf.getX()-fx)/bbox.getWidth();
+//        }
+//
+//        if ( by ) {
+//            double ay = anchor.getY();
+//            double minY = bbox.getY(), maxY = bbox.getMaxY();
+//            double y = (Math.abs(minY-ay) > Math.abs(maxY-ay) ? minY : maxY);
+//            if ( y < bounds.getMinY() || y > bounds.getMaxY() )
+//                y = (y==minY ? maxY : minY);
+//            fy = fisheye(y,ay,dy,bounds.getMinY(),bounds.getMaxY());
+//            fy = Math.abs(pf.getY()-fy)/bbox.getHeight();
+//        }
+//        
+//        double sf = (!by ? fx : (!bx ? fy : Math.min(fx,fy)));
+//        if (Double.isInfinite(sf) || Double.isNaN(sf)) {
+//            return 1.;
+//        } else {
+//            return sz*sf;
+//        }
+//    } //
+d120 1
+a120 1
+            double minX = bbox.getMinX(), maxX = bbox.getMaxX();
+d130 1
+a130 1
+            double minY = bbox.getMinY(), maxY = bbox.getMaxY();
+d144 1
+a144 1
+    }
+d157 1
+a157 1
+    }
+@
+
+
+1.1.2.4
+log
+@Lots of javadoc
+@
+text
+@d9 1
+a9 1
+ * Computes a graphical fisheye distortion of a graph view. This distortion 
+d12 1
+a12 1
+ * distant space in a continuous fashion.
+d23 2
+a24 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d32 1
+a32 1
+     * Create a new FisheyeDistortion with default distortion factor.
+d39 1
+a39 1
+     * Create a new FisheyeDistortion with the given distortion factor
+d48 1
+a48 1
+     * Create a new FisheyeDistortion with the given distortion factors
+d96 1
+a96 1
+     * @@see prefuse.action.distortion.Distortion#distortX(double, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+d103 1
+a103 1
+     * @@see prefuse.action.distortion.Distortion#distortY(double, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+d109 35
+d145 1
+a145 1
+     * @@see prefuse.action.distortion.Distortion#distortSize(java.awt.geom.Rectangle2D, double, double, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+@
+
+

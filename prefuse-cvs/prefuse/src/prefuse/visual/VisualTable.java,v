@@ -1,0 +1,4848 @@
+head	2.3;
+access;
+symbols
+	java_1_5:2.3.0.4
+	Root_java_1_5:2.3
+	beta:2.3.0.2
+	beta-20080113:2.3
+	beta-20071021:2.2
+	beta-20060220:2.2
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.3
+date	2008.01.13.22.39.14;	author jheer;	state Exp;
+branches
+	2.3.4.1;
+next	2.2;
+
+2.2
+date	2006.02.20.09.37.40;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.17.18.08.28;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	1.1.2.7;
+
+1.1.2.7
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	1.1.2.8;
+
+1.1.2.8
+date	2006.02.02.19.10.29;	author jheer;	state Exp;
+branches;
+next	1.1.2.9;
+
+1.1.2.9
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	1.1.2.10;
+
+1.1.2.10
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.3.4.1
+date	2008.01.23.23.55.41;	author jogiles;	state Exp;
+branches;
+next	2.3.4.2;
+
+2.3.4.2
+date	2008.02.06.20.35.45;	author jogiles;	state Exp;
+branches;
+next	2.3.4.3;
+
+2.3.4.3
+date	2008.02.24.00.22.30;	author amarsden;	state Exp;
+branches;
+next	2.3.4.4;
+
+2.3.4.4
+date	2008.02.28.01.09.32;	author amarsden;	state Exp;
+branches;
+next	2.3.4.5;
+
+2.3.4.5
+date	2008.03.11.04.20.38;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.3
+log
+@Fixed javadoc comments
+@
+text
+@package prefuse.visual;
+
+import java.awt.BasicStroke;
+import java.awt.Font;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.Visualization;
+import prefuse.data.CascadedTable;
+import prefuse.data.Schema;
+import prefuse.data.Table;
+import prefuse.data.event.EventConstants;
+import prefuse.data.expression.Predicate;
+import prefuse.visual.tuple.TableVisualItem;
+
+/**
+ * A visual abstraction of a Table data structure. Serves as a backing table
+ * for VisualItem tuples. VisualTable dervies from CascadedTable,
+ * so can inherit another table's values. Commonly, a VisualTable is used to
+ * take a raw data table and "strap" visual properties on top of it.
+ * VisualTables should not be created directly, they are created automatically
+ * by adding data to a Visualization, for example by using the
+ * {@@link Visualization#addTable(String, Table)} method.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class VisualTable extends CascadedTable implements VisualTupleSet {
+
+    private Visualization m_vis;
+    private String m_group;
+    
+    // ------------------------------------------------------------------------
+    // Constructors
+    
+    /**
+     * Create a new VisualTable.
+     * @@param parent the parent table whose values this table should inherit
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     */
+    public VisualTable(Table parent, Visualization vis, String group) {
+        this(parent, vis, group, null, VisualItem.SCHEMA);
+    }
+
+    /**
+     * Create a new VisualTable.
+     * @@param parent the parent table whose values this table should inherit
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     * @@param rowFilter a predicate determing which rows of the parent table
+     * should be inherited by this table and which should be filtered out
+     */
+    public VisualTable(Table parent, Visualization vis, String group,
+            Predicate rowFilter)
+    {
+        this(parent, vis, group, rowFilter, VisualItem.SCHEMA);
+    }
+
+    /**
+     * Create a new VisualTable.
+     * @@param parent the parent table whose values this table should inherit
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     * @@param rowFilter a predicate determing which rows of the parent table
+     * should be inherited by this table and which should be filtered out
+     * @@param schema the data schema to use for the table's local columns
+     */
+    public VisualTable(Table parent, Visualization vis, String group, 
+            Predicate rowFilter, Schema schema)
+    {
+        super(parent, rowFilter, null, TableVisualItem.class);
+        init(vis, group, schema);
+    }
+
+    // -- non-cascaded visual table -------------------------------------------
+    
+    /**
+     * Create a new VisualTable without a parent table.
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     */
+    public VisualTable(Visualization vis, String group) {
+        super(TableVisualItem.class);
+        init(vis, group, VisualItem.SCHEMA);
+    }
+    
+    /**
+     * Create a new VisualTable without a parent table.
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     * @@param schema the data schema to use for the table's local columns
+     */
+    public VisualTable(Visualization vis, String group, Schema schema) {
+        super(TableVisualItem.class);
+        init(vis, group, schema);
+    }
+
+    /**
+     * Create a new VisualTable without a parent table.
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     * @@param schema the data schema to use for the table's local columns
+     * @@param tupleType the type of Tuple instances to use
+     */
+    public VisualTable(Visualization vis, String group, Schema schema,
+            Class tupleType)
+    {
+        super(tupleType);
+        init(vis, group, schema);
+    }
+    
+    /**
+     * Initialize this VisualTable
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     * @@param schema the data schema to use for the table's local columns
+     */
+    protected void init(Visualization vis, String group, Schema schema) {
+        setVisualization(vis);
+        setGroup(group);
+        addColumns(schema);
+        if ( canGetBoolean(VisualItem.VISIBLE) )
+            index(VisualItem.VISIBLE);
+        if ( canGetBoolean(VisualItem.STARTVISIBLE) )
+            index(VisualItem.STARTVISIBLE);
+        if ( canGetBoolean(VisualItem.VALIDATED) )
+            index(VisualItem.VALIDATED);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Relay table events. Ensures that updated visual items are invalidated
+     * and that damage reports are issued for deleted items.
+     */
+    protected void fireTableEvent(int row0, int row1, int col, int type) {
+        // table attributes changed, so we invalidate the bounds
+        if ( type==EventConstants.UPDATE )
+        {
+            if ( col != VisualItem.IDX_VALIDATED ) {
+                for ( int r=row0; r<=row1; ++r )
+                    setValidated(r,false);
+            } else {
+                // change in validated status
+                for ( int r=row0; r<=row1; ++r ) {
+                    if ( !isValidated(r) ) {
+                        // retrieve the old bounds to report damage
+                        m_vis.damageReport(getItem(r), getBounds(r));
+                    }
+                }
+            }
+        }
+        else if ( type==EventConstants.DELETE && col==EventConstants.ALL_COLUMNS)
+        {
+            for ( int r=row0; r<=row1; ++r ) {
+                if ( isVisible(r) && isValidated(r) ) {
+                    VisualItem item = (VisualItem)getTuple(r);
+                    m_vis.damageReport(item, getBounds(r));
+                }
+            }
+        }
+        // now propagate the change event
+        super.fireTableEvent(row0, row1, col, type);
+    }
+    
+    // ------------------------------------------------------------------------
+    // VisualItemTable Methods
+    
+    /**
+     * @@see prefuse.visual.VisualTupleSet#getVisualization()
+     */
+    public Visualization getVisualization() {
+        return m_vis;
+    }
+    
+    /**
+     * Set the visualization associated with this VisualTable
+     * @@param vis the visualization to set
+     */
+    public void setVisualization(Visualization vis) {
+        m_vis = vis;
+    }
+    
+    /**
+     * Get the visualization data group name for this table
+     * @@return the data group name
+     */
+    public String getGroup() {
+        return m_group;
+    }
+    
+    /**
+     * Set the visualization data group name for this table
+     * @@param group the data group name to use
+     */
+    public void setGroup(String group) {
+        m_group = group;
+    }
+    
+    /**
+     * Get the VisualItem for the given table row.
+     * @@param row a table row index
+     * @@return the VisualItem for the given table row
+     */
+    public VisualItem getItem(int row) {
+        return (VisualItem)getTuple(row);
+    }
+    
+    /**
+     * Add a new row to the table and return the VisualItem for that row. Only
+     * allowed if there is no parent table, otherwise an exception will result.
+     * @@return the VisualItem for the newly added table row.
+     */
+    public VisualItem addItem() {
+        return getItem(addRow());
+    }
+    
+    // ------------------------------------------------------------------------
+    // VisualItem Data Access
+    
+    /**
+     * Indicates if the given row is currently validated. If not,
+     * validateBounds() must be run to update the bounds to a current value.
+     * @@param row the table row
+     * @@return true if validated, false otherwise
+     */
+    public boolean isValidated(int row) {
+        return getBoolean(row, VisualItem.VALIDATED);
+    }
+    
+    /**
+     * Set the given row's validated flag. This is for internal use by prefuse
+     * and, in general, should not be called by application code.
+     * @@param row the table row to set
+     * @@param value the value of the validated flag to set.
+     */
+    public void setValidated(int row, boolean value) {
+        setBoolean(row, VisualItem.VALIDATED, value);
+    }
+    
+    /**
+     * Indicates if the given row is currently set to be visible. Items with
+     * the visible flag set false will not be drawn by a display. Invisible
+     * items are also by necessity not interactive, regardless of the value of
+     * the interactive flag.
+     * @@param row the table row
+     * @@return true if visible, false if invisible
+     */
+    public boolean isVisible(int row) {
+        return getBoolean(row, VisualItem.VISIBLE);
+    }
+    
+    /**
+     * Set the given row's visibility.
+     * @@param row the table row to set
+     * @@param value true to make the item visible, false otherwise.
+     */
+    public void setVisible(int row, boolean value) {
+        setBoolean(row, VisualItem.VISIBLE, value);
+    }
+    
+    /**
+     * Indicates if the start visible flag is set to true. This is the
+     * visibility value consulted for the staring value of the visibility
+     * field at the beginning of an animated transition.
+     * @@param row the table row
+     * @@return true if this item starts out visible, false otherwise.
+     */
+    public boolean isStartVisible(int row) {
+        return getBoolean(row, VisualItem.STARTVISIBLE);
+    }
+    
+    /**
+     * Set the start visible flag.
+     * @@param row the table row to set
+     * @@param value true to set the start visible flag, false otherwise
+     */
+    public void setStartVisible(int row, boolean value) {
+        setBoolean(row, VisualItem.STARTVISIBLE, value);
+    }
+
+    /**
+     * Indictes if the end visible flag is set to true. This is the
+     * visibility value consulted for the ending value of the visibility
+     * field at the end of an animated transition.
+     * @@param row the table row
+     * @@return true if this items ends visible, false otherwise.
+     */
+    public boolean isEndVisible(int row) {
+        return getBoolean(row, VisualItem.ENDVISIBLE);
+    }
+    
+    /**
+     * Set the end visible flag.
+     * @@param row the table row to set
+     * @@param value true to set the end visible flag, false otherwise
+     */
+    public void setEndVisible(int row, boolean value) {
+        setBoolean(row, VisualItem.ENDVISIBLE, value);
+    }
+    
+    /**
+     * Indicates if this item is interactive, meaning it can potentially
+     * respond to mouse and keyboard input events.
+     * @@param row the table row
+     * @@return true if the item is interactive, false otherwise
+     */
+    public boolean isInteractive(int row) {
+        return getBoolean(row, VisualItem.INTERACTIVE);
+    }
+
+    /**
+     * Set the interactive status of the given row.
+     * @@param row the table row to set
+     * @@param value true for interactive, false for non-interactive
+     */
+    public void setInteractive(int row, boolean value) {
+        setBoolean(row, VisualItem.INTERACTIVE, value);
+    }
+    
+    /**
+     * Indicates the given row is expanded. Only used for items that are
+     * part of a graph structure. 
+     * @@param row the table row
+     * @@return true if expanded, false otherwise
+     */
+    public boolean isExpanded(int row) {
+        return getBoolean(row, VisualItem.EXPANDED);
+    }
+
+    /**
+     * Set the expanded flag.
+     * @@param row the table row to set
+     * @@param value true to set as expanded, false as collapsed.
+     */
+    public void setExpanded(int row, boolean value) {
+        setBoolean(row, VisualItem.EXPANDED, value);
+    }
+    
+    /**
+     * Indicates if the given row is fixed, and so will not have its position
+     * changed by any layout or distortion actions.
+     * @@param row the table row
+     * @@return true if the item has a fixed position, false otherwise
+     */
+    public boolean isFixed(int row) {
+        return getBoolean(row, VisualItem.FIXED);
+    }
+
+    /**
+     * Sets if the given row is fixed in its position.
+     * @@param row the table row to set
+     * @@param value true to fix the item, false otherwise
+     */
+    public void setFixed(int row, boolean value) {
+        setBoolean(row, VisualItem.FIXED, value);
+    }
+    
+    /**
+     * Indicates if the given row is highlighted.
+     * @@param row the table row
+     * @@return true for highlighted, false for not highlighted
+     */
+    public boolean isHighlighted(int row) {
+        return getBoolean(row, VisualItem.HIGHLIGHT);
+    }
+    
+    /**
+     * Set the highlighted status of the given row. How higlighting values are
+     * interpreted by the system depends on the various processing actions
+     * set up for an application (e.g., how a
+     * {@@link prefuse.action.assignment.ColorAction} might assign colors
+     * based on the flag).
+     * @@param row the table row to set
+     * @@param value true to highlight the item, false for no highlighting.
+     */
+    public void setHighlighted(int row, boolean value) {
+        setBoolean(row, VisualItem.HIGHLIGHT, value);
+    }
+
+    /**
+     * Indicates if the given row currently has the mouse pointer over it.
+     * @@param row the table row
+     * @@return true if the mouse pointer is over this item, false otherwise
+     */
+    public boolean isHover(int row) {
+        return getBoolean(row, VisualItem.HOVER);
+    }
+    
+    /**
+     * Set the hover flag. This is set automatically by the prefuse framework,
+     * so should not need to be set explicitly by application code.
+     * @@param row the table row to set
+     * @@param value true to set the hover flag, false otherwise
+     */
+    public void setHover(int row, boolean value) {
+        setBoolean(row, VisualItem.HOVER, value);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current x-coordinate of the given row.
+     * @@param row the table row
+     * @@return the current x-coordinate
+     */
+    public double getX(int row) {
+        return getDouble(row, VisualItem.X);
+    }
+    
+    /**
+     * Set the current x-coordinate of the given row.
+     * @@param row the table row to set
+     * @@param x the new current x-coordinate
+     */
+    public void setX(int row, double x) {
+        setDouble(row, VisualItem.X, x);
+    }
+    
+    /**
+     * Get the current y-coordinate of the given row.
+     * @@param row the table row
+     * @@return the current y-coordinate
+     */
+    public double getY(int row) {
+        return getDouble(row, VisualItem.Y);
+    }
+    
+    /**
+     * Set the current y-coordinate of the given row.
+     * @@param row the table row to set
+     * @@param y the new current y-coordinate
+     */
+    public void setY(int row, double y) {
+        setDouble(row, VisualItem.Y, y);
+    }    
+    
+    /**
+     * Get the starting x-coordinate of the given row.
+     * @@param row the table row
+     * @@return the starting x-coordinate
+     */
+    public double getStartX(int row) {
+        return getDouble(row, VisualItem.STARTX);
+    }
+    
+    /**
+     * Set the starting x-coordinate of the given row.
+     * @@param row the table row to set
+     * @@param x the new starting x-coordinate
+     */
+    public void setStartX(int row, double x) {
+        setDouble(row, VisualItem.STARTX, x);
+    }
+    
+    /**
+     * Get the starting y-coordinate of the given row.
+     * @@param row the table row
+     * @@return the starting y-coordinate
+     */
+    public double getStartY(int row) {
+        return getDouble(row, VisualItem.STARTY);
+    }
+    
+    /**
+     * Set the starting y-coordinate of the given row.
+     * @@param row the table row to set
+     * @@param y the new starting y-coordinate
+     */
+    public void setStartY(int row, double y) {
+        setDouble(row, VisualItem.STARTY, y);
+    }
+    
+    /**
+     * Get the ending x-coordinate of the given row.
+     * @@param row the table row
+     * @@return the ending x-coordinate
+     */
+    public double getEndX(int row) {
+        return getDouble(row, VisualItem.ENDX);
+    }
+    
+    /**
+     * Set the ending x-coordinate of the given row.
+     * @@param row the table row to set
+     * @@param x the new ending x-coordinate
+     */
+    public void setEndX(int row, double x) {
+        setDouble(row, VisualItem.ENDX, x);
+    }
+    
+    /**
+     * Get the ending y-coordinate of the given row.
+     * @@param row the table row
+     * @@return the ending y-coordinate
+     */
+    public double getEndY(int row) {
+        return getDouble(row, VisualItem.ENDY);
+    }
+
+    /**
+     * Set the ending y-coordinate of the given row.
+     * @@param row the table row to set
+     * @@param y the new ending y-coordinate
+     */
+    public void setEndY(int row, double y) {
+        setDouble(row, VisualItem.ENDY, y);
+    }
+    
+    /**
+     * Returns the bounds for the VisualItem at the given row index. The
+     * returned reference is for the actual bounds object used by the
+     * system -- do <b>NOT</b> directly edit the values in this returned
+     * object!! This will corrupt the state of the system.
+     * 
+     * @@param row the table row
+     * @@return the bounding box for the item at the given row
+     */
+    public Rectangle2D getBounds(int row) {
+        return (Rectangle2D)get(row, VisualItem.BOUNDS);
+    }
+    
+    /**
+     * Set the bounding box for an item. This method is used by Renderer
+     * modules when the bounds are validated, or set by processing Actions
+     * used in conjunction with Renderers that do not perform bounds
+     * management.
+     * @@param row the table row to set
+     * @@param x the minimum x-coordinate
+     * @@param y the minimum y-coorindate
+     * @@param w the width of this item
+     * @@param h the height of this item
+     * @@see VisualItem#BOUNDS
+     */
+    public void setBounds(int row, double x, double y, double w, double h) {
+        getBounds(row).setRect(x, y, w, h);
+        fireTableEvent(row, row,
+                getColumnNumber(VisualItem.BOUNDS), EventConstants.UPDATE);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current stroke color of the row. The stroke color is used
+     * to draw lines and the outlines of shapes. Color values as represented as
+     * an integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the current stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public int getStrokeColor(int row) {
+        return getInt(row, VisualItem.STROKECOLOR);
+    }
+    
+    /**
+     * Set the current stroke color of the row. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the current stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public void setStrokeColor(int row, int color) {
+        setInt(row, VisualItem.STROKECOLOR, color);
+    }
+    
+    /**
+     * Get the starting stroke color of the row. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the starting stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public int getStartStrokeColor(int row) {
+        return getInt(row, VisualItem.STARTSTROKECOLOR);
+    }
+    
+    /**
+     * Set the starting stroke color of the row. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the starting stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public void setStartStrokeColor(int row, int color) {
+        setInt(row, VisualItem.STARTSTROKECOLOR, color);
+    }
+    
+    /**
+     * Get the ending stroke color of the row. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the ending stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public int getEndStrokeColor(int row) {
+        return getInt(row, VisualItem.ENDSTROKECOLOR);
+    }
+    
+    /**
+     * Set the ending stroke color of the row. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the ending stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public void setEndStrokeColor(int row, int color) {
+        setInt(row, VisualItem.ENDSTROKECOLOR, color);
+    }
+    
+    /**
+     * Get the current fill color of the row. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the current fill color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public int getFillColor(int row) {
+        return getInt(row, VisualItem.FILLCOLOR);
+    }
+    
+    /**
+     * Set the current fill color of the row. The stroke color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the current fill color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public void setFillColor(int row, int color) {
+        setInt(row, VisualItem.FILLCOLOR, color);
+    }
+    
+    /**
+     * Get the starting fill color of the row. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the starting fill color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public int getStartFillColor(int row) {
+        return getInt(row, VisualItem.STARTFILLCOLOR);
+    }
+    
+    /**
+     * Set the starting fill color of the row. The stroke color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the starting fill color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public void setStartFillColor(int row, int color) {
+        setInt(row, VisualItem.STARTFILLCOLOR, color);
+    }
+    
+    /**
+     * Get the ending fill color of the row. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the ending fill color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public int getEndFillColor(int row) {
+        return getInt(row, VisualItem.ENDFILLCOLOR);
+    }
+    
+    /**
+     * Set the ending fill color of the row. The stroke color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the ending fill color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public void setEndFillColor(int row, int color) {
+        setInt(row, VisualItem.ENDFILLCOLOR, color);
+    }
+    
+    /**
+     * Get the current text color of the row. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the current text color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public int getTextColor(int row) {
+        return getInt(row, VisualItem.TEXTCOLOR);
+    }
+    
+    /**
+     * Set the current text color of the row. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the current text color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public void setTextColor(int row, int color) {
+        setInt(row, VisualItem.TEXTCOLOR, color);
+    }
+    
+    /**
+     * Get the starting text color of the row. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the starting text color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public int getStartTextColor(int row) {
+        return getInt(row, VisualItem.STARTTEXTCOLOR);
+    }
+    
+    /**
+     * Set the starting text color of the row. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the starting text color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public void setStartTextColor(int row, int color) {
+        setInt(row, VisualItem.STARTTEXTCOLOR, color);
+    }
+    
+    /**
+     * Get the ending text color of the row. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the ending text color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public int getEndTextColor(int row) {
+        return getInt(row, VisualItem.ENDTEXTCOLOR);
+    }
+    
+    /**
+     * Set the ending text color of the row. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the ending text color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     */
+    public void setEndTextColor(int row, int color) {
+        setInt(row, VisualItem.ENDTEXTCOLOR, color);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current size value of the row. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param row the table row
+     * @@return the current size value
+     */
+    public double getSize(int row) {
+        return getDouble(row, VisualItem.SIZE);
+    }
+    
+    /**
+     * Set the current size value of the row. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param row the table row to set
+     * @@param size the current size value
+     */
+    public void setSize(int row, double size) {
+        setDouble(row, VisualItem.SIZE, size);
+    }
+    
+    /**
+     * Get the starting size value of the row. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param row the table row
+     * @@return the starting size value
+     */
+    public double getStartSize(int row) {
+        return getDouble(row, VisualItem.STARTSIZE);
+    }
+    
+    /**
+     * Set the starting size value of the row. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param row the table row to set
+     * @@param size the starting size value
+     */
+    public void setStartSize(int row, double size) {
+        setDouble(row, VisualItem.STARTSIZE, size);
+    }
+    
+    /**
+     * Get the ending size value of the row. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param row the table row
+     * @@return the ending size value
+     */
+    public double getEndSize(int row) {
+        return getDouble(row, VisualItem.ENDSIZE);
+    }
+    
+    /**
+     * Set the ending size value of the row. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param row the table row to set
+     * @@param size the ending size value
+     */
+    public void setEndSize(int row, double size) {
+        setDouble(row, VisualItem.ENDSIZE, size);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current shape value of the row. One of the SHAPE constants
+     * included in the {@@link prefuse.Constants} class. This value only has an
+     * effect if a Renderer that supports different shapes is used
+     * (e.g., {@@link prefuse.render.ShapeRenderer}.
+     * @@param row the table row
+     * @@return the current shape value
+     */
+    public int getShape(int row) {
+        return getInt(row, VisualItem.SHAPE);
+    }
+    
+    /**
+     * Set the current shape value of the row. One of the SHAPE constants
+     * included in the {@@link prefuse.Constants} class. This value only has an
+     * effect if a Renderer that supports different shapes is used
+     * (e.g., {@@link prefuse.render.ShapeRenderer}.
+     * @@param row the table row to set
+     * @@param shape the shape value to use
+     */
+    public void setShape(int row, int shape) {
+        setInt(row, VisualItem.SHAPE, shape);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current stroke used to draw lines and shape outlines for the
+     * item at the given row.
+     * @@return the stroke used to draw lines and shape outlines
+     */
+    public BasicStroke getStroke(int row) {
+        return (BasicStroke)get(row, VisualItem.STROKE);
+    }
+    
+    /**
+     * Set the current stroke used to draw lines and shape outlines.
+     * @@param stroke the stroke to use to draw lines and shape outlines
+     */
+    public void setStroke(int row, BasicStroke stroke) {
+        set(row, VisualItem.STROKE, stroke);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current font for the row. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param row the table row
+     * @@return the current font value
+     */
+    public Font getFont(int row) {
+        return (Font)get(row, VisualItem.FONT);
+    }
+    
+    /**
+     * Set the current font for the the row. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param row the table row to set
+     * @@param font the current font value
+     */
+    public void setFont(int row, Font font) {
+        set(row, VisualItem.FONT, font);
+    }
+    
+    /**
+     * Get the starting font for the row. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param row the table row
+     * @@return the starting font value
+     */
+    public Font getStartFont(int row) {
+        return (Font)get(row, VisualItem.STARTFONT);
+    }
+
+    /**
+     * Set the starting font for the row. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param row the table row to set
+     * @@param font the starting font value
+     */
+    public void setStartFont(int row, Font font) {
+        set(row, VisualItem.STARTFONT, font);
+    }
+    
+    /**
+     * Get the ending font for the row. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param row the table row
+     * @@return the ending font value
+     */
+    public Font getEndFont(int row) {
+        return (Font)get(row, VisualItem.ENDFONT);
+    }
+    
+    /**
+     * Set the ending font for the row. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param row the table row to set
+     * @@param font the ending font value
+     */
+    public void setEndFont(int row, Font font) {
+        set(row, VisualItem.ENDFONT, font);
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the degree-of-interest (DOI) value. The degree-of-interet is an
+     * optional value that can be used to sort items by importance, control
+     * item visibility, or influence particular visual encodings. A common
+     * example is to use the DOI to store the graph distance of a node from
+     * the nearest selected focus node.
+     * @@param row the table row
+     * @@return the DOI value of this item
+     */
+    public double getDOI(int row) {
+        return getDouble(row, VisualItem.DOI);
+    }
+    
+    /**
+     * Set the degree-of-interest (DOI) value. The degree-of-interet is an
+     * optional value that can be used to sort items by importance, control
+     * item visibility, or influence particular visual encodings. A common
+     * example is to use the DOI to store the graph distance of a node from
+     * the nearest selected focus node.
+     * @@param row the table row to set
+     * @@param doi the DOI value of this item
+     */
+    public void setDOI(int row, double doi) {
+        setDouble(row, VisualItem.DOI, doi);
+    }
+    
+} // end of class VisualTable
+@
+
+
+2.3.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a6 1
+import prefuse.ShapeType;
+a10 1
+import prefuse.data.Tuple;
+d17 1
+a17 1
+ * for VisualItem tuples. VisualTable derives from CascadedTable,
+d23 1
+a23 1
+ *
+d26 1
+a26 36
+public abstract class VisualTable <T extends Tuple<?>, C extends VisualItem<?>> extends CascadedTable<T,C> implements VisualTupleSet<C> {
+
+
+	public static <T extends Tuple<?>> VisualTable<T, TableVisualItem<?>> createVisualTable(Table<T> parent, Visualization vis, String group) {
+		return createVisualTable(parent, vis, group, null, VisualItem.SCHEMA);
+	}
+
+	public static <T extends Tuple<?>> VisualTable<T, TableVisualItem<?>> createVisualTable(Table<T> parent, Visualization vis, String group,Predicate rowFilter) {
+		return createVisualTable(parent, vis, group, rowFilter,VisualItem.SCHEMA);
+	}
+	public static <T extends Tuple<?>> VisualTable<T, TableVisualItem<?>> createVisualTable(Table<T> parent, Visualization vis, String group,Predicate rowFilter, Schema schema) {
+		return new VisualTable<T, TableVisualItem<?>>(parent, vis,group,rowFilter,schema) {
+
+			@@Override
+			public TableVisualItem<?> createTupleInstance() {
+				return new TableVisualItem<TableVisualItem<?>>();
+			}
+
+		};
+	}
+
+	public static VisualTable<TableVisualItem<?>, TableVisualItem<?>> createVisualTable(Visualization vis, String group) {
+		return createVisualTable(vis, group, VisualItem.SCHEMA);
+	}
+
+	public static VisualTable<TableVisualItem<?>, TableVisualItem<?>> createVisualTable(Visualization vis, String group,Schema schema) {
+		return new VisualTable<TableVisualItem<?>, TableVisualItem<?>>(vis, group,schema) {
+
+			@@Override
+			public TableVisualItem<?> createTupleInstance() {
+				return new TableVisualItem<TableVisualItem<?>>();
+			}
+
+		};
+	}
+
+d30 1
+a30 1
+
+d33 1
+a33 1
+
+d40 1
+a40 1
+    public VisualTable(Table<T> parent, Visualization vis, String group) {
+d52 1
+a52 1
+    public VisualTable(Table<T> parent, Visualization vis, String group,
+d67 1
+a67 1
+    public VisualTable(Table<T> parent, Visualization vis, String group,
+d70 1
+a70 1
+        super(parent, rowFilter, null);
+d75 1
+a75 1
+
+d82 1
+d85 1
+a85 1
+
+d93 1
+d98 14
+d121 6
+a126 9
+        if ( canGetBoolean(VisualItem.VISIBLE) ) {
+			index(VisualItem.VISIBLE);
+		}
+        if ( canGetBoolean(VisualItem.STARTVISIBLE) ) {
+			index(VisualItem.STARTVISIBLE);
+		}
+        if ( canGetBoolean(VisualItem.VALIDATED) ) {
+			index(VisualItem.VALIDATED);
+		}
+d128 1
+a128 1
+
+d130 1
+a130 1
+
+d135 1
+a135 2
+    @@Override
+	protected void fireTableEvent(int row0, int row1, int col, int type) {
+d140 2
+a141 3
+                for ( int r=row0; r<=row1; ++r ) {
+					setValidated(r,false);
+				}
+d156 1
+a156 1
+                    VisualItem<?> item = getTuple(r);
+d164 1
+a164 1
+
+d167 1
+a167 1
+
+d174 1
+a174 1
+
+d182 1
+a182 1
+
+d190 1
+a190 1
+
+d193 1
+a193 1
+     * @@param group the data group name for this table
+d198 1
+a198 1
+
+d204 2
+a205 2
+    public C getItem(int row) {
+        return getTuple(row);
+d207 1
+a207 1
+
+d213 1
+a213 1
+    public C addItem() {
+d216 1
+a216 1
+
+d219 1
+a219 1
+
+d229 1
+a229 1
+
+d239 1
+a239 1
+
+d251 1
+a251 1
+
+d260 1
+a260 1
+
+d271 1
+a271 1
+
+d291 1
+a291 1
+
+d300 1
+a300 1
+
+d319 1
+a319 1
+
+d322 1
+a322 1
+     * part of a graph structure.
+d338 1
+a338 1
+
+d357 1
+a357 1
+
+d366 1
+a366 1
+
+d388 1
+a388 1
+
+d398 1
+a398 1
+
+d400 1
+a400 1
+
+d409 1
+a409 1
+
+d418 1
+a418 1
+
+d427 1
+a427 1
+
+d435 2
+a436 2
+    }
+
+d445 1
+a445 1
+
+d454 1
+a454 1
+
+d463 1
+a463 1
+
+d472 1
+a472 1
+
+d481 1
+a481 1
+
+d490 1
+a490 1
+
+d508 1
+a508 1
+
+d514 1
+a514 1
+     *
+d521 1
+a521 1
+
+d539 1
+a539 1
+
+d541 1
+a541 1
+
+d555 1
+a555 1
+
+d569 1
+a569 1
+
+d583 1
+a583 1
+
+d597 1
+a597 1
+
+d611 1
+a611 1
+
+d625 1
+a625 1
+
+d639 1
+a639 1
+
+d653 1
+a653 1
+
+d667 1
+a667 1
+
+d681 1
+a681 1
+
+d695 1
+a695 1
+
+d709 1
+a709 1
+
+d723 1
+a723 1
+
+d737 1
+a737 1
+
+d751 1
+a751 1
+
+d765 1
+a765 1
+
+d779 1
+a779 1
+
+d793 1
+a793 1
+
+d795 1
+a795 1
+
+d806 1
+a806 1
+
+d817 1
+a817 1
+
+d828 1
+a828 1
+
+d839 1
+a839 1
+
+d850 1
+a850 1
+
+d861 1
+a861 1
+
+d863 1
+a863 1
+
+d865 3
+a867 2
+     * Get the current shape value of the row.
+     * This value only has an effect if a Renderer that supports different shapes is used
+d872 2
+a873 2
+    public ShapeType getShape(int row) {
+        return ShapeType.values()[getInt(row, VisualItem.SHAPE)];
+d875 1
+a875 1
+
+d877 2
+a878 1
+     * Set the current shape value of the row. This value only has an
+d884 2
+a885 2
+    public void setShape(int row, ShapeType shape) {
+        setInt(row, VisualItem.SHAPE, shape.ordinal());
+d887 1
+a887 1
+
+d889 1
+a889 1
+
+d898 1
+a898 1
+
+d906 1
+a906 1
+
+d908 1
+a908 1
+
+d918 1
+a918 1
+
+d928 1
+a928 1
+
+d948 1
+a948 1
+
+d958 1
+a958 1
+
+d970 1
+a970 1
+
+d983 1
+a983 1
+
+d996 1
+a996 1
+
+@
+
+
+2.3.4.2
+log
+@added a bit more safety to the visual table class
+@
+text
+@a4 1
+import java.awt.Rectangle;
+d18 8
+a25 6
+ * A visual abstraction of a Table data structure. Serves as a backing table for VisualItem tuples.
+ * VisualTable derives from CascadedTable, so can inherit another table's values. Commonly, a
+ * VisualTable is used to take a raw data table and "strap" visual properties on top of it.
+ * VisualTables should not be created directly, they are created automatically by adding data to a
+ * Visualization, for example by using the {@@link Visualization#addTable(String, Table)} method.
+ * 
+d28 1
+a28 1
+public abstract class VisualTable<T extends Tuple<?>, C extends VisualItem<?>> extends CascadedTable<T, C> implements VisualTupleSet<C> {
+d30 2
+a31 2
+	public static <T extends Tuple<?>> VisualTable<T, TableVisualItem<?>> createVisualTable(final Table<T> parent,
+			final Visualization vis, final String group) {
+d35 2
+a36 3
+	public static <T extends Tuple<?>> VisualTable<T, TableVisualItem<?>> createVisualTable(final Table<T> parent,
+			final Visualization vis, final String group, final Predicate rowFilter) {
+		return createVisualTable(parent, vis, group, rowFilter, VisualItem.SCHEMA);
+d38 2
+a39 4
+
+	public static <T extends Tuple<?>> VisualTable<T, TableVisualItem<?>> createVisualTable(final Table<T> parent,
+			final Visualization vis, final String group, final Predicate rowFilter, final Schema schema) {
+		return new VisualTable<T, TableVisualItem<?>>(parent, vis, group, rowFilter, schema) {
+d49 1
+a49 2
+	public static VisualTable<TableVisualItem<?>, TableVisualItem<?>> createVisualTable(final Visualization vis,
+			final String group) {
+d53 2
+a54 3
+	public static VisualTable<TableVisualItem<?>, TableVisualItem<?>> createVisualTable(final Visualization vis,
+			final String group, final Schema schema) {
+		return new VisualTable<TableVisualItem<?>, TableVisualItem<?>>(vis, group, schema) {
+a63 57
+	private Visualization m_vis;
+	private String m_group;
+
+	// ------------------------------------------------------------------------
+	// Constructors
+
+	/**
+	 * Create a new VisualTable.
+	 * 
+	 * @@param parent
+	 *            the parent table whose values this table should inherit
+	 * @@param vis
+	 *            the Visualization associated with this table
+	 * @@param group
+	 *            the data group of this table
+	 */
+	public VisualTable(final Table<T> parent, final Visualization vis, final String group) {
+		this(parent, vis, group, null, VisualItem.SCHEMA);
+	}
+
+	/**
+	 * Create a new VisualTable.
+	 * 
+	 * @@param parent
+	 *            the parent table whose values this table should inherit
+	 * @@param vis
+	 *            the Visualization associated with this table
+	 * @@param group
+	 *            the data group of this table
+	 * @@param rowFilter
+	 *            a predicate determing which rows of the parent table should be inherited by this
+	 *            table and which should be filtered out
+	 */
+	public VisualTable(final Table<T> parent, final Visualization vis, final String group, final Predicate rowFilter) {
+		this(parent, vis, group, rowFilter, VisualItem.SCHEMA);
+	}
+
+	/**
+	 * Create a new VisualTable.
+	 * 
+	 * @@param parent
+	 *            the parent table whose values this table should inherit
+	 * @@param vis
+	 *            the Visualization associated with this table
+	 * @@param group
+	 *            the data group of this table
+	 * @@param rowFilter
+	 *            a predicate determing which rows of the parent table should be inherited by this
+	 *            table and which should be filtered out
+	 * @@param schema
+	 *            the data schema to use for the table's local columns
+	 */
+	public VisualTable(final Table<T> parent, final Visualization vis, final String group, final Predicate rowFilter,
+			final Schema schema) {
+		super(parent, rowFilter, null);
+		init(vis, group, schema);
+	}
+d65 2
+a66 1
+	// -- non-cascaded visual table -------------------------------------------
+d68 2
+a69 25
+	/**
+	 * Create a new VisualTable without a parent table.
+	 * 
+	 * @@param vis
+	 *            the Visualization associated with this table
+	 * @@param group
+	 *            the data group of this table
+	 */
+	public VisualTable(final Visualization vis, final String group) {
+		init(vis, group, VisualItem.SCHEMA);
+	}
+
+	/**
+	 * Create a new VisualTable without a parent table.
+	 * 
+	 * @@param vis
+	 *            the Visualization associated with this table
+	 * @@param group
+	 *            the data group of this table
+	 * @@param schema
+	 *            the data schema to use for the table's local columns
+	 */
+	public VisualTable(final Visualization vis, final String group, final Schema schema) {
+		init(vis, group, schema);
+	}
+d71 72
+a142 15
+	/**
+	 * Initialize this VisualTable
+	 * 
+	 * @@param vis
+	 *            the Visualization associated with this table
+	 * @@param group
+	 *            the data group of this table
+	 * @@param schema
+	 *            the data schema to use for the table's local columns
+	 */
+	protected void init(final Visualization vis, final String group, final Schema schema) {
+		setVisualization(vis);
+		setGroup(group);
+		addColumns(schema);
+		if (canGetBoolean(VisualItem.VISIBLE)) {
+d145 1
+a145 1
+		if (canGetBoolean(VisualItem.STARTVISIBLE)) {
+d148 1
+a148 1
+		if (canGetBoolean(VisualItem.VALIDATED)) {
+d151 1
+a151 1
+	}
+d153 1
+a153 1
+	// ------------------------------------------------------------------------
+d155 12
+a166 26
+	/**
+	 * Relay table events. Ensures that updated visual items are invalidated and that damage reports
+	 * are issued for deleted items.
+	 */
+	@@Override
+	protected void fireTableEvent(final int row0, final int row1, final int col, final int type) {
+		// table attributes changed, so we invalidate the bounds
+		if (type == EventConstants.UPDATE) {
+			if (col != VisualItem.IDX_VALIDATED) {
+				for (int r = row0; r <= row1; ++r) {
+					setValidated(r, false);
+				}
+			} else {
+				// change in validated status
+				for (int r = row0; r <= row1; ++r) {
+					if (!isValidated(r)) {
+						// retrieve the old bounds to report damage
+						m_vis.damageReport(getItem(r), getBounds(r));
+					}
+				}
+			}
+		} else if (type == EventConstants.DELETE && col == EventConstants.ALL_COLUMNS) {
+			for (int r = row0; r <= row1; ++r) {
+				if (isVisible(r) && isValidated(r)) {
+					final VisualItem<?> item = getTuple(r);
+					m_vis.damageReport(item, getBounds(r));
+d168 852
+a1019 997
+			}
+		}
+		// now propagate the change event
+		super.fireTableEvent(row0, row1, col, type);
+	}
+
+	// ------------------------------------------------------------------------
+	// VisualItemTable Methods
+
+	/**
+	 * @@see prefuse.visual.VisualTupleSet#getVisualization()
+	 */
+	public Visualization getVisualization() {
+		return m_vis;
+	}
+
+	/**
+	 * Set the visualization associated with this VisualTable
+	 * 
+	 * @@param vis
+	 *            the visualization to set
+	 */
+	public void setVisualization(final Visualization vis) {
+		m_vis = vis;
+	}
+
+	/**
+	 * Get the visualization data group name for this table
+	 * 
+	 * @@return the data group name
+	 */
+	public String getGroup() {
+		return m_group;
+	}
+
+	/**
+	 * Set the visualization data group name for this table
+	 * 
+	 * @@param group
+	 *            the data group name for this table
+	 */
+	public void setGroup(final String group) {
+		m_group = group;
+	}
+
+	/**
+	 * Get the VisualItem for the given table row.
+	 * 
+	 * @@param row
+	 *            a table row index
+	 * @@return the VisualItem for the given table row
+	 */
+	public C getItem(final int row) {
+		return getTuple(row);
+	}
+
+	/**
+	 * Add a new row to the table and return the VisualItem for that row. Only allowed if there is
+	 * no parent table, otherwise an exception will result.
+	 * 
+	 * @@return the VisualItem for the newly added table row.
+	 */
+	public C addItem() {
+		return getItem(addRow());
+	}
+
+	// ------------------------------------------------------------------------
+	// VisualItem Data Access
+
+	/**
+	 * Indicates if the given row is currently validated. If not, validateBounds() must be run to
+	 * update the bounds to a current value.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return true if validated, false otherwise
+	 */
+	public boolean isValidated(final int row) {
+		return getBoolean(row, VisualItem.VALIDATED);
+	}
+
+	/**
+	 * Set the given row's validated flag. This is for internal use by prefuse and, in general,
+	 * should not be called by application code.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param value
+	 *            the value of the validated flag to set.
+	 */
+	public void setValidated(final int row, final boolean value) {
+		setBoolean(row, VisualItem.VALIDATED, value);
+	}
+
+	/**
+	 * Indicates if the given row is currently set to be visible. Items with the visible flag set
+	 * false will not be drawn by a display. Invisible items are also by necessity not interactive,
+	 * regardless of the value of the interactive flag.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return true if visible, false if invisible
+	 */
+	public boolean isVisible(final int row) {
+		return getBoolean(row, VisualItem.VISIBLE);
+	}
+
+	/**
+	 * Set the given row's visibility.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param value
+	 *            true to make the item visible, false otherwise.
+	 */
+	public void setVisible(final int row, final boolean value) {
+		setBoolean(row, VisualItem.VISIBLE, value);
+	}
+
+	/**
+	 * Indicates if the start visible flag is set to true. This is the visibility value consulted
+	 * for the staring value of the visibility field at the beginning of an animated transition.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return true if this item starts out visible, false otherwise.
+	 */
+	public boolean isStartVisible(final int row) {
+		return getBoolean(row, VisualItem.STARTVISIBLE);
+	}
+
+	/**
+	 * Set the start visible flag.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param value
+	 *            true to set the start visible flag, false otherwise
+	 */
+	public void setStartVisible(final int row, final boolean value) {
+		setBoolean(row, VisualItem.STARTVISIBLE, value);
+	}
+
+	/**
+	 * Indictes if the end visible flag is set to true. This is the visibility value consulted for
+	 * the ending value of the visibility field at the end of an animated transition.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return true if this items ends visible, false otherwise.
+	 */
+	public boolean isEndVisible(final int row) {
+		return getBoolean(row, VisualItem.ENDVISIBLE);
+	}
+
+	/**
+	 * Set the end visible flag.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param value
+	 *            true to set the end visible flag, false otherwise
+	 */
+	public void setEndVisible(final int row, final boolean value) {
+		setBoolean(row, VisualItem.ENDVISIBLE, value);
+	}
+
+	/**
+	 * Indicates if this item is interactive, meaning it can potentially respond to mouse and
+	 * keyboard input events.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return true if the item is interactive, false otherwise
+	 */
+	public boolean isInteractive(final int row) {
+		return getBoolean(row, VisualItem.INTERACTIVE);
+	}
+
+	/**
+	 * Set the interactive status of the given row.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param value
+	 *            true for interactive, false for non-interactive
+	 */
+	public void setInteractive(final int row, final boolean value) {
+		setBoolean(row, VisualItem.INTERACTIVE, value);
+	}
+
+	/**
+	 * Indicates the given row is expanded. Only used for items that are part of a graph structure.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return true if expanded, false otherwise
+	 */
+	public boolean isExpanded(final int row) {
+		return getBoolean(row, VisualItem.EXPANDED);
+	}
+
+	/**
+	 * Set the expanded flag.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param value
+	 *            true to set as expanded, false as collapsed.
+	 */
+	public void setExpanded(final int row, final boolean value) {
+		setBoolean(row, VisualItem.EXPANDED, value);
+	}
+
+	/**
+	 * Indicates if the given row is fixed, and so will not have its position changed by any layout
+	 * or distortion actions.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return true if the item has a fixed position, false otherwise
+	 */
+	public boolean isFixed(final int row) {
+		return getBoolean(row, VisualItem.FIXED);
+	}
+
+	/**
+	 * Sets if the given row is fixed in its position.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param value
+	 *            true to fix the item, false otherwise
+	 */
+	public void setFixed(final int row, final boolean value) {
+		setBoolean(row, VisualItem.FIXED, value);
+	}
+
+	/**
+	 * Indicates if the given row is highlighted.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return true for highlighted, false for not highlighted
+	 */
+	public boolean isHighlighted(final int row) {
+		return getBoolean(row, VisualItem.HIGHLIGHT);
+	}
+
+	/**
+	 * Set the highlighted status of the given row. How higlighting values are interpreted by the
+	 * system depends on the various processing actions set up for an application (e.g., how a
+	 * {@@link prefuse.action.assignment.ColorAction} might assign colors based on the flag).
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param value
+	 *            true to highlight the item, false for no highlighting.
+	 */
+	public void setHighlighted(final int row, final boolean value) {
+		setBoolean(row, VisualItem.HIGHLIGHT, value);
+	}
+
+	/**
+	 * Indicates if the given row currently has the mouse pointer over it.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return true if the mouse pointer is over this item, false otherwise
+	 */
+	public boolean isHover(final int row) {
+		return getBoolean(row, VisualItem.HOVER);
+	}
+
+	/**
+	 * Set the hover flag. This is set automatically by the prefuse framework, so should not need to
+	 * be set explicitly by application code.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param value
+	 *            true to set the hover flag, false otherwise
+	 */
+	public void setHover(final int row, final boolean value) {
+		setBoolean(row, VisualItem.HOVER, value);
+	}
+
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Get the current x-coordinate of the given row.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the current x-coordinate
+	 */
+	public double getX(final int row) {
+		return getDouble(row, VisualItem.X);
+	}
+
+	/**
+	 * Set the current x-coordinate of the given row.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param x
+	 *            the new current x-coordinate
+	 */
+	public void setX(final int row, final double x) {
+		setDouble(row, VisualItem.X, x);
+	}
+
+	/**
+	 * Get the current y-coordinate of the given row.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the current y-coordinate
+	 */
+	public double getY(final int row) {
+		return getDouble(row, VisualItem.Y);
+	}
+
+	/**
+	 * Set the current y-coordinate of the given row.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param y
+	 *            the new current y-coordinate
+	 */
+	public void setY(final int row, final double y) {
+		setDouble(row, VisualItem.Y, y);
+	}
+
+	/**
+	 * Get the starting x-coordinate of the given row.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the starting x-coordinate
+	 */
+	public double getStartX(final int row) {
+		return getDouble(row, VisualItem.STARTX);
+	}
+
+	/**
+	 * Set the starting x-coordinate of the given row.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param x
+	 *            the new starting x-coordinate
+	 */
+	public void setStartX(final int row, final double x) {
+		setDouble(row, VisualItem.STARTX, x);
+	}
+
+	/**
+	 * Get the starting y-coordinate of the given row.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the starting y-coordinate
+	 */
+	public double getStartY(final int row) {
+		return getDouble(row, VisualItem.STARTY);
+	}
+
+	/**
+	 * Set the starting y-coordinate of the given row.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param y
+	 *            the new starting y-coordinate
+	 */
+	public void setStartY(final int row, final double y) {
+		setDouble(row, VisualItem.STARTY, y);
+	}
+
+	/**
+	 * Get the ending x-coordinate of the given row.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the ending x-coordinate
+	 */
+	public double getEndX(final int row) {
+		return getDouble(row, VisualItem.ENDX);
+	}
+
+	/**
+	 * Set the ending x-coordinate of the given row.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param x
+	 *            the new ending x-coordinate
+	 */
+	public void setEndX(final int row, final double x) {
+		setDouble(row, VisualItem.ENDX, x);
+	}
+
+	/**
+	 * Get the ending y-coordinate of the given row.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the ending y-coordinate
+	 */
+	public double getEndY(final int row) {
+		return getDouble(row, VisualItem.ENDY);
+	}
+
+	/**
+	 * Set the ending y-coordinate of the given row.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param y
+	 *            the new ending y-coordinate
+	 */
+	public void setEndY(final int row, final double y) {
+		setDouble(row, VisualItem.ENDY, y);
+	}
+
+	/**
+	 * Returns the bounds for the VisualItem at the given row index. The returned reference is for
+	 * the actual bounds object used by the system -- do <b>NOT</b> directly edit the values in
+	 * this returned object!! This will corrupt the state of the system.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the bounding box for the item at the given row
+	 */
+	public Rectangle2D getBounds(final int row) {
+		return (Rectangle2D) get(row, VisualItem.BOUNDS);
+	}
+
+	/**
+	 * Set the bounding box for an item. This method is used by Renderer modules when the bounds are
+	 * validated, or set by processing Actions used in conjunction with Renderers that do not
+	 * perform bounds management.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param x
+	 *            the minimum x-coordinate
+	 * @@param y
+	 *            the minimum y-coorindate
+	 * @@param w
+	 *            the width of this item
+	 * @@param h
+	 *            the height of this item
+	 * @@see VisualItem#BOUNDS
+	 */
+	public void setBounds(final int row, final double x, final double y, final double w, final double h) {
+		Rectangle2D rect = getBounds(row);
+
+		// occassionally the bounds, when queried here, is null. To counteract this, we actually
+		// create a new rectangle and set this as the bounds. We then use this rectangle to notify
+		// the system.
+		if (rect == null) {
+			rect = new Rectangle();
+			rect.setRect(x, y, w, h);
+			set(row, VisualItem.BOUNDS, rect);
+		} else {
+			rect.setRect(x, y, w, h);
+		}
+		fireTableEvent(row, row, getColumnNumber(VisualItem.BOUNDS), EventConstants.UPDATE);
+	}
+
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Get the current stroke color of the row. The stroke color is used to draw lines and the
+	 * outlines of shapes. Color values as represented as an integer containing the red, green,
+	 * blue, and alpha (transparency) color channels. A color with a zero alpha component is fully
+	 * transparent and will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the current stroke color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public int getStrokeColor(final int row) {
+		return getInt(row, VisualItem.STROKECOLOR);
+	}
+
+	/**
+	 * Set the current stroke color of the row. The stroke color is used to draw lines and the
+	 * outlines of shapes. Color values as represented as an integer containing the red, green,
+	 * blue, and alpha (transparency) color channels. A color with a zero alpha component is fully
+	 * transparent and will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param color
+	 *            the current stroke color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public void setStrokeColor(final int row, final int color) {
+		setInt(row, VisualItem.STROKECOLOR, color);
+	}
+
+	/**
+	 * Get the starting stroke color of the row. The stroke color is used to draw lines and the
+	 * outlines of shapes. Color values as represented as an integer containing the red, green,
+	 * blue, and alpha (transparency) color channels. A color with a zero alpha component is fully
+	 * transparent and will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the starting stroke color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public int getStartStrokeColor(final int row) {
+		return getInt(row, VisualItem.STARTSTROKECOLOR);
+	}
+
+	/**
+	 * Set the starting stroke color of the row. The stroke color is used to draw lines and the
+	 * outlines of shapes. Color values as represented as an integer containing the red, green,
+	 * blue, and alpha (transparency) color channels. A color with a zero alpha component is fully
+	 * transparent and will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param color
+	 *            the starting stroke color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public void setStartStrokeColor(final int row, final int color) {
+		setInt(row, VisualItem.STARTSTROKECOLOR, color);
+	}
+
+	/**
+	 * Get the ending stroke color of the row. The stroke color is used to draw lines and the
+	 * outlines of shapes. Color values as represented as an integer containing the red, green,
+	 * blue, and alpha (transparency) color channels. A color with a zero alpha component is fully
+	 * transparent and will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the ending stroke color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public int getEndStrokeColor(final int row) {
+		return getInt(row, VisualItem.ENDSTROKECOLOR);
+	}
+
+	/**
+	 * Set the ending stroke color of the row. The stroke color is used to draw lines and the
+	 * outlines of shapes. Color values as represented as an integer containing the red, green,
+	 * blue, and alpha (transparency) color channels. A color with a zero alpha component is fully
+	 * transparent and will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param color
+	 *            the ending stroke color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public void setEndStrokeColor(final int row, final int color) {
+		setInt(row, VisualItem.ENDSTROKECOLOR, color);
+	}
+
+	/**
+	 * Get the current fill color of the row. The fill color is used to fill the interior of shapes.
+	 * Color values as represented as an integer containing the red, green, blue, and alpha
+	 * (transparency) color channels. A color with a zero alpha component is fully transparent and
+	 * will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the current fill color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public int getFillColor(final int row) {
+		return getInt(row, VisualItem.FILLCOLOR);
+	}
+
+	/**
+	 * Set the current fill color of the row. The stroke color is used to fill the interior of
+	 * shapes. Color values as represented as an integer containing the red, green, blue, and alpha
+	 * (transparency) color channels. A color with a zero alpha component is fully transparent and
+	 * will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param color
+	 *            the current fill color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public void setFillColor(final int row, final int color) {
+		setInt(row, VisualItem.FILLCOLOR, color);
+	}
+
+	/**
+	 * Get the starting fill color of the row. The fill color is used to fill the interior of
+	 * shapes. Color values as represented as an integer containing the red, green, blue, and alpha
+	 * (transparency) color channels. A color with zero alpha component is fully transparent and
+	 * will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the starting fill color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public int getStartFillColor(final int row) {
+		return getInt(row, VisualItem.STARTFILLCOLOR);
+	}
+
+	/**
+	 * Set the starting fill color of the row. The stroke color is used to fill the interior of
+	 * shapes. Color values as represented as an integer containing the red, green, blue, and alpha
+	 * (transparency) color channels. A color with a zero alpha component is fully transparent and
+	 * will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param color
+	 *            the starting fill color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public void setStartFillColor(final int row, final int color) {
+		setInt(row, VisualItem.STARTFILLCOLOR, color);
+	}
+
+	/**
+	 * Get the ending fill color of the row. The fill color is used to fill the interior of shapes.
+	 * Color values as represented as an integer containing the red, green, blue, and alpha
+	 * (transparency) color channels. A color with zero alpha component is fully transparent and
+	 * will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the ending fill color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public int getEndFillColor(final int row) {
+		return getInt(row, VisualItem.ENDFILLCOLOR);
+	}
+
+	/**
+	 * Set the ending fill color of the row. The stroke color is used to fill the interior of
+	 * shapes. Color values as represented as an integer containing the red, green, blue, and alpha
+	 * (transparency) color channels. A color with a zero alpha component is fully transparent and
+	 * will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param color
+	 *            the ending fill color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public void setEndFillColor(final int row, final int color) {
+		setInt(row, VisualItem.ENDFILLCOLOR, color);
+	}
+
+	/**
+	 * Get the current text color of the row. The text color is used to draw text strings for the
+	 * item. Color values as represented as an integer containing the red, green, blue, and alpha
+	 * (transparency) color channels. A color with zero alpha component is fully transparent and
+	 * will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the current text color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public int getTextColor(final int row) {
+		return getInt(row, VisualItem.TEXTCOLOR);
+	}
+
+	/**
+	 * Set the current text color of the row. The text color is used to draw text strings for the
+	 * item. Color values as represented as an integer containing the red, green, blue, and alpha
+	 * (transparency) color channels. A color with a zero alpha component is fully transparent and
+	 * will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param color
+	 *            the current text color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public void setTextColor(final int row, final int color) {
+		setInt(row, VisualItem.TEXTCOLOR, color);
+	}
+
+	/**
+	 * Get the starting text color of the row. The text color is used to draw text strings for the
+	 * item. Color values as represented as an integer containing the red, green, blue, and alpha
+	 * (transparency) color channels. A color with zero alpha component is fully transparent and
+	 * will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the starting text color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public int getStartTextColor(final int row) {
+		return getInt(row, VisualItem.STARTTEXTCOLOR);
+	}
+
+	/**
+	 * Set the starting text color of the row. The text color is used to draw text strings for the
+	 * item. Color values as represented as an integer containing the red, green, blue, and alpha
+	 * (transparency) color channels. A color with a zero alpha component is fully transparent and
+	 * will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param color
+	 *            the starting text color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public void setStartTextColor(final int row, final int color) {
+		setInt(row, VisualItem.STARTTEXTCOLOR, color);
+	}
+
+	/**
+	 * Get the ending text color of the row. The text color is used to draw text strings for the
+	 * item. Color values as represented as an integer containing the red, green, blue, and alpha
+	 * (transparency) color channels. A color with zero alpha component is fully transparent and
+	 * will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the ending text color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public int getEndTextColor(final int row) {
+		return getInt(row, VisualItem.ENDTEXTCOLOR);
+	}
+
+	/**
+	 * Set the ending text color of the row. The text color is used to draw text strings for the
+	 * item. Color values as represented as an integer containing the red, green, blue, and alpha
+	 * (transparency) color channels. A color with a zero alpha component is fully transparent and
+	 * will not be drawn.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param color
+	 *            the ending text color, represented as an integer
+	 * @@see prefuse.util.ColorLib
+	 */
+	public void setEndTextColor(final int row, final int color) {
+		setInt(row, VisualItem.ENDTEXTCOLOR, color);
+	}
+
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Get the current size value of the row. Size values are typically used to scale an item,
+	 * either in one-dimension (e.g., a bar chart length) or two-dimensions (e.g., using pixel area
+	 * to encode a quantitative value).
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the current size value
+	 */
+	public double getSize(final int row) {
+		return getDouble(row, VisualItem.SIZE);
+	}
+
+	/**
+	 * Set the current size value of the row. Size values are typically used to scale an item,
+	 * either in one-dimension (e.g., a bar chart length) or two-dimensions (e.g., using pixel area
+	 * to encode a quantitative value).
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param size
+	 *            the current size value
+	 */
+	public void setSize(final int row, final double size) {
+		setDouble(row, VisualItem.SIZE, size);
+	}
+
+	/**
+	 * Get the starting size value of the row. Size values are typically used to scale an item,
+	 * either in one-dimension (e.g., a bar chart length) or two-dimensions (e.g., using pixel area
+	 * to encode a quantitative value).
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the starting size value
+	 */
+	public double getStartSize(final int row) {
+		return getDouble(row, VisualItem.STARTSIZE);
+	}
+
+	/**
+	 * Set the starting size value of the row. Size values are typically used to scale an item,
+	 * either in one-dimension (e.g., a bar chart length) or two-dimensions (e.g., using pixel area
+	 * to encode a quantitative value).
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param size
+	 *            the starting size value
+	 */
+	public void setStartSize(final int row, final double size) {
+		setDouble(row, VisualItem.STARTSIZE, size);
+	}
+
+	/**
+	 * Get the ending size value of the row. Size values are typically used to scale an item, either
+	 * in one-dimension (e.g., a bar chart length) or two-dimensions (e.g., using pixel area to
+	 * encode a quantitative value).
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the ending size value
+	 */
+	public double getEndSize(final int row) {
+		return getDouble(row, VisualItem.ENDSIZE);
+	}
+
+	/**
+	 * Set the ending size value of the row. Size values are typically used to scale an item, either
+	 * in one-dimension (e.g., a bar chart length) or two-dimensions (e.g., using pixel area to
+	 * encode a quantitative value).
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param size
+	 *            the ending size value
+	 */
+	public void setEndSize(final int row, final double size) {
+		setDouble(row, VisualItem.ENDSIZE, size);
+	}
+
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Get the current shape value of the row. This value only has an effect if a Renderer that
+	 * supports different shapes is used (e.g., {@@link prefuse.render.ShapeRenderer}.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the current shape value
+	 */
+	public ShapeType getShape(final int row) {
+		final int num = getInt(row, VisualItem.SHAPE);
+
+		// perhaps due to a threading issue, very frequently the num variable is set
+		// to -1, which causes an ArrayIndexOutOfBounds exception here. To counteract this,
+		// we check the value of num, and if it is -1, we return the shape type of NONE instead.
+		return num == -1 ? ShapeType.NONE : ShapeType.values()[num];
+	}
+
+	/**
+	 * Set the current shape value of the row. This value only has an effect if a Renderer that
+	 * supports different shapes is used (e.g., {@@link prefuse.render.ShapeRenderer}.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param shape
+	 *            the shape value to use
+	 */
+	public void setShape(final int row, final ShapeType shape) {
+		setInt(row, VisualItem.SHAPE, shape.ordinal());
+	}
+
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Get the current stroke used to draw lines and shape outlines for the item at the given row.
+	 * 
+	 * @@return the stroke used to draw lines and shape outlines
+	 */
+	public BasicStroke getStroke(final int row) {
+		return (BasicStroke) get(row, VisualItem.STROKE);
+	}
+
+	/**
+	 * Set the current stroke used to draw lines and shape outlines.
+	 * 
+	 * @@param stroke
+	 *            the stroke to use to draw lines and shape outlines
+	 */
+	public void setStroke(final int row, final BasicStroke stroke) {
+		set(row, VisualItem.STROKE, stroke);
+	}
+
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Get the current font for the row. The font is used as the default typeface for drawing text
+	 * for this item.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the current font value
+	 */
+	public Font getFont(final int row) {
+		return (Font) get(row, VisualItem.FONT);
+	}
+
+	/**
+	 * Set the current font for the the row. The font is used as the default typeface for drawing
+	 * text for this item.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param font
+	 *            the current font value
+	 */
+	public void setFont(final int row, final Font font) {
+		set(row, VisualItem.FONT, font);
+	}
+
+	/**
+	 * Get the starting font for the row. The font is used as the default typeface for drawing text
+	 * for this item.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the starting font value
+	 */
+	public Font getStartFont(final int row) {
+		return (Font) get(row, VisualItem.STARTFONT);
+	}
+
+	/**
+	 * Set the starting font for the row. The font is used as the default typeface for drawing text
+	 * for this item.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param font
+	 *            the starting font value
+	 */
+	public void setStartFont(final int row, final Font font) {
+		set(row, VisualItem.STARTFONT, font);
+	}
+
+	/**
+	 * Get the ending font for the row. The font is used as the default typeface for drawing text
+	 * for this item.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the ending font value
+	 */
+	public Font getEndFont(final int row) {
+		return (Font) get(row, VisualItem.ENDFONT);
+	}
+
+	/**
+	 * Set the ending font for the row. The font is used as the default typeface for drawing text
+	 * for this item.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param font
+	 *            the ending font value
+	 */
+	public void setEndFont(final int row, final Font font) {
+		set(row, VisualItem.ENDFONT, font);
+	}
+
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Get the degree-of-interest (DOI) value. The degree-of-interet is an optional value that can
+	 * be used to sort items by importance, control item visibility, or influence particular visual
+	 * encodings. A common example is to use the DOI to store the graph distance of a node from the
+	 * nearest selected focus node.
+	 * 
+	 * @@param row
+	 *            the table row
+	 * @@return the DOI value of this item
+	 */
+	public double getDOI(final int row) {
+		return getDouble(row, VisualItem.DOI);
+	}
+
+	/**
+	 * Set the degree-of-interest (DOI) value. The degree-of-interet is an optional value that can
+	 * be used to sort items by importance, control item visibility, or influence particular visual
+	 * encodings. A common example is to use the DOI to store the graph distance of a node from the
+	 * nearest selected focus node.
+	 * 
+	 * @@param row
+	 *            the table row to set
+	 * @@param doi
+	 *            the DOI value of this item
+	 */
+	public void setDOI(final int row, final double doi) {
+		setDouble(row, VisualItem.DOI, doi);
+	}
+@
+
+
+2.3.4.3
+log
+@Refactored the shape work to allow for custom ShapeBuilders. VisualItem.SHAPE has been replaced with VisualItem.SHAPEBUILDER.
+@
+text
+@d8 1
+a8 1
+import prefuse.ShapeBuilder;
+d1048 1
+a1048 1
+	 * Get the current shape builder of the row. This value only has an effect if a Renderer that
+d1055 7
+a1061 2
+	public ShapeBuilder getShapeBuilder(final int row) {
+	    return (ShapeBuilder) get(row, VisualItem.SHAPEBUILDER);
+d1073 2
+a1074 2
+	public void setShapeBuilder(final int row, final ShapeBuilder shapeBuilder) {
+		set(row, VisualItem.SHAPEBUILDER, shapeBuilder);
+@
+
+
+2.3.4.4
+log
+@Documentation improvements
+@
+text
+@d24 1
+a24 1
+ *
+d76 1
+a76 1
+	 *
+d90 1
+a90 1
+	 *
+d107 1
+a107 1
+	 *
+d130 1
+a130 1
+	 *
+d142 1
+a142 1
+	 *
+d156 1
+a156 1
+	 *
+d226 1
+a226 1
+	 *
+d236 1
+a236 1
+	 *
+d245 1
+a245 1
+	 *
+d255 1
+a255 1
+	 *
+d267 1
+a267 1
+	 *
+d280 1
+a280 1
+	 *
+d292 1
+a292 1
+	 *
+d306 1
+a306 1
+	 *
+d317 1
+a317 1
+	 *
+d330 1
+a330 1
+	 *
+d341 1
+a341 1
+	 *
+d354 1
+a354 1
+	 *
+d365 1
+a365 1
+	 *
+d378 1
+a378 1
+	 *
+d389 1
+a389 1
+	 *
+d401 1
+a401 1
+	 *
+d412 1
+a412 1
+	 *
+d425 1
+a425 1
+	 *
+d436 1
+a436 1
+	 *
+d448 1
+a448 1
+	 *
+d461 1
+a461 1
+	 *
+d473 1
+a473 1
+	 *
+d485 1
+a485 1
+	 *
+d499 1
+a499 1
+	 *
+d510 1
+a510 1
+	 *
+d522 1
+a522 1
+	 *
+d533 1
+a533 1
+	 *
+d545 1
+a545 1
+	 *
+d556 1
+a556 1
+	 *
+d568 1
+a568 1
+	 *
+d579 1
+a579 1
+	 *
+d591 1
+a591 1
+	 *
+d602 1
+a602 1
+	 *
+d614 1
+a614 1
+	 *
+d625 1
+a625 1
+	 *
+d639 1
+a639 1
+	 *
+d652 1
+a652 1
+	 *
+d688 1
+a688 1
+	 *
+d703 1
+a703 1
+	 *
+d719 1
+a719 1
+	 *
+d734 1
+a734 1
+	 *
+d750 1
+a750 1
+	 *
+d765 1
+a765 1
+	 *
+d781 1
+a781 1
+	 *
+d796 1
+a796 1
+	 *
+d812 1
+a812 1
+	 *
+d827 1
+a827 1
+	 *
+d843 1
+a843 1
+	 *
+d858 1
+a858 1
+	 *
+d874 1
+a874 1
+	 *
+d889 1
+a889 1
+	 *
+d905 1
+a905 1
+	 *
+d920 1
+a920 1
+	 *
+d936 1
+a936 1
+	 *
+d951 1
+a951 1
+	 *
+d968 1
+a968 1
+	 *
+d981 1
+a981 1
+	 *
+d995 1
+a995 1
+	 *
+d1008 1
+a1008 1
+	 *
+d1022 1
+a1022 1
+	 *
+d1035 1
+a1035 1
+	 *
+d1048 3
+a1050 4
+	 * Get the current shape builder of the row. This value only has an effect
+	 * if a Renderer that supports different shapes is used (e.g.,
+	 * {@@link prefuse.render.ShapeRenderer}.
+	 *
+d1053 1
+a1053 1
+	 * @@return the current ShapeBuilder
+d1062 1
+a1062 1
+	 *
+d1065 2
+a1066 2
+	 * @@param shapeBuilder
+	 *            the ShapeBuilder to use
+d1076 1
+a1076 1
+	 *
+d1085 1
+a1085 1
+	 *
+d1098 1
+a1098 1
+	 *
+d1110 1
+a1110 1
+	 *
+d1123 1
+a1123 1
+	 *
+d1135 1
+a1135 1
+	 *
+d1148 1
+a1148 1
+	 *
+d1160 1
+a1160 1
+	 *
+d1177 1
+a1177 1
+	 *
+d1191 1
+a1191 1
+	 *
+@
+
+
+2.3.4.5
+log
+@fixed typos
+@
+text
+@d98 1
+a98 1
+	 *            a predicate determining which rows of the parent table should be inherited by this
+d115 1
+a115 1
+	 *            a predicate determining which rows of the parent table should be inherited by this
+d458 1
+a458 1
+	 * Set the highlighted status of the given row. How highlighting values are interpreted by the
+d658 1
+a658 1
+	 *            the minimum y-coordinate
+@
+
+
+2.2
+log
+@Moved damage report for invalidation to the event handler.
+@
+text
+@d193 1
+a193 1
+     * @@return the data group name to use
+@
+
+
+2.1
+log
+@Added "stroke" visual property for configuring line drawing.
+EdgeRenderer now draws directed edges (more) correctly, and allow parameterization of the arrow head size.
+@
+text
+@d137 1
+a137 1
+        if ( type==EventConstants.UPDATE && col!=VisualItem.IDX_VALIDATED )
+d139 12
+a150 2
+            for ( int r=row0; r<=row1; ++r )
+                setValidated(r,false);
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d3 1
+d881 19
+@
+
+
+1.1
+log
+@file VisualTable.java was initially added on branch beta.
+@
+text
+@d1 967
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 671
+package prefuse.visual;
+
+import java.awt.Font;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.Visualization;
+import prefuse.data.CascadedTable;
+import prefuse.data.Schema;
+import prefuse.data.Table;
+import prefuse.data.event.EventConstants;
+import prefuse.data.expression.Predicate;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class VisualTable extends CascadedTable {
+
+    private Visualization m_vis;
+    private String m_group;
+    
+    // ------------------------------------------------------------------------
+    // Constructors
+    
+    public VisualTable(Table parent, Visualization vis, String group) {
+        this(parent, vis, group, null, VisualItem.SCHEMA);
+    }
+
+    public VisualTable(Table parent, Visualization vis, String group,
+            Predicate rowFilter)
+    {
+        this(parent, vis, group, rowFilter, VisualItem.SCHEMA);
+    }
+
+    public VisualTable(Table parent, Visualization vis, String group, 
+            Predicate rowFilter, Schema schema)
+    {
+        super(parent, rowFilter, null, VisualItemTupleManager.class);
+        init(vis, group, schema);
+    }
+
+    // -- non-cascaded visual table -------------------------------------------
+    
+    public VisualTable(Visualization vis, String group) {
+        super(VisualItemTupleManager.class);
+        init(vis, group, VisualItem.SCHEMA);
+    }
+    
+    public VisualTable(Visualization vis, String group, Schema schema) {
+        super(VisualItemTupleManager.class);
+        init(vis, group, schema);
+    }
+    
+    protected void init(Visualization vis, String group, Schema schema) {
+        setVisualization(vis);
+        setGroup(group);
+        addColumns(schema);
+        index(VisualItem.VISIBLE);
+        index(VisualItem.STARTVISIBLE);
+        index(VisualItem.VALIDATED);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    protected void fireTableEvent(int row0, int row1, int col, int type) {
+        // table attributes changed, so we invalidate the bounds
+        if ( type==EventConstants.UPDATE && col!=VisualItem.IDX_VALIDATED )
+        {
+            for ( int r=row0; r<=row1; ++r )
+                setValidated(false,r);
+        }
+        else if ( type==EventConstants.DELETE && col==EventConstants.ALL_COLUMNS)
+        {
+            for ( int r=row0; r<=row1; ++r ) {
+                if ( isVisible(r) && isValidated(r) ) {
+                    VisualItem item = (VisualItem)getTuple(r);
+                    m_vis.damageReport(item, getBounds(r));
+                }
+            }
+        }
+        // now propagate the change event
+        super.fireTableEvent(row0, row1, col, type);
+    }
+    
+    // ------------------------------------------------------------------------
+    // VisualItemTable Methods
+    
+    public Visualization getVisualization() {
+        return m_vis;
+    }
+    
+    public void setVisualization(Visualization vis) {
+        m_vis = vis;
+    }
+    
+    public String getGroup() {
+        return m_group;
+    }
+    
+    public void setGroup(String group) {
+        m_group = group;
+    }
+    
+    public VisualItem getItem(int row) {
+        return (VisualItem)getTuple(row);
+    }
+    
+    public VisualItem addItem() {
+        return getItem(addRow());
+    }
+    
+    // ------------------------------------------------------------------------
+    // VisualItem Data Access
+    
+    boolean isValidated(int row) {
+        return getBoolean(VisualItem.VALIDATED, row);
+    }
+    
+    void setValidated(boolean value, int row) {
+        setBoolean(value, VisualItem.VALIDATED, row);
+    }
+    
+    public boolean isVisible(int row) {
+        return getBoolean(VisualItem.VISIBLE, row);
+    }
+    
+    public void setVisible(boolean value, int row) {
+        setBoolean(value, VisualItem.VISIBLE, row);
+    }
+    
+    public boolean isStartVisible(int row) {
+        return getBoolean(VisualItem.STARTVISIBLE, row);
+    }
+    
+    public void setStartVisible(boolean value, int row) {
+        setBoolean(value, VisualItem.STARTVISIBLE, row);
+    }
+
+    public boolean isEndVisible(int row) {
+        return getBoolean(VisualItem.ENDVISIBLE, row);
+    }
+    
+    public void setEndVisible(boolean value, int row) {
+        setBoolean(value, VisualItem.ENDVISIBLE, row);
+    }
+    
+    public boolean isInteractive(int row) {
+        return getBoolean(VisualItem.INTERACTIVE, row);
+    }
+
+    public void setInteractive(boolean value, int row) {
+        setBoolean(value, VisualItem.INTERACTIVE, row);
+    }
+    
+    public boolean isExpanded(int row) {
+        return getBoolean(VisualItem.EXPANDED, row);
+    }
+
+    public void setExpanded(boolean value, int row) {
+        setBoolean(value, VisualItem.EXPANDED, row);
+    }
+    
+    public boolean isFixed(int row) {
+        return getBoolean(VisualItem.FIXED, row);
+    }
+
+    public void setFixed(boolean value, int row) {
+        setBoolean(value, VisualItem.FIXED, row);
+    }
+    
+    public boolean isHighlighted(int row) {
+        return getBoolean(VisualItem.HIGHLIGHT, row);
+    }
+    
+    public void setHighlighted(boolean value, int row) {
+        setBoolean(value, VisualItem.HIGHLIGHT, row);
+    }
+
+    public boolean isHover(int row) {
+        return getBoolean(VisualItem.HOVER, row);
+    }
+    
+    public void setHover(boolean value, int row) {
+        setBoolean(value, VisualItem.HOVER, row);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public double getX(int row) {
+        return getDouble(VisualItem.X, row);
+    }
+    
+    public void setX(double x, int row) {
+        setDouble(x, VisualItem.X, row);
+    }
+    
+    public double getY(int row) {
+        return getDouble(VisualItem.Y, row);
+    }
+    
+    public void setY(double y, int row) {
+        setDouble(y, VisualItem.Y, row);
+    }    
+    
+    public double getStartX(int row) {
+        return getDouble(VisualItem.STARTX, row);
+    }
+    
+    public void setStartX(double x, int row) {
+        setDouble(x, VisualItem.STARTX, row);
+    }
+    
+    public double getStartY(int row) {
+        return getDouble(VisualItem.STARTY, row);
+    }
+    
+    public void setStartY(double y, int row) {
+        setDouble(y, VisualItem.STARTY, row);
+    }
+    
+    public double getEndX(int row) {
+        return getDouble(VisualItem.ENDX, row);
+    }
+    
+    public void setEndX(double x, int row) {
+        setDouble(x, VisualItem.ENDX, row);
+    }
+    
+    public double getEndY(int row) {
+        return getDouble(VisualItem.ENDY, row);
+    }
+
+    public void setEndY(double y, int row) {
+        setDouble(y, VisualItem.ENDY, row);
+    }
+    
+    /**
+     * Returns the bounds for the VisualItem at the given row index. The
+     * returned reference is for the actual bounds object used by the
+     * system -- do <b>NOT</b> directly edit the values in this returned
+     * object!! This will corrupt the state of the system.
+     * 
+     * @@param row
+     * @@return
+     */
+    public Rectangle2D getBounds(int row) {
+        return (Rectangle2D)get(VisualItem.BOUNDS, row);
+    }
+    
+    public void setBounds(double x, double y, double w, double h, int row) {
+        getBounds(row).setRect(x, y, w, h);
+        fireTableEvent(row, row,
+                getColumnIndex(VisualItem.BOUNDS), EventConstants.UPDATE);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public int getStrokeColor(int row) {
+        return getInt(VisualItem.STROKECOLOR, row);
+    }
+    
+    public void setStrokeColor(int color, int row) {
+        setInt(color, VisualItem.STROKECOLOR, row);
+    }
+    
+    public int getStartStrokeColor(int row) {
+        return getInt(VisualItem.STARTSTROKECOLOR, row);
+    }
+    
+    public void setStartStrokeColor(int color, int row) {
+        setInt(color, VisualItem.STARTSTROKECOLOR, row);
+    }
+    
+    public int getEndStrokeColor(int row) {
+        return getInt(VisualItem.ENDSTROKECOLOR, row);
+    }
+    
+    public void setEndStrokeColor(int color, int row) {
+        setInt(color, VisualItem.ENDSTROKECOLOR, row);
+    }
+    
+    public int getFillColor(int row) {
+        return getInt(VisualItem.FILLCOLOR, row);
+    }
+    
+    public void setFillColor(int color, int row) {
+        setInt(color, VisualItem.FILLCOLOR, row);
+    }
+    
+    public int getStartFillColor(int row) {
+        return getInt(VisualItem.STARTFILLCOLOR, row);
+    }
+    
+    public void setStartFillColor(int color, int row) {
+        setInt(color, VisualItem.STARTFILLCOLOR, row);
+    }
+    
+    public int getEndFillColor(int row) {
+        return getInt(VisualItem.ENDFILLCOLOR, row);
+    }
+    
+    public void setEndFillColor(int color, int row) {
+        setInt(color, VisualItem.ENDFILLCOLOR, row);
+    }
+    
+    public int getTextColor(int row) {
+        return getInt(VisualItem.TEXTCOLOR, row);
+    }
+    
+    public void setTextColor(int color, int row) {
+        setInt(color, VisualItem.TEXTCOLOR, row);
+    }
+    
+    public int getStartTextColor(int row) {
+        return getInt(VisualItem.STARTTEXTCOLOR, row);
+    }
+    
+    public void setStartTextColor(int color, int row) {
+        setInt(color, VisualItem.STARTTEXTCOLOR, row);
+    }
+    
+    public int getEndTextColor(int row) {
+        return getInt(VisualItem.ENDTEXTCOLOR, row);
+    }
+    
+    public void setEndTextColor(int color, int row) {
+        setInt(color, VisualItem.ENDTEXTCOLOR, row);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public double getSize(int row) {
+        return getDouble(VisualItem.SIZE, row);
+    }
+    
+    public void setSize(double size, int row) {
+        setDouble(size, VisualItem.SIZE, row);
+    }
+    
+    public double getStartSize(int row) {
+        return getDouble(VisualItem.STARTSIZE, row);
+    }
+    
+    public void setStartSize(double size, int row) {
+        setDouble(size, VisualItem.STARTSIZE, row);
+    }
+    
+    public double getEndSize(int row) {
+        return getDouble(VisualItem.ENDSIZE, row);
+    }
+    
+    public void setEndSize(double size, int row) {
+        setDouble(size, VisualItem.ENDSIZE, row);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public Font getFont(int row) {
+        return (Font)get(VisualItem.FONT, row);
+    }
+    
+    public void setFont(Font font, int row) {
+        set(font, VisualItem.FONT, row);
+    }
+    
+    public Font getStartFont(int row) {
+        return (Font)get(VisualItem.STARTFONT, row);
+    }
+
+    public void setStartFont(Font font, int row) {
+        set(font, VisualItem.STARTFONT, row);
+    }
+    
+    public Font getEndFont(int row) {
+        return (Font)get(VisualItem.ENDFONT, row);
+    }
+    
+    public void setEndFont(Font font, int row) {
+        set(font, VisualItem.ENDFONT, row);
+    }
+
+    // ------------------------------------------------------------------------
+    
+    public double getDOI(int row) {
+        return getDouble(VisualItem.DOI, row);
+    }
+    
+    public void setDOI(double doi, int row) {
+        setDouble(doi, VisualItem.DOI, row);
+    }
+        
+    
+    // ------------------------------------------------------------------------
+    // VisualItem Data Access
+    
+//    boolean isValidated(int row) {
+//        return getColumn(VisualItem.IDX_VALIDATED).getBoolean(row);
+//    }
+//    
+//    void setValidated(boolean value, int row) {
+//        getColumn(VisualItem.IDX_VALIDATED).setBoolean(value, row);
+//    }
+//    
+//    public boolean isVisible(int row) {
+//        return getColumn(VisualItem.IDX_VISIBLE).getBoolean(row);
+//    }
+//    
+//    public void setVisible(boolean value, int row) {
+//        getColumn(VisualItem.IDX_VISIBLE).setBoolean(value, row);
+//    }
+//    
+//    public boolean isStartVisible(int row) {
+//        return getColumn(VisualItem.IDX_STARTVISIBLE).getBoolean(row);
+//    }
+//    
+//    public void setStartVisible(boolean value, int row) {
+//        getColumn(VisualItem.IDX_STARTVISIBLE).setBoolean(value, row);
+//    }
+//
+//    public boolean isEndVisible(int row) {
+//        return getColumn(VisualItem.IDX_ENDVISIBLE).getBoolean(row);
+//    }
+//    
+//    public void setEndVisible(boolean value, int row) {
+//        getColumn(VisualItem.IDX_ENDVISIBLE).setBoolean(value, row);
+//    }
+//    
+//    public boolean isInteractive(int row) {
+//        return getColumn(VisualItem.IDX_INTERACTIVE).getBoolean(row);
+//    }
+//
+//    public void setInteractive(boolean value, int row) {
+//        getColumn(VisualItem.IDX_INTERACTIVE).setBoolean(value, row);
+//    }
+//    
+//    public boolean isExpanded(int row) {
+//        return getColumn(VisualItem.IDX_EXPANDED).getBoolean(row);
+//    }
+//
+//    public void setExpanded(boolean value, int row) {
+//        getColumn(VisualItem.IDX_EXPANDED).setBoolean(value, row);
+//    }
+//    
+//    public boolean isFixed(int row) {
+//        return getColumn(VisualItem.IDX_FIXED).getBoolean(row);
+//    }
+//
+//    public void setFixed(boolean value, int row) {
+//        getColumn(VisualItem.IDX_FIXED).setBoolean(value, row);
+//    }
+//    
+//    public boolean isHighlighted(int row) {
+//        return getColumn(VisualItem.IDX_HIGHLIGHT).getBoolean(row);
+//    }
+//    
+//    public void setHighlighted(boolean value, int row) {
+//        getColumn(VisualItem.IDX_HIGHLIGHT).setBoolean(value, row);
+//    }
+//
+//    public boolean isHover(int row) {
+//        return getColumn(VisualItem.IDX_HOVER).getBoolean(row);
+//    }
+//    
+//    public void setHover(boolean value, int row) {
+//        getColumn(VisualItem.IDX_HOVER).setBoolean(value, row);
+//    }
+//    
+//    // ------------------------------------------------------------------------
+//    
+//    public double getX(int row) {
+//        return getColumn(VisualItem.IDX_X).getDouble(row);
+//    }
+//    
+//    public void setX(double x, int row) {
+//        getColumn(VisualItem.IDX_X).setDouble(x, row);
+//    }
+//    
+//    public double getY(int row) {
+//        return getColumn(VisualItem.IDX_Y).getDouble(row);
+//    }
+//    
+//    public void setY(double y, int row) {
+//        getColumn(VisualItem.IDX_Y).setDouble(y, row);
+//    }    
+//    
+//    public double getStartX(int row) {
+//        return getColumn(VisualItem.IDX_STARTX).getDouble(row);
+//    }
+//    
+//    public void setStartX(double x, int row) {
+//        getColumn(VisualItem.IDX_STARTX).setDouble(x, row);
+//    }
+//    
+//    public double getStartY(int row) {
+//        return getColumn(VisualItem.IDX_STARTY).getDouble(row);
+//    }
+//    
+//    public void setStartY(double y, int row) {
+//        getColumn(VisualItem.IDX_STARTY).setDouble(y, row);
+//    }
+//    
+//    public double getEndX(int row) {
+//        return getColumn(VisualItem.IDX_ENDX).getDouble(row);
+//    }
+//    
+//    public void setEndX(double x, int row) {
+//        getColumn(VisualItem.IDX_ENDX).setDouble(x, row);
+//    }
+//    
+//    public double getEndY(int row) {
+//        return getColumn(VisualItem.IDX_ENDY).getDouble(row);
+//    }
+//
+//    public void setEndY(double y, int row) {
+//        getColumn(VisualItem.IDX_ENDY).setDouble(y, row);
+//    }
+//    
+//    /**
+//     * Returns the bounds for the VisualItem at the given row index. The
+//     * returned reference is for the actual bounds object used by the
+//     * system -- do <b>NOT</b> directly edit the values in this returned
+//     * object!! This will corrupt the state of the system.
+//     * 
+//     * @@param row
+//     * @@return
+//     */
+//    public Rectangle2D getBounds(int row) {
+//        return (Rectangle2D)getColumn(VisualItem.IDX_BOUNDS).get(row);
+//    }
+//    
+//    public void setBounds(double x, double y, double w, double h, int row) {
+//        getBounds(row).setRect(x, y, w, h);
+//        fireTableEvent(row, row, VisualItem.IDX_BOUNDS, EventConstants.UPDATE);
+//    }
+//    
+//    // ------------------------------------------------------------------------
+//    
+//    public int getStrokeColor(int row) {
+//        return getColumn(VisualItem.IDX_STROKECOLOR).getInt(row);
+//    }
+//    
+//    public void setStrokeColor(int color, int row) {
+//        getColumn(VisualItem.IDX_STROKECOLOR).setInt(color, row);
+//    }
+//    
+//    public int getStartStrokeColor(int row) {
+//        return getColumn(VisualItem.IDX_STARTSTROKECOLOR).getInt(row);
+//    }
+//    
+//    public void setStartStrokeColor(int color, int row) {
+//        getColumn(VisualItem.IDX_STARTSTROKECOLOR).setInt(color, row);
+//    }
+//    
+//    public int getEndStrokeColor(int row) {
+//        return getColumn(VisualItem.IDX_ENDSTROKECOLOR).getInt(row);
+//    }
+//    
+//    public void setEndStrokeColor(int color, int row) {
+//        getColumn(VisualItem.IDX_ENDSTROKECOLOR).setInt(color, row);
+//    }
+//    
+//    public int getFillColor(int row) {
+//        return getColumn(VisualItem.IDX_FILLCOLOR).getInt(row);
+//    }
+//    
+//    public void setFillColor(int color, int row) {
+//        getColumn(VisualItem.IDX_FILLCOLOR).setInt(color, row);
+//    }
+//    
+//    public int getStartFillColor(int row) {
+//        return getColumn(VisualItem.IDX_STARTFILLCOLOR).getInt(row);
+//    }
+//    
+//    public void setStartFillColor(int color, int row) {
+//        getColumn(VisualItem.IDX_STARTFILLCOLOR).setInt(color, row);
+//    }
+//    
+//    public int getEndFillColor(int row) {
+//        return getColumn(VisualItem.IDX_ENDFILLCOLOR).getInt(row);
+//    }
+//    
+//    public void setEndFillColor(int color, int row) {
+//        getColumn(VisualItem.IDX_ENDFILLCOLOR).setInt(color, row);
+//    }
+//    
+//    public int getTextColor(int row) {
+//        return getColumn(VisualItem.IDX_TEXTCOLOR).getInt(row);
+//    }
+//    
+//    public void setTextColor(int color, int row) {
+//        getColumn(VisualItem.IDX_TEXTCOLOR).setInt(color, row);
+//    }
+//    
+//    public int getStartTextColor(int row) {
+//        return getColumn(VisualItem.IDX_STARTTEXTCOLOR).getInt(row);
+//    }
+//    
+//    public void setStartTextColor(int color, int row) {
+//        getColumn(VisualItem.IDX_STARTTEXTCOLOR).setInt(color, row);
+//    }
+//    
+//    public int getEndTextColor(int row) {
+//        return getColumn(VisualItem.IDX_ENDTEXTCOLOR).getInt(row);
+//    }
+//    
+//    public void setEndTextColor(int color, int row) {
+//        getColumn(VisualItem.IDX_ENDTEXTCOLOR).setInt(color, row);
+//    }
+//    
+//    // ------------------------------------------------------------------------
+//    
+//    public double getSize(int row) {
+//        return getColumn(VisualItem.IDX_SIZE).getDouble(row);
+//    }
+//    
+//    public void setSize(double size, int row) {
+//        getColumn(VisualItem.IDX_SIZE).setDouble(size, row);
+//    }
+//    
+//    public double getStartSize(int row) {
+//        return getColumn(VisualItem.IDX_STARTSIZE).getDouble(row);
+//    }
+//    
+//    public void setStartSize(double size, int row) {
+//        getColumn(VisualItem.IDX_STARTSIZE).setDouble(size, row);
+//    }
+//    
+//    public double getEndSize(int row) {
+//        return getColumn(VisualItem.IDX_ENDSIZE).getDouble(row);
+//    }
+//    
+//    public void setEndSize(double size, int row) {
+//        getColumn(VisualItem.IDX_ENDSIZE).setDouble(size, row);
+//    }
+//    
+//    // ------------------------------------------------------------------------
+//    
+//    public Font getFont(int row) {
+//        return (Font)getColumn(VisualItem.IDX_FONT).get(row);
+//    }
+//    
+//    public void setFont(Font font, int row) {
+//        getColumn(VisualItem.IDX_FONT).set(font, row);
+//    }
+//    
+//    public Font getStartFont(int row) {
+//        return (Font)getColumn(VisualItem.IDX_STARTFONT).get(row);
+//    }
+//
+//    public void setStartFont(Font font, int row) {
+//        getColumn(VisualItem.IDX_STARTFONT).set(font, row);
+//    }
+//    
+//    public Font getEndFont(int row) {
+//        return (Font)getColumn(VisualItem.IDX_ENDFONT).get(row);
+//    }
+//    
+//    public void setEndFont(Font font, int row) {
+//        getColumn(VisualItem.IDX_ENDFONT).set(font, row);
+//    }
+//
+//    // ------------------------------------------------------------------------
+//    
+//    public double getDOI(int row) {
+//        return getColumn(VisualItem.IDX_DOI).getDouble(row);
+//    }
+//    
+//    public void setDOI(double x, int row) {
+//        getColumn(VisualItem.IDX_DOI).setDouble(x, row);
+//    }
+    
+} // end of class VisualTable@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d115 1
+a115 1
+        return getBoolean(row, VisualItem.VALIDATED);
+d119 1
+a119 1
+        setBoolean(row, VisualItem.VALIDATED, value);
+d123 1
+a123 1
+        return getBoolean(row, VisualItem.VISIBLE);
+d127 1
+a127 1
+        setBoolean(row, VisualItem.VISIBLE, value);
+d131 1
+a131 1
+        return getBoolean(row, VisualItem.STARTVISIBLE);
+d135 1
+a135 1
+        setBoolean(row, VisualItem.STARTVISIBLE, value);
+d139 1
+a139 1
+        return getBoolean(row, VisualItem.ENDVISIBLE);
+d143 1
+a143 1
+        setBoolean(row, VisualItem.ENDVISIBLE, value);
+d147 1
+a147 1
+        return getBoolean(row, VisualItem.INTERACTIVE);
+d151 1
+a151 1
+        setBoolean(row, VisualItem.INTERACTIVE, value);
+d155 1
+a155 1
+        return getBoolean(row, VisualItem.EXPANDED);
+d159 1
+a159 1
+        setBoolean(row, VisualItem.EXPANDED, value);
+d163 1
+a163 1
+        return getBoolean(row, VisualItem.FIXED);
+d167 1
+a167 1
+        setBoolean(row, VisualItem.FIXED, value);
+d171 1
+a171 1
+        return getBoolean(row, VisualItem.HIGHLIGHT);
+d175 1
+a175 1
+        setBoolean(row, VisualItem.HIGHLIGHT, value);
+d179 1
+a179 1
+        return getBoolean(row, VisualItem.HOVER);
+d183 1
+a183 1
+        setBoolean(row, VisualItem.HOVER, value);
+d189 1
+a189 1
+        return getDouble(row, VisualItem.X);
+d193 1
+a193 1
+        setDouble(row, VisualItem.X, x);
+d197 1
+a197 1
+        return getDouble(row, VisualItem.Y);
+d201 1
+a201 1
+        setDouble(row, VisualItem.Y, y);
+d205 1
+a205 1
+        return getDouble(row, VisualItem.STARTX);
+d209 1
+a209 1
+        setDouble(row, VisualItem.STARTX, x);
+d213 1
+a213 1
+        return getDouble(row, VisualItem.STARTY);
+d217 1
+a217 1
+        setDouble(row, VisualItem.STARTY, y);
+d221 1
+a221 1
+        return getDouble(row, VisualItem.ENDX);
+d225 1
+a225 1
+        setDouble(row, VisualItem.ENDX, x);
+d229 1
+a229 1
+        return getDouble(row, VisualItem.ENDY);
+d233 1
+a233 1
+        setDouble(row, VisualItem.ENDY, y);
+d246 1
+a246 1
+        return (Rectangle2D)get(row, VisualItem.BOUNDS);
+d258 1
+a258 1
+        return getInt(row, VisualItem.STROKECOLOR);
+d262 1
+a262 1
+        setInt(row, VisualItem.STROKECOLOR, color);
+d266 1
+a266 1
+        return getInt(row, VisualItem.STARTSTROKECOLOR);
+d270 1
+a270 1
+        setInt(row, VisualItem.STARTSTROKECOLOR, color);
+d274 1
+a274 1
+        return getInt(row, VisualItem.ENDSTROKECOLOR);
+d278 1
+a278 1
+        setInt(row, VisualItem.ENDSTROKECOLOR, color);
+d282 1
+a282 1
+        return getInt(row, VisualItem.FILLCOLOR);
+d286 1
+a286 1
+        setInt(row, VisualItem.FILLCOLOR, color);
+d290 1
+a290 1
+        return getInt(row, VisualItem.STARTFILLCOLOR);
+d294 1
+a294 1
+        setInt(row, VisualItem.STARTFILLCOLOR, color);
+d298 1
+a298 1
+        return getInt(row, VisualItem.ENDFILLCOLOR);
+d302 1
+a302 1
+        setInt(row, VisualItem.ENDFILLCOLOR, color);
+d306 1
+a306 1
+        return getInt(row, VisualItem.TEXTCOLOR);
+d310 1
+a310 1
+        setInt(row, VisualItem.TEXTCOLOR, color);
+d314 1
+a314 1
+        return getInt(row, VisualItem.STARTTEXTCOLOR);
+d318 1
+a318 1
+        setInt(row, VisualItem.STARTTEXTCOLOR, color);
+d322 1
+a322 1
+        return getInt(row, VisualItem.ENDTEXTCOLOR);
+d326 1
+a326 1
+        setInt(row, VisualItem.ENDTEXTCOLOR, color);
+d332 1
+a332 1
+        return getDouble(row, VisualItem.SIZE);
+d336 1
+a336 1
+        setDouble(row, VisualItem.SIZE, size);
+d340 1
+a340 1
+        return getDouble(row, VisualItem.STARTSIZE);
+d344 1
+a344 1
+        setDouble(row, VisualItem.STARTSIZE, size);
+d348 1
+a348 1
+        return getDouble(row, VisualItem.ENDSIZE);
+d352 1
+a352 1
+        setDouble(row, VisualItem.ENDSIZE, size);
+d358 1
+a358 1
+        return (Font)get(row, VisualItem.FONT);
+d362 1
+a362 1
+        set(row, VisualItem.FONT, font);
+d366 1
+a366 1
+        return (Font)get(row, VisualItem.STARTFONT);
+d370 1
+a370 1
+        set(row, VisualItem.STARTFONT, font);
+d374 1
+a374 1
+        return (Font)get(row, VisualItem.ENDFONT);
+d378 1
+a378 1
+        set(row, VisualItem.ENDFONT, font);
+d384 1
+a384 1
+        return getDouble(row, VisualItem.DOI);
+d388 1
+a388 1
+        setDouble(row, VisualItem.DOI, doi);
+@
+
+
+1.1.2.3
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a11 1
+import prefuse.visual.tuple.VisualItemTupleManager;
+a52 7
+    public VisualTable(Visualization vis, String group, Schema schema,
+    		Class tupleManagerClass)
+    {
+        super(tupleManagerClass);
+        init(vis, group, schema);
+    }
+    
+d57 3
+a59 6
+        if ( canGetBoolean(VisualItem.VISIBLE) )
+        	index(VisualItem.VISIBLE);
+        if ( canGetBoolean(VisualItem.STARTVISIBLE) )
+        	index(VisualItem.STARTVISIBLE);
+        if ( canGetBoolean(VisualItem.VALIDATED) )
+        	index(VisualItem.VALIDATED);
+d114 1
+a114 1
+    public boolean isValidated(int row) {
+d118 1
+a118 1
+    public void setValidated(boolean value, int row) {
+@
+
+
+1.1.2.4
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d55 1
+a55 1
+            Class tupleManagerClass)
+d66 1
+a66 1
+            index(VisualItem.VISIBLE);
+d68 1
+a68 1
+            index(VisualItem.STARTVISIBLE);
+d70 1
+a70 1
+            index(VisualItem.VALIDATED);
+d682 1
+a682 1
+} // end of class VisualTable
+@
+
+
+1.1.2.5
+log
+@Much more javadoc
+@
+text
+@d15 1
+a15 9
+ * A visual abstraction of a Table data structure. Serves as a backing table
+ * for VisualItem tuples. VisualTable dervies from CascadedTable,
+ * so can inherit another table's values. Commonly, a VisualTable is used to
+ * take a raw data table and "strap" visual properties on top of it.
+ * VisualTables should not be created directly, they are created automatically
+ * by adding data to a Visualization, for example by using the
+ * {@@link Visualization#addTable(String, Table)} method.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d17 1
+a17 1
+public class VisualTable extends CascadedTable implements VisualTupleSet {
+a24 6
+    /**
+     * Create a new VisualTable.
+     * @@param parent the parent table whose values this table should inherit
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     */
+a28 8
+    /**
+     * Create a new VisualTable.
+     * @@param parent the parent table whose values this table should inherit
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     * @@param rowFilter a predicate determing which rows of the parent table
+     * should be inherited by this table and which should be filtered out
+     */
+a34 9
+    /**
+     * Create a new VisualTable.
+     * @@param parent the parent table whose values this table should inherit
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     * @@param rowFilter a predicate determing which rows of the parent table
+     * should be inherited by this table and which should be filtered out
+     * @@param schema the data schema to use for the table's local columns
+     */
+a43 5
+    /**
+     * Create a new VisualTable without a parent table.
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     */
+a48 6
+    /**
+     * Create a new VisualTable without a parent table.
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     * @@param schema the data schema to use for the table's local columns
+     */
+d53 1
+a53 8
+
+    /**
+     * Create a new VisualTable without a parent table.
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     * @@param schema the data schema to use for the table's local columns
+     * @@param tupleManagerClass the type of TupleManager to use
+     */
+a60 6
+    /**
+     * Initialize this VisualTable
+     * @@param vis the Visualization associated with this table
+     * @@param group the data group of this table
+     * @@param schema the data schema to use for the table's local columns
+     */
+a74 4
+    /**
+     * Relay table events. Ensures that updated visual items are invalidated
+     * and that damage reports are issued for deleted items.
+     */
+d80 1
+a80 1
+                setValidated(r,false);
+a97 3
+    /**
+     * @@see prefuse.visual.VisualTupleSet#getVisualization()
+     */
+a101 4
+    /**
+     * Set the visualization associated with this VisualTable
+     * @@param vis the visualization to set
+     */
+a105 4
+    /**
+     * Get the visualization data group name for this table
+     * @@return the data group name
+     */
+a109 4
+    /**
+     * Set the visualization data group name for this table
+     * @@return the data group name to use
+     */
+a113 5
+    /**
+     * Get the VisualItem for the given table row.
+     * @@param row a table row index
+     * @@return the VisualItem for the given table row
+     */
+a117 5
+    /**
+     * Add a new row to the table and return the VisualItem for that row. Only
+     * allowed if there is no parent table, otherwise an exception will result.
+     * @@return the VisualItem for the newly added table row.
+     */
+a124 6
+    /**
+     * Indicates if the given row is currently validated. If not,
+     * validateBounds() must be run to update the bounds to a current value.
+     * @@param row the table row
+     * @@return true if validated, false otherwise
+     */
+d129 1
+a129 7
+    /**
+     * Set the given row's validated flag. This is for internal use by prefuse
+     * and, in general, should not be called by application code.
+     * @@param row the table row to set
+     * @@param value the value of the validated flag to set.
+     */
+    public void setValidated(int row, boolean value) {
+a132 8
+    /**
+     * Indicates if the given row is currently set to be visible. Items with
+     * the visible flag set false will not be drawn by a display. Invisible
+     * items are also by necessity not interactive, regardless of the value of
+     * the interactive flag.
+     * @@param row the table row
+     * @@return true if visible, false if invisible
+     */
+d137 1
+a137 6
+    /**
+     * Set the given row's visibility.
+     * @@param row the table row to set
+     * @@param value true to make the item visible, false otherwise.
+     */
+    public void setVisible(int row, boolean value) {
+a140 7
+    /**
+     * Indicates if the start visible flag is set to true. This is the
+     * visibility value consulted for the staring value of the visibility
+     * field at the beginning of an animated transition.
+     * @@param row the table row
+     * @@return true if this item starts out visible, false otherwise.
+     */
+d145 1
+a145 6
+    /**
+     * Set the start visible flag.
+     * @@param row the table row to set
+     * @@param value true to set the start visible flag, false otherwise
+     */
+    public void setStartVisible(int row, boolean value) {
+a148 7
+    /**
+     * Indictes if the end visible flag is set to true. This is the
+     * visibility value consulted for the ending value of the visibility
+     * field at the end of an animated transition.
+     * @@param row the table row
+     * @@return true if this items ends visible, false otherwise.
+     */
+d153 1
+a153 6
+    /**
+     * Set the end visible flag.
+     * @@param row the table row to set
+     * @@param value true to set the end visible flag, false otherwise
+     */
+    public void setEndVisible(int row, boolean value) {
+a156 6
+    /**
+     * Indicates if this item is interactive, meaning it can potentially
+     * respond to mouse and keyboard input events.
+     * @@param row the table row
+     * @@return true if the item is interactive, false otherwise
+     */
+d161 1
+a161 6
+    /**
+     * Set the interactive status of the given row.
+     * @@param row the table row to set
+     * @@param value true for interactive, false for non-interactive
+     */
+    public void setInteractive(int row, boolean value) {
+a164 6
+    /**
+     * Indicates the given row is expanded. Only used for items that are
+     * part of a graph structure. 
+     * @@param row the table row
+     * @@return true if expanded, false otherwise
+     */
+d169 1
+a169 6
+    /**
+     * Set the expanded flag.
+     * @@param row the table row to set
+     * @@param value true to set as expanded, false as collapsed.
+     */
+    public void setExpanded(int row, boolean value) {
+a172 6
+    /**
+     * Indicates if the given row is fixed, and so will not have its position
+     * changed by any layout or distortion actions.
+     * @@param row the table row
+     * @@return true if the item has a fixed position, false otherwise
+     */
+d177 1
+a177 6
+    /**
+     * Sets if the given row is fixed in its position.
+     * @@param row the table row to set
+     * @@param value true to fix the item, false otherwise
+     */
+    public void setFixed(int row, boolean value) {
+a180 5
+    /**
+     * Indicates if the given row is highlighted.
+     * @@param row the table row
+     * @@return true for highlighted, false for not highlighted
+     */
+d185 1
+a185 10
+    /**
+     * Set the highlighted status of the given row. How higlighting values are
+     * interpreted by the system depends on the various processing actions
+     * set up for an application (e.g., how a
+     * {@@link prefuse.action.assignment.ColorFunction} might assign colors
+     * based on the flag).
+     * @@param row the table row to set
+     * @@param value true to highlight the item, false for no highlighting.
+     */
+    public void setHighlighted(int row, boolean value) {
+a188 5
+    /**
+     * Indicates if the given row currently has the mouse pointer over it.
+     * @@param row the table row
+     * @@return true if the mouse pointer is over this item, false otherwise
+     */
+d193 1
+a193 7
+    /**
+     * Set the hover flag. This is set automatically by the prefuse framework,
+     * so should not need to be set explicitly by application code.
+     * @@param row the table row to set
+     * @@param value true to set the hover flag, false otherwise
+     */
+    public void setHover(int row, boolean value) {
+a198 5
+    /**
+     * Get the current x-coordinate of the given row.
+     * @@param row the table row
+     * @@return the current x-coordinate
+     */
+d203 1
+a203 6
+    /**
+     * Set the current x-coordinate of the given row.
+     * @@param row the table row to set
+     * @@param x the new current x-coordinate
+     */
+    public void setX(int row, double x) {
+a206 5
+    /**
+     * Get the current y-coordinate of the given row.
+     * @@param row the table row
+     * @@return the current y-coordinate
+     */
+d211 1
+a211 6
+    /**
+     * Set the current y-coordinate of the given row.
+     * @@param row the table row to set
+     * @@param y the new current y-coordinate
+     */
+    public void setY(int row, double y) {
+a214 5
+    /**
+     * Get the starting x-coordinate of the given row.
+     * @@param row the table row
+     * @@return the starting x-coordinate
+     */
+d219 1
+a219 6
+    /**
+     * Set the starting x-coordinate of the given row.
+     * @@param row the table row to set
+     * @@param x the new starting x-coordinate
+     */
+    public void setStartX(int row, double x) {
+a222 5
+    /**
+     * Get the starting y-coordinate of the given row.
+     * @@param row the table row
+     * @@return the starting y-coordinate
+     */
+d227 1
+a227 6
+    /**
+     * Set the starting y-coordinate of the given row.
+     * @@param row the table row to set
+     * @@param y the new starting y-coordinate
+     */
+    public void setStartY(int row, double y) {
+a230 5
+    /**
+     * Get the ending x-coordinate of the given row.
+     * @@param row the table row
+     * @@return the ending x-coordinate
+     */
+d235 1
+a235 6
+    /**
+     * Set the ending x-coordinate of the given row.
+     * @@param row the table row to set
+     * @@param x the new ending x-coordinate
+     */
+    public void setEndX(int row, double x) {
+a238 5
+    /**
+     * Get the ending y-coordinate of the given row.
+     * @@param row the table row
+     * @@return the ending y-coordinate
+     */
+d243 1
+a243 6
+    /**
+     * Set the ending y-coordinate of the given row.
+     * @@param row the table row to set
+     * @@param y the new ending y-coordinate
+     */
+    public void setEndY(int row, double y) {
+d253 2
+a254 2
+     * @@param row the table row
+     * @@return the bounding box for the item at the given row
+d260 1
+a260 13
+    /**
+     * Set the bounding box for an item. This method is used by Renderer
+     * modules when the bounds are validated, or set by processing Actions
+     * used in conjunction with Renderers that do not perform bounds
+     * management.
+     * @@param row the table row to set
+     * @@param x the minimum x-coordinate
+     * @@param y the minimum y-coorindate
+     * @@param w the width of this item
+     * @@param h the height of this item
+     * @@see #BOUNDS
+     */
+    public void setBounds(int row, double x, double y, double w, double h) {
+a267 10
+    /**
+     * Get the current stroke color of the row. The stroke color is used
+     * to draw lines and the outlines of shapes. Color values as represented as
+     * an integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the current stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+d272 1
+a272 11
+    /**
+     * Set the current stroke color of the row. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the current stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+    public void setStrokeColor(int row, int color) {
+a275 10
+    /**
+     * Get the starting stroke color of the row. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the starting stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+d280 1
+a280 11
+    /**
+     * Set the starting stroke color of the row. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the starting stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+    public void setStartStrokeColor(int row, int color) {
+a283 10
+    /**
+     * Get the ending stroke color of the row. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the ending stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+d288 1
+a288 11
+    /**
+     * Set the ending stroke color of the row. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the ending stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+    public void setEndStrokeColor(int row, int color) {
+a291 10
+    /**
+     * Get the current fill color of the row. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the current fill color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+d296 1
+a296 11
+    /**
+     * Set the current fill color of the row. The stroke color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the current fill color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+    public void setFillColor(int row, int color) {
+a299 10
+    /**
+     * Get the starting fill color of the row. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the starting fill color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+d304 1
+a304 11
+    /**
+     * Set the starting fill color of the row. The stroke color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the starting fill color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+    public void setStartFillColor(int row, int color) {
+a307 10
+    /**
+     * Get the ending fill color of the row. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the ending fill color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+d312 1
+a312 11
+    /**
+     * Set the ending fill color of the row. The stroke color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the ending fill color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+    public void setEndFillColor(int row, int color) {
+a315 10
+    /**
+     * Get the current text color of the row. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the current text color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+d320 1
+a320 11
+    /**
+     * Set the current text color of the row. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the current text color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+    public void setTextColor(int row, int color) {
+a323 10
+    /**
+     * Get the starting text color of the row. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the starting text color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+d328 1
+a328 11
+    /**
+     * Set the starting text color of the row. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the starting text color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+    public void setStartTextColor(int row, int color) {
+a331 10
+    /**
+     * Get the ending text color of the row. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row
+     * @@return the ending text color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+d336 1
+a336 11
+    /**
+     * Set the ending text color of the row. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param row the table row to set
+     * @@param color the ending text color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     */
+    public void setEndTextColor(int row, int color) {
+a341 7
+    /**
+     * Get the current size value of the row. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param row the table row
+     * @@return the current size value
+     */
+d346 1
+a346 8
+    /**
+     * Set the current size value of the row. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param row the table row to set
+     * @@param size the current size value
+     */
+    public void setSize(int row, double size) {
+a349 7
+    /**
+     * Get the starting size value of the row. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param row the table row
+     * @@return the starting size value
+     */
+d354 1
+a354 8
+    /**
+     * Set the starting size value of the row. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param row the table row to set
+     * @@param size the starting size value
+     */
+    public void setStartSize(int row, double size) {
+a357 7
+    /**
+     * Get the ending size value of the row. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param row the table row
+     * @@return the ending size value
+     */
+d362 1
+a362 8
+    /**
+     * Set the ending size value of the row. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param row the table row to set
+     * @@param size the ending size value
+     */
+    public void setEndSize(int row, double size) {
+a367 6
+    /**
+     * Get the current font for the row. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param row the table row
+     * @@return the current font value
+     */
+d372 1
+a372 7
+    /**
+     * Set the current font for the the row. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param row the table row to set
+     * @@param font the current font value
+     */
+    public void setFont(int row, Font font) {
+a375 6
+    /**
+     * Get the starting font for the row. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param row the table row
+     * @@return the starting font value
+     */
+d380 1
+a380 7
+    /**
+     * Set the starting font for the row. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param row the table row to set
+     * @@param font the starting font value
+     */
+    public void setStartFont(int row, Font font) {
+a383 6
+    /**
+     * Get the ending font for the row. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param row the table row
+     * @@return the ending font value
+     */
+d388 1
+a388 7
+    /**
+     * Set the ending font for the row. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param row the table row to set
+     * @@param font the ending font value
+     */
+    public void setEndFont(int row, Font font) {
+a393 9
+    /**
+     * Get the degree-of-interest (DOI) value. The degree-of-interet is an
+     * optional value that can be used to sort items by importance, control
+     * item visibility, or influence particular visual encodings. A common
+     * example is to use the DOI to store the graph distance of a node from
+     * the nearest selected focus node.
+     * @@param row the table row
+     * @@return the DOI value of this item
+     */
+d398 1
+a398 10
+    /**
+     * Set the degree-of-interest (DOI) value. The degree-of-interet is an
+     * optional value that can be used to sort items by importance, control
+     * item visibility, or influence particular visual encodings. A common
+     * example is to use the DOI to store the graph distance of a node from
+     * the nearest selected focus node.
+     * @@param row the table row to set
+     * @@param doi the DOI value of this item
+     */
+    public void setDOI(int row, double doi) {
+d401 280
+@
+
+
+1.1.2.6
+log
+@Javadoc'd.
+@
+text
+@d521 1
+a521 1
+     * @@see VisualItem#BOUNDS
+d526 1
+a526 1
+                getColumnNumber(VisualItem.BOUNDS), EventConstants.UPDATE);
+d539 1
+a539 1
+     * @@see prefuse.util.ColorLib
+d553 1
+a553 1
+     * @@see prefuse.util.ColorLib
+d567 1
+a567 1
+     * @@see prefuse.util.ColorLib
+d581 1
+a581 1
+     * @@see prefuse.util.ColorLib
+d595 1
+a595 1
+     * @@see prefuse.util.ColorLib
+d609 1
+a609 1
+     * @@see prefuse.util.ColorLib
+d623 1
+a623 1
+     * @@see prefuse.util.ColorLib
+d637 1
+a637 1
+     * @@see prefuse.util.ColorLib
+d651 1
+a651 1
+     * @@see prefuse.util.ColorLib
+d665 1
+a665 1
+     * @@see prefuse.util.ColorLib
+d679 1
+a679 1
+     * @@see prefuse.util.ColorLib
+d693 1
+a693 1
+     * @@see prefuse.util.ColorLib
+d707 1
+a707 1
+     * @@see prefuse.util.ColorLib
+d721 1
+a721 1
+     * @@see prefuse.util.ColorLib
+d735 1
+a735 1
+     * @@see prefuse.util.ColorLib
+d749 1
+a749 1
+     * @@see prefuse.util.ColorLib
+d763 1
+a763 1
+     * @@see prefuse.util.ColorLib
+d777 1
+a777 1
+     * @@see prefuse.util.ColorLib
+@
+
+
+1.1.2.7
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d12 1
+a12 1
+import prefuse.visual.tuple.TableVisualItem;
+d69 1
+a69 1
+        super(parent, rowFilter, null, TableVisualItem.class);
+d81 1
+a81 1
+        super(TableVisualItem.class);
+d92 1
+a92 1
+        super(TableVisualItem.class);
+d104 1
+a104 1
+            Class tupleType)
+d106 1
+a106 1
+        super(tupleType);
+@
+
+
+1.1.2.8
+log
+@Fixed dangling errors left over from TupleManager refactoring
+@
+text
+@d101 1
+a101 1
+     * @@param tupleType the type of Tuple instances to use
+@
+
+
+1.1.2.9
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@d360 1
+a360 1
+     * {@@link prefuse.action.assignment.ColorAction} might assign colors
+a853 26
+     * Get the current shape value of the row. One of the SHAPE constants
+     * included in the {@@link prefuse.Constants} class. This value only has an
+     * effect if a Renderer that supports different shapes is used
+     * (e.g., {@@link prefuse.render.ShapeItemRenderer}.
+     * @@param row the table row
+     * @@return the current shape value
+     */
+    public int getShape(int row) {
+        return getInt(row, VisualItem.SHAPE);
+    }
+    
+    /**
+     * Set the current shape value of the row. One of the SHAPE constants
+     * included in the {@@link prefuse.Constants} class. This value only has an
+     * effect if a Renderer that supports different shapes is used
+     * (e.g., {@@link prefuse.render.ShapeItemRenderer}.
+     * @@param row the table row to set
+     * @@param shape the shape value to use
+     */
+    public void setShape(int row, int shape) {
+        setInt(row, VisualItem.SHAPE, shape);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+@
+
+
+1.1.2.10
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d857 1
+a857 1
+     * (e.g., {@@link prefuse.render.ShapeRenderer}.
+d869 1
+a869 1
+     * (e.g., {@@link prefuse.render.ShapeRenderer}.
+@
+
+

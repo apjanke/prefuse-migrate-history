@@ -1,0 +1,162 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file TableEdgeItem.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 71
+package prefuse.visual;
+
+import prefuse.Visualization;
+import prefuse.data.Graph;
+import prefuse.data.tuple.Node;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class TableEdgeItem extends TableVisualItem implements EdgeItem {
+
+    protected Graph m_graph;
+    
+    public TableEdgeItem(Visualization vis, String group, int row) {
+        super(vis, group, row);
+        String graph = group.substring(0, group.lastIndexOf("."));
+        m_graph = (Graph)vis.getGroup(graph);
+    }
+    
+    /**
+     * @@see prefuse.data.tuple.Edge#getGraph()
+     */
+    public Graph getGraph() {
+        return m_graph;
+    }
+    
+    // ------------------------------------------------------------------------
+
+    /**
+     * @@see prefuse.data.tuple.Edge#getSourceNode()
+     */
+    public Node getSourceNode() {
+        return m_graph.getSourceNode(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Edge#getTargetNode()
+     */
+    public Node getTargetNode() {
+        return m_graph.getTargetNode(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Edge#getAdjacentNode(prefuse.data.tuple.Node)
+     */
+    public Node getAdjacentNode(Node n) {
+        return m_graph.getAdjacentNode(this, n);
+    }
+    
+    /**
+     * @@see prefuse.visual.EdgeItem#getSourceItem()
+     */
+    public NodeItem getSourceItem() {
+        return (NodeItem)getSourceNode();
+    }
+
+    /**
+     * @@see prefuse.visual.EdgeItem#getTargetItem()
+     */
+    public NodeItem getTargetItem() {
+        return (NodeItem)getTargetNode();
+    }
+
+    /**
+     * @@see prefuse.visual.EdgeItem#getAdjacentItem(prefuse.visual.NodeItem)
+     */
+    public NodeItem getAdjacentItem(NodeItem n) {
+        return (NodeItem)getAdjacentNode(n);
+    }
+
+} // end of class TableEdgeItem@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@a7 2
+ * An EdgeItem (visual representation of an Edge) implementation backed by
+ * an edge Table for edge data. 
+a13 7
+    /**
+     * Create a new TableEdgeItem, using the edge table of the VisualGraph
+     * indicated by the provided Visualization instance and group name.
+     * @@param vis the Visualization of which this EdgeItem is a member
+     * @@param group the data group of this edge's VisualGraph
+     * @@param row the row number of this edge in it's edge Table
+     */
+d27 1
+a27 6
+    /**
+     * @@see prefuse.data.tuple.Edge#isDirected()
+     */
+    public boolean isDirected() {
+    	return m_graph.isDirected();
+    }
+@
+
+
+1.1.2.3
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@@
+
+

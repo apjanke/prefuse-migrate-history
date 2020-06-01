@@ -1,0 +1,1047 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.02.27.03.59.39;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.11.06.38.42;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.01.19.22.44;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.07.00.42.28;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state Exp;
+branches;
+next	2.1.4.2;
+
+2.1.4.2
+date	2008.03.27.00.28.52;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Updated demos to simplify external creation of demos from client code.
+@
+text
+@package prefuse.demos;
+
+import java.awt.Font;
+import java.awt.Shape;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+
+import javax.swing.BorderFactory;
+import javax.swing.JFrame;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.Action;
+import prefuse.action.ActionList;
+import prefuse.action.RepaintAction;
+import prefuse.action.animate.ColorAnimator;
+import prefuse.action.animate.LocationAnimator;
+import prefuse.action.assignment.ColorAction;
+import prefuse.action.layout.AxisLayout;
+import prefuse.activity.Activity;
+import prefuse.activity.ActivityAdapter;
+import prefuse.activity.SlowInSlowOutPacer;
+import prefuse.data.Schema;
+import prefuse.data.Table;
+import prefuse.data.Tuple;
+import prefuse.data.event.TupleSetListener;
+import prefuse.data.expression.FunctionExpression;
+import prefuse.data.expression.FunctionTable;
+import prefuse.data.expression.Predicate;
+import prefuse.data.expression.parser.ExpressionParser;
+import prefuse.data.io.DataIOException;
+import prefuse.data.io.DelimitedTextTableReader;
+import prefuse.data.query.SearchQueryBinding;
+import prefuse.data.search.SearchTupleSet;
+import prefuse.data.tuple.TupleSet;
+import prefuse.render.DefaultRendererFactory;
+import prefuse.render.ShapeRenderer;
+import prefuse.render.LabelRenderer;
+import prefuse.util.ColorLib;
+import prefuse.util.FontLib;
+import prefuse.util.PrefuseLib;
+import prefuse.util.ui.JSearchPanel;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTable;
+
+/**
+ * Re-implementation of Ben Fry's Zipdecode. Check out the
+ * original at <a href="http://acg.media.mit.edu/people/fry/zipdecode/">
+ * http://acg.media.mit.edu/people/fry/zipdecode/</a>.
+ * 
+ * This demo showcases creating new functions in the prefuse expression
+ * language, creating derived columns, and provides an example of using
+ * a dedicated focus set of items to support more efficient data handling.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ZipDecode extends Display implements Constants {
+
+    public static final String ZIPCODES = "/zipcode.txt";
+    public static final String STATES = "/state.txt";
+    
+    // data groups
+    private static final String DATA = "data";
+    private static final String LABELS = "labels";
+    private static final String FOCUS = Visualization.FOCUS_ITEMS;
+    
+    public static class StateLookupFunction extends FunctionExpression {
+        private static Table s_states;
+        static {
+            try {
+                s_states = new DelimitedTextTableReader().readTable(STATES);
+            } catch ( Exception e ) { e.printStackTrace(); }
+        }
+        
+        public StateLookupFunction() { super(1); }
+        public String getName() { return "STATE"; }
+        public Class getType(Schema s) { return String.class; }
+        public Object get(Tuple t) {
+            int code = s_states.index("code").get(param(0).getInt(t));
+            return s_states.getString(code, "alpha");
+        }
+    }
+    // add state function to the FunctionTable
+    static { FunctionTable.addFunction("STATE", StateLookupFunction.class); }
+    
+    
+    public ZipDecode(final Table t) {
+        super(new Visualization());
+        
+        // this predicate makes sure only the continental states are included
+        Predicate filter = (Predicate)ExpressionParser.parse(
+                "state >= 1 && state <= 56 && state != 2 && state != 15");
+        VisualTable vt = m_vis.addTable(DATA, t, filter, getDataSchema());
+        // zip codes are loaded in as integers, so lets create a derived
+        // column that has correctly-formatted 5 digit strings
+        vt.addColumn("zipstr", "LPAD(zip,5,'0')");
+        // now add a formatted label to show within the visualization
+        vt.addColumn("label", "CONCAT(CAP(city),', ',STATE(state),' ',zipstr)");
+        
+        // create a filter controlling label appearance
+        Predicate loneResult = (Predicate)ExpressionParser.parse(
+                "INGROUP('_search_') AND GROUPSIZE('_search_')=1 AND " +
+                "LENGTH(QUERY('_search_'))=5");
+        
+        // add a table of visible city,state,zip labels
+        // this is a derived table, overriding only the fields that need to
+        // have unique values and inheriting all other data values from the
+        // data table. in particular, we want to inherit the x,y coordinates.
+        m_vis.addDerivedTable(LABELS, DATA, loneResult, getLabelSchema());
+        
+        // -- renderers -------------------------------------------------------
+        
+        DefaultRendererFactory rf = new DefaultRendererFactory();
+        rf.setDefaultRenderer(new ShapeRenderer(1)); // 1 pixel rectangles
+        rf.add("INGROUP('labels')", new LabelRenderer("label") {
+            public Shape getShape(VisualItem item) {
+                // set horizontal alignment based on x-coordinate position
+                setHorizontalAlignment(item.getX()>getWidth()/2 ? RIGHT:LEFT);
+                // now return shape as usual
+                return super.getShape(item);
+            }
+        });
+        m_vis.setRendererFactory(rf);
+        
+        // -- actions ---------------------------------------------------------
+        
+        ActionList layout = new ActionList();
+        layout.add(new AxisLayout(DATA, "lat", Y_AXIS));
+        layout.add(new AxisLayout(DATA, "lon", X_AXIS));
+        m_vis.putAction("layout", layout);
+        
+        // the update list updates the colors of data points and sets the visual
+        // properties for any labels. Color updating is limited only to the
+        // current focus items, ensuring faster performance.
+        final Action update = new ZipColorAction(FOCUS);
+        m_vis.putAction("update", update);
+        
+        // animate a change in color in the interface. this animation is quite
+        // short, only 200ms, so that it does not impede with interaction.
+        // color animation of data points looks only at the focus items,
+        // ensuring faster performance.
+        ActionList animate = new ActionList(200);
+        animate.add(new ColorAnimator(FOCUS, VisualItem.FILLCOLOR));
+        animate.add(new ColorAnimator(LABELS, VisualItem.TEXTCOLOR));
+        animate.add(new RepaintAction());
+        animate.addActivityListener(new ActivityAdapter() {
+            public void activityCancelled(Activity a) {
+                // if animation is canceled, set colors to final state
+                update.run(1.0);
+            }
+        });
+        m_vis.putAction("animate", animate);
+        
+        // update items after a resize of the display, animating them to their
+        // new locations. this animates all data points, so is noticeably slow.
+        ActionList resize = new ActionList(1500);
+        resize.setPacingFunction(new SlowInSlowOutPacer());
+        resize.add(new LocationAnimator(DATA));
+        resize.add(new LocationAnimator(LABELS));
+        resize.add(new RepaintAction());
+        m_vis.putAction("resize", resize);
+        
+        // -- display ---------------------------------------------------------
+        
+        setSize(720, 360);
+        setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        setBackground(ColorLib.getGrayscale(50));
+        setFocusable(false);
+        
+        // -- search ----------------------------------------------------------
+        
+        // zipcode text search is performed using a prefix based search,
+        // provided by a search dynamic query. to make this application run
+        // more efficiently, we optimize data handling by taking all search
+        // results (both added and removed) and shuttling them into a
+        // focus set. we work with this reduced set for updating and
+        // animating color changes in the action definitions above.
+        
+        // create a final reference to the focus set, so that the following
+        // search listener can access it.
+        final TupleSet focus = m_vis.getFocusGroup(FOCUS);
+        
+        // create the search query binding
+        SearchQueryBinding searchQ = new SearchQueryBinding(vt, "zipstr");
+        final SearchTupleSet search = searchQ.getSearchSet(); 
+        
+        // create the listener that collects search results into a focus set
+        search.addTupleSetListener(new TupleSetListener() {
+            public void tupleSetChanged(TupleSet t, Tuple[] add, Tuple[] rem) {
+                m_vis.cancel("animate");
+                
+                // invalidate changed tuples, add them all to the focus set
+                focus.clear();
+                for ( int i=0; i<add.length; ++i ) {
+                    ((VisualItem)add[i]).setValidated(false);
+                    focus.addTuple(add[i]);
+                }
+                for ( int i=0; i<rem.length; ++i ) {
+                    ((VisualItem)rem[i]).setValidated(false);
+                    focus.addTuple(rem[i]);
+                }
+                
+                m_vis.run("update");
+                m_vis.run("animate");
+            }
+        });
+        m_vis.addFocusGroup(Visualization.SEARCH_ITEMS, search);
+        
+        // create and parameterize a search panel for searching on zip code
+        final JSearchPanel searcher = searchQ.createSearchPanel();
+        searcher.setLabelText("zip>"); // the search box label
+        searcher.setShowCancel(false); // don't show the cancel query button
+        searcher.setShowBorder(false); // don't show the search box border
+        searcher.setFont(FontLib.getFont("Georgia", Font.PLAIN, 22));
+        searcher.setBackground(ColorLib.getGrayscale(50));
+        searcher.setForeground(ColorLib.getColor(100,100,75));
+        add(searcher); // add the search box as a sub-component of the display
+        searcher.setBounds(10, getHeight()-40, 120, 30);
+        
+        addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent e) {
+                m_vis.run("layout");
+                m_vis.run("update");
+                m_vis.run("resize");
+                searcher.setBounds(10, getHeight()-40, 120, 30);
+                invalidate();
+            }
+        });
+        
+        // -- launch ----------------------------------------------------------
+        
+        m_vis.run("layout");
+        m_vis.run("animate");
+    }
+    
+    private static Schema getDataSchema() {
+        Schema s = PrefuseLib.getVisualItemSchema();
+        s.setDefault(VisualItem.INTERACTIVE, false);
+        s.setDefault(VisualItem.FILLCOLOR, ColorLib.rgb(100,100,75));
+        return s;
+    }
+    
+    private static Schema getLabelSchema() {
+        Schema s = PrefuseLib.getMinimalVisualSchema();
+        s.setDefault(VisualItem.INTERACTIVE, false);
+        
+        // default font is 16 point Georgia
+        s.addInterpolatedColumn(
+                VisualItem.FONT, Font.class, FontLib.getFont("Georgia",16));
+        
+        // default fill color should be invisible
+        s.addInterpolatedColumn(VisualItem.FILLCOLOR, int.class);
+        s.setInterpolatedDefault(VisualItem.FILLCOLOR, 0);
+        
+        s.addInterpolatedColumn(VisualItem.TEXTCOLOR, int.class);
+        // default text color is white
+        s.setInterpolatedDefault(VisualItem.TEXTCOLOR, ColorLib.gray(255));
+        // default start text color is fully transparent
+        s.setDefault(VisualItem.STARTTEXTCOLOR, ColorLib.gray(255,0));
+        return s;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public static void main(String[] args) {
+        String datafile = ZIPCODES;
+        if ( args.length > 0 )
+            datafile = args[0];
+        
+        try {
+            JFrame frame = demo(datafile);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setVisible(true);
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+    
+    public static JFrame demo() {
+        try {
+            return demo(ZIPCODES);
+        } catch ( Exception e ) {
+            return null;
+        }
+    }
+    
+    public static JFrame demo(String table) throws DataIOException {
+        DelimitedTextTableReader tr = new DelimitedTextTableReader();
+        Table t = tr.readTable(table);        
+        ZipDecode zd = new ZipDecode(t);
+        
+        JFrame frame = new JFrame("p r e f u s e  |  z i p d e c o d e");
+        frame.getContentPane().add(zd);
+        frame.pack();
+        return frame;
+    }
+    
+    public static class ZipColorAction extends ColorAction {
+        public ZipColorAction(String group) {
+            super(group, VisualItem.FILLCOLOR);
+        }
+        
+        public int getColor(VisualItem item) {
+            if ( item.isInGroup(Visualization.SEARCH_ITEMS) ) {
+                return ColorLib.gray(255);
+            } else {
+                return ColorLib.rgb(100,100,75);
+            }
+        }
+    }
+    
+} // end of class ZipDecode
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d11 1
+a11 1
+import prefuse.Alignment;
+a19 1
+import prefuse.action.layout.Axis;
+d51 1
+a51 1
+ *
+d55 1
+a55 1
+ *
+d58 1
+a58 1
+public class ZipDecode extends Display {
+d62 1
+a62 1
+
+d67 1
+a67 1
+
+d69 1
+a69 1
+        private static Table<?> s_states;
+d75 1
+a75 1
+
+d77 3
+a79 5
+        @@Override
+		public String getName() { return "STATE"; }
+        public Class<?> getType(Schema s) { return String.class; }
+        @@Override
+		public Object get(Tuple<?> t) {
+d86 3
+a88 3
+
+
+    public ZipDecode(final Table<?> t) {
+d90 1
+a90 1
+
+d94 1
+a94 1
+        VisualTable<?,?> vt = m_vis.addTable(DATA, t, filter, getDataSchema());
+d100 1
+a100 1
+
+d105 1
+a105 1
+
+d111 1
+a111 1
+
+d113 1
+a113 1
+
+d117 1
+a117 2
+            @@Override
+			public Shape getShape(VisualItem<?> item) {
+d119 1
+a119 1
+                setHorizontalAlignment(item.getX()>getWidth()/2 ? Alignment.RIGHT:Alignment.LEFT);
+d125 1
+a125 1
+
+d127 1
+a127 1
+
+d129 2
+a130 2
+        layout.add(new AxisLayout(DATA, "lat", Axis.Y));
+        layout.add(new AxisLayout(DATA, "lon", Axis.X));
+d132 1
+a132 1
+
+d138 1
+a138 1
+
+d148 1
+a148 2
+            @@Override
+			public void activityCancelled(Activity a) {
+d154 1
+a154 1
+
+d163 1
+a163 1
+
+d165 1
+a165 1
+
+d170 1
+a170 1
+
+d172 1
+a172 1
+
+d179 1
+a179 1
+
+d182 2
+a183 2
+        final TupleSet<VisualItem<?>> focus = m_vis.getFocusGroup(FOCUS);
+
+d185 3
+a187 3
+        SearchQueryBinding<VisualItem<?>> searchQ = new SearchQueryBinding<VisualItem<?>>(vt, "zipstr");
+        final SearchTupleSet<VisualItem<?>> search = searchQ.getSearchSet();
+
+d190 1
+a190 1
+            public void tupleSetChanged(TupleSet<?> t, Tuple<?>[] add, Tuple<?>[] rem) {
+d192 1
+a192 1
+
+d196 2
+a197 3
+                	VisualItem<?> item = (VisualItem<?>) add[i];
+                    item.setValidated(false);
+                    focus.addTuple(item);
+d200 2
+a201 3
+                	VisualItem<?> item = (VisualItem<?>) rem[i];
+                    item.setValidated(false);
+                    focus.addTuple(item);
+d203 1
+a203 1
+
+d209 1
+a209 1
+
+d220 1
+a220 1
+
+d222 1
+a222 2
+            @@Override
+			public void componentResized(ComponentEvent e) {
+d230 1
+a230 1
+
+d232 1
+a232 1
+
+d236 1
+a236 1
+
+d243 1
+a243 1
+
+d247 1
+a247 1
+
+d251 1
+a251 1
+
+d255 1
+a255 1
+
+d263 1
+a263 1
+
+d265 1
+a265 1
+
+d268 3
+a270 4
+        if ( args.length > 0 ) {
+			datafile = args[0];
+		}
+
+d280 1
+a280 1
+
+d288 1
+a288 1
+
+d291 1
+a291 1
+        Table<?> t = tr.readTable(table);
+d293 1
+a293 1
+
+d299 1
+a299 1
+
+d304 2
+a305 3
+
+        @@Override
+		public int getColor(VisualItem<?> item) {
+d313 1
+a313 1
+
+@
+
+
+2.1.4.2
+log
+@fix - set the ShapeBuilder for each data item
+@
+text
+@a12 1
+import prefuse.PredefinedShape;
+a28 1
+import prefuse.data.expression.BooleanLiteral;
+a103 2
+        m_vis.setValue(DATA, BooleanLiteral.TRUE, VisualItem.SHAPEBUILDER, PredefinedShape.RECTANGLE);
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d281 8
+@
+
+
+1.1
+log
+@file ZipDecode.java was initially added on branch beta.
+@
+text
+@d1 306
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 306
+package prefuse.demos;
+
+import java.awt.Font;
+import java.awt.Shape;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+
+import javax.swing.BorderFactory;
+import javax.swing.JFrame;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.Action;
+import prefuse.action.ActionList;
+import prefuse.action.RepaintAction;
+import prefuse.action.animate.ColorAnimator;
+import prefuse.action.animate.LocationAnimator;
+import prefuse.action.assignment.ColorFunction;
+import prefuse.action.layout.AxisLayout;
+import prefuse.activity.Activity;
+import prefuse.activity.ActivityAdapter;
+import prefuse.activity.SlowInSlowOutPacer;
+import prefuse.data.Schema;
+import prefuse.data.Table;
+import prefuse.data.event.TupleSetListener;
+import prefuse.data.expression.FunctionExpression;
+import prefuse.data.expression.FunctionTable;
+import prefuse.data.expression.Predicate;
+import prefuse.data.expression.parser.ExpressionParser;
+import prefuse.data.io.DataReadException;
+import prefuse.data.io.DelimitedTextTableReader;
+import prefuse.data.query.SearchQueryBinding;
+import prefuse.data.search.SearchTupleSet;
+import prefuse.data.tuple.Tuple;
+import prefuse.data.tuple.TupleSet;
+import prefuse.render.DefaultRendererFactory;
+import prefuse.render.ShapeItemRenderer;
+import prefuse.render.TextItemRenderer;
+import prefuse.util.ColorLib;
+import prefuse.util.FontLib;
+import prefuse.util.PrefuseLib;
+import prefuse.util.ui.JSearchPanel;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTable;
+
+/**
+ * Re-implementation of Ben Fry's Zipdecode. Check out the
+ * original at <a href="http://acg.media.mit.edu/people/fry/zipdecode/">
+ * http://acg.media.mit.edu/people/fry/zipdecode/</a>.
+ * 
+ * This demo showcases creating new functions in the prefuse expression
+ * language, creating derived columns, and provides an example of using
+ * a dedicated focus set of items to support more efficient data handling.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class ZipDecode extends Display implements Constants {
+
+    public static final String ZIPCODES = "/zipcode.txt";
+    public static final String STATES = "/state.txt";
+    
+    // data groups
+    private static final String DATA = "data";
+    private static final String LABELS = "labels";
+    private static final String FOCUS = Visualization.FOCUS_ITEMS;
+    
+    public static class StateLookupFunction extends FunctionExpression {
+        private static Table s_states;
+        static {
+            try {
+                s_states = new DelimitedTextTableReader().readTable(STATES);
+            } catch ( Exception e ) { e.printStackTrace(); }
+        }
+        
+        public StateLookupFunction() { super(1); }
+        public String getName() { return "STATE"; }
+        public Class getClass(Schema s) { return String.class; }
+        public Object get(Tuple t) {
+            int code = s_states.index("code").get(param(0).getInt(t));
+            return s_states.getString("alpha", code);
+        }
+    }
+    // add state function to the FunctionTable
+    static { FunctionTable.addFunction("STATE", StateLookupFunction.class); }
+    
+    
+    public ZipDecode(final Table t) {
+        super(new Visualization());
+        
+        // this predicate makes sure only the continental states are included
+        Predicate filter = (Predicate)ExpressionParser.parse(
+                "state >= 1 && state <= 56 && state != 2 && state != 15");
+        VisualTable vt = m_vis.addTable(DATA, t, filter, getDataSchema());
+        // zip codes are loaded in as integers, so lets create a derived
+        // column that has correctly-formatted 5 digit strings
+        vt.addColumn("zipstr", "LPAD(zip,5,'0')");
+        // now add a formatted label to show within the visualization
+        vt.addColumn("label", "CONCAT(CAP(city),', ',STATE(state),' ',zipstr)");
+        
+        // create a filter controlling label appearance
+        Predicate loneResult = (Predicate)ExpressionParser.parse(
+                "INGROUP('__search') AND GROUPSIZE('__search')=1 AND " +
+                "LENGTH(QUERY('__search'))=5");
+        
+        // add a table of visible city,state,zip labels
+        // this is a derived table, overriding only the fields that need to
+        // have unique values and inheriting all other data values from the
+        // data table. in particular, we want to inherit the x,y coordinates.
+        m_vis.addDerivedTable(LABELS, DATA, loneResult, getLabelSchema());
+        
+        // -- renderers -------------------------------------------------------
+        
+        DefaultRendererFactory rf = new DefaultRendererFactory();
+        rf.setDefaultRenderer(new ShapeItemRenderer(1)); // 1 pixel rectangles
+        rf.add("INGROUP('labels')", new TextItemRenderer("label") {
+            public Shape getShape(VisualItem item) {
+                // set horizontal alignment based on x-coordinate position
+                setHorizontalAlignment(item.getX()>getWidth()/2 ? RIGHT:LEFT);
+                // now return shape as usual
+                return super.getShape(item);
+            }
+        });
+        m_vis.setRendererFactory(rf);
+        
+        // -- actions ---------------------------------------------------------
+        
+        ActionList layout = new ActionList();
+        layout.add(new AxisLayout(DATA, "lat", Y_AXIS));
+        layout.add(new AxisLayout(DATA, "lon", X_AXIS));
+        m_vis.putAction("layout", layout);
+        
+        // the update list updates the colors of data points and sets the visual
+        // properties for any labels. Color updating is limited only to the
+        // current focus items, ensuring faster performance.
+        final Action update = new ZipColorFunction(FOCUS);
+        m_vis.putAction("update", update);
+        
+        // animate a change in color in the interface. this animation is quite
+        // short, only 200ms, so that it does not impede with interaction.
+        // color animation of data points looks only at the focus items,
+        // ensuring faster performance.
+        ActionList animate = new ActionList(200);
+        animate.add(new ColorAnimator(FOCUS, VisualItem.FILLCOLOR));
+        animate.add(new ColorAnimator(LABELS, VisualItem.TEXTCOLOR));
+        animate.add(new RepaintAction());
+        animate.addActivityListener(new ActivityAdapter() {
+            public void activityCancelled(Activity a) {
+                // if animation is canceled, set colors to final state
+                update.run(1.0);
+            }
+        });
+        m_vis.putAction("animate", animate);
+        
+        // update items after a resize of the display, animating them to their
+        // new locations. this animates all data points, so is noticeably slow.
+        ActionList resize = new ActionList(1500);
+        resize.setPacingFunction(new SlowInSlowOutPacer());
+        resize.add(new LocationAnimator(DATA));
+        resize.add(new LocationAnimator(LABELS));
+        resize.add(new RepaintAction());
+        m_vis.putAction("resize", resize);
+        
+        // -- display ---------------------------------------------------------
+        
+        setSize(720, 360);
+        setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        setBackground(ColorLib.getGrayscale(50));
+        setFocusable(false);
+        
+        // -- search ----------------------------------------------------------
+        
+        // zipcode text search is performed using a prefix based search,
+        // provided by a search dynamic query. to make this application run
+        // more efficiently, we optimize data handling by taking all search
+        // results (both added and removed) and shuttling them into a
+        // focus set. we work with this reduced set for updating and
+        // animating color changes in the action definitions above.
+        
+        // create a final reference to the focus set, so that the following
+        // search listener can access it.
+        final TupleSet focus = m_vis.getFocusGroup(FOCUS);
+        
+        // create the search query binding
+        SearchQueryBinding searchQ = new SearchQueryBinding(vt, "zipstr");
+        final SearchTupleSet search = searchQ.getSearchSet(); 
+        
+        // create the listener that collects search results into a focus set
+        search.addTupleSetListener(new TupleSetListener() {
+            public void tupleSetChanged(TupleSet t, Tuple[] add, Tuple[] rem) {
+                m_vis.cancel("animate");
+                
+                // invalidate changed tuples, add them all to the focus set
+                focus.clear();
+                for ( int i=0; i<add.length; ++i ) {
+                    ((VisualItem)add[i]).setValidated(false);
+                    focus.addTuple(add[i]);
+                }
+                for ( int i=0; i<rem.length; ++i ) {
+                    ((VisualItem)rem[i]).setValidated(false);
+                    focus.addTuple(rem[i]);
+                }
+                
+                m_vis.run("update");
+                m_vis.run("animate");
+            }
+        });
+        m_vis.addFocusGroup(Visualization.SEARCH_ITEMS, search);
+        
+        // create and parameterize a search panel for searching on zip code
+        final JSearchPanel searcher = searchQ.getSearchPanel();
+        searcher.setLabelText("zip>"); // the search box label
+        searcher.setShowCancel(false); // don't show the cancel query button
+        searcher.setShowBorder(false); // don't show the search box border
+        searcher.setFont(FontLib.getFont("Georgia", Font.PLAIN, 22));
+        searcher.setBackground(ColorLib.getGrayscale(50));
+        searcher.setForeground(ColorLib.getColor(100,100,75));
+        add(searcher); // add the search box as a sub-component of the display
+        searcher.setBounds(10, getHeight()-40, 120, 30);
+        
+        addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent e) {
+                m_vis.run("layout");
+                m_vis.run("update");
+                m_vis.run("resize");
+                searcher.setBounds(10, getHeight()-40, 120, 30);
+                invalidate();
+            }
+        });
+        
+        // -- launch ----------------------------------------------------------
+        
+        m_vis.run("layout");
+        m_vis.run("animate");
+    }
+    
+    private static Schema getDataSchema() {
+        Schema s = PrefuseLib.getVisualItemSchema();
+        s.setDefault(VisualItem.INTERACTIVE, false);
+        s.setDefault(VisualItem.FILLCOLOR, ColorLib.rgb(100,100,75));
+        return s;
+    }
+    
+    private static Schema getLabelSchema() {
+        Schema s = PrefuseLib.getMinimalVisualSchema();
+        s.setDefault(VisualItem.INTERACTIVE, false);
+        
+        // default font is 16 point Georgia
+        s.addInterpolatedColumn(
+                VisualItem.FONT, Font.class, FontLib.getFont("Georgia",16));
+        
+        // default fill color should be invisible
+        s.addInterpolatedColumn(VisualItem.FILLCOLOR, int.class);
+        s.setInterpolatedDefault(VisualItem.FILLCOLOR, 0);
+        
+        s.addInterpolatedColumn(VisualItem.TEXTCOLOR, int.class);
+        // default text color is white
+        s.setInterpolatedDefault(VisualItem.TEXTCOLOR, ColorLib.gray(255));
+        // default start text color is fully transparent
+        s.setDefault(VisualItem.STARTTEXTCOLOR, ColorLib.gray(255,0));
+        return s;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public static void main(String[] args) {
+        String datafile = ZIPCODES;
+        if ( args.length > 0 )
+            datafile = args[0];
+        
+        try {
+            JFrame frame = demo(datafile);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setVisible(true);
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+    
+    public static JFrame demo(String table) throws DataReadException {
+        DelimitedTextTableReader tr = new DelimitedTextTableReader();
+        Table t = tr.readTable(table);        
+        ZipDecode zd = new ZipDecode(t);
+        
+        JFrame frame = new JFrame("p r e f u s e  |  z i p d e c o d e");
+        frame.getContentPane().add(zd);
+        frame.pack();
+        return frame;
+    }
+    
+    public static class ZipColorFunction extends ColorFunction {
+        public ZipColorFunction(String group) {
+            super(group, VisualItem.FILLCOLOR);
+        }
+        
+        public int getColor(VisualItem item) {
+            if ( item.isInGroup(Visualization.SEARCH_ITEMS) ) {
+                return ColorLib.gray(255);
+            } else {
+                return ColorLib.rgb(100,100,75);
+            }
+        }
+    }
+    
+} // end of class ZipDecode
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d31 1
+a31 1
+import prefuse.data.io.DataIOException;
+d81 1
+a81 1
+            return s_states.getString(code, "alpha");
+d211 1
+a211 1
+        final JSearchPanel searcher = searchQ.createSearchPanel();
+d281 1
+a281 1
+    public static JFrame demo(String table) throws DataIOException {
+@
+
+
+1.1.2.3
+log
+@Javadoc'd.
+@
+text
+@d78 1
+a78 1
+        public Class getType(Schema s) { return String.class; }
+@
+
+
+1.1.2.4
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d56 1
+a56 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.5
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@d19 1
+a19 1
+import prefuse.action.assignment.ColorAction;
+a25 1
+import prefuse.data.Tuple;
+d35 1
+d103 2
+a104 2
+                "INGROUP('_search_') AND GROUPSIZE('_search_')=1 AND " +
+                "LENGTH(QUERY('_search_'))=5");
+d136 1
+a136 1
+        final Action update = new ZipColorAction(FOCUS);
+d292 2
+a293 2
+    public static class ZipColorAction extends ColorAction {
+        public ZipColorAction(String group) {
+@
+
+
+1.1.2.6
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d38 2
+a39 2
+import prefuse.render.ShapeRenderer;
+import prefuse.render.LabelRenderer;
+d115 2
+a116 2
+        rf.setDefaultRenderer(new ShapeRenderer(1)); // 1 pixel rectangles
+        rf.add("INGROUP('labels')", new LabelRenderer("label") {
+@
+
+

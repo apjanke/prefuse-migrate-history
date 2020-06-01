@@ -1,0 +1,299 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.04.14.06.57.11;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.41;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Added filtered iteration of members to AggregateItem
+Added member-based aggregate lookup to AggregateItemTable
+@
+text
+@/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.visual;
+
+import java.util.Iterator;
+
+import prefuse.data.expression.Predicate;
+
+/**
+ * VisualItem that represents an aggregation of one or more other VisualItems.
+ * AggregateItems include methods adding and removing items from the aggregate
+ * collection, and are backed by an {@@link AggregateTable} instance.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface AggregateItem extends VisualItem {
+    
+    /**
+     * Get the size of this AggregateItem, the number of visual items
+     * contained in the aggregation.
+     * @@return the aggregate size
+     */
+    public int getAggregateSize();
+    
+    /**
+     * Indicates is a given VisualItem is contained in the aggregation.
+     * @@param item the VisualItem to check for containment
+     * @@return true if the given item is contained in this aggregate,
+     * false otherwise.
+     */
+    public boolean containsItem(VisualItem item);
+    
+    /**
+     * Add a VisualItem to this aggregate.
+     * @@param item the item to add
+     */
+    public void addItem(VisualItem item);
+    
+    /**
+     * Remove a VisualItem from this aggregate.
+     * @@param item the item to remove
+     */
+    public void removeItem(VisualItem item);
+    
+    /**
+     * Remove all items contained in this aggregate.
+     */
+    public void removeAllItems();
+    
+    /**
+     * Get an iterator over all the items contained in this aggregate.
+     * @@return an iterator over the items in this aggregate
+     */
+    public Iterator items();
+    
+    /**
+     * Get a filtered iterator over all the items contained in this aggregate.
+     * @@param filter a Predicate instance indicating the filter criteria
+     * @@return an iterator over the items in this aggregate
+     */
+    public Iterator items(Predicate filter);
+    
+} // end of interface AggregateItem
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d7 2
+d15 1
+a15 1
+ *
+d18 2
+a19 2
+public interface AggregateItem <T extends VisualItem<?>, V extends VisualItem<?>> extends VisualItem<T> {
+
+d26 1
+a26 1
+
+d33 2
+a34 2
+    public boolean containsItem(VisualItem<?> item);
+
+d39 2
+a40 2
+    public void addItem(V item);
+
+d45 2
+a46 2
+    public void removeItem(VisualItem<?> item);
+
+d51 1
+a51 1
+
+d56 2
+a57 2
+    public Iterable<V> items();
+
+d63 2
+a64 2
+    public Iterable<V> items(Predicate filter);
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d9 2
+d58 7
+@
+
+
+1.1
+log
+@file AggregateItem.java was initially added on branch beta.
+@
+text
+@d1 56
+@
+
+
+1.1.2.1
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a0 21
+/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.visual;
+
+import java.util.Iterator;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public interface AggregateItem extends VisualItem {
+	
+	public int getAggregateSize();
+	public boolean containsItem(VisualItem item);
+	public void addItem(VisualItem item);
+	public void removeItem(VisualItem item);
+	public void removeAllItems();
+	public Iterator items();
+	
+} // end of interface AggregateItem
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d13 8
+a20 8
+    
+    public int getAggregateSize();
+    public boolean containsItem(VisualItem item);
+    public void addItem(VisualItem item);
+    public void removeItem(VisualItem item);
+    public void removeAllItems();
+    public Iterator items();
+    
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@d10 1
+a10 5
+ * VisualItem that represents an aggregation of one or more other VisualItems.
+ * AggregateItems include methods adding and removing items from the aggregate
+ * collection, and are backed by an {@@link AggregateTable} instance.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a13 5
+    /**
+     * Get the size of this AggregateItem, the number of visual items
+     * contained in the aggregation.
+     * @@return the aggregate size
+     */
+a14 7
+    
+    /**
+     * Indicates is a given VisualItem is contained in the aggregation.
+     * @@param item the VisualItem to check for containment
+     * @@return true if the given item is contained in this aggregate,
+     * false otherwise.
+     */
+a15 5
+    
+    /**
+     * Add a VisualItem to this aggregate.
+     * @@param item the item to add
+     */
+a16 5
+    
+    /**
+     * Remove a VisualItem from this aggregate.
+     * @@param item the item to remove
+     */
+a17 4
+    
+    /**
+     * Remove all items contained in this aggregate.
+     */
+a18 5
+    
+    /**
+     * Get an iterator over all the items contained in this aggregate.
+     * @@return an iterator over the items in this aggregate
+     */
+@
+
+

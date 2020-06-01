@@ -1,0 +1,546 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.24.18.46.25;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file FreeVisualItem.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 493
+package prefuse.visual;
+
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.Visualization;
+import prefuse.data.tuple.FreeTuple;
+import prefuse.render.Renderer;
+
+/**
+ * VisualItem implementation for items not backed by a data table.
+ * TODO: handle change which occur
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public abstract class FreeVisualItem extends FreeTuple implements VisualItem {
+
+    protected Visualization m_vis;
+    protected String m_group;
+    
+    public FreeVisualItem(Visualization vis, String group) {
+        super(VisualItem.SCHEMA);
+        m_vis = vis;
+        m_group = group;
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getVisualization()
+     */
+    public Visualization getVisualization() {
+        return m_vis;
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getGroup()
+     */
+    public String getGroup() {
+        return m_group;
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#render(java.awt.Graphics2D)
+     */
+    public abstract void render(Graphics2D g);
+
+    /**
+     * @@see prefuse.visual.VisualItem#getRenderer()
+     */
+    public Renderer getRenderer() {
+        return null;
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#validateBounds()
+     */
+    public Rectangle2D validateBounds() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#isValidated()
+     */
+    public boolean isValidated() {
+        return ((Boolean)getValueAt(IDX_VALIDATED)).booleanValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setValidated(boolean)
+     */
+    public void setValidated(boolean value) {
+        setValueAt((value?Boolean.TRUE:Boolean.FALSE), IDX_VALIDATED);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#isVisible()
+     */
+    public boolean isVisible() {
+        return ((Boolean)getValueAt(IDX_VISIBLE)).booleanValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setVisible(boolean)
+     */
+    public void setVisible(boolean value) {
+        setValueAt((value?Boolean.TRUE:Boolean.FALSE), IDX_VISIBLE);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#isInteractive()
+     */
+    public boolean isInteractive() {
+        return ((Boolean)getValueAt(IDX_INTERACTIVE)).booleanValue();    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setInteractive(boolean)
+     */
+    public void setInteractive(boolean value) {
+        setValueAt((value?Boolean.TRUE:Boolean.FALSE), IDX_INTERACTIVE);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#isFixed()
+     */
+    public boolean isFixed() {
+        return ((Boolean)getValueAt(IDX_FIXED)).booleanValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setFixed(boolean)
+     */
+    public void setFixed(boolean value) {
+        setValueAt((value?Boolean.TRUE:Boolean.FALSE), IDX_FIXED);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#isHighlighted()
+     */
+    public boolean isHighlighted() {
+        return ((Boolean)getValueAt(IDX_HIGHLIGHT)).booleanValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setHighlighted(boolean)
+     */
+    public void setHighlighted(boolean value) {
+        setValueAt((value?Boolean.TRUE:Boolean.FALSE), IDX_HIGHLIGHT);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#isHover()
+     */
+    public boolean isHover() {
+        return ((Boolean)getValueAt(IDX_HOVER)).booleanValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setHover(boolean)
+     */
+    public void setHover(boolean value) {
+        setValueAt((value?Boolean.TRUE:Boolean.FALSE), IDX_HOVER);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#isFocus()
+     */
+    public boolean isExpanded() {
+        return ((Boolean)getValueAt(IDX_EXPANDED)).booleanValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setFocus(boolean)
+     */
+    public void setExpanded(boolean value) {
+        setValueAt((value?Boolean.TRUE:Boolean.FALSE), IDX_EXPANDED);
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getX()
+     */
+    public double getX() {
+        return ((Number)getValueAt(IDX_X)).doubleValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setX(double)
+     */
+    public void setX(double x) {
+        setValueAt(new Double(x), IDX_X);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getY()
+     */
+    public double getY() {
+        return ((Number)getValueAt(IDX_Y)).doubleValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setY(double)
+     */
+    public void setY(double y) {
+        setValueAt(new Double(y), IDX_Y);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getStartX()
+     */
+    public double getStartX() {
+        return ((Number)getValueAt(IDX_STARTX)).doubleValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setStartX(double)
+     */
+    public void setStartX(double x) {
+        setValueAt(new Double(x), IDX_STARTX);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getStartY()
+     */
+    public double getStartY() {
+        return ((Number)getValueAt(IDX_STARTY)).doubleValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setStartY(double)
+     */
+    public void setStartY(double y) {
+        setValueAt(new Double(y), IDX_STARTY);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getEndX()
+     */
+    public double getEndX() {
+        return ((Number)getValueAt(IDX_ENDX)).doubleValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setEndX(double)
+     */
+    public void setEndX(double x) {
+        setValueAt(new Double(x), IDX_ENDX);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getEndY()
+     */
+    public double getEndY() {
+        return ((Number)getValueAt(IDX_ENDY)).doubleValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setEndY(double)
+     */
+    public void setEndY(double y) {
+        setValueAt(new Double(y), IDX_STARTY);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getBounds()
+     */
+    public Rectangle2D getBounds() {
+        return (Rectangle2D)getValueAt(IDX_BOUNDS);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setBounds(double, double, double, double)
+     */
+    public void setBounds(double x, double y, double w, double h) {
+        ((Rectangle2D)getValueAt(IDX_BOUNDS)).setRect(x, y, w, h);
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getStrokeColor()
+     */
+    public int getStrokeColor() {
+        return ((Number)getValueAt(IDX_STROKECOLOR)).intValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setStrokeColor(int)
+     */
+    public void setStrokeColor(int color) {
+        setValueAt(new Integer(color), IDX_STROKECOLOR);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getStartStrokeColor()
+     */
+    public int getStartStrokeColor() {
+        return ((Number)getValueAt(IDX_STARTSTROKECOLOR)).intValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setStartStrokeColor(int)
+     */
+    public void setStartStrokeColor(int color) {
+        setValueAt(new Integer(color), IDX_STARTSTROKECOLOR);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getEndStrokeColor()
+     */
+    public int getEndStrokeColor() {
+        return ((Number)getValueAt(IDX_ENDSTROKECOLOR)).intValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setEndStrokeColor(int)
+     */
+    public void setEndStrokeColor(int color) {
+        setValueAt(new Integer(color), IDX_ENDSTROKECOLOR);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getFillColor()
+     */
+    public int getFillColor() {
+        return ((Number)getValueAt(IDX_FILLCOLOR)).intValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setFillColor(int)
+     */
+    public void setFillColor(int color) {
+        setValueAt(new Integer(color), IDX_FILLCOLOR);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getStartFillColor()
+     */
+    public int getStartFillColor() {
+        return ((Number)getValueAt(IDX_STARTFILLCOLOR)).intValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setStartFillColor(int)
+     */
+    public void setStartFillColor(int color) {
+        setValueAt(new Integer(color), IDX_STARTFILLCOLOR);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getEndFillColor()
+     */
+    public int getEndFillColor() {
+        return ((Number)getValueAt(IDX_ENDFILLCOLOR)).intValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setEndFillColor(int)
+     */
+    public void setEndFillColor(int color) {
+        setValueAt(new Integer(color), IDX_ENDFILLCOLOR);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getTextColor()
+     */
+    public int getTextColor() {
+        return ((Number)getValueAt(IDX_TEXTCOLOR)).intValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setTextColor(int)
+     */
+    public void setTextColor(int color) {
+        setValueAt(new Integer(color), IDX_TEXTCOLOR);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getStartTextColor()
+     */
+    public int getStartTextColor() {
+        return ((Number)getValueAt(IDX_STARTTEXTCOLOR)).intValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setStartTextColor(int)
+     */
+    public void setStartTextColor(int color) {
+        setValueAt(new Integer(color), IDX_STARTTEXTCOLOR);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getEndTextColor()
+     */
+    public int getEndTextColor() {
+        return ((Number)getValueAt(IDX_ENDTEXTCOLOR)).intValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setEndTextColor(int)
+     */
+    public void setEndTextColor(int color) {
+        setValueAt(new Integer(color), IDX_ENDTEXTCOLOR);
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getSize()
+     */
+    public double getSize() {
+        return ((Number)getValueAt(IDX_SIZE)).doubleValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setSize(double)
+     */
+    public void setSize(double size) {
+        setValueAt(new Double(size), IDX_SIZE);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getStartSize()
+     */
+    public double getStartSize() {
+        return ((Number)getValueAt(IDX_STARTSIZE)).doubleValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setStartSize(double)
+     */
+    public void setStartSize(double size) {
+        setValueAt(new Double(size), IDX_STARTSIZE);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getEndSize()
+     */
+    public double getEndSize() {
+        return ((Number)getValueAt(IDX_ENDSIZE)).doubleValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setEndSize(double)
+     */
+    public void setEndSize(double size) {
+        setValueAt(new Double(size), IDX_ENDSIZE);
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getFont()
+     */
+    public Font getFont() {
+        return (Font)getValueAt(IDX_FONT);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setFont(java.awt.Font)
+     */
+    public void setFont(Font font) {
+        setValueAt(font, IDX_FONT);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getStartFont()
+     */
+    public Font getStartFont() {
+        return (Font)getValueAt(IDX_STARTFONT);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setStartFont(java.awt.Font)
+     */
+    public void setStartFont(Font font) {
+        setValueAt(font, IDX_FONT);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getEndFont()
+     */
+    public Font getEndFont() {
+        return (Font)getValueAt(IDX_ENDFONT);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setEndFont(java.awt.Font)
+     */
+    public void setEndFont(Font font) {
+        setValueAt(font, IDX_FONT);
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getDOI()
+     */
+    public double getDOI() {
+        return ((Number)getValueAt(IDX_DOI)).doubleValue();
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setDOI(double)
+     */
+    public void setDOI(double doi) {
+        setValueAt(new Double(doi), IDX_DOI);
+    }
+
+} // end of class FreeVisualItem
+@
+
+
+1.1.2.2
+log
+@Javadoc fixes, other clean-up
+@
+text
+@@
+
+

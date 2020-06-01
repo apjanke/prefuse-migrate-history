@@ -1,0 +1,249 @@
+head	1.4;
+access;
+symbols
+	P20050924_InfoVis:1.4
+	Preliminary_Design:1.3
+	P200501_Prototype:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2005.09.24.18.40.28;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.04.20.03.54.16;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.04.16.06.01.39;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.15.00.36.40;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Update to new version!!
+@
+text
+@package vizster.render;
+
+import vizster.DecoratorItem;
+import vizster.Vizster;
+import edu.berkeley.guir.prefuse.AggregateItem;
+import edu.berkeley.guir.prefuse.Display;
+import edu.berkeley.guir.prefuse.EdgeItem;
+import edu.berkeley.guir.prefuse.NodeItem;
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.render.ImageFactory;
+import edu.berkeley.guir.prefuse.render.PolygonRenderer;
+import edu.berkeley.guir.prefuse.render.Renderer;
+import edu.berkeley.guir.prefuse.render.RendererFactory;
+import edu.berkeley.guir.prefuse.render.ShapeRenderer;
+
+/**
+ * Provides renderers for the Vizster application. This factory supports
+ * semantic zooming, updating image resolutions based on the current
+ * zoom level, and two different modes - one for general browsing and
+ * one for comparing node attributes.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> vizster(AT)jheer.org
+ */
+public class VizsterRendererFactory implements RendererFactory {
+
+    private double scaleThreshold = 2;
+    
+    private Vizster vizster;
+    private Display display;
+    
+    private VizsterImageRenderer imageRenderer;
+    private VizsterImageRenderer imageRenderer2;
+    private VizsterImageRenderer compareRenderer;
+    private Renderer edgeRenderer;
+    private PolygonRenderer polyRenderer;
+    private AuraRenderer auraRenderer;
+    
+    public VizsterRendererFactory(Vizster vizster) {
+        this.vizster = vizster;
+        this.display = vizster.getDisplay();
+        
+        imageRenderer2 = new VizsterImageRenderer();
+        imageRenderer2.setMaxImageDimensions(150,150);
+        imageRenderer2.setImageSize(0.2);
+        imageRenderer2.setHorizontalPadding(2);
+        
+        imageRenderer = new VizsterImageRenderer();
+        
+        ImageFactory bw1 = imageRenderer.getBlackAndWhiteImageFactory();
+        ImageFactory if2 = imageRenderer2.getImageFactory();
+        ImageFactory bw2 = imageRenderer2.getBlackAndWhiteImageFactory();
+        
+        imageRenderer.setImageFactory(new SharingImageFactory(if2,bw1,bw2));
+        imageRenderer.setMaxImageDimensions(30,30);
+        imageRenderer.setHorizontalPadding(2);
+        
+        compareRenderer = new VizsterImageRenderer() {
+            public int getRenderType(VisualItem item) {
+                int rt = super.getRenderType(item);
+                if ( rt == RENDER_TYPE_NONE || rt == RENDER_TYPE_DRAW ) {
+                    rt = RENDER_TYPE_FILL;
+                }
+                return rt;
+            } //
+        };
+        compareRenderer.setDrawImages(false);
+        compareRenderer.setRoundedCorner(8,8);
+        compareRenderer.setHorizontalPadding(2);
+        
+        edgeRenderer = new VizsterEdgeRenderer();
+        polyRenderer = new PolygonRenderer(PolygonRenderer.EDGE_CURVE);
+        auraRenderer = new AuraRenderer(vizster);
+    } //
+    
+    public void setScaleThreshold(double scale) {
+        scaleThreshold = scale;
+    } //
+    
+    /**
+     * @@see edu.berkeley.guir.prefuse.render.RendererFactory#getRenderer(edu.berkeley.guir.prefuse.VisualItem)
+     */
+    public Renderer getRenderer(VisualItem item) {
+        if ( item instanceof DecoratorItem ) {
+            return auraRenderer;
+        } else if ( item instanceof AggregateItem ) {
+            if ( vizster.isXRayMode() ) {
+                polyRenderer.setRenderType(ShapeRenderer.RENDER_TYPE_DRAW);
+            } else {
+                polyRenderer.setRenderType(ShapeRenderer.RENDER_TYPE_DRAW_AND_FILL);
+            }
+            return polyRenderer;
+        } else if ( item instanceof EdgeItem ) {
+            return edgeRenderer;
+        } else if ( item instanceof NodeItem ) {
+            if ( vizster.isXRayMode() ) {
+                return compareRenderer;
+            } else {
+                double scale = display.getScale();
+                if ( scale >= scaleThreshold ) {
+                    return imageRenderer2;
+                } else {
+                    return imageRenderer;
+                }
+            }
+        } else {
+            return null;
+        }
+    } //
+
+    public void setDrawImages(boolean s) {
+        imageRenderer.setDrawImages(s);
+    } //
+    
+} // end of class VizsterRendererFactory
+@
+
+
+1.3
+log
+@Vizster 1.0
+@
+text
+@d3 3
+d10 2
+d14 1
+d29 2
+a30 1
+    private Display  display;
+d36 2
+d39 3
+a41 4
+    private boolean browseMode = true;
+    
+    public VizsterRendererFactory(Display display) {
+        this.display = display;
+d49 6
+a54 2
+        imageRenderer.setImageFactory(
+            new SharingImageFactory(imageRenderer2.getImageFactory()));
+d60 5
+a64 6
+                if ( item.isFocus() )
+                    return RENDER_TYPE_DRAW_AND_FILL;
+                else if ( item.isHighlighted() )
+                    return RENDER_TYPE_DRAW_AND_FILL;
+                else
+                    return RENDER_TYPE_FILL;
+d71 3
+a73 5
+        edgeRenderer  = new VizsterEdgeRenderer();
+    } //
+    
+    public void setBrowseMode(boolean b) {
+        browseMode = b;
+d84 10
+a93 1
+        if ( item instanceof EdgeItem ) {
+d96 3
+a98 1
+            if ( browseMode ) {
+a104 2
+            } else {
+                return compareRenderer;
+a108 1
+        
+@
+
+
+1.2
+log
+@Smooth image zooming, updated login dialog
+@
+text
+@d11 4
+a14 2
+ * 
+ * Apr 13, 2004 - jheer - Created class
+d27 1
+d30 2
+d46 14
+d63 4
+d78 7
+a84 3
+            double scale = display.getScale();
+            if ( scale >= scaleThreshold ) {
+                return imageRenderer2;
+d86 1
+a86 1
+                return imageRenderer;
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@a29 5
+        imageRenderer = new VizsterImageRenderer();
+        imageRenderer.setMaxImageDimensions(30,30);
+        imageRenderer.setHorizontalPadding(2);
+        //imageRenderer.setRoundedCorner(8,8);
+        
+d34 6
+a39 1
+        //imageRenderer2.setRoundedCorner(8,8);
+@
+

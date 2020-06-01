@@ -1,0 +1,173 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2004.03.24.01.57.26;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.07.19.07.07;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.06.00.50.41;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@New filters added plus more
+@
+text
+@package edu.berkeley.guir.prefuse.action;
+
+import java.awt.Insets;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+import edu.berkeley.guir.prefuse.Display;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+
+/**
+ * Abstract class providing convenience methods for graph layout algorithms.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public abstract class Layout extends AbstractAction {
+
+    protected Rectangle2D m_bounds = null;
+    protected Point2D     m_anchor = null;
+    private   Insets      m_insets = new Insets(0,0,0,0);
+    
+    private   double[]    m_bpts   = new double[4];
+    private   Rectangle2D m_tmp    = new Rectangle2D.Double();
+    
+    public Rectangle2D getLayoutBounds() {
+        return m_bounds;
+    } //
+    
+    public Rectangle2D getLayoutBounds(ItemRegistry registry) {
+        if ( m_bounds != null )
+            return m_bounds;
+        Display d;
+        if ( registry != null && (d=registry.getDisplay(0)) != null ) {
+            Insets i = d.getInsets(m_insets);
+            m_bpts[0] = i.left; m_bpts[1] = i.top;
+            m_bpts[2] = d.getWidth()-i.right;
+            m_bpts[3] = d.getHeight()-i.bottom;
+            d.getInverseTransform().transform(m_bpts,0,m_bpts,0,2);
+            m_tmp.setRect(m_bpts[0],m_bpts[1],
+                          m_bpts[2]-m_bpts[0],
+                          m_bpts[3]-m_bpts[1]);
+            return m_tmp;
+        } else
+            return null;
+    } //
+    
+    public void setLayoutBounds(Rectangle2D b) {
+        m_bounds = b;
+    } //
+    
+    public Point2D getLayoutAnchor() {
+        return m_anchor;
+    } //
+    
+    public Point2D getLayoutAnchor(ItemRegistry registry) {
+        if ( m_anchor != null )
+            return m_anchor;
+        Point2D a = new Point2D.Double(0,0);
+        if ( registry != null ) {
+            Display d = registry.getDisplay(0);
+            a.setLocation(d.getWidth()/2.0,d.getHeight()/2.0);
+            d.getInverseTransform().transform(a,a);
+        }
+        return a;
+    } //
+    
+    public void setLayoutAnchor(Point2D a) {
+        m_anchor = a;
+    } //
+    
+    public abstract void run(ItemRegistry registry, double frac);
+
+} // end of abstract class Layout
+@
+
+
+1.3
+log
+@Updated layout bounds handling
+@
+text
+@@
+
+
+1.2
+log
+@Updated naming of layout convenience routines
+@
+text
+@d3 1
+a3 1
+import java.awt.Rectangle;
+d20 4
+d33 12
+a44 4
+        if ( registry != null && (d=registry.getDisplay(0)) != null )
+            return new Rectangle(0,0,d.getWidth(),d.getHeight());
+        else
+            return new Rectangle();
+d58 1
+a58 1
+        double x = 0, y = 0;
+d61 2
+a62 1
+            x = d.getWidth()/2; y = d.getHeight()/2;
+d64 1
+a64 1
+        return new Point2D.Double(x,y);
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d21 1
+a21 1
+    public Rectangle2D getBounds() {
+d25 1
+a25 1
+    public Rectangle2D getBounds(ItemRegistry registry) {
+d35 1
+a35 1
+    public void setBounds(Rectangle2D b) {
+d39 1
+a39 1
+    public Point2D getAnchor() {
+d43 1
+a43 1
+    public Point2D getAnchor(ItemRegistry registry) {
+d54 1
+a54 1
+    public void setAnchor(Point2D a) {
+@
+

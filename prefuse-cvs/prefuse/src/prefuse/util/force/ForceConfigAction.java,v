@@ -1,0 +1,195 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.15;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.force;
+
+import java.awt.event.ActionEvent;
+
+import javax.swing.AbstractAction;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+import prefuse.util.ui.JForcePanel;
+
+/**
+ * Swing Action components that brings up a dialog allowing users to configure
+ * a force simulation.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ * @@see prefuse.util.ui.JForcePanel
+ */
+public class ForceConfigAction extends AbstractAction {
+
+    private JDialog dialog;
+    
+    /**
+     * Create a new ForceConfigAction.
+     * @@param frame the parent frame for which to create the dialog
+     * @@param fsim the force simulator to configure
+     */
+    public ForceConfigAction(JFrame frame, ForceSimulator fsim) {
+        dialog = new JDialog(frame, false);
+        dialog.setTitle("Configure Force Simulator");
+        JPanel forcePanel = new JForcePanel(fsim);
+        dialog.getContentPane().add(forcePanel);
+        dialog.pack();
+    }
+    
+    /**
+     * @@see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        dialog.setVisible(true);
+    }
+
+} // end of class ForceConfigAction
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d21 2
+a22 2
+    private final JDialog dialog;
+
+d35 1
+a35 1
+
+@
+
+
+1.1
+log
+@file ForceConfigAction.java was initially added on branch beta.
+@
+text
+@d1 43
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 37
+package prefuse.util.force;
+
+import java.awt.event.ActionEvent;
+
+import javax.swing.AbstractAction;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+import prefuse.util.ui.JForcePanel;
+
+/**
+ * Brings up a dialog allowing users to configure a force simulation.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ForceConfigAction extends AbstractAction {
+
+    private JDialog dialog;
+    
+    public ForceConfigAction(JFrame frame, ForceSimulator fsim) {
+        dialog = new JDialog(frame, false);
+        dialog.setTitle("Configure Force Simulator");
+        JPanel forcePanel = new JForcePanel(fsim);
+        dialog.getContentPane().add(forcePanel);
+        dialog.pack();
+    } //
+    
+    /**
+     * @@see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        dialog.setVisible(true);
+    } //
+
+} // end of class ForceConfigAction
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d13 1
+a13 2
+ * Swing Action components that brings up a dialog allowing users to configure
+ * a force simulation.
+d15 2
+a16 2
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ * @@see prefuse.util.ui.JForcePanel
+a21 5
+    /**
+     * Create a new ForceConfigAction.
+     * @@param frame the parent frame for which to create the dialog
+     * @@param fsim the force simulator to configure
+     */
+d28 1
+a28 1
+    }
+d35 1
+a35 1
+    }
+@
+
+

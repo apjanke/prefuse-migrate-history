@@ -1,0 +1,51 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2004.02.27.21.35.18;	author jheer;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.10.24;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Major commit of updated architecture
+@
+text
+@package edu.berkeley.guir.prefuse.graph;
+
+/**
+ * 
+ * Aug 15, 2003 - jheer - Created class
+ * 
+ * @@version 1.0
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+ */
+public interface FilterFunction {
+	
+	public boolean filter(Entity e);
+	
+} // end of interface FilterFunction
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@@
+

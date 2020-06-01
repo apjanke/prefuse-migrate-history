@@ -1,0 +1,52 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.02.26.05.02.53;	author amarsden;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2008.02.26.05.02.53;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file RenderType.java was initially added on branch java_1_5.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Moved RenderType outside of AbstractShapeRenderer (it is now a top level enum)
+@
+text
+@a0 13
+/**
+ *
+ */
+package prefuse.render;
+
+/**
+ * Specifies the type of rendering to use - needed by GraphicsLib
+ *
+ * @@author Anton Marsden
+ */
+public enum RenderType {
+	NONE, DRAW, FILL, DRAW_AND_FILL
+}@
+

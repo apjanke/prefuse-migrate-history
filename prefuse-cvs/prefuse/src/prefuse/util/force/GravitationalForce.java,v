@@ -1,0 +1,326 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.15;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	2.0.4.2;
+
+2.0.4.2
+date	2008.03.10.09.20.31;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.force;
+
+/**
+ * Represents a constant gravitational force, like the pull of gravity
+ * for an object on the Earth (F = mg). The force experienced by a
+ * given item is calculated as the product of a GravitationalConstant 
+ * parameter and the mass of the item.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class GravitationalForce extends AbstractForce {
+
+    private static final String[] pnames
+        = { "GravitationalConstant", "Direction" };
+    
+    public static final int GRAVITATIONAL_CONST = 0;
+    public static final int DIRECTION = 1;
+    
+    public static final float DEFAULT_FORCE_CONSTANT = 1E-4f;
+    public static final float DEFAULT_MIN_FORCE_CONSTANT = 1E-5f;
+    public static final float DEFAULT_MAX_FORCE_CONSTANT = 1E-3f;
+    
+    public static final float DEFAULT_DIRECTION = (float)-Math.PI/2;
+    public static final float DEFAULT_MIN_DIRECTION = (float)-Math.PI;
+    public static final float DEFAULT_MAX_DIRECTION = (float)Math.PI;
+    
+    /**
+     * Create a new GravitationForce.
+     * @@param forceConstant the gravitational constant to use
+     * @@param direction the direction in which gravity should act,
+     * in radians.
+     */
+    public GravitationalForce(float forceConstant, float direction) {
+        params = new float[] { forceConstant, direction };
+        minValues = new float[] 
+            { DEFAULT_MIN_FORCE_CONSTANT, DEFAULT_MIN_DIRECTION };
+        maxValues = new float[] 
+            { DEFAULT_MAX_FORCE_CONSTANT, DEFAULT_MAX_DIRECTION };
+    }
+    
+    /**
+     * Create a new GravitationalForce with default gravitational
+     * constant and direction.
+     */
+    public GravitationalForce() {
+        this(DEFAULT_FORCE_CONSTANT, DEFAULT_DIRECTION);
+    }
+    
+    /**
+     * Returns true.
+     * @@see prefuse.util.force.Force#isItemForce()
+     */
+    public boolean isItemForce() {
+        return true;
+    }
+
+    /**
+     * @@see prefuse.util.force.AbstractForce#getParameterNames()
+     */
+    protected String[] getParameterNames() {
+        return pnames;
+    }
+    
+    /**
+     * @@see prefuse.util.force.Force#getForce(prefuse.util.force.ForceItem)
+     */
+    public void getForce(ForceItem item) {
+        float theta = params[DIRECTION];
+        float coeff = params[GRAVITATIONAL_CONST]*item.mass;
+        
+        item.force[0] += Math.cos(theta)*coeff;
+        item.force[1] += Math.sin(theta)*coeff;
+    }
+
+} // end of class GravitationalForce
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d6 1
+a6 1
+ * given item is calculated as the product of a GravitationalConstant
+d15 1
+a15 1
+
+d18 1
+a18 1
+
+d22 1
+a22 1
+
+d26 1
+a26 1
+
+d35 1
+a35 1
+        minValues = new float[]
+d37 1
+a37 1
+        maxValues = new float[]
+d40 1
+a40 1
+
+d48 1
+a48 1
+
+d53 1
+a53 2
+    @@Override
+	public boolean isItemForce() {
+d60 1
+a60 2
+    @@Override
+	protected String[] getParameterNames() {
+d63 1
+a63 1
+
+d67 1
+a67 2
+    @@Override
+	public void getForce(ForceItem item) {
+d70 1
+a70 1
+
+@
+
+
+2.0.4.2
+log
+@Minor tweaks to edge layouts
+@
+text
+@a2 2
+import prefuse.util.MathLib;
+
+d23 1
+a23 1
+    public static final float DEFAULT_DIRECTION = (float)-MathLib.PI_DIV_2;
+@
+
+
+1.1
+log
+@file GravitationalForce.java was initially added on branch beta.
+@
+text
+@d1 75
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 56
+package prefuse.util.force;
+
+/**
+ * Represents a constant gravitational force, like the pull of gravity
+ * for an object on the Earth (F = mg). The force experienced by a
+ * given item is calculated as the product of a GravitationalConstant 
+ * parameter and the mass of the item.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class GravitationalForce extends AbstractForce {
+
+    private static final String[] pnames
+        = { "GravitationalConstant", "Direction" };
+    
+    public static final int GRAVITATIONAL_CONST = 0;
+    public static final int DIRECTION = 1;
+    
+    public static final float DEFAULT_FORCE_CONSTANT = 1E-4f;
+    public static final float DEFAULT_MIN_FORCE_CONSTANT = 1E-5f;
+    public static final float DEFAULT_MAX_FORCE_CONSTANT = 1E-3f;
+    
+    public static final float DEFAULT_DIRECTION = (float)-Math.PI/2;
+    public static final float DEFAULT_MIN_DIRECTION = (float)-Math.PI;
+    public static final float DEFAULT_MAX_DIRECTION = (float)Math.PI;
+    
+    public GravitationalForce(float forceConstant, float direction) {
+        params = new float[] { forceConstant, direction };
+        minValues = new float[] 
+            { DEFAULT_MIN_FORCE_CONSTANT, DEFAULT_MIN_DIRECTION };
+        maxValues = new float[] 
+            { DEFAULT_MAX_FORCE_CONSTANT, DEFAULT_MAX_DIRECTION };
+    } //
+    
+    public GravitationalForce() {
+        this(DEFAULT_FORCE_CONSTANT, DEFAULT_DIRECTION);
+    } //
+    
+    public boolean isItemForce() {
+        return true;
+    } //
+
+    protected String[] getParameterNames() {
+        return pnames;
+    } //
+    
+    public void getForce(ForceItem item) {
+        float theta = params[DIRECTION];
+        float coeff = params[GRAVITATIONAL_CONST]*item.mass;
+        
+        item.force[0] += Math.cos(theta)*coeff;
+        item.force[1] += Math.sin(theta)*coeff;
+    } //
+
+} // end of class GravitationalForce
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d9 2
+a10 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a27 6
+    /**
+     * Create a new GravitationForce.
+     * @@param forceConstant the gravitational constant to use
+     * @@param direction the direction in which gravity should act,
+     * in radians.
+     */
+d34 1
+a34 1
+    }
+a35 4
+    /**
+     * Create a new GravitationalForce with default gravitational
+     * constant and direction.
+     */
+d38 1
+a38 1
+    }
+a39 4
+    /**
+     * Returns true.
+     * @@see prefuse.util.force.Force#isItemForce()
+     */
+d42 1
+a42 1
+    }
+a43 3
+    /**
+     * @@see prefuse.util.force.AbstractForce#getParameterNames()
+     */
+d46 1
+a46 1
+    }
+a47 3
+    /**
+     * @@see prefuse.util.force.Force#getForce(prefuse.util.force.ForceItem)
+     */
+d54 1
+a54 1
+    }
+@
+
+

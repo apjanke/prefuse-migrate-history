@@ -1,0 +1,234 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.04;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.43;	author jogiles;	state Exp;
+branches;
+next	2.0.4.2;
+
+2.0.4.2
+date	2008.02.28.01.09.32;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.render;
+
+import java.awt.Graphics2D;
+import java.awt.geom.Point2D;
+
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Renderer that does nothing, causing an item to be rendered "into
+ * the void". Possibly useful for items that must exist and have a spatial
+ * location but should otherwise be invisible and non-interactive (e.g.,
+ * invisible end-points for visible edges).
+ *  
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class NullRenderer implements Renderer {
+
+    /**
+     * @@see prefuse.render.Renderer#render(java.awt.Graphics2D, prefuse.visual.VisualItem)
+     */
+    public void render(Graphics2D g, VisualItem item) {
+        // do nothing
+    }
+    
+    /**
+     * @@see prefuse.render.Renderer#locatePoint(java.awt.geom.Point2D, prefuse.visual.VisualItem)
+     */
+    public boolean locatePoint(Point2D p, VisualItem item) {
+        return false;
+    }
+    
+    /**
+     * @@see prefuse.render.Renderer#setBounds(prefuse.visual.VisualItem)
+     */
+    public void setBounds(VisualItem item) {
+        item.setBounds(item.getX(), item.getY(), 0, 0);
+    }
+
+} // end of class NullRenderer
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a4 1
+import java.awt.geom.Rectangle2D;
+d14 1
+a14 1
+ *
+d22 1
+a22 1
+    public void render(Graphics2D g, VisualItem<?> item) {
+d25 1
+a25 1
+
+d29 1
+a29 1
+    public boolean locatePoint(Point2D p, VisualItem<?> item) {
+d32 1
+a32 1
+
+d34 1
+a34 1
+     * @@see prefuse.render.Renderer#calculateBounds(VisualItem)
+d36 2
+a37 2
+    public void calculateBounds(VisualItem<?> item, Rectangle2D bounds) {
+    	bounds.setRect(item.getX(), item.getY(), 0, 0);
+a39 4
+	public boolean managesBounds() {
+		return true;
+	}
+
+@
+
+
+2.0.4.2
+log
+@Documentation improvements
+@
+text
+@d35 1
+a35 1
+     * @@see prefuse.render.Renderer#calculateBounds(VisualItem,Rectangle2D)
+@
+
+
+1.1
+log
+@file NullRenderer.java was initially added on branch beta.
+@
+text
+@d1 40
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 32
+package prefuse.render;
+
+import java.awt.Graphics2D;
+import java.awt.geom.Point2D;
+
+import prefuse.visual.VisualItem;
+
+
+/**
+ * The NullRenderer does nothing, causing an item to be rendered "into
+ * the void". Maybe used for items that must exist and have a spatial
+ * location but should otherwise be invisible and non-interactive (e.g.,
+ * invisible end-points for visible edges).
+ *  
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class NullRenderer implements Renderer {
+
+    public void render(Graphics2D g, VisualItem item) {
+        // the null renderer!
+    } //
+    
+    public boolean locatePoint(Point2D p, VisualItem item) {
+        return false;
+    } //
+    
+    public void setBounds(VisualItem item) {
+        item.setBounds(item.getX(), item.getY(), 0, 0);
+    } //
+
+} // end of class NullRenderer
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d10 2
+a11 2
+ * Renderer that does nothing, causing an item to be rendered "into
+ * the void". Possibly useful for items that must exist and have a spatial
+d15 2
+a16 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a19 3
+    /**
+     * @@see prefuse.render.Renderer#render(java.awt.Graphics2D, prefuse.visual.VisualItem)
+     */
+d21 2
+a22 2
+        // do nothing
+    }
+a23 3
+    /**
+     * @@see prefuse.render.Renderer#locatePoint(java.awt.geom.Point2D, prefuse.visual.VisualItem)
+     */
+d26 1
+a26 1
+    }
+a27 3
+    /**
+     * @@see prefuse.render.Renderer#setBounds(prefuse.visual.VisualItem)
+     */
+d30 1
+a30 1
+    }
+@
+
+

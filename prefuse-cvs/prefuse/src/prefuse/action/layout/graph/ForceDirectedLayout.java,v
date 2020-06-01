@@ -1,0 +1,1456 @@
+head	2.5;
+access;
+symbols
+	java_1_5:2.5.0.4
+	Root_java_1_5:2.5
+	beta:2.5.0.2
+	beta-20080113:2.5
+	beta-20071021:2.5
+	beta-20060220:2.1
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2006.07.15.16.32.42;	author jheer;	state Exp;
+branches
+	2.5.4.1;
+next	2.4;
+
+2.4
+date	2006.05.26.20.28.56;	author jheer;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2006.04.05.17.11.24;	author jheer;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.02.27.03.40.13;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.20.09.35.31;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	;
+
+2.5.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@Updated calls to setX and setY such that they no longer refer to the "super" instance, now allowing overrides.
+Thanks to Vadim Gritsenko for the fix!
+@
+text
+@package prefuse.action.layout.graph;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+
+import prefuse.action.layout.Layout;
+import prefuse.data.Graph;
+import prefuse.data.Schema;
+import prefuse.data.tuple.TupleSet;
+import prefuse.util.PrefuseLib;
+import prefuse.util.force.DragForce;
+import prefuse.util.force.ForceItem;
+import prefuse.util.force.ForceSimulator;
+import prefuse.util.force.NBodyForce;
+import prefuse.util.force.SpringForce;
+import prefuse.visual.EdgeItem;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * <p>Layout that positions graph elements based on a physics simulation of
+ * interacting forces; by default, nodes repel each other, edges act as
+ * springs, and drag forces (similar to air resistance) are applied. This
+ * algorithm can be run for multiple iterations for a run-once layout
+ * computation or repeatedly run in an animated fashion for a dynamic and
+ * interactive layout.</p>
+ * 
+ * <p>The running time of this layout algorithm is the greater of O(N log N)
+ * and O(E), where N is the number of nodes and E the number of edges.
+ * The addition of custom force calculation modules may, however, increase
+ * this value.</p>
+ * 
+ * <p>The {@@link prefuse.util.force.ForceSimulator} used to drive this layout
+ * can be set explicitly, allowing any number of custom force directed layouts
+ * to be created through the user's selection of included
+ * {@@link prefuse.util.force.Force} components. Each node in the layout is
+ * mapped to a {@@link prefuse.util.force.ForceItem} instance and each edge
+ * to a {@@link prefuse.util.force.Spring} instance for storing the state
+ * of the simulation. See the {@@link prefuse.util.force} package for more.</p>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ForceDirectedLayout extends Layout {
+    
+    private ForceSimulator m_fsim;
+    private long m_lasttime = -1L;
+    private long m_maxstep = 50L;
+    private boolean m_runonce;
+    private int m_iterations = 100;
+    private boolean m_enforceBounds;
+    
+    protected transient VisualItem referrer;
+    
+    protected String m_nodeGroup;
+    protected String m_edgeGroup;
+    
+    /**
+     * Create a new ForceDirectedLayout. By default, this layout will not
+     * restrict the layout to the layout bounds and will assume it is being
+     * run in animated (rather than run-once) fashion.
+     * @@param graph the data group to layout. Must resolve to a Graph instance.
+     */
+    public ForceDirectedLayout(String graph)
+    {
+        this(graph, false, false);
+    }
+
+    /**
+     * Create a new ForceDirectedLayout. The layout will assume it is being
+     * run in animated (rather than run-once) fashion.
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+     * @@param enforceBounds indicates whether or not the layout should require
+     * that all node placements stay within the layout bounds.
+     */
+    public ForceDirectedLayout(String group, boolean enforceBounds)
+    {
+        this(group, enforceBounds, false);
+    }
+    
+    /**
+     * Create a new ForceDirectedLayout.
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+     * @@param enforceBounds indicates whether or not the layout should require
+     * that all node placements stay within the layout bounds.
+     * @@param runonce indicates if the layout will be run in a run-once or
+     * animated fashion. In run-once mode, the layout will run for a set number
+     * of iterations when invoked. In animation mode, only one iteration of the
+     * layout is computed.
+     */
+    public ForceDirectedLayout(String group,
+            boolean enforceBounds, boolean runonce)
+    {
+        super(group);
+        m_nodeGroup = PrefuseLib.getGroupName(group, Graph.NODES);
+        m_edgeGroup = PrefuseLib.getGroupName(group, Graph.EDGES);
+        
+        m_enforceBounds = enforceBounds;
+        m_runonce = runonce;
+        m_fsim = new ForceSimulator();
+        m_fsim.addForce(new NBodyForce());
+        m_fsim.addForce(new SpringForce());
+        m_fsim.addForce(new DragForce());
+    }
+    
+    /**
+     * Create a new ForceDirectedLayout. The layout will assume it is being
+     * run in animated (rather than run-once) fashion.
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+     * @@param fsim the force simulator used to drive the layout computation
+     * @@param enforceBounds indicates whether or not the layout should require
+     * that all node placements stay within the layout bounds.
+     */
+    public ForceDirectedLayout(String group,
+            ForceSimulator fsim, boolean enforceBounds) {
+        this(group, fsim, enforceBounds, false);
+    }
+    
+    /**
+     * Create a new ForceDirectedLayout.
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+     * @@param fsim the force simulator used to drive the layout computation
+     * @@param enforceBounds indicates whether or not the layout should require
+     * that all node placements stay within the layout bounds.
+     * @@param runonce indicates if the layout will be run in a run-once or
+     * animated fashion. In run-once mode, the layout will run for a set number
+     * of iterations when invoked. In animation mode, only one iteration of the
+     * layout is computed.
+     */
+    public ForceDirectedLayout(String group, ForceSimulator fsim,
+            boolean enforceBounds, boolean runonce)
+    {
+        super(group);
+        m_nodeGroup = PrefuseLib.getGroupName(group, Graph.NODES);
+        m_edgeGroup = PrefuseLib.getGroupName(group, Graph.EDGES);
+        
+        m_enforceBounds = enforceBounds;
+        m_runonce = runonce;
+        m_fsim = fsim;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the maximum timestep allowed for integrating node settings between
+     * runs of this layout. When computation times are longer than desired,
+     * and node positions are changing dramatically between animated frames,
+     * the max step time can be lowered to suppress node movement.
+     * @@return the maximum timestep allowed for integrating between two
+     * layout steps.
+     */
+    public long getMaxTimeStep() {
+        return m_maxstep;
+    }
+
+    /**
+     * Set the maximum timestep allowed for integrating node settings between
+     * runs of this layout. When computation times are longer than desired,
+     * and node positions are changing dramatically between animated frames,
+     * the max step time can be lowered to suppress node movement.
+     * @@param maxstep the maximum timestep allowed for integrating between two
+     * layout steps
+     */
+    public void setMaxTimeStep(long maxstep) {
+        this.m_maxstep = maxstep;
+    }
+    
+    /**
+     * Get the force simulator driving this layout.
+     * @@return the force simulator
+     */
+    public ForceSimulator getForceSimulator() {
+        return m_fsim;
+    }
+    
+    /**
+     * Set the force simulator driving this layout.
+     * @@param fsim the force simulator
+     */
+    public void setForceSimulator(ForceSimulator fsim) {
+        m_fsim = fsim;
+    }
+    
+    /**
+     * Get the number of iterations to use when computing a layout in
+     * run-once mode.
+     * @@return the number of layout iterations to run
+     */
+    public int getIterations() {
+        return m_iterations;
+    }
+
+    /**
+     * Set the number of iterations to use when computing a layout in
+     * run-once mode.
+     * @@param iter the number of layout iterations to run
+     */
+    public void setIterations(int iter) {
+        if ( iter < 1 )
+            throw new IllegalArgumentException(
+                    "Iterations must be a positive number!");
+        m_iterations = iter;
+    }
+    
+    /**
+     * Explicitly sets the node and edge groups to use for this layout,
+     * overriding the group setting passed to the constructor.
+     * @@param nodeGroup the node data group
+     * @@param edgeGroup the edge data group
+     */
+    public void setDataGroups(String nodeGroup, String edgeGroup) {
+        m_nodeGroup = nodeGroup;
+        m_edgeGroup = edgeGroup;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        // perform different actions if this is a run-once or
+        // run-continuously layout
+        if ( m_runonce ) {
+            Point2D anchor = getLayoutAnchor();
+            Iterator iter = m_vis.visibleItems(m_nodeGroup);
+            while ( iter.hasNext() ) {
+                VisualItem  item = (NodeItem)iter.next();
+                item.setX(anchor.getX());
+                item.setY(anchor.getY());
+            }
+            m_fsim.clear();
+            long timestep = 1000L;
+            initSimulator(m_fsim);
+            for ( int i = 0; i < m_iterations; i++ ) {
+                // use an annealing schedule to set time step
+                timestep *= (1.0 - i/(double)m_iterations);
+                long step = timestep+50;
+                // run simulator
+                m_fsim.runSimulator(step);
+                // debugging output
+//                if (i % 10 == 0 ) {
+//                    System.out.println("iter: "+i);
+//                }
+            }
+            updateNodePositions();
+        } else {
+            // get timestep
+            if ( m_lasttime == -1 )
+                m_lasttime = System.currentTimeMillis()-20;
+            long time = System.currentTimeMillis();
+            long timestep = Math.min(m_maxstep, time - m_lasttime);
+            m_lasttime = time;
+            
+            // run force simulator
+            m_fsim.clear();
+            initSimulator(m_fsim);
+            m_fsim.runSimulator(timestep);
+            updateNodePositions();
+        }
+        if ( frac == 1.0 ) {
+            reset();
+        }
+    }
+
+    private void updateNodePositions() {
+        Rectangle2D bounds = getLayoutBounds();
+        double x1=0, x2=0, y1=0, y2=0;
+        if ( bounds != null ) {
+            x1 = bounds.getMinX(); y1 = bounds.getMinY();
+            x2 = bounds.getMaxX(); y2 = bounds.getMaxY();
+        }
+        
+        // update positions
+        Iterator iter = m_vis.visibleItems(m_nodeGroup);
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            ForceItem fitem = (ForceItem)item.get(FORCEITEM);
+            
+            if ( item.isFixed() ) {
+                // clear any force computations
+                fitem.force[0] = 0.0f;
+                fitem.force[1] = 0.0f;
+                fitem.velocity[0] = 0.0f;
+                fitem.velocity[1] = 0.0f;
+                
+                if ( Double.isNaN(item.getX()) ) {
+                    setX(item, referrer, 0.0);
+                    setY(item, referrer, 0.0);
+                }
+                continue;
+            }
+            
+            double x = fitem.location[0];
+            double y = fitem.location[1];
+            
+            if ( m_enforceBounds && bounds != null) {
+                Rectangle2D b = item.getBounds();
+                double hw = b.getWidth()/2;
+                double hh = b.getHeight()/2;
+                if ( x+hw > x2 ) x = x2-hw;
+                if ( x-hw < x1 ) x = x1+hw;
+                if ( y+hh > y2 ) y = y2-hh;
+                if ( y-hh < y1 ) y = y1+hh;
+            }
+            
+            // set the actual position
+            setX(item, referrer, x);
+            setY(item, referrer, y);
+        }
+    }
+    
+    /**
+     * Reset the force simulation state for all nodes processed
+     * by this layout.
+     */
+    public void reset() {
+        Iterator iter = m_vis.visibleItems(m_nodeGroup);
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            ForceItem fitem = (ForceItem)item.get(FORCEITEM);
+            if ( fitem != null ) {
+                fitem.location[0] = (float)item.getEndX();
+                fitem.location[1] = (float)item.getEndY();
+                fitem.force[0]    = fitem.force[1]    = 0;
+                fitem.velocity[0] = fitem.velocity[1] = 0;
+            }
+        }
+        m_lasttime = -1L;
+    }
+    
+    /**
+     * Loads the simulator with all relevant force items and springs.
+     * @@param fsim the force simulator driving this layout
+     */
+    protected void initSimulator(ForceSimulator fsim) {     
+        // make sure we have force items to work with
+        TupleSet ts = m_vis.getGroup(m_nodeGroup);
+        if ( ts == null ) return;
+        try {
+            ts.addColumns(FORCEITEM_SCHEMA);
+        } catch ( IllegalArgumentException iae ) { /* ignored */ }
+        
+        float startX = (referrer == null ? 0f : (float)referrer.getX());
+        float startY = (referrer == null ? 0f : (float)referrer.getY());
+        startX = Float.isNaN(startX) ? 0f : startX;
+        startY = Float.isNaN(startY) ? 0f : startY;
+       
+        Iterator iter = m_vis.visibleItems(m_nodeGroup);
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            ForceItem fitem = (ForceItem)item.get(FORCEITEM);
+            fitem.mass = getMassValue(item);
+            double x = item.getEndX();
+            double y = item.getEndY();
+            fitem.location[0] = (Double.isNaN(x) ? startX : (float)x);
+            fitem.location[1] = (Double.isNaN(y) ? startY : (float)y);
+            fsim.addItem(fitem);
+        }
+        if ( m_edgeGroup != null ) {
+            iter = m_vis.visibleItems(m_edgeGroup);
+            while ( iter.hasNext() ) {
+                EdgeItem  e  = (EdgeItem)iter.next();
+                NodeItem  n1 = e.getSourceItem();
+                ForceItem f1 = (ForceItem)n1.get(FORCEITEM);
+                NodeItem  n2 = e.getTargetItem();
+                ForceItem f2 = (ForceItem)n2.get(FORCEITEM);
+                float coeff = getSpringCoefficient(e);
+                float slen = getSpringLength(e);
+                fsim.addSpring(f1, f2, (coeff>=0?coeff:-1.f), (slen>=0?slen:-1.f));
+            }
+        }
+    }
+    
+    /**
+     * Get the mass value associated with the given node. Subclasses should
+     * override this method to perform custom mass assignment.
+     * @@param n the node for which to compute the mass value
+     * @@return the mass value for the node. By default, all items are given
+     * a mass value of 1.0.
+     */
+    protected float getMassValue(VisualItem n) {
+        return 1.0f;
+    }
+    
+    /**
+     * Get the spring length for the given edge. Subclasses should
+     * override this method to perform custom spring length assignment.
+     * @@param e the edge for which to compute the spring length
+     * @@return the spring length for the edge. A return value of
+     * -1 means to ignore this method and use the global default.
+     */
+    protected float getSpringLength(EdgeItem e) {
+        return -1.f;
+    }
+
+    /**
+     * Get the spring coefficient for the given edge, which controls the
+     * tension or strength of the spring. Subclasses should
+     * override this method to perform custom spring tension assignment.
+     * @@param e the edge for which to compute the spring coefficient.
+     * @@return the spring coefficient for the edge. A return value of
+     * -1 means to ignore this method and use the global default.
+     */
+    protected float getSpringCoefficient(EdgeItem e) {
+        return -1.f;
+    }
+    
+    /**
+     * Get the referrer item to use to set x or y coordinates that are
+     * initialized to NaN.
+     * @@return the referrer item.
+     * @@see prefuse.util.PrefuseLib#setX(VisualItem, VisualItem, double)
+     * @@see prefuse.util.PrefuseLib#setY(VisualItem, VisualItem, double)
+     */
+    public VisualItem getReferrer() {
+        return referrer;
+    }
+    
+    /**
+     * Set the referrer item to use to set x or y coordinates that are
+     * initialized to NaN.
+     * @@param referrer the referrer item to use.
+     * @@see prefuse.util.PrefuseLib#setX(VisualItem, VisualItem, double)
+     * @@see prefuse.util.PrefuseLib#setY(VisualItem, VisualItem, double)
+     */
+    public void setReferrer(VisualItem referrer) {
+        this.referrer = referrer;
+    }
+    
+    // ------------------------------------------------------------------------
+    // ForceItem Schema Addition
+    
+    /**
+     * The data field in which the parameters used by this layout are stored.
+     */
+    public static final String FORCEITEM = "_forceItem";
+    /**
+     * The schema for the parameters used by this layout.
+     */
+    public static final Schema FORCEITEM_SCHEMA = new Schema();
+    static {
+        FORCEITEM_SCHEMA.addColumn(FORCEITEM,
+                                   ForceItem.class,
+                                   new ForceItem());
+    }
+    
+} // end of class ForceDirectedLayout
+@
+
+
+2.5.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d5 1
+a14 1
+import prefuse.util.force.ForceSimulatorImpl;
+d29 1
+a29 1
+ *
+d34 1
+a34 1
+ *
+d42 1
+a42 1
+ *
+d46 1
+a46 1
+
+d50 1
+a50 1
+    private final boolean m_runonce;
+d52 4
+a55 4
+    private final boolean m_enforceBounds;
+
+    protected transient VisualItem<?> referrer;
+
+d58 1
+a58 1
+
+d81 1
+a81 1
+
+d98 1
+a98 1
+
+d101 1
+a101 1
+        m_fsim = new ForceSimulatorImpl();
+d106 1
+a106 1
+
+d119 1
+a119 1
+
+d137 1
+a137 1
+
+d142 1
+a142 1
+
+d144 1
+a144 1
+
+d168 1
+a168 1
+
+d176 1
+a176 1
+
+d184 1
+a184 1
+
+d200 2
+a201 2
+        if ( iter < 1 ) {
+			throw new IllegalArgumentException(
+a202 1
+		}
+d205 1
+a205 1
+
+d216 1
+a216 1
+
+d218 1
+a218 1
+
+d222 1
+a222 2
+    @@Override
+	public void run(double frac) {
+d227 3
+a229 1
+            for(VisualItem<?> item : m_vis.visibleItems(m_nodeGroup)) {
+d238 1
+a238 1
+                timestep *= 1.0 - i/(double)m_iterations;
+d250 2
+a251 3
+            if ( m_lasttime == -1 ) {
+				m_lasttime = System.currentTimeMillis()-20;
+			}
+d255 1
+a255 1
+
+d274 1
+a274 1
+
+d276 3
+a278 1
+        for(VisualItem<?> item :  m_vis.visibleItems(m_nodeGroup)) {
+d280 1
+a280 1
+
+d287 1
+a287 1
+
+d294 1
+a294 1
+
+d297 1
+a297 1
+
+d302 4
+a305 12
+                if ( x+hw > x2 ) {
+					x = x2-hw;
+				}
+                if ( x-hw < x1 ) {
+					x = x1+hw;
+				}
+                if ( y+hh > y2 ) {
+					y = y2-hh;
+				}
+                if ( y-hh < y1 ) {
+					y = y1+hh;
+				}
+d307 1
+a307 1
+
+d313 1
+a313 1
+
+d319 3
+a321 1
+    	for(VisualItem<?> item : m_vis.visibleItems(m_nodeGroup)) {
+d332 1
+a332 1
+
+d337 1
+a337 1
+    protected void initSimulator(ForceSimulator fsim) {
+d339 2
+a340 4
+        TupleSet<? extends VisualItem<?>> ts = m_vis.getGroup(m_nodeGroup);
+        if ( ts == null ) {
+			return;
+		}
+d344 3
+a346 3
+
+        float startX = referrer == null ? 0f : (float)referrer.getX();
+        float startY = referrer == null ? 0f : (float)referrer.getY();
+d349 4
+a352 2
+
+        for(VisualItem<?> item : m_vis.visibleItems(m_nodeGroup)) {
+d357 2
+a358 2
+            fitem.location[0] = Double.isNaN(x) ? startX : (float)x;
+            fitem.location[1] = Double.isNaN(y) ? startY : (float)y;
+d362 4
+a365 3
+        	for(VisualItem<?> item : m_vis.visibleItems(m_edgeGroup)) {
+                EdgeItem<?,?>  e  = (EdgeItem<?,?>)item;
+                NodeItem<?,?>  n1 = e.getSourceNode();
+d367 1
+a367 1
+                NodeItem<?,?>  n2 = e.getTargetNode();
+d375 1
+a375 1
+
+d383 1
+a383 1
+    protected float getMassValue(VisualItem<?> n) {
+d386 1
+a386 1
+
+d394 1
+a394 1
+    protected float getSpringLength(EdgeItem<?,?> e) {
+d406 1
+a406 1
+    protected float getSpringCoefficient(EdgeItem<?,?> e) {
+d409 1
+a409 1
+
+d417 1
+a417 1
+    public VisualItem<?> getReferrer() {
+d420 1
+a420 1
+
+d428 1
+a428 1
+    public void setReferrer(VisualItem<?> referrer) {
+d431 1
+a431 1
+
+d434 1
+a434 1
+
+d448 1
+a448 1
+
+@
+
+
+2.4
+log
+@Commented debugging output in ForceDirectedLayout run-once mode
+@
+text
+@d289 2
+a290 2
+                    super.setX(item, referrer, 0.0);
+                    super.setY(item, referrer, 0.0);
+d309 2
+a310 2
+            super.setX(item, referrer, x);
+            super.setY(item, referrer, y);
+@
+
+
+2.3
+log
+@Fixed javadoc bugs in ForceDirectedLayout
+@
+text
+@d243 3
+a245 3
+                if (i % 10 == 0 ) {
+                    System.out.println("iter: "+i);
+                }
+@
+
+
+2.2
+log
+@Added ability to manually set node/edge groups.
+@
+text
+@d162 2
+a163 2
+     * @@return the maximum timestep allowed for integrating between two
+     * layout steps to use
+d337 1
+a337 1
+    protected void initSimulator(ForceSimulator fsim) {
+d343 1
+a343 1
+        } catch ( IllegalArgumentException iae ) {}
+d424 1
+a424 1
+     * @@return the referrer item to use.
+@
+
+
+2.1
+log
+@Added null check, fixed overly-specific cast.
+@
+text
+@d206 11
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d329 1
+d341 1
+a341 1
+            VisualItem item = (NodeItem)iter.next();
+@
+
+
+1.1
+log
+@file ForceDirectedLayout.java was initially added on branch beta.
+@
+text
+@d1 437
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 307
+package prefuse.action.layout.graph;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+
+import prefuse.action.layout.Layout;
+import prefuse.data.Graph;
+import prefuse.data.Schema;
+import prefuse.data.Table;
+import prefuse.util.PrefuseLib;
+import prefuse.util.force.DragForce;
+import prefuse.util.force.ForceItem;
+import prefuse.util.force.ForceSimulator;
+import prefuse.util.force.NBodyForce;
+import prefuse.util.force.SpringForce;
+import prefuse.visual.EdgeItem;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Layout algorithm that positions graph elements based on a physics
+ * simulation of interacting forces (e.g., anti-gravity, spring forces,
+ * drag forces, etc).
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org</a>
+ */
+public class ForceDirectedLayout extends Layout {
+    
+    private ForceSimulator m_fsim;
+    private long m_lasttime = -1L;
+    private long m_maxstep = 50L;
+    private boolean m_runonce;
+    private int m_iterations = 100;
+    private boolean m_enforceBounds;
+    
+    protected transient VisualItem referrer;
+    protected transient int m_fidx;
+    
+    protected String m_nodeGroup;
+    protected String m_edgeGroup;
+    
+    public ForceDirectedLayout(String graph)
+    {
+        this(graph, false, false);
+    }
+    
+    public ForceDirectedLayout(String group, boolean enforceBounds)
+    {
+        this(group, enforceBounds, false);
+    }
+    
+    public ForceDirectedLayout(String group,
+            boolean enforceBounds, boolean runonce)
+    {
+        super(group);
+        m_nodeGroup = PrefuseLib.getGroupName(group, Graph.NODE_TABLE);
+        m_edgeGroup = PrefuseLib.getGroupName(group, Graph.EDGE_TABLE);
+        
+        m_enforceBounds = enforceBounds;
+        m_runonce = runonce;
+        m_fsim = new ForceSimulator();
+        m_fsim.addForce(new NBodyForce());
+        m_fsim.addForce(new SpringForce());
+        m_fsim.addForce(new DragForce());
+    }
+    
+    public ForceDirectedLayout(String group,
+            ForceSimulator fsim, boolean enforceBounds) {
+        this(group, fsim, enforceBounds, false);
+    }
+    
+    public ForceDirectedLayout(String group, 
+            ForceSimulator fsim, boolean enforceBounds, boolean runonce)
+    {
+        super(group);
+        m_nodeGroup = PrefuseLib.getGroupName(group, Graph.NODE_TABLE);
+        m_edgeGroup = PrefuseLib.getGroupName(group, Graph.EDGE_TABLE);
+        
+        m_enforceBounds = enforceBounds;
+        m_runonce = runonce;
+        m_fsim = fsim;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public long getMaxTimeStep() {
+        return m_maxstep;
+    } //
+    
+    public void setMaxTimeStep(long maxstep) {
+        this.m_maxstep = maxstep;
+    } //
+    
+    public ForceSimulator getForceSimulator() {
+        return m_fsim;
+    } //
+    
+    public void setForceSimulator(ForceSimulator fsim) {
+        m_fsim = fsim;
+    } //
+    
+    public int getRunOnceIterations() {
+        return m_iterations;
+    } //
+    
+    public void setRunOnceIterations(int iter) {
+        if ( iter < 1 )
+            throw new IllegalArgumentException(
+                    "Iterations must be a positive number!");
+        m_iterations = iter;
+    } //
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.Action#run(prefuse.a_old.ItemRegistry, double)
+     */
+    public void run(double frac) {
+        // perform different actions if this is a run-once or
+        // run-continuously layout
+        if ( m_runonce ) {
+            Point2D anchor = getLayoutAnchor();
+            Iterator iter = m_vis.visibleItems(m_nodeGroup);
+            while ( iter.hasNext() ) {
+                VisualItem  item = (NodeItem)iter.next();
+                item.setX(anchor.getX());
+                item.setY(anchor.getY());
+            }
+            m_fsim.clear();
+            long timestep = 1000L;
+            initSimulator(m_fsim);
+            for ( int i = 0; i < m_iterations; i++ ) {
+                // use an annealing schedule to set time step
+                timestep *= (1.0 - i/(double)m_iterations);
+                long step = timestep+50;
+                // run simulator
+                m_fsim.runSimulator(step);
+                // debugging output
+                if (i % 10 == 0 ) {
+                    System.out.println("iter: "+i);
+                }
+            }
+            updateNodePositions();
+        } else {
+            // get timestep
+            if ( m_lasttime == -1 )
+                m_lasttime = System.currentTimeMillis()-20;
+            long time = System.currentTimeMillis();
+            long timestep = Math.min(m_maxstep, time - m_lasttime);
+            m_lasttime = time;
+            
+            // run force simulator
+            m_fsim.clear();
+            initSimulator(m_fsim);
+            m_fsim.runSimulator(timestep);
+            updateNodePositions();
+        }
+        if ( frac == 1.0 ) {
+            reset();
+        }
+    } //
+
+    private void updateNodePositions() {
+        Rectangle2D bounds = getLayoutBounds();
+        double x1=0, x2=0, y1=0, y2=0;
+        if ( bounds != null ) {
+            x1 = bounds.getMinX(); y1 = bounds.getMinY();
+            x2 = bounds.getMaxX(); y2 = bounds.getMaxY();
+        }
+        
+        // update positions
+        Iterator iter = m_vis.visibleItems(m_nodeGroup);
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            ForceItem fitem = (ForceItem)item.getValueAt(m_fidx);
+            
+            if ( item.isFixed() ) {
+                // clear any force computations
+                fitem.force[0] = 0.0f;
+                fitem.force[1] = 0.0f;
+                fitem.velocity[0] = 0.0f;
+                fitem.velocity[1] = 0.0f;
+                
+                if ( Double.isNaN(item.getX()) ) {
+                    super.setX(item, referrer, 0.0);
+                    super.setY(item, referrer, 0.0);
+                }
+                continue;
+            }
+            
+            double x = fitem.location[0];
+            double y = fitem.location[1];
+            
+            if ( m_enforceBounds && bounds != null) {
+                Rectangle2D b = item.getBounds();
+                double hw = b.getWidth()/2;
+                double hh = b.getHeight()/2;
+                if ( x+hw > x2 ) x = x2-hw;
+                if ( x-hw < x1 ) x = x1+hw;
+                if ( y+hh > y2 ) y = y2-hh;
+                if ( y-hh < y1 ) y = y1+hh;
+            }
+            
+            // set the actual position
+            super.setX(item, referrer, x);
+            super.setY(item, referrer, y);
+        }
+    } //
+    
+    public void reset() {
+        Iterator iter = m_vis.visibleItems(m_nodeGroup);
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            ForceItem fitem = (ForceItem)item.getValueAt(m_fidx);
+            if ( fitem != null ) {
+                fitem.location[0] = (float)item.getEndX();
+                fitem.location[1] = (float)item.getEndY();
+                fitem.force[0]    = fitem.force[1]    = 0;
+                fitem.velocity[0] = fitem.velocity[1] = 0;
+            }
+        }
+        m_lasttime = -1L;
+    } //
+    
+    /**
+     * Loads the simulator with all relevant force items and springs.
+     */
+    protected void initSimulator(ForceSimulator fsim) {
+        // make sure we have force items to work with
+        Table t = (Table)m_vis.getGroup(m_nodeGroup);
+        if ( (m_fidx=t.getColumnIndex(FORCEITEM)) == -1 ) {
+            t.addColumns(FORCEITEM_SCHEMA);
+            m_fidx = t.getColumnIndex(FORCEITEM);
+        }
+        
+        float startX = (referrer == null ? 0f : (float)referrer.getX());
+        float startY = (referrer == null ? 0f : (float)referrer.getY());
+        startX = Float.isNaN(startX) ? 0f : startX;
+        startY = Float.isNaN(startY) ? 0f : startY;
+       
+        Iterator iter = m_vis.visibleItems(m_nodeGroup);
+        while ( iter.hasNext() ) {
+            VisualItem item = (NodeItem)iter.next();
+            ForceItem fitem = (ForceItem)item.getValueAt(m_fidx);
+            fitem.mass = getMassValue(item);
+            double x = item.getEndX();
+            double y = item.getEndY();
+            fitem.location[0] = (Double.isNaN(x) ? startX : (float)x);
+            fitem.location[1] = (Double.isNaN(y) ? startY : (float)y);
+            fsim.addItem(fitem);
+        }
+        if ( m_edgeGroup != null ) {
+            iter = m_vis.visibleItems(m_edgeGroup);
+            while ( iter.hasNext() ) {
+                EdgeItem  e  = (EdgeItem)iter.next();
+                NodeItem  n1 = e.getSourceItem();
+                ForceItem f1 = (ForceItem)n1.getValueAt(m_fidx);
+                NodeItem  n2 = e.getTargetItem();
+                ForceItem f2 = (ForceItem)n2.getValueAt(m_fidx);
+                float coeff = getSpringCoefficient(e);
+                float slen = getSpringLength(e);
+                fsim.addSpring(f1, f2, (coeff>=0?coeff:-1.f), (slen>=0?slen:-1.f));
+            }
+        }
+    } //
+    
+    protected float getMassValue(VisualItem n) {
+        return 1.0f;
+    } //
+    
+    protected float getSpringLength(EdgeItem e) {
+        return -1.f;
+    } //
+    
+    protected float getSpringCoefficient(EdgeItem e) {
+        return -1.f;
+    } //
+    
+    /**
+     * @@return Returns the referrer.
+     */
+    public VisualItem getReferrer() {
+        return referrer;
+    }
+    
+    /**
+     * @@param referrer The referrer to set.
+     */
+    public void setReferrer(VisualItem referrer) {
+        this.referrer = referrer;
+    }
+    
+    // ------------------------------------------------------------------------
+    // ForceItem Schema Addition
+    
+    public static final String FORCEITEM = "_forceItem";
+    public static final Schema FORCEITEM_SCHEMA = new Schema();
+    static {
+        FORCEITEM_SCHEMA.addColumn(FORCEITEM,
+                                   ForceItem.class,
+                                   new ForceItem());
+    }
+    
+} // end of class ForceDirectedLayout@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d10 1
+a10 1
+import prefuse.data.tuple.TupleSet;
+d40 1
+d59 2
+a60 2
+        m_nodeGroup = PrefuseLib.getGroupName(group, Graph.NODES);
+        m_edgeGroup = PrefuseLib.getGroupName(group, Graph.EDGES);
+d79 2
+a80 2
+        m_nodeGroup = PrefuseLib.getGroupName(group, Graph.NODES);
+        m_edgeGroup = PrefuseLib.getGroupName(group, Graph.EDGES);
+d178 1
+a178 1
+            ForceItem fitem = (ForceItem)item.get(FORCEITEM);
+d217 1
+a217 1
+            ForceItem fitem = (ForceItem)item.get(FORCEITEM);
+d233 5
+a237 4
+        TupleSet ts = m_vis.getGroup(m_nodeGroup);
+        try {
+        	ts.addColumns(FORCEITEM_SCHEMA);
+        } catch ( IllegalArgumentException iae ) {}
+d247 1
+a247 1
+            ForceItem fitem = (ForceItem)item.get(FORCEITEM);
+d260 1
+a260 1
+                ForceItem f1 = (ForceItem)n1.get(FORCEITEM);
+d262 1
+a262 1
+                ForceItem f2 = (ForceItem)n2.get(FORCEITEM);
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d234 1
+a234 1
+            ts.addColumns(FORCEITEM_SCHEMA);
+d305 1
+a305 1
+} // end of class ForceDirectedLayout
+@
+
+
+1.1.2.4
+log
+@Lots of javadoc
+@
+text
+@d23 3
+a25 6
+ * <p>Layout that positions graph elements based on a physics simulation of
+ * interacting forces; by default, nodes repel each other, edges act as
+ * springs, and drag forces (similar to air resistance) are applied. This
+ * algorithm can be run for multiple iterations for a run-once layout
+ * computation or repeatedly run in an animated fashion for a dynamic and
+ * interactive layout.</p>
+d27 2
+a28 14
+ * <p>The running time of this layout algorithm is the greater of O(N log N)
+ * and O(E), where N is the number of nodes and E the number of edges.
+ * The addition of custom force calculation modules may, however, increase
+ * this value.</p>
+ * 
+ * <p>The {@@link prefuse.util.force.ForceSimulator} used to drive this layout
+ * can be set explicitly, allowing any number of custom force directed layouts
+ * to be created through the user's selection of included
+ * {@@link prefuse.util.force.Force} components. Each node in the layout is
+ * mapped to a {@@link prefuse.util.force.ForceItem} instance and each edge
+ * to a {@@link prefuse.util.force.Spring} instance for storing the state
+ * of the simulation. See the {@@link prefuse.util.force} package for more.</p>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a43 6
+    /**
+     * Create a new ForceDirectedLayout. By default, this layout will not
+     * restrict the layout to the layout bounds and will assume it is being
+     * run in animated (rather than run-once) fashion.
+     * @@param graph the data group to layout. Must resolve to a Graph instance.
+     */
+d48 1
+a48 8
+
+    /**
+     * Create a new ForceDirectedLayout. The layout will assume it is being
+     * run in animated (rather than run-once) fashion.
+     * @@param graph the data group to layout. Must resolve to a Graph instance.
+     * @@param enforceBounds indicates whether or not the layout should require
+     * that all node placements stay within the layout bounds.
+     */
+a53 10
+    /**
+     * Create a new ForceDirectedLayout.
+     * @@param graph the data group to layout. Must resolve to a Graph instance.
+     * @@param enforceBounds indicates whether or not the layout should require
+     * that all node placements stay within the layout bounds.
+     * @@param runonce indicates if the layout will be run in a run-once or
+     * animated fashion. In run-once mode, the layout will run for a set number
+     * of iterations when invoked. In animation mode, only one iteration of the
+     * layout is computed.
+     */
+a68 8
+    /**
+     * Create a new ForceDirectedLayout. The layout will assume it is being
+     * run in animated (rather than run-once) fashion.
+     * @@param graph the data group to layout. Must resolve to a Graph instance.
+     * @@param fsim the force simulator used to drive the layout computation
+     * @@param enforceBounds indicates whether or not the layout should require
+     * that all node placements stay within the layout bounds.
+     */
+d74 2
+a75 13
+    /**
+     * Create a new ForceDirectedLayout.
+     * @@param graph the data group to layout. Must resolve to a Graph instance.
+     * @@param fsim the force simulator used to drive the layout computation
+     * @@param enforceBounds indicates whether or not the layout should require
+     * that all node placements stay within the layout bounds.
+     * @@param runonce indicates if the layout will be run in a run-once or
+     * animated fashion. In run-once mode, the layout will run for a set number
+     * of iterations when invoked. In animation mode, only one iteration of the
+     * layout is computed.
+     */
+    public ForceDirectedLayout(String group, ForceSimulator fsim,
+            boolean enforceBounds, boolean runonce)
+a87 8
+    /**
+     * Get the maximum timestep allowed for integrating node settings between
+     * runs of this layout. When computation times are longer than desired,
+     * and node positions are changing dramatically between animated frames,
+     * the max step time can be lowered to suppress node movement.
+     * @@return the maximum timestep allowed for integrating between two
+     * layout steps.
+     */
+d90 2
+a91 10
+    }
+
+    /**
+     * Set the maximum timestep allowed for integrating node settings between
+     * runs of this layout. When computation times are longer than desired,
+     * and node positions are changing dramatically between animated frames,
+     * the max step time can be lowered to suppress node movement.
+     * @@return the maximum timestep allowed for integrating between two
+     * layout steps to use
+     */
+d94 1
+a94 1
+    }
+a95 4
+    /**
+     * Get the force simulator driving this layout.
+     * @@return the force simulator
+     */
+d98 1
+a98 1
+    }
+a99 4
+    /**
+     * Set the force simulator driving this layout.
+     * @@param fsim the force simulator
+     */
+d102 1
+a102 1
+    }
+d104 1
+a104 6
+    /**
+     * Get the number of iterations to use when computing a layout in
+     * run-once mode.
+     * @@return the number of layout iterations to run
+     */
+    public int getIterations() {
+d106 3
+a108 8
+    }
+
+    /**
+     * Set the number of iterations to use when computing a layout in
+     * run-once mode.
+     * @@param iter the number of layout iterations to run
+     */
+    public void setIterations(int iter) {
+d113 1
+a113 1
+    }
+d118 1
+a118 1
+     * @@see prefuse.action.Action#run(double)
+d163 1
+a163 1
+    }
+d210 1
+a210 1
+    }
+a211 4
+    /**
+     * Reset the force simulation state for all nodes processed
+     * by this layout.
+     */
+d225 1
+a225 1
+    }
+a228 1
+     * @@param fsim the force simulator driving this layout
+d266 1
+a266 1
+    }
+a267 7
+    /**
+     * Get the mass value associated with the given node. Subclasses should
+     * override this method to perform custom mass assignment.
+     * @@param n the node for which to compute the mass value
+     * @@return the mass value for the node. By default, all items are given
+     * a mass value of 1.0.
+     */
+d270 1
+a270 1
+    }
+a271 7
+    /**
+     * Get the spring length for the given edge. Subclasses should
+     * override this method to perform custom spring length assignment.
+     * @@param e the edge for which to compute the spring length
+     * @@return the spring length for the edge. A return value of
+     * -1 means to ignore this method and use the global default.
+     */
+d274 2
+a275 10
+    }
+
+    /**
+     * Get the spring coefficient for the given edge, which controls the
+     * tension or strength of the spring. Subclasses should
+     * override this method to perform custom spring tension assignment.
+     * @@param e the edge for which to compute the spring coefficient.
+     * @@return the spring coefficient for the edge. A return value of
+     * -1 means to ignore this method and use the global default.
+     */
+d278 1
+a278 1
+    }
+d281 1
+a281 5
+     * Get the referrer item to use to set x or y coordinates that are
+     * initialized to NaN.
+     * @@return the referrer item.
+     * @@see prefuse.util.PrefuseLib#setX(VisualItem, VisualItem, double)
+     * @@see prefuse.util.PrefuseLib#setY(VisualItem, VisualItem, double)
+d288 1
+a288 5
+     * Set the referrer item to use to set x or y coordinates that are
+     * initialized to NaN.
+     * @@return the referrer item to use.
+     * @@see prefuse.util.PrefuseLib#setX(VisualItem, VisualItem, double)
+     * @@see prefuse.util.PrefuseLib#setY(VisualItem, VisualItem, double)
+a296 3
+    /**
+     * The data field in which the parameters used by this layout are stored.
+     */
+a297 3
+    /**
+     * The schema for the parameters used by this layout.
+     */
+@
+
+
+1.1.2.5
+log
+@Javadoc'd.
+@
+text
+@d73 1
+a73 1
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+d84 1
+a84 1
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+d110 1
+a110 1
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+d122 1
+a122 1
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+@
+
+

@@ -1,0 +1,178 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.02.19.01.51;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.collections;
+
+/**
+ * Sorted map that maps from a boolean key to an int value.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface BooleanIntSortedMap extends IntSortedMap {
+
+    public boolean firstKey();
+
+    public boolean lastKey();
+
+    public boolean containsKey(boolean key);
+    
+    public IntIterator valueRangeIterator(boolean fromKey, boolean fromInc, 
+                                          boolean toKey,   boolean toInc);
+    
+    public LiteralIterator keyIterator();
+
+    public LiteralIterator keyRangeIterator(boolean fromKey, boolean fromInc, 
+                                            boolean toKey,   boolean toInc);
+
+    public int get(boolean key);
+
+    public int remove(boolean key);
+    
+    public int remove(boolean key, int value);
+
+    public int put(boolean key, int value);
+    
+} // end of interface LongIntSortedMap
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d5 1
+a5 1
+ *
+d15 2
+a16 2
+
+    public IntIterator valueRangeIterator(boolean fromKey, boolean fromInc,
+d18 1
+a18 1
+
+d21 1
+a21 1
+    public LiteralIterator keyRangeIterator(boolean fromKey, boolean fromInc,
+d27 1
+a27 1
+
+d31 1
+a31 1
+
+@
+
+
+1.1
+log
+@file BooleanIntSortedMap.java was initially added on branch beta.
+@
+text
+@d1 32
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 29
+package prefuse.util.collections;
+
+
+
+public interface BooleanIntSortedMap extends IntSortedMap {
+
+    public boolean firstKey();
+
+    public boolean lastKey();
+
+    public boolean containsKey(boolean key);
+    
+    public IntIterator valueRangeIterator(boolean fromKey, boolean fromInc, 
+                                          boolean toKey,   boolean toInc);
+    
+    public LiteralIterator keyIterator();
+
+    public LiteralIterator keyRangeIterator(boolean fromKey, boolean fromInc, 
+                                            boolean toKey,   boolean toInc);
+
+    public int get(boolean key);
+
+    public int remove(boolean key);
+    
+    public int remove(boolean key, int value);
+
+    public int put(boolean key, int value);
+    
+} // end of interface LongIntSortedMap
+@
+
+
+1.1.2.2
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d3 2
+a4 5
+/**
+ * Sorted map that maps from a boolean key to an int value.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+@
+
+

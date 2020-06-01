@@ -1,0 +1,146 @@
+head	1.4;
+access;
+symbols
+	alpha:1.3.0.2
+	Root_alpha:1.3
+	prefuse-alpha-20051229:1.3
+	P20050401_Alpha_PreCHI:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2006.02.11.06.38.43;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.04.16.07.00.05;	author jheer;	state Exp;
+branches
+	1.3.4.1;
+next	1.2;
+
+1.2
+date	2004.03.09.03.44.24;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+1.3.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefusex.force;
+
+import java.util.ArrayList;
+
+/**
+ * Represents a spring in a force simulation.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class Spring {
+    private static SpringFactory s_factory = new SpringFactory();
+    
+    public static SpringFactory getFactory() {
+        return s_factory;
+    } //
+    
+    public Spring(ForceItem fi1, ForceItem fi2, float k, float len) {
+        item1 = fi1;
+        item2 = fi2;
+        coeff = k;
+        length = len;
+    } //
+    public ForceItem item1;
+    public ForceItem item2;
+    public float length;
+    public float coeff;
+    
+    public static final class SpringFactory {
+        private int maxSprings = 10000;
+        private ArrayList springs = new ArrayList();
+        
+        public Spring getSpring(ForceItem f1, ForceItem f2, float k, float length) {
+            if ( springs.size() > 0 ) {
+                Spring s = (Spring)springs.remove(springs.size()-1);
+                s.item1 = f1;
+                s.item2 = f2;
+                s.coeff = k;
+                s.length = length;
+                return s;
+            } else {
+                return new Spring(f1,f2,k,length);
+            }
+        } //
+        public void reclaim(Spring s) {
+            s.item1 = null;
+            s.item2 = null;
+            if ( springs.size() < maxSprings )
+                springs.add(s);
+        } //
+    }
+} // end of class Spring
+@
+
+
+1.3
+log
+@Added means to better parameterize spring constants
+@
+text
+@@
+
+
+1.3.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.2
+log
+@Fixed bug when setting Spring length
+@
+text
+@d18 1
+a18 1
+    public Spring(ForceItem fi1, ForceItem fi2, float len) {
+d21 1
+d27 1
+d33 1
+a33 1
+        public Spring getSpring(ForceItem f1, ForceItem f2, float length) {
+d38 1
+d42 1
+a42 1
+                return new Spring(f1,f2,length);
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d36 1
+@
+

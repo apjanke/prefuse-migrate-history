@@ -1,0 +1,127 @@
+head	1.2;
+access;
+symbols
+	alpha:1.1.0.2
+	Root_alpha:1.1
+	prefuse-alpha-20051229:1.1
+	P20050401_Alpha_PreCHI:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2006.02.11.06.38.43;	author jheer;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches
+	1.1.4.1;
+next	;
+
+1.1.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefusex.force;
+
+/**
+ * Represents a function for computing a force in a force simulation.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public interface Force {
+
+    /**
+     * Initialize this force function.
+     * @@param fsim the encompassing ForceSimulator
+     */
+    public void init(ForceSimulator fsim);
+
+    /**
+     * Returns the number of parameters (e.g., gravitational constant or
+     * spring force coefficient) affecting this force function. 
+     * @@return the number of parameters
+     */
+    public int getParameterCount();
+
+    /**
+     * Returns the specified, numbered parameter.
+     * @@param i the index of the parameter to return
+     * @@return the parameter value
+     */
+    public float getParameter(int i);
+    
+    /**
+     * Gets the text name of the requested parameter.
+     * @@param i the index of the parameter
+     * @@return a String containing the name of this parameter
+     */
+    public String getParameterName(int i);
+
+    /**
+     * Sets the specified parameter value.
+     * @@param i the index of the parameter
+     * @@param val the new value of the parameter
+     */
+    public void setParameter(int i, float val);
+    
+    /**
+     * Indicates if this force function will compute forces
+     * on Spring instances.
+     * @@return true if this force function processes Spring instances 
+     */
+    public boolean isSpringForce();
+    
+    /**
+     * Indicates if this force function will compute forces
+     * on ForceItem instances
+     * @@return true if this force function processes Force instances 
+     */
+    public boolean isItemForce();
+    
+    /**
+     * Updates the force calculation on the given ForceItem
+     * @@param item the ForceItem on which to compute updated forces
+     */
+    public void getForce(ForceItem item);
+    
+    /**
+     * Updates the force calculation on the given Spring. The ForceItems
+     * attached to Spring will have their force values updated appropriately.
+     * @@param spring the Spring on which to compute updated forces
+     */
+    public void getForce(Spring spring);
+    
+} // end of interface Force
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@@
+
+
+1.1.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+

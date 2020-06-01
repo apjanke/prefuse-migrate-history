@@ -1,0 +1,398 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.03.24.17.39.19;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.03.15.04.47.29;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.47;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.09;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.01.19.22.44;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.02.19.01.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Changed visibility of item type constants
+@
+text
+@package prefuse.visual.sort;
+
+import java.util.Comparator;
+
+import prefuse.Visualization;
+import prefuse.visual.AggregateItem;
+import prefuse.visual.DecoratorItem;
+import prefuse.visual.EdgeItem;
+import prefuse.visual.VisualItem;
+
+/**
+ * ItemSorter instances provide an integer score for each VisualItem;
+ * these scores are then used to sort the items in ascending order of score.
+ * ItemSorters are used to determine the rendering order of items in a
+ * Display.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ItemSorter implements Comparator {
+
+    protected static final int AGGREGATE = 0;
+    protected static final int EDGE      = 1;
+    protected static final int ITEM      = 2;
+    protected static final int DECORATOR = 3;
+    
+    /**
+     * <p>Return an ordering score for an item. The default scoring imparts
+     * the following order:
+     * hover items > highlighted items > items in the
+     * {@@link prefuse.Visualization#FOCUS_ITEMS} set >
+     * {@@link prefuse.Visualization#SEARCH_ITEMS} set >
+     * DecoratorItem instances > normal VisualItem instances. A zero
+     * score is returned for normal items, with scores starting at
+     * 1&lt;&lt;27 for other items, leaving the number range beneath that
+     * value open for additional nuanced scoring.</p> 
+     * 
+     * <p>Subclasses can override this method to provide custom sorting
+     * criteria.</p>
+     * @@param item the VisualItem to provide an ordering score
+     * @@return the ordering score
+     */
+    public int score(VisualItem item) {
+        int type = ITEM;
+        if ( item instanceof EdgeItem ) {
+            type = EDGE;
+        } else if ( item instanceof AggregateItem ) {
+            type = AGGREGATE;
+        } else if ( item instanceof DecoratorItem ) {
+            type = DECORATOR;
+        }
+        
+        int score = (1<<(26+type));
+        if ( item.isHover() ) {
+            score += (1<<25);
+        }
+        if ( item.isHighlighted() ) {
+            score += (1<<24);
+        }
+        if ( item.isInGroup(Visualization.FOCUS_ITEMS) ) {
+            score += (1<<23);
+        }
+        if ( item.isInGroup(Visualization.SEARCH_ITEMS) ) {
+            score += (1<<22);
+        }
+
+        return score;
+    }
+    
+    /**
+     * Compare two items based on their ordering scores. Calls the
+     * {@@link #score(VisualItem)} on each item and compares the result.
+     * @@param v1 the first VisualItem to compare
+     * @@param v2 the second VisualItem to compare
+     * @@return -1 if score(v1) &lt; score(v2), 1 if score(v1) &gt; score(v2)
+     * and 0 if score(v1) == score(v2).
+     */
+    public int compare(VisualItem v1, VisualItem v2) {
+        int score1 = score(v1);
+        int score2 = score(v2);
+        return (score1<score2 ? -1 : (score1==score2 ? 0 : 1));
+    }
+    
+    /**
+     * @@see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+     * @@see #compare(VisualItem, VisualItem)
+     */
+    public int compare(Object o1, Object o2) {
+        if ( !(o1 instanceof VisualItem && o2 instanceof VisualItem) ) {
+            throw new IllegalArgumentException();
+        }
+        return compare((VisualItem)o1, (VisualItem)o2);
+    }
+
+} // end of class ItemSorter
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d16 1
+a16 1
+ *
+d19 1
+a19 1
+public class ItemSorter implements Comparator<VisualItem<?>> {
+d25 1
+a25 1
+
+d35 2
+a36 2
+     * value open for additional nuanced scoring.</p>
+     *
+d42 1
+a42 1
+    public int score(VisualItem<?> item) {
+d51 2
+a52 2
+
+        int score = 1<<26+type;
+d54 1
+a54 1
+            score += 1<<25;
+d57 1
+a57 1
+            score += 1<<24;
+d60 1
+a60 1
+            score += 1<<23;
+d63 1
+a63 1
+            score += 1<<22;
+d68 1
+a68 1
+
+d77 1
+a77 1
+    public int compare(VisualItem<?> v1, VisualItem<?> v2) {
+d80 12
+a91 1
+        return score1<score2 ? -1 : score1==score2 ? 0 : 1;
+@
+
+
+2.1
+log
+@Updated item sorter for more satisfying ordering for common cases.
+@
+text
+@d21 4
+a24 4
+    private static final int AGGREGATE = 0;
+    private static final int EDGE      = 1;
+    private static final int ITEM      = 2;
+    private static final int DECORATOR = 3;
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d6 1
+d8 1
+d21 5
+d43 10
+a52 1
+        int score = 0;
+d54 1
+a54 1
+            score += (1<<29);
+d57 1
+a57 1
+            score += (1<<28);
+d60 1
+a60 1
+            score += (1<<27);
+d63 1
+a63 4
+            score += (1<<26);
+        }
+        if ( item instanceof DecoratorItem ) {
+            score += (1<<27);
+d65 1
+@
+
+
+1.1
+log
+@file ItemSorter.java was initially added on branch beta.
+@
+text
+@d1 80
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 51
+package prefuse.visual.sort;
+
+import java.util.Comparator;
+
+import prefuse.Visualization;
+import prefuse.visual.DecoratorItem;
+import prefuse.visual.VisualItem;
+
+/**
+ * Comparator interface for sorting VisualItem instances.
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class ItemSorter implements Comparator {
+
+    public int score(VisualItem item) {
+        int score = 0;
+        if ( item.isHover() ) {
+            score += (1<<29);
+        }
+        if ( item.isHighlighted() ) {
+            score += (1<<28);
+        }
+        if ( item.isInGroup(Visualization.FOCUS_ITEMS) ) {
+            score += (1<<27);
+        }
+        if ( item.isInGroup(Visualization.SEARCH_ITEMS) ) {
+            score += (1<<26);
+        }
+        if ( item instanceof DecoratorItem ) {
+            score += (1<<27);
+        }
+        return score;
+    }
+    
+    public int compare(VisualItem v1, VisualItem v2) {
+        int score1 = score(v1);
+        int score2 = score(v2);
+        return (score1<score2 ? -1 : (score1==score2 ? 0 : 1));
+    }
+    
+    /**
+     * @@see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+     */
+    public int compare(Object o1, Object o2) {
+        if ( !(o1 instanceof VisualItem && o2 instanceof VisualItem) ) {
+            throw new IllegalArgumentException();
+        }
+        return compare((VisualItem)o1, (VisualItem)o2);
+    }
+
+} // end of class ItemSorter
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d10 1
+a10 5
+ * ItemSorter instances provide an integer score for each VisualItem;
+ * these scores are then used to sort the items in ascending order of score.
+ * ItemSorters are used to determine the rendering order of items in a
+ * Display.
+ * 
+a14 16
+    /**
+     * <p>Return an ordering score for an item. The default scoring imparts
+     * the following order:
+     * hover items > highlighted items > items in the
+     * {@@link prefuse.Visualization#FOCUS_ITEMS set >
+     * {@@link prefuse.Visualization#SEARCH_ITEMS} set >
+     * DecoratorItem instances > normal VisualItem instances. A zero
+     * score is returned for normal items, with scores starting at
+     * 1&lt;&lt;27 for other items, leaving the number range beneath that
+     * value open for additional nuanced scoring.</p> 
+     * 
+     * <p>Subclasses can override this method to provide custom sorting
+     * criteria.</p>
+     * @@param item the VisualItem to provide an ordering score
+     * @@return the ordering score
+     */
+a34 8
+    /**
+     * Compare two items based on their ordering scores. Calls the
+     * {@@link #score(VisualItem)} on each item and compares the result.
+     * @@param v1 the first VisualItem to compare
+     * @@param v2 the second VisualItem to compare
+     * @@return -1 if score(v1) &lt; score(v2), 1 if score(v1) &gt; score(v2)
+     * and 0 if score(v1) == score(v2).
+     */
+a42 1
+     * @@see #compare(VisualItem, VisualItem)
+@
+
+
+1.1.2.3
+log
+@Javadoc'd.
+@
+text
+@d23 1
+a23 1
+     * {@@link prefuse.Visualization#FOCUS_ITEMS} set >
+@
+
+
+1.1.2.4
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d15 1
+a15 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

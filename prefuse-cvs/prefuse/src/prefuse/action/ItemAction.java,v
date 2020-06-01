@@ -1,0 +1,391 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action;
+
+import java.util.Iterator;
+
+import prefuse.Visualization;
+import prefuse.data.expression.Predicate;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.VisiblePredicate;
+
+/**
+ * An Action that processes VisualItems one item at a time. By default,
+ * it only processes items that are visible. Use the
+ * {@@link #setFilterPredicate(Predicate)} method
+ * to change the filtering criteria.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public abstract class ItemAction extends GroupAction {
+    
+    /** A reference to filtering predicate for this Action */
+    protected Predicate m_predicate;
+    
+    /**
+     * Create a new ItemAction that processes all groups.
+     * @@see Visualization#ALL_ITEMS
+     */
+    public ItemAction() {
+        this((Visualization)null);
+    }
+    
+    /**
+     * Create a new ItemAction that processes all groups.
+     * @@param vis the {@@link prefuse.Visualization} to process
+     * @@see Visualization#ALL_ITEMS
+     */
+    public ItemAction(Visualization vis) {
+        this(vis, Visualization.ALL_ITEMS);
+    }
+    
+    /**
+     * Create a new ItemAction that processes the specified group.
+     * @@param group the name of the group to process
+     */
+    public ItemAction(String group) {
+        this(null, group);
+    }
+    
+    /**
+     * Create a new ItemAction that processes the specified group.
+     * @@param group the name of the group to process
+     * @@param filter the filtering {@@link prefuse.data.expression.Predicate}
+     */
+    public ItemAction(String group, Predicate filter) {
+        this(null, group, filter);
+    }
+    
+    /**
+     * Create a new ItemAction that processes the specified group.
+     * @@param vis the {@@link prefuse.Visualization} to process
+     * @@param group the name of the group to process
+     */
+    public ItemAction(Visualization vis, String group) {
+        this(vis, group, VisiblePredicate.TRUE);
+    }
+
+    /**
+     * Create a new ItemAction that processes the specified group.
+     * @@param vis the {@@link prefuse.Visualization} to process
+     * @@param group the name of the group to process
+     * @@param filter the filtering {@@link prefuse.data.expression.Predicate}
+     */
+    public ItemAction(Visualization vis, String group, Predicate filter) {
+        super(vis, group);
+        m_predicate = filter;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Returns the filtering predicate used by this Action.
+     * @@return the filtering {@@link prefuse.data.expression.Predicate}
+     */
+    public Predicate getFilterPredicate() {
+        return m_predicate;
+    }
+
+    /**
+     * Sets the filtering predicate used by this Action.
+     * @@param filter the filtering {@@link prefuse.data.expression.Predicate}
+     * to use
+     */
+    public void setFilterPredicate(Predicate filter) {
+        m_predicate = filter;
+    }
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        Iterator items = getVisualization().items(m_group, m_predicate);
+        while ( items.hasNext() ) {
+            process((VisualItem)items.next(), frac);
+        }
+    }
+    
+    /**
+     * Processes an individual item.
+     * @@param item the VisualItem to process
+     * @@param frac the fraction of elapsed duration time
+     */
+    public abstract void process(VisualItem item, double frac);
+
+} // end of class ItemAction
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d3 2
+d15 1
+a15 1
+ *
+d19 1
+a19 1
+
+d22 1
+a22 1
+
+d30 1
+a30 1
+
+d39 1
+a39 1
+
+d47 1
+a47 1
+
+d56 1
+a56 1
+
+d76 1
+a76 1
+
+d78 1
+a78 1
+
+d95 1
+a95 1
+
+d99 4
+a102 4
+    @@Override
+	public void run(double frac) {
+        for(VisualItem<?> item : getVisualization().items(m_group, m_predicate)) {
+            process(item, frac);
+d105 1
+a105 1
+
+d111 1
+a111 1
+    public abstract void process(VisualItem<?> item, double frac);
+@
+
+
+1.1
+log
+@file ItemAction.java was initially added on branch beta.
+@
+text
+@d1 113
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 72
+package prefuse.action;
+
+import java.util.Iterator;
+
+import prefuse.Visualization;
+import prefuse.data.expression.Predicate;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.VisiblePredicate;
+
+/**
+ * An Action that processes VisualItems one item at a time. By default,
+ * it only processes items that are visible. Use the setFilterPredicate method
+ * to change the filtering criteria.
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public abstract class ItemAction extends GroupAction {
+    
+    protected Predicate m_predicate;
+    
+    public ItemAction() {
+        this((Visualization)null);
+    }
+    
+    public ItemAction(Visualization vis) {
+        this(vis, Visualization.ALL_ITEMS);
+    }
+    
+    public ItemAction(String group) {
+        this(null, group);
+    }
+    
+    public ItemAction(String group, Predicate filter) {
+        this(null, group, filter);
+    }
+    
+    public ItemAction(Visualization vis, String group) {
+        this(vis, group, VisiblePredicate.TRUE);
+    }
+
+    public ItemAction(Visualization vis, String group, Predicate filter) {
+        super(vis, group);
+        m_predicate = filter;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public Predicate getFilterPredicate() {
+        return m_predicate;
+    }
+    
+    public void setFilterPredicate(Predicate filter) {
+        m_predicate = filter;
+    }
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        Iterator items = getVisualization().items(m_group, m_predicate);
+        while ( items.hasNext() ) {
+            process((VisualItem)items.next(), frac);
+        }
+    }
+    
+    /**
+     * Processes an individual item.
+     * @@param item the VisualItem to process
+     * @@param frac the fraction of elapsed duration time
+     */
+    public abstract void process(VisualItem item, double frac);
+
+} // end of class ItemAction
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d12 1
+a12 2
+ * it only processes items that are visible. Use the
+ * {@@link #setFilterPredicate(Predicate)} method
+a13 1
+ * 
+a17 1
+    /** A reference to filtering predicate for this Action */
+a19 4
+    /**
+     * Create a new ItemAction that processes all groups.
+     * @@see Visualization#ALL_ITEMS
+     */
+a23 5
+    /**
+     * Create a new ItemAction that processes all groups.
+     * @@param vis the {@@link prefuse.Visualization} to process
+     * @@see Visualization#ALL_ITEMS
+     */
+a27 4
+    /**
+     * Create a new ItemAction that processes the specified group.
+     * @@param group the name of the group to process
+     */
+a31 5
+    /**
+     * Create a new ItemAction that processes the specified group.
+     * @@param group the name of the group to process
+     * @@param filter the filtering {@@link prefuse.data.expression.Predicate}
+     */
+a35 5
+    /**
+     * Create a new ItemAction that processes the specified group.
+     * @@param vis the {@@link prefuse.Visualization} to process
+     * @@param group the name of the group to process
+     */
+a39 6
+    /**
+     * Create a new ItemAction that processes the specified group.
+     * @@param vis the {@@link prefuse.Visualization} to process
+     * @@param group the name of the group to process
+     * @@param filter the filtering {@@link prefuse.data.expression.Predicate}
+     */
+a46 4
+    /**
+     * Returns the filtering predicate used by this Action.
+     * @@return the filtering {@@link prefuse.data.expression.Predicate}
+     */
+d50 1
+a50 6
+
+    /**
+     * Sets the filtering predicate used by this Action.
+     * @@param filter the filtering {@@link prefuse.data.expression.Predicate}
+     * to use
+     */
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d16 1
+a16 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

@@ -1,0 +1,182 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.15;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.force;
+
+import java.util.Iterator;
+
+/**
+ * Updates velocity and position data using Euler's Method. This is the
+ * simplest and fastest method, but is somewhat inaccurate and less smooth
+ * than more costly approaches.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ * @@see RungeKuttaIntegrator
+ */
+public class EulerIntegrator implements Integrator {
+    
+    /**
+     * @@see prefuse.util.force.Integrator#integrate(prefuse.util.force.ForceSimulator, long)
+     */
+    public void integrate(ForceSimulator sim, long timestep) {
+        float speedLimit = sim.getSpeedLimit();
+        Iterator iter = sim.getItems();
+        while ( iter.hasNext() ) {
+            ForceItem item = (ForceItem)iter.next();
+            item.location[0] += timestep * item.velocity[0];
+            item.location[1] += timestep * item.velocity[1];
+            float coeff = timestep / item.mass;
+            item.velocity[0] += coeff * item.force[0];
+            item.velocity[1] += coeff * item.force[1];
+            float vx = item.velocity[0];
+            float vy = item.velocity[1];
+            float v = (float)Math.sqrt(vx*vx+vy*vy);
+            if ( v > speedLimit ) {
+                item.velocity[0] = speedLimit * vx / v;
+                item.velocity[1] = speedLimit * vy / v;
+            }
+        }
+    }
+
+} // end of class EulerIntegrator
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d3 2
+d14 1
+a14 1
+
+d20 3
+a22 1
+        for ( ForceItem item : sim.getItems()) {
+@
+
+
+1.1
+log
+@file EulerIntegrator.java was initially added on branch beta.
+@
+text
+@d1 38
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 37
+package prefuse.util.force;
+
+import java.util.Iterator;
+
+/**
+ * Updates velocity and position data using Euler's Method. This is a
+ * simple and fast, though somewhat inaccurate, approach.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class EulerIntegrator implements Integrator {
+    
+    /**
+     * @@see prefuse.util.force.Integrator#integrate(prefuse.util.force.ForceSimulator, long)
+     */
+    public void integrate(ForceSimulator sim, long timestep) {
+        float speedLimit = sim.getSpeedLimit();
+        Iterator iter = sim.getItems();
+        while ( iter.hasNext() ) {
+            ForceItem item = (ForceItem)iter.next();
+            item.location[0] += timestep * item.velocity[0];
+            item.location[1] += timestep * item.velocity[1];
+            float coeff = timestep / item.mass;
+            item.velocity[0] += coeff * item.force[0];
+            item.velocity[1] += coeff * item.force[1];
+            float vx = item.velocity[0];
+            float vy = item.velocity[1];
+            float v = (float)Math.sqrt(vx*vx+vy*vy);
+            if ( v > speedLimit ) {
+                item.velocity[0] = speedLimit * vx / v;
+                item.velocity[1] = speedLimit * vy / v;
+            }
+        }
+    } //
+
+} // end of class EulerIntegrator
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d6 2
+a7 3
+ * Updates velocity and position data using Euler's Method. This is the
+ * simplest and fastest method, but is somewhat inaccurate and less smooth
+ * than more costly approaches.
+d9 2
+a10 2
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ * @@see RungeKuttaIntegrator
+d35 1
+a35 1
+    }
+@
+
+

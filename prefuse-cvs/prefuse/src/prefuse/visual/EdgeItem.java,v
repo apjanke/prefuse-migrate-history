@@ -1,0 +1,215 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.41;	author jogiles;	state Exp;
+branches;
+next	2.0.4.2;
+
+2.0.4.2
+date	2008.02.23.21.21.02;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.visual;
+
+import prefuse.data.Edge;
+
+/**
+ * VisualItem that represents an edge in a graph. This interface combines
+ * the {@@link VisualItem} interface with the {@@link prefuse.data.Edge}
+ * interface.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface EdgeItem extends VisualItem, Edge {
+
+    /**
+     * Get the first, or source, NodeItem upon which this edge is incident.
+     * @@return the source NodeItem
+     */
+    public NodeItem getSourceItem();
+    
+    /**
+     * Get the second, or target, NodeItem upon which this edge is incident.
+     * @@return the target NodeItem
+     */
+    public NodeItem getTargetItem();
+    
+    /**
+     * Get the NodeItem connected to the given NodeItem by this edge.
+     * @@param n a NodeItem upon which this edge is incident. If this item
+     * is not connected to this edge, a runtime exception will be thrown.
+     * @@return the other NodeItem connected to this edge
+     */
+    public NodeItem getAdjacentItem(NodeItem n);
+    
+} // end of interface EdgeItem
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d9 1
+a9 1
+ *
+d12 1
+a12 1
+public interface EdgeItem <N extends NodeItem<N,E>, E extends EdgeItem<N,E>> extends VisualItem<E>, Edge<N,E> {
+d18 2
+a19 2
+    public NodeItem<N,E> getSourceItem();
+
+d24 10
+a33 2
+    public NodeItem<N,E> getTargetItem();
+
+@
+
+
+2.0.4.2
+log
+@Eliminated unnecessary methods from the EdgeItem interface
+@
+text
+@d14 12
+@
+
+
+1.1
+log
+@file EdgeItem.java was initially added on branch beta.
+@
+text
+@d1 34
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 14
+package prefuse.visual;
+
+import prefuse.data.tuple.Edge;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public interface EdgeItem extends VisualItem, Edge {
+
+    public NodeItem getSourceItem();
+    public NodeItem getTargetItem();
+    public NodeItem getAdjacentItem(NodeItem n);
+    
+} // end of interface EdgeItem
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d6 1
+a6 5
+ * VisualItem that represents an edge in a graph. This interface combines
+ * the {@@link VisualItem} interface with the {@@link prefuse.data.tuple.Edge}
+ * interface.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a9 4
+    /**
+     * Get the first, or source, NodeItem upon which this edge is incident.
+     * @@return the source NodeItem
+     */
+a10 5
+    
+    /**
+     * Get the second, or target, NodeItem upon which this edge is incident.
+     * @@return the target NodeItem
+     */
+a11 7
+    
+    /**
+     * Get the NodeItem connected to the given NodeItem by this edge.
+     * @@param n a NodeItem upon which this edge is incident. If this item
+     * is not connected to this edge, a runtime exception will be thrown.
+     * @@return the other NodeItem connected to this edge
+     */
+@
+
+
+1.1.2.3
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@d3 1
+a3 1
+import prefuse.data.Edge;
+d7 1
+a7 1
+ * the {@@link VisualItem} interface with the {@@link prefuse.data.Edge}
+@
+
+

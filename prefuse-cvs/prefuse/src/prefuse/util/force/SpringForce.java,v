@@ -1,0 +1,380 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.15;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.02.19.01.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.force;
+
+/**
+ * Force function that computes the force acting on ForceItems due to a
+ * given Spring.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class SpringForce extends AbstractForce {
+
+    private static String[] pnames 
+        = new String[] { "SpringCoefficient", "DefaultSpringLength" };
+    
+    public static final float DEFAULT_SPRING_COEFF = 1E-4f;
+    public static final float DEFAULT_MAX_SPRING_COEFF = 1E-3f;
+    public static final float DEFAULT_MIN_SPRING_COEFF = 1E-5f;
+    public static final float DEFAULT_SPRING_LENGTH = 50;
+    public static final float DEFAULT_MIN_SPRING_LENGTH = 0;
+    public static final float DEFAULT_MAX_SPRING_LENGTH = 200;
+    public static final int SPRING_COEFF = 0;
+    public static final int SPRING_LENGTH = 1;
+    
+    /**
+     * Create a new SpringForce.
+     * @@param springCoeff the default spring co-efficient to use. This will
+     * be used if the spring's own co-efficient is less than zero.
+     * @@param defaultLength the default spring length to use. This will
+     * be used if the spring's own length is less than zero.
+     */
+    public SpringForce(float springCoeff, float defaultLength) {
+        params = new float[] { springCoeff, defaultLength };
+        minValues = new float[] 
+            { DEFAULT_MIN_SPRING_COEFF, DEFAULT_MIN_SPRING_LENGTH };
+        maxValues = new float[] 
+            { DEFAULT_MAX_SPRING_COEFF, DEFAULT_MAX_SPRING_LENGTH };
+    }
+    
+    /**
+     * Constructs a new SpringForce instance with default parameters.
+     */
+    public SpringForce() {
+        this(DEFAULT_SPRING_COEFF, DEFAULT_SPRING_LENGTH);
+    }
+
+    /**
+     * Returns true.
+     * @@see prefuse.util.force.Force#isSpringForce()
+     */
+    public boolean isSpringForce() {
+        return true;
+    }
+    
+    /**
+     * @@see prefuse.util.force.AbstractForce#getParameterNames()
+     */
+    protected String[] getParameterNames() {
+        return pnames;
+    } 
+    
+    /**
+     * Calculates the force vector acting on the items due to the given spring.
+     * @@param s the Spring for which to compute the force
+     * @@see prefuse.util.force.Force#getForce(prefuse.util.force.Spring)
+     */
+    public void getForce(Spring s) {
+        ForceItem item1 = s.item1;
+        ForceItem item2 = s.item2;
+        float length = (s.length < 0 ? params[SPRING_LENGTH] : s.length);
+        float x1 = item1.location[0], y1 = item1.location[1];
+        float x2 = item2.location[0], y2 = item2.location[1];
+        float dx = x2-x1, dy = y2-y1;
+        float r  = (float)Math.sqrt(dx*dx+dy*dy);
+        if ( r == 0.0 ) {
+            dx = ((float)Math.random()-0.5f) / 50.0f;
+            dy = ((float)Math.random()-0.5f) / 50.0f;
+            r  = (float)Math.sqrt(dx*dx+dy*dy);
+        }
+        float d  = r-length;
+        float coeff = (s.coeff < 0 ? params[SPRING_COEFF] : s.coeff)*d/r;
+        item1.force[0] += coeff*dx;
+        item1.force[1] += coeff*dy;
+        item2.force[0] += -coeff*dx;
+        item2.force[1] += -coeff*dy;
+    }
+    
+} // end of class SpringForce
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d6 1
+a6 1
+ *
+d11 1
+a11 1
+    private static String[] pnames
+d13 1
+a13 1
+
+d22 1
+a22 1
+
+d32 1
+a32 1
+        minValues = new float[]
+d34 1
+a34 1
+        maxValues = new float[]
+d37 1
+a37 1
+
+d49 1
+a49 2
+    @@Override
+	public boolean isSpringForce() {
+d52 1
+a52 1
+
+d56 1
+a56 2
+    @@Override
+	protected String[] getParameterNames() {
+d58 2
+a59 2
+    }
+
+d65 1
+a65 2
+    @@Override
+	public void getForce(Spring s) {
+d68 1
+a68 1
+        float length = s.length < 0 ? params[SPRING_LENGTH] : s.length;
+d85 1
+a85 1
+
+@
+
+
+1.1
+log
+@file SpringForce.java was initially added on branch beta.
+@
+text
+@d1 86
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 80
+package prefuse.util.force;
+
+/**
+ * Computes the force on a node resulting from treating incident edges
+ * as a system of springs.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class SpringForce extends AbstractForce {
+
+    private static String[] pnames 
+        = new String[] { "SpringCoefficient", "DefaultSpringLength" };
+    
+    public static final float DEFAULT_SPRING_COEFF = 1E-4f;
+    public static final float DEFAULT_MAX_SPRING_COEFF = 1E-3f;
+    public static final float DEFAULT_MIN_SPRING_COEFF = 1E-5f;
+    public static final float DEFAULT_SPRING_LENGTH = 50;
+    public static final float DEFAULT_MIN_SPRING_LENGTH = 0;
+    public static final float DEFAULT_MAX_SPRING_LENGTH = 200;
+    public static final int SPRING_COEFF = 0;
+    public static final int SPRING_LENGTH = 1;
+    
+    public SpringForce(float springCoeff, float defaultLength) {
+        params = new float[] { springCoeff, defaultLength };
+        minValues = new float[] 
+            { DEFAULT_MIN_SPRING_COEFF, DEFAULT_MIN_SPRING_LENGTH };
+        maxValues = new float[] 
+            { DEFAULT_MAX_SPRING_COEFF, DEFAULT_MAX_SPRING_LENGTH };
+    } //
+    
+    /**
+     * Constructs a new SpringForce instance.
+     */
+    public SpringForce() {
+        this(DEFAULT_SPRING_COEFF, DEFAULT_SPRING_LENGTH);
+    } //
+
+    public boolean isSpringForce() {
+        return true;
+    } //
+    
+    protected String[] getParameterNames() {
+        return pnames;
+    } //
+    
+    /**
+     * Initialize this force function.
+     * Subclasses should override this method with any needed initialization.
+     * @@param fsim the encompassing ForceSimulator
+     */
+    public void init(ForceSimulator fsim) {
+    } //    
+    
+    /**
+     * Calculates the force vector acting on the items due to the given spring.
+     * @@param s the Spring for which to compute the force
+     */   
+    public void getForce(Spring s) {
+        ForceItem item1 = s.item1;
+        ForceItem item2 = s.item2;
+        float length = (s.length < 0 ? params[SPRING_LENGTH] : s.length);
+        float x1 = item1.location[0], y1 = item1.location[1];
+        float x2 = item2.location[0], y2 = item2.location[1];
+        float dx = x2-x1, dy = y2-y1;
+        float r  = (float)Math.sqrt(dx*dx+dy*dy);
+        if ( r == 0.0 ) {
+            dx = ((float)Math.random()-0.5f) / 50.0f;
+            dy = ((float)Math.random()-0.5f) / 50.0f;
+            r  = (float)Math.sqrt(dx*dx+dy*dy);
+        }
+        float d  = r-length;
+        float coeff = (s.coeff < 0 ? params[SPRING_COEFF] : s.coeff)*d/r;
+        item1.force[0] += coeff*dx;
+        item1.force[1] += coeff*dy;
+        item2.force[0] += -coeff*dx;
+        item2.force[1] += -coeff*dy;
+    } //
+    
+} // end of class SpringForce@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d80 1
+a80 1
+} // end of class SpringForce
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@d4 2
+a5 2
+ * Force function that computes the force acting on ForceItems due to a
+ * given Spring.
+d7 1
+a23 7
+    /**
+     * Create a new SpringForce.
+     * @@param springCoeff the default spring co-efficient to use. This will
+     * be used if the spring's own co-efficient is less than zero.
+     * @@param defaultLength the default spring length to use. This will
+     * be used if the spring's own length is less than zero.
+     */
+d30 1
+a30 1
+    }
+d33 1
+a33 1
+     * Constructs a new SpringForce instance with default parameters.
+d37 1
+a37 1
+    }
+a38 4
+    /**
+     * Returns true.
+     * @@see prefuse.util.force.Force#isSpringForce()
+     */
+d41 5
+a45 1
+    }
+d48 3
+a50 1
+     * @@see prefuse.util.force.AbstractForce#getParameterNames()
+d52 2
+a53 3
+    protected String[] getParameterNames() {
+        return pnames;
+    } 
+d58 1
+a58 2
+     * @@see prefuse.util.force.Force#getForce(prefuse.util.force.Spring)
+     */
+d78 1
+a78 1
+    }
+@
+
+
+1.1.2.4
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d7 1
+a7 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

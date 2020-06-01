@@ -1,0 +1,95 @@
+head	1.2;
+access;
+symbols
+	alpha:1.1.0.2
+	Root_alpha:1.1
+	prefuse-alpha-20051229:1.1
+	P20050401_Alpha_PreCHI:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2006.02.11.06.38.43;	author jheer;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches
+	1.1.4.1;
+next	;
+
+1.1.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefusex.force;
+
+/**
+ * Implements a viscosity/drag force to stabilize items.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class DragForce extends AbstractForce {
+
+    private static String[] pnames = new String[] { "DragCoefficient" };
+    
+    public static final float DEFAULT_DRAG_COEFF = -0.01f;
+    public static final int DRAG_COEFF = 0;
+
+    public DragForce(float dragCoeff) {
+        params = new float[] { dragCoeff };
+    } //
+    
+    public DragForce() {
+        this(DEFAULT_DRAG_COEFF);
+    } //
+
+    public boolean isItemForce() {
+        return true;
+    } //
+    
+    protected String[] getParameterNames() {
+        return pnames;
+    } //
+    
+    /**
+     * Calculates the force vector acting on the given item.
+     * @@param item the ForceItem for which to compute the force
+     */
+    public void getForce(ForceItem item) {
+        item.force[0] += params[DRAG_COEFF]*item.velocity[0];
+        item.force[1] += params[DRAG_COEFF]*item.velocity[1];
+    } //
+
+} // end of class DragForce@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@@
+
+
+1.1.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+

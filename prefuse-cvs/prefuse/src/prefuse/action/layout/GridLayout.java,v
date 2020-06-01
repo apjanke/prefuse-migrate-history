@@ -1,0 +1,500 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.01.19.22.02;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.07.00.42.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action.layout;
+
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+
+import prefuse.data.Node;
+import prefuse.data.tuple.TupleSet;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Implements a uniform grid-based layout. This component can either use
+ * preset grid dimensions or analyze a grid-shaped graph to determine them
+ * automatically.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class GridLayout extends Layout {
+
+    protected int rows;
+    protected int cols;
+    protected boolean analyze = false;
+    
+    /**
+     * Create a new GridLayout without preset dimensions. The layout will
+     * attempt to analyze an input graph to determine grid parameters.
+     * @@param group the data group to layout. In this automatic grid
+     * analysis configuration, the group <b>must</b> resolve to a set of
+     * graph nodes.
+     */
+    public GridLayout(String group) {
+        super(group);
+        analyze = true;
+    }
+    
+    /**
+     * Create a new GridLayout using the specified grid dimensions. If the
+     * input data has more elements than the grid dimensions can hold, the
+     * left over elements will not be visible.
+     * @@param group the data group to layout
+     * @@param nrows the number of rows of the grid
+     * @@param ncols the number of columns of the grid
+     */
+    public GridLayout(String group, int nrows, int ncols) {
+        super(group);
+        rows = nrows;
+        cols = ncols;
+        analyze = false;
+    }
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        Rectangle2D b = getLayoutBounds();
+        double bx = b.getMinX(), by = b.getMinY();
+        double w = b.getWidth(), h = b.getHeight();
+        
+        TupleSet ts = m_vis.getGroup(m_group);
+        int m = rows, n = cols;
+        if ( analyze ) {
+            int[] d = analyzeGraphGrid(ts);
+            m = d[0]; n = d[1];
+        }
+        
+        Iterator iter = ts.tuples();
+        // layout grid contents
+        for ( int i=0; iter.hasNext() && i < m*n; ++i ) {
+            VisualItem item = (VisualItem)iter.next();
+            item.setVisible(true);
+            double x = bx + w*((i%n)/(double)(n-1));
+            double y = by + h*((i/n)/(double)(m-1));
+            setX(item,null,x);
+            setY(item,null,y);
+        }
+        // set left-overs invisible
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            item.setVisible(false);
+        }
+    }
+    
+    /**
+     * Analyzes a set of nodes to try and determine grid dimensions. Currently
+     * looks for the edge count on a node to drop to 2 to determine the end of
+     * a row.
+     * @@param ts TupleSet ts a set of nodes to analyze. Contained tuples
+     * <b>must</b> implement be Node instances.
+     * @@return a two-element int array with the row and column lengths
+     */
+    public static int[] analyzeGraphGrid(TupleSet ts) {
+        // TODO: more robust grid analysis?
+        int m, n;
+        Iterator iter = ts.tuples(); iter.next();
+        for ( n=2; iter.hasNext(); n++ ) {
+            Node nd = (Node)iter.next();
+            if ( nd.getDegree() == 2 )
+                break;
+        }
+        m = ts.getTupleCount() / n;
+        return new int[] {m,n};
+    }
+    
+    /**
+     * Get the number of grid columns.
+     * @@return the number of grid columns
+     */
+    public int getNumCols() {
+        return cols;
+    }
+    
+    /**
+     * Set the number of grid columns.
+     * @@param cols the number of grid columns to use
+     */
+    public void setNumCols(int cols) {
+        this.cols = cols;
+    }
+    
+    /**
+     * Get the number of grid rows.
+     * @@return the number of grid rows
+     */
+    public int getNumRows() {
+        return rows;
+    }
+    
+    /**
+     * Set the number of grid rows.
+     * @@param rows the number of grid rows to use
+     */
+    public void setNumRows(int rows) {
+        this.rows = rows;
+    }
+    
+} // end of class GridLayout
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d4 1
+d15 1
+a15 1
+ *
+d23 1
+a23 1
+
+d35 1
+a35 1
+
+d50 1
+a50 1
+
+d54 1
+a54 2
+    @@Override
+	public void run(double frac) {
+d58 2
+a59 2
+
+        TupleSet<? extends VisualItem<?>> ts = m_vis.getGroup(m_group);
+d65 2
+a66 1
+
+d68 12
+a79 13
+        int i = 0;
+        for(VisualItem<?> item : ts.tuples()) {
+        	if(i >= m * n) {
+                // set left-overs invisible
+                item.setVisible(false);
+        	} else {
+        		item.setVisible(true);
+        		double x = bx + w*i%n/(n-1);
+        		double y = by + h*i/n/(m-1);
+        		setX(item,null,x);
+        		setY(item,null,y);
+        		i++;
+        	}
+d82 1
+a82 1
+
+d91 1
+a91 1
+    public static int[] analyzeGraphGrid(TupleSet<? extends VisualItem<?>> ts) {
+d93 6
+a98 8
+        int m = 0;
+        int n = 2;
+        for (VisualItem<?> item : ts.tuples()) {
+            Node<?,?> nd = (Node<?,?>) item;
+            if ( nd.getDegree() == 2 ) {
+				break;
+			}
+            n++;
+d103 1
+a103 1
+
+d111 1
+a111 1
+
+d119 1
+a119 1
+
+d127 1
+a127 1
+
+d135 1
+a135 1
+
+@
+
+
+1.1
+log
+@file GridLayout.java was initially added on branch beta.
+@
+text
+@d1 136
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 128
+package prefuse.action.layout;
+
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+
+import prefuse.data.tuple.Node;
+import prefuse.data.tuple.TupleSet;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Implements a uniform grid-based layout. This component can either use
+ * preset grid dimensions or analyze a grid-shaped graph to determine them
+ * automatically.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org</a>
+ */
+public class GridLayout extends Layout {
+
+    protected int rows;
+    protected int cols;
+    protected boolean analyze = false;
+    
+    /**
+     * Create a new GridLayout without preset dimensions. The layout will
+     * attempt to analyze an input graph to determine grid parameters.
+     */
+    public GridLayout(String group) {
+        super(group);
+        analyze = true;
+    } //
+    
+    /**
+     * Create a new GridLayout using the specified grid dimensions. If the
+     * input data has more elements than the grid dimensions can hold, the
+     * left over elements will not be visible.
+     * @@param nrows the number of rows of the grid
+     * @@param ncols the number of columns of the grid
+     */
+    public GridLayout(String group, int nrows, int ncols) {
+        super(group);
+        rows = nrows;
+        cols = ncols;
+        analyze = false;
+    }
+    
+    /**
+     * @@see prefuse.action.Action#run(prefuse.a_old.ItemRegistry, double)
+     */
+    public void run(double frac) {
+        Rectangle2D b = getLayoutBounds();
+        double bx = b.getMinX(), by = b.getMinY();
+        double w = b.getWidth(), h = b.getHeight();
+        
+        TupleSet ts = m_vis.getGroup(m_group);
+        int m = rows, n = cols;
+        if ( analyze ) {
+            int[] d = analyzeGraphGrid(ts);
+            m = d[0]; n = d[1];
+        }
+        
+        Iterator iter = ts.tuples();
+        // layout grid contents
+        for ( int i=0; iter.hasNext() && i < m*n; ++i ) {
+            VisualItem item = (VisualItem)iter.next();
+            item.setVisible(true);
+            double x = bx + w*((i%n)/(double)(n-1));
+            double y = by + h*((i/n)/(double)(m-1));
+            setX(item,null,x);
+            setY(item,null,y);
+        }
+        // set left-overs invisible
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            item.setVisible(false);
+        }
+    }
+    
+    /**
+     * Analyzes a graph to try and determine it's grid dimensions. Currently
+     * looks for the edge count on anode to drop to 2 to determine the end of
+     * a row.
+     * @@param g the input graph
+     * @@return
+     */
+    public static int[] analyzeGraphGrid(TupleSet ts) {
+        // TODO: more robust grid analysis?
+        int m, n;
+        Iterator iter = ts.tuples(); iter.next();
+        for ( n=2; iter.hasNext(); n++ ) {
+            Node nd = (Node)iter.next();
+            if ( nd.getDegree() == 2 )
+                break;
+        }
+        m = ts.getTupleCount() / n;
+        return new int[] {m,n};
+    }
+    
+    /**
+     * @@return Returns the number of columns.
+     */
+    public int getNumCols() {
+        return cols;
+    }
+    
+    /**
+     * @@param cols Sets the number of columns.
+     */
+    public void setNumCols(int cols) {
+        this.cols = cols;
+    }
+    
+    /**
+     * @@return Returns the numerb of rows.
+     */
+    public int getNumRows() {
+        return rows;
+    }
+    
+    /**
+     * @@param rows Sets the number of rows.
+     */
+    public void setNumRows(int rows) {
+        this.rows = rows;
+    }
+    
+} // end of class GridLayout
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d16 2
+a17 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a27 3
+     * @@param group the data group to layout. In this automatic grid
+     * analysis configuration, the group <b>must</b> resolve to a set of
+     * graph nodes.
+d32 1
+a32 1
+    }
+a37 1
+     * @@param group the data group to layout
+d49 1
+a49 1
+     * @@see prefuse.action.Action#run(double)
+d81 2
+a82 2
+     * Analyzes a set of nodes to try and determine grid dimensions. Currently
+     * looks for the edge count on a node to drop to 2 to determine the end of
+d84 2
+a85 3
+     * @@param TupleSet ts a set of nodes to analyze. Contained tuples
+     * <b>must</b> implement be Node instances.
+     * @@return a two-element int array with the row and column lengths
+d101 1
+a101 2
+     * Get the number of grid columns.
+     * @@return the number of grid columns
+d108 1
+a108 2
+     * Set the number of grid columns.
+     * @@param cols the number of grid columns to use
+d115 1
+a115 2
+     * Get the number of grid rows.
+     * @@return the number of grid rows
+d122 1
+a122 2
+     * Set the number of grid rows.
+     * @@param rows the number of grid rows to use
+@
+
+
+1.1.2.3
+log
+@Javadoc'd.
+@
+text
+@d87 1
+a87 1
+     * @@param ts TupleSet ts a set of nodes to analyze. Contained tuples
+@
+
+
+1.1.2.4
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@d6 1
+a6 1
+import prefuse.data.Node;
+@
+
+

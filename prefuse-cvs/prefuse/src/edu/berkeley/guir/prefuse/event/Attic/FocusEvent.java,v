@@ -1,0 +1,264 @@
+head	1.7;
+access;
+symbols
+	alpha:1.6.0.2
+	Root_alpha:1.6
+	prefuse-alpha-20051229:1.6
+	P20050401_Alpha_PreCHI:1.6;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2006.02.11.06.38.46;	author jheer;	state dead;
+branches;
+next	1.6;
+
+1.6
+date	2005.01.11.06.57.27;	author jheer;	state Exp;
+branches
+	1.6.4.1;
+next	1.5;
+
+1.5
+date	2005.01.05.02.35.39;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.04.15.00.35.17;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.12.01.51.32;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.02.27.21.35.17;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.09.59;	author jheer;	state Exp;
+branches;
+next	;
+
+1.6.4.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.event;
+
+import java.util.EventObject;
+
+import edu.berkeley.guir.prefuse.focus.FocusSet;
+import edu.berkeley.guir.prefuse.graph.Entity;
+
+/**
+ * 
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class FocusEvent extends EventObject {
+
+    public static final Entity[] EMPTY = new Entity[0];    
+    
+    public static final int FOCUS_ADDED   = 0;
+    public static final int FOCUS_REMOVED = 1;
+    public static final int FOCUS_SET     = 2;
+
+    private Entity[] m_added, m_removed;
+    private long m_when;
+    private int m_type;
+    
+    public FocusEvent(FocusSet src, int type, Entity[] added, Entity[] removed) {
+        super(src);
+        if ( type < FOCUS_ADDED || type > FOCUS_SET )
+            throw new IllegalArgumentException("Unrecognized event type:"+type);
+        m_when = System.currentTimeMillis();
+        m_type = type;
+        m_added = (added == null ? EMPTY : added);
+        m_removed = (removed == null ? EMPTY : removed);
+    } //
+    
+    public long getWhen() {
+        return m_when;
+    } //
+    
+    public int getEventType() {
+        return m_type;
+    } //
+    
+    public FocusSet getFocusSet() {
+    	return (FocusSet)getSource();
+    } //
+    
+    public Entity[] getAddedFoci() {
+        return m_added;
+    } //
+    
+    public Entity[] getRemovedFoci() {
+        return m_removed;
+    } //
+    
+    public Entity getFirstAdded() {
+        return ( m_added.length > 0 ? m_added[0] : null );
+    } //
+    
+    public Entity getFirstRemoved() {
+        return ( m_removed.length > 0 ? m_removed[0] : null );
+    } //
+    
+} // end of class FocusEvent
+@
+
+
+1.6
+log
+@Added method to retrieve source FocusSet
+@
+text
+@@
+
+
+1.6.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.5
+log
+@Created new package for FocusSet implementations
+@
+text
+@d44 4
+@
+
+
+1.4
+log
+@Application-driven updates
+@
+text
+@d5 1
+a6 1
+import edu.berkeley.guir.prefuse.util.FocusSet;
+@
+
+
+1.3
+log
+@Fixed bad reference bug
+@
+text
+@a9 1
+ * Feb 20, 2004 - jheer - Created class
+@
+
+
+1.2
+log
+@Major commit of updated architecture
+@
+text
+@d34 1
+a34 1
+        m_removed = (removed == null ? EMPTY : added);
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@a4 1
+import edu.berkeley.guir.prefuse.ItemRegistry;
+d6 1
+a8 4
+ * Represents a change in which nodes have been placed in "focus" by
+ * user selection.
+ * 
+ * Apr 26, 2003 - jheer - Created class
+d10 2
+d13 1
+a13 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+d16 45
+a60 57
+	
+	public static final int FOCUS_ADDED   = 0;
+	public static final int FOCUS_REMOVED = 1;
+	public static final int FOCUS_SET     = 2;
+	
+	private Entity m_focus;
+	private Entity m_prevFocus;
+	private int    m_type;
+	
+	/**
+	 * Constructor.
+	 * @@param registry the registry upon which the focus change occurs.
+	 * @@param type the type of the FocusEvent. Is one of FOCUS_ADDED, 
+	 *  FOCUS_REMOVED, and FOCUS_SET.
+	 * @@param focus the focus entity added, removed, or set.
+	 * @@param prevFocus the previous focus (if it exists), in case of 
+	 *  a FOCUS_SET
+	 */
+	public FocusEvent(ItemRegistry registry, int type, Entity focus, Entity prevFocus) {
+		super(registry);
+		m_type = type;
+		m_focus = focus;
+		m_prevFocus = prevFocus;		
+	} //
+	
+	/**
+	 * Returns the ItemRegistry where the focus change occurred.
+	 * @@return the ItemRegistry
+	 */
+	public ItemRegistry getSourceRegistry() {
+		return (ItemRegistry)getSource();
+	} //
+	
+	/**
+	 * Returns the type of focus change.
+	 * @@return the type of focus change
+	 */
+	public int getType() {
+		return m_type;
+	} //
+	
+	/**
+	 * Returns the affected focus entity.
+	 * @@return the affected focus entity
+	 */
+	public Entity getFocus() {
+		return m_focus;
+	} //
+	
+	/**
+	 * Returns the previous focus, if appropriate.
+	 * @@return the previous focus
+	 */
+	public Entity getPreviousFocus() {
+		return m_prevFocus;
+	} //
+		
+@
+

@@ -1,0 +1,167 @@
+head	1.4;
+access;
+symbols
+	alpha:1.3.0.2
+	Root_alpha:1.3
+	prefuse-alpha-20051229:1.3
+	P20050401_Alpha_PreCHI:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2006.02.11.06.38.42;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.06.27.22.13.42;	author tha_jackl;	state Exp;
+branches
+	1.3.4.1;
+next	1.2;
+
+1.2
+date	2004.03.24.01.57.41;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.23.03.55.15;	author jheer;	state Exp;
+branches;
+next	;
+
+1.3.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.samples;
+
+import javax.swing.JFrame;
+
+import edu.berkeley.guir.prefuse.Display;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.action.RepaintAction;
+import edu.berkeley.guir.prefuse.action.filter.GraphFilter;
+import edu.berkeley.guir.prefuse.activity.ActionList;
+import edu.berkeley.guir.prefuse.graph.Graph;
+import edu.berkeley.guir.prefuse.graph.GraphLib;
+import edu.berkeley.guir.prefusex.controls.DragControl;
+import edu.berkeley.guir.prefusex.layout.RandomLayout;
+
+/**
+ * Creates a new graph and draws it on the screen.
+ */
+public class ShowGraph extends JFrame {
+	
+	private ItemRegistry registry;
+	private ActionList actions;
+	
+	public ShowGraph() {
+		super("ShowGraph");
+		
+		// creates a new graph
+		Graph g = GraphLib.getClique(5);
+		
+		// create a new item registry
+		//  the item registry stores all the visual
+		//  representations of different graph elements
+		registry = new ItemRegistry(g);
+		
+		// create a new display component to show the data
+		Display display = new Display(registry);
+		// lets users drag nodes around on screen
+		display.addControlListener(new DragControl());
+		
+		// create a new action list that
+		// (a) filters visual representations from the original graph
+		// (b) performs a random layout of graph nodes
+		// (c) calls repaint on displays so that we can see the result
+		actions = new ActionList(registry);
+		actions.add(new GraphFilter());
+		actions.add(new RandomLayout());
+		actions.add(new RepaintAction());
+		
+		// set up this JFrame
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		getContentPane().add(display);
+		pack();
+		setVisible(true);
+        
+		// now execute the actions to visualize the graph
+		actions.runNow();
+	}
+
+	public static void main(String[] args) {
+		new ShowGraph();
+	}
+}
+@
+
+
+1.3
+log
+@Deleted setSize (already the default size)
+@
+text
+@@
+
+
+1.3.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.2
+log
+@New filters added plus more
+@
+text
+@a35 1
+		display.setSize(400,400);
+@
+
+
+1.1
+log
+@Added simplified code samples
+@
+text
+@a6 2
+import edu.berkeley.guir.prefuse.action.GraphEdgeFilter;
+import edu.berkeley.guir.prefuse.action.GraphNodeFilter;
+d8 2
+a9 1
+import edu.berkeley.guir.prefuse.activity.ActionPipeline;
+d21 1
+a21 1
+	private ActionPipeline pipeline;
+d40 1
+a40 1
+		// create a new action pipeline that
+d44 4
+a47 5
+		pipeline = new ActionPipeline(registry);
+		pipeline.add(new GraphNodeFilter());
+		pipeline.add(new GraphEdgeFilter());
+		pipeline.add(new RandomLayout());
+		pipeline.add(new RepaintAction());
+d55 2
+a56 2
+		// now execute the pipeline to visualize the graph
+		pipeline.runNow();
+@
+

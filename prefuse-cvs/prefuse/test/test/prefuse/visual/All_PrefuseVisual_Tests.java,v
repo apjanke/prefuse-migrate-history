@@ -1,0 +1,48 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.02.27.03.59.10;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Fixes and test cases for Visualizations and VisualItems.
+Revisited reset, removeGroup, getSourceData, and getSourceTuple.
+Added getSourceXXX methods to VisualItem
+Added new test cases
+@
+text
+@package test.prefuse.visual;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+public class All_PrefuseVisual_Tests {
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite("Test for test.prefuse.visual");
+        //$JUnit-BEGIN$
+        suite.addTestSuite(VisualizationTest.class);
+        suite.addTestSuite(VisualAggregateTableTest.class);
+        //$JUnit-END$
+        return suite;
+    }
+
+}
+@

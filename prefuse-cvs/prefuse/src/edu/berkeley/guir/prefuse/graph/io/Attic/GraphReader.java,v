@@ -1,0 +1,126 @@
+head	1.3;
+access;
+symbols
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.12.18.23.42;	author jheer;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.23.19.34.05;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.01.08.21.09.59;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.graph.io;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+
+import edu.berkeley.guir.prefuse.graph.Graph;
+
+/**
+ * Interface by which to read in Graph instances from stored files.
+ * 
+ * May 21, 2003 - jheer - Created class
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public interface GraphReader {
+
+	/**
+	 * Load a graph from the file with the given filename.
+	 * @@param filename the file to load the graph from
+	 * @@return the loaded Graph
+	 * @@throws FileNotFoundException
+	 * @@throws IOException
+	 */
+	public Graph loadGraph(String filename) throws FileNotFoundException, IOException;
+	
+	/**
+	 * Load a graph from the given URL.
+	 * @@param url the url to load the graph from
+	 * @@return the loaded Graph
+	 * @@throws IOException
+	 */
+	public Graph loadGraph(URL url) throws IOException;
+	
+	/**
+	 * Load a graph from the given File.
+	 * @@param f the file to load the graph from
+	 * @@return the loaded Graph
+	 * @@throws FileNotFoundException
+	 * @@throws IOException
+	 */
+	public Graph loadGraph(File f) throws FileNotFoundException, IOException;
+	
+	/**
+	 * Load a graph from the given InputStream.
+	 * @@param is the InputStream to load the graph from
+	 * @@return the loaded Graph
+	 * @@throws IOException
+	 */
+	public Graph loadGraph(InputStream is) throws IOException;
+
+} // end of interface GraphReader
+@
+
+
+1.2
+log
+@More Javadoc updates
+@
+text
+@@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.1
+log
+@Initial import
+@
+text
+@d17 1
+a17 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+@
+

@@ -1,0 +1,225 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.02.19.01.51;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.collections;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+
+/**
+ * Maintains a breadth-first-search queue as well as depth labels.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class Queue {
+
+    // TODO: create an optimized implementation of this class
+    
+    private LinkedList m_list = new LinkedList();
+    private HashMap    m_map  = new HashMap();
+    
+    public void clear() {
+        m_list.clear();
+        m_map.clear();
+    }
+    
+    public boolean isEmpty() {
+        return m_list.isEmpty();
+    }
+    
+    public void add(Object o, int depth) {
+        m_list.add(o);
+        visit(o, depth);
+    }
+    
+    public int getDepth(Object o) {
+        Integer d = (Integer)m_map.get(o);
+        return ( d==null ? -1 : d.intValue() );
+    }
+    
+    public void visit(Object o, int depth) {
+        m_map.put(o, new Integer(depth));
+    }
+    
+    public Object removeFirst() {
+        return m_list.removeFirst();
+    }
+    
+    public Object removeLast() {
+        return m_list.removeLast();
+    }
+    
+} // end of class Queue
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d8 1
+a8 1
+ *
+d14 4
+a17 4
+
+    private final LinkedList m_list = new LinkedList();
+    private final HashMap    m_map  = new HashMap();
+
+d22 1
+a22 1
+
+d26 1
+a26 1
+
+d31 1
+a31 1
+
+d34 1
+a34 1
+        return d==null ? -1 : d.intValue();
+d36 1
+a36 1
+
+d40 1
+a40 1
+
+d44 1
+a44 1
+
+d48 1
+a48 1
+
+@
+
+
+1.1
+log
+@file Queue.java was initially added on branch beta.
+@
+text
+@d1 49
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 47
+package prefuse.util.collections;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class Queue {
+
+    // TODO: create an optimized implementation of this class
+    
+    private LinkedList m_list = new LinkedList();
+    private HashMap    m_map  = new HashMap();
+    
+    public void clear() {
+        m_list.clear();
+        m_map.clear();
+    }
+    
+    public boolean isEmpty() {
+        return m_list.isEmpty();
+    }
+    
+    public void add(Object o, int depth) {
+        m_list.add(o);
+        visit(o, depth);
+    }
+    
+    public int getDepth(Object o) {
+        Integer d = (Integer)m_map.get(o);
+        return ( d==null ? -1 : d.intValue() );
+    }
+    
+    public void visit(Object o, int depth) {
+        m_map.put(o, new Integer(depth));
+    }
+    
+    public Object removeFirst() {
+        return m_list.removeFirst();
+    }
+    
+    public Object removeLast() {
+        return m_list.removeLast();
+    }
+    
+} // end of class Queue
+@
+
+
+1.1.2.2
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d7 1
+a7 3
+ * Maintains a breadth-first-search queue as well as depth labels.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

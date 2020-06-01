@@ -1,0 +1,123 @@
+head	1.3;
+access;
+symbols
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.11.06.38.46;	author jheer;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.23.19.34.05;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.01.08.21.10.12;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.collections;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+
+/**
+ * Iterator that traverses a list in reverse.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ReverseListIterator implements Iterator {
+
+	ListIterator m_iter;
+
+	/**
+	 * Constructor.
+	 * @@param list the list to traverse in reverse
+	 */
+	public ReverseListIterator(List list) {
+		m_iter = list.listIterator();
+		// we shouldn't have to do this... but things weren't working properly
+		// when attempting to use the previous() method right off the bat.
+		while ( m_iter.hasNext() ) { m_iter.next(); }	
+	} //
+
+	/**
+	 * @@see java.util.Iterator#remove()
+	 */
+	public void remove() {
+		throw new UnsupportedOperationException("Remove not supported");
+	} //
+
+	/**
+	 * @@see java.util.Iterator#hasNext()
+	 */
+	public boolean hasNext() {
+		return m_iter.hasPrevious();
+	} //
+
+	/**
+	 * @@see java.util.Iterator#next()
+	 */
+	public Object next() {		
+		return m_iter.previous();
+	} //
+
+} // end of class ReverseListIterator
+@
+
+
+1.2
+log
+@More Javadoc updates
+@
+text
+@@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.1
+log
+@Initial import
+@
+text
+@a9 2
+ * Jun 2, 2003 - jheer - Created class
+ * 
+d11 1
+a11 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+@
+

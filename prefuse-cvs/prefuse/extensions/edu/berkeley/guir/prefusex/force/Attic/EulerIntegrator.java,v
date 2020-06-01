@@ -1,0 +1,108 @@
+head	1.3;
+access;
+symbols
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.11.06.38.43;	author jheer;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.08.20.05.52;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefusex.force;
+
+import java.util.Iterator;
+
+/**
+ * Updates velocity and position data using Euler's Method. This is a
+ * simple and fast, though somewhat inaccurate, approach.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class EulerIntegrator implements Integrator {
+    
+    /**
+     * @@see edu.berkeley.guir.prefusex.force.Integrator#integrate(edu.berkeley.guir.prefusex.force.ForceSimulator, long)
+     */
+    public void integrate(ForceSimulator sim, long timestep) {
+        float speedLimit = sim.getSpeedLimit();
+        Iterator iter = sim.getItems();
+        while ( iter.hasNext() ) {
+            ForceItem item = (ForceItem)iter.next();
+            item.location[0] += timestep * item.velocity[0];
+            item.location[1] += timestep * item.velocity[1];
+            float coeff = timestep / item.mass;
+            item.velocity[0] += coeff * item.force[0];
+            item.velocity[1] += coeff * item.force[1];
+            float vx = item.velocity[0];
+            float vy = item.velocity[1];
+            float v = (float)Math.sqrt(vx*vx+vy*vy);
+            if ( v > speedLimit ) {
+                item.velocity[0] = speedLimit * vx / v;
+                item.velocity[1] = speedLimit * vy / v;
+            }
+        }
+    } //
+
+} // end of class EulerIntegrator
+@
+
+
+1.2
+log
+@Javadoc update and fixes
+@
+text
+@@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d15 1
+a15 1
+     * @@see edu.berkeley.guir.prefusex.force.Integrator#integrate(edu.berkeley.guir.prefusex.force.ForceItem)
+@
+

@@ -1,0 +1,130 @@
+head	1.3;
+access;
+symbols
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.11.06.38.44;	author jheer;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.24.01.57.26;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.03.08.20.05.51;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Merge beta branch back onto main trunk
+@
+text
+@<body>
+<strong><font face="Verdana,Arial,Helvetica,Sans-Serif">prefuse</font></strong> is a user interface
+toolkit for constructing highly-interactive visualizations of graph-structured
+(i.e. node-link) data. <font face="Verdana,Arial,Helvetica,Sans-Serif">prefuse</font>
+applications are built by stringing together composable modules (called
+<code>{@@link edu.berkeley.guir.prefuse.action.Action Actions}</code>) into
+<code>{@@link edu.berkeley.guir.prefuse.activity.ActionList ActionLists}</code>
+that perform various tasks such as graph processing and animation.
+
+<br/><br/>
+
+Other features of the toolkit include:
+<ul>
+  <li>Libraries of composable actions, including layout algorithms (see
+      the <code>{@@link edu.berkeley.guir.prefuse.action action}</code> and
+      <code>{@@link edu.berkeley.guir.prefusex.layout layout}</code> packages).
+  <li>Filtering and caching schemes to support large data sets through a
+  	  centralized <code>{@@link edu.berkeley.guir.prefuse.ItemRegistry ItemRegistry}
+  	  </code>.
+  <li>A physics simulation engine supporting physically-based layout and interaction
+      (see the <code>{@@link edu.berkeley.guir.prefusex.force force}</code> package).
+  <li>Flexible activity scheduling and animation support (see the
+      <code>{@@link edu.berkeley.guir.prefuse.activity activity}</code> package);
+  <li>User interface event handling (see the
+      <code>{@@link edu.berkeley.guir.prefuse.event event}</code> and
+      <code>{@@link edu.berkeley.guir.prefusex.controls controls}</code> packages).
+  <li>View transformations, as well as panning and zooming (see the
+  	  <code>{@@link edu.berkeley.guir.prefuse.Display Display}</code> class and
+  	  the <code>{@@link edu.berkeley.guir.prefusex.distortion distortion}</code>
+  	  package).
+</ul>
+
+<br/>
+
+The general pattern of building a prefuse visualization component is to first
+determine the <code>{@@link edu.berkeley.guir.prefuse.graph.Graph Graph}</code>
+data structure to visualize, and construct an 
+<code>{@@link edu.berkeley.guir.prefuse.ItemRegistry ItemRegistry}</code>
+to create and store visual representations of the graph data along with one or more
+<code>{@@link edu.berkeley.guir.prefuse.Display Display}</code> instances to draw
+these visual representations to the screen. One then assigns a 
+<code>{@@link edu.berkeley.guir.prefuse.render.RendererFactory RendererFactory}</code>
+to the <code>{@@link edu.berkeley.guir.prefuse.ItemRegistry ItemRegistry}</code>,
+which determines which
+<code>{@@link edu.berkeley.guir.prefuse.render.Renderer Renderer}</code>
+instances are used to draw individual items. Then any number of 
+<code>{@@link edu.berkeley.guir.prefuse.activity.ActionList ActionLists}</code>
+can be created and scheduled to perform graph operations such as layout, color
+assignment, and animation. Finally, interactive behaviors can be specified by
+adding custom 
+<code>{@@link edu.berkeley.guir.prefuse.event.ControlListener ControlListeners}</code>
+or pre-built <code>{@@link edu.berkeley.guir.prefusex.controls Controls}</code>
+to the <code>{@@link edu.berkeley.guir.prefuse.Display Display}</code> instances.
+
+For working examples of this process, take a look at the provided
+{@@link edu.berkeley.guir.prefuse.demos demonstration applications}.
+</body>@
+
+
+1.2
+log
+@New filters added plus more
+@
+text
+@@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.1
+log
+@Javadoc update and fixes
+@
+text
+@d7 1
+a7 1
+<code>{@@link edu.berkeley.guir.prefuse.activity.ActionPipeline ActionPipelines}</code>
+d47 1
+a47 1
+<code>{@@link edu.berkeley.guir.prefuse.activity.ActionPipeline ActionPipelines}</code>
+@
+

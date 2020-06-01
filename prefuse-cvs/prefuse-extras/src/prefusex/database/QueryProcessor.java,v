@@ -1,0 +1,41 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.03.16.01.31.44;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Major update
+@
+text
+@package prefusex.database;
+
+import java.sql.ResultSet;
+
+/**
+ * An interface for issuing and processing a SQL database query.
+ *  
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public interface QueryProcessor {
+
+    public void start();
+    public boolean hasNext();
+    public String getQuery();
+    public void processResults(ResultSet rs) throws Exception;
+    
+} // end of interface QueryProcessor
+@

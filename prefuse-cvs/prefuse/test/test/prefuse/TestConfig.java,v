@@ -1,0 +1,126 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.50;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package test.prefuse;
+
+public class TestConfig {
+    
+    public static boolean verbose() {
+        String v = System.getProperty("verbose");
+        return ( v != null && v.equalsIgnoreCase("true") );
+    }
+    
+    public static String memUse() {
+        // memory usage
+        long total = Runtime.getRuntime().totalMemory() / (2<<10);
+        long free  = Runtime.getRuntime().freeMemory() / (2<<10);
+        long max   = Runtime.getRuntime().maxMemory() / (2<<10);
+        return "Memory: " + (total-free) + "K used / "
+                          + total + "K avail / "
+                          + max + "K max";
+    }
+    
+}
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d4 1
+a4 1
+
+d7 1
+a7 1
+        return v != null && v.equalsIgnoreCase("true");
+d9 1
+a9 1
+
+d19 1
+a19 1
+
+@
+
+
+1.1
+log
+@file TestConfig.java was initially added on branch beta.
+@
+text
+@d1 20
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 20
+package test.prefuse;
+
+public class TestConfig {
+    
+    public static boolean verbose() {
+        String v = System.getProperty("verbose");
+        return ( v != null && v.equalsIgnoreCase("true") );
+    }
+    
+    public static String memUse() {
+        // memory usage
+        long total = Runtime.getRuntime().totalMemory() / (2<<10);
+        long free  = Runtime.getRuntime().freeMemory() / (2<<10);
+        long max   = Runtime.getRuntime().maxMemory() / (2<<10);
+        return "Memory: " + (total-free) + "K used / "
+                          + total + "K avail / "
+                          + max + "K max";
+    }
+    
+}
+@
+

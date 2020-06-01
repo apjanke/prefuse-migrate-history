@@ -1,0 +1,658 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.1
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.02.17.18.08.28;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.02.09.05.12.45;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.44;	author jogiles;	state Exp;
+branches;
+next	2.1.4.2;
+
+2.1.4.2
+date	2008.02.26.05.02.53;	author amarsden;	state Exp;
+branches;
+next	2.1.4.3;
+
+2.1.4.3
+date	2008.03.03.05.19.17;	author amarsden;	state Exp;
+branches;
+next	2.1.4.4;
+
+2.1.4.4
+date	2008.04.09.23.50.43;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Added "stroke" visual property for configuring line drawing.
+EdgeRenderer now draws directed edges (more) correctly, and allow parameterization of the arrow head size.
+@
+text
+@package prefuse.render;
+
+import java.awt.BasicStroke;
+import java.awt.Graphics2D;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+
+import prefuse.util.GraphicsLib;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * <p>Abstract base class implementation of the Renderer interface for
+ * supporting the drawing of basic shapes. Subclasses should override the
+ * {@@link #getRawShape(VisualItem) getRawShape} method,
+ * which returns the shape to draw. Optionally, subclasses can also override the
+ * {@@link #getTransform(VisualItem) getTransform} method to apply a desired
+ * <code>AffineTransform</code> to the shape.</p>
+ * 
+ * <p><b>NOTE:</b> For more efficient rendering, subclasses should use a
+ * single shape instance in memory, and update its parameters on each call
+ * to getRawShape, rather than allocating a new Shape object each time.
+ * Otherwise, a new object will be allocated every time something needs to
+ * be drawn, and then subsequently be arbage collected. This can significantly
+ * reduce performance, especially when there are many things to draw.
+ * </p>
+ * 
+ * @@version 1.0
+ * @@author alan newberger
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public abstract class AbstractShapeRenderer implements Renderer {
+    
+    public static final int RENDER_TYPE_NONE = 0;
+    public static final int RENDER_TYPE_DRAW = 1;
+    public static final int RENDER_TYPE_FILL = 2;
+    public static final int RENDER_TYPE_DRAW_AND_FILL = 3;
+
+    private int m_renderType = RENDER_TYPE_DRAW_AND_FILL;
+    protected AffineTransform m_transform = new AffineTransform();
+    protected boolean m_manageBounds = true;
+    
+    public void setManageBounds(boolean b) {
+        m_manageBounds = b;
+    }
+    
+    /**
+     * @@see prefuse.render.Renderer#render(java.awt.Graphics2D, prefuse.visual.VisualItem)
+     */
+    public void render(Graphics2D g, VisualItem item) {
+        Shape shape = getShape(item);
+        if (shape != null)
+            drawShape(g, item, shape);
+    }
+    
+    /**
+     * Draws the specified shape into the provided Graphics context, using
+     * stroke and fill color values from the specified VisualItem. This method
+     * can be called by subclasses in custom rendering routines. 
+     */
+    protected void drawShape(Graphics2D g, VisualItem item, Shape shape) {
+        GraphicsLib.paint(g, item, shape, getStroke(item), getRenderType(item));
+    }
+
+    /**
+     * Returns the shape describing the boundary of an item. The shape's
+     * coordinates should be in abolute (item-space) coordinates.
+     * @@param item the item for which to get the Shape
+     */
+    public Shape getShape(VisualItem item) {
+        AffineTransform at = getTransform(item);
+        Shape rawShape = getRawShape(item);
+        return (at==null || rawShape==null ? rawShape 
+                 : at.createTransformedShape(rawShape));
+    }
+
+    /**
+     * Retursn the stroke to use for drawing lines and shape outlines. By
+     * default returns the value of {@@link VisualItem#getStroke()}.
+     * Subclasses can override this method to implement custom stroke
+     * assignment, though changing the <code>VisualItem</code>'s stroke
+     * value is preferred.
+     * @@param item the VisualItem
+     * @@return the strok to use for drawing lines and shape outlines
+     */
+    protected BasicStroke getStroke(VisualItem item) {
+        return item.getStroke();
+    }
+    
+    /**
+     * Return a non-transformed shape for the visual representation of the
+     * item. Subclasses must implement this method.
+     * @@param item the VisualItem being drawn
+     * @@return the "raw", untransformed shape.
+     */
+    protected abstract Shape getRawShape(VisualItem item);
+    
+    /**
+     * Return the graphics space transform applied to this item's shape, if any.
+     * Subclasses can implement this method, otherwise it will return null 
+     * to indicate no transformation is needed.
+     * @@param item the VisualItem
+     * @@return the graphics space transform, or null if none
+     */
+    protected AffineTransform getTransform(VisualItem item) {
+        return null;
+    }
+
+    /**
+     * Returns a value indicating if a shape is drawn by its outline, by a 
+     * fill, or both. The default is to draw both.
+     * @@return the rendering type
+     */
+    public int getRenderType(VisualItem item) {
+        return m_renderType;
+    }
+    
+    /**
+     * Sets a value indicating if a shape is drawn by its outline, by a fill, 
+     * or both. The default is to draw both.
+     * @@param type the new rendering type. Should be one of
+     *  {@@link #RENDER_TYPE_NONE}, {@@link #RENDER_TYPE_DRAW},
+     *  {@@link #RENDER_TYPE_FILL}, or {@@link #RENDER_TYPE_DRAW_AND_FILL}.
+     */
+    public void setRenderType(int type) {
+        if ( type < RENDER_TYPE_NONE || type > RENDER_TYPE_DRAW_AND_FILL ) {
+            throw new IllegalArgumentException("Unrecognized render type.");
+        }
+        m_renderType = type;
+    }
+    
+    /**
+     * @@see prefuse.render.Renderer#locatePoint(java.awt.geom.Point2D, prefuse.visual.VisualItem)
+     */
+    public boolean locatePoint(Point2D p, VisualItem item) {
+        if ( item.getBounds().contains(p) ) {
+            // if within bounds, check within shape outline
+            Shape s = getShape(item);
+            return (s != null ? s.contains(p) : false);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @@see prefuse.render.Renderer#setBounds(prefuse.visual.VisualItem)
+     */
+    public void setBounds(VisualItem item) {
+        if ( !m_manageBounds ) return;
+        Shape shape = getShape(item);
+        if ( shape == null ) {
+            item.setBounds(item.getX(), item.getY(), 0, 0);
+        } else {
+            GraphicsLib.setBounds(item, shape, getStroke(item));
+        }
+    }
+
+} // end of abstract class AbstractShapeRenderer
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a7 1
+import java.awt.geom.Rectangle2D;
+d20 1
+a20 1
+ *
+d25 1
+a25 1
+ * be drawn, and then subsequently be garbage collected. This can significantly
+d28 1
+a28 1
+ *
+d34 5
+d40 1
+a40 6
+    public static enum RenderType {
+    	NONE, DRAW, FILL, DRAW_AND_FILL
+    }
+
+
+    private RenderType m_renderType = RenderType.DRAW_AND_FILL;
+d43 1
+a43 1
+
+d47 1
+a47 5
+
+    public boolean managesBounds() {
+    	return m_manageBounds;
+    }
+
+d51 1
+a51 1
+    public void render(Graphics2D g, VisualItem<?> item) {
+d53 2
+a54 3
+        if (shape != null) {
+			drawShape(g, item, shape);
+		}
+d56 1
+a56 1
+
+d60 1
+a60 1
+     * can be called by subclasses in custom rendering routines.
+d62 1
+a62 1
+    protected void drawShape(Graphics2D g, VisualItem<?> item, Shape shape) {
+d68 1
+a68 1
+     * coordinates should be in absolute (item-space) coordinates.
+d71 1
+a71 1
+    public Shape getShape(VisualItem<?> item) {
+d74 2
+a75 2
+        return at==null || rawShape==null ? rawShape
+                 : at.createTransformedShape(rawShape);
+d79 1
+a79 1
+     * Returns the stroke to use for drawing lines and shape outlines. By
+d85 1
+a85 1
+     * @@return the stroke to use for drawing lines and shape outlines
+d87 1
+a87 1
+    protected BasicStroke getStroke(VisualItem<?> item) {
+d90 1
+a90 1
+
+d97 2
+a98 2
+    protected abstract Shape getRawShape(VisualItem<?> item);
+
+d101 1
+a101 1
+     * Subclasses can implement this method, otherwise it will return null
+d106 1
+a106 1
+    protected AffineTransform getTransform(VisualItem<?> item) {
+d111 1
+a111 1
+     * Returns a value indicating if a shape is drawn by its outline, by a
+d115 1
+a115 1
+    public RenderType getRenderType(VisualItem<?> item) {
+d118 1
+a118 1
+
+d120 1
+a120 1
+     * Sets a value indicating if a shape is drawn by its outline, by a fill,
+d122 8
+a129 3
+     * @@param type the new rendering type
+     */
+    public void setRenderType(RenderType type) {
+d132 1
+a132 1
+
+d136 1
+a136 1
+    public boolean locatePoint(Point2D p, VisualItem<?> item) {
+d140 1
+a140 1
+            return s != null ? s.contains(p) : false;
+d147 1
+a147 1
+     *
+d149 2
+a150 5
+    public void calculateBounds(VisualItem<?> item, Rectangle2D bounds) {
+        if ( !m_manageBounds ) {
+        	bounds.setRect(item.getX(), item.getY(), 0, 0);
+			return;
+		}
+d153 1
+a153 1
+        	bounds.setRect(item.getX(), item.getY(), 0, 0);
+d155 1
+a155 1
+            GraphicsLib.calculateBounds(item, shape, getStroke(item), bounds);
+@
+
+
+2.1.4.2
+log
+@Moved RenderType outside of AbstractShapeRenderer (it is now a top level enum)
+@
+text
+@d36 5
+@
+
+
+2.1.4.3
+log
+@GraphicsLib is no longer aware of VisualItem. The Renderers now provide the necessary information to GraphicsLib
+@
+text
+@a3 1
+import java.awt.Color;
+a9 1
+import prefuse.util.ColorLib;
+d64 1
+a64 3
+        Color strokeColor = ColorLib.getColor(item.getStrokeColor());
+        Color fillColor = ColorLib.getColor(item.getFillColor());
+        GraphicsLib.paint(g, strokeColor, fillColor, shape, getStroke(item), getRenderType(item));
+d154 1
+a154 1
+            GraphicsLib.calculateBounds(shape, getStroke(item), bounds);
+@
+
+
+2.1.4.4
+log
+@added the ability to override strokeColor and fillColor
+@
+text
+@d61 2
+a62 1
+     * Draws the specified shape into the provided Graphics context. This method
+d66 4
+a69 3
+		GraphicsLib.paint(g, getStrokeColor(item), getFillColor(item), shape,
+				getStroke(item), getRenderType(item));
+	}
+a83 26
+     * Returns the stroke color to use for drawing lines and shape outlines. By
+     * default returns the value of {@@link VisualItem#getStrokeColor()}.
+     * Subclasses can override this method to implement custom stroke color
+     * assignment, though changing the <code>VisualItem</code>'s stroke color
+     * value is preferred.
+     * @@param item the VisualItem
+     * @@return the stroke color to use for drawing lines and shape outlines
+     */
+    protected Color getStrokeColor(VisualItem<?> item) {
+    	return ColorLib.getColor(item.getStrokeColor());
+    }
+
+    /**
+     * Returns the fill color to use for painting shapes. By
+     * default returns the value of {@@link VisualItem#getFillColor()}.
+     * Subclasses can override this method to implement custom fill color
+     * assignment, though changing the <code>VisualItem</code>'s fill color
+     * value is preferred.
+     * @@param item the VisualItem
+     * @@return the fill color to use for painting shapes
+     */
+    protected Color getFillColor(VisualItem<?> item) {
+    	return ColorLib.getColor(item.getFillColor());
+    }
+
+    /**
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@a5 1
+import java.awt.Stroke;
+d63 1
+a63 8
+        // render the shape
+        Stroke s = g.getStroke();
+        Stroke is = getStroke(item);
+        if ( is != null ) g.setStroke(is);
+        
+        GraphicsLib.paint(g, item, shape, getRenderType(item));
+        
+        g.setStroke(s);
+d79 13
+a97 11
+
+    /**
+     * Returns the Stroke used to draw the shapes. By default, this method
+     * returns null to indicate the default stroke. Subclasses can override
+     * this method to control custom stroke assignment.
+     * @@param item the VisualItem being drawn
+     * @@return the Stroke to use for drawing the item
+     */
+    protected BasicStroke getStroke(VisualItem item) {
+        return null;
+    }
+d151 2
+a152 2
+        Shape s = getShape(item);
+        if ( s == null ) {
+d155 1
+a155 1
+            GraphicsLib.setBounds(item, s, getStroke(item));
+@
+
+
+1.1
+log
+@file AbstractShapeRenderer.java was initially added on branch beta.
+@
+text
+@d1 165
+@
+
+
+1.1.2.1
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@a0 165
+package prefuse.render;
+
+import java.awt.BasicStroke;
+import java.awt.Graphics2D;
+import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+
+import prefuse.util.GraphicsLib;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * <p>Abstract base class implementation of the Renderer interface for
+ * supporting the drawing of basic shapes. Subclasses should override the
+ * {@@link #getRawShape(VisualItem) getRawShape} method,
+ * which returns the shape to draw. Optionally, subclasses can also override the
+ * {@@link #getTransform(VisualItem) getTransform} method to apply a desired
+ * <code>AffineTransform</code> to the shape.</p>
+ * 
+ * <p><b>NOTE:</b> For more efficient rendering, subclasses should use a
+ * single shape instance in memory, and update its parameters on each call
+ * to getRawShape, rather than allocating a new Shape object each time.
+ * Otherwise, a new object will be allocated every time something needs to
+ * be drawn, and then subsequently be arbage collected. This can significantly
+ * reduce performance, especially when there are many things to draw.
+ * </p>
+ * 
+ * @@version 1.0
+ * @@author alan newberger
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public abstract class AbstractShapeRenderer implements Renderer {
+    
+    public static final int RENDER_TYPE_NONE = 0;
+    public static final int RENDER_TYPE_DRAW = 1;
+    public static final int RENDER_TYPE_FILL = 2;
+    public static final int RENDER_TYPE_DRAW_AND_FILL = 3;
+
+    private int m_renderType = RENDER_TYPE_DRAW_AND_FILL;
+    protected AffineTransform m_transform = new AffineTransform();
+    protected boolean m_manageBounds = true;
+    
+    public void setManageBounds(boolean b) {
+        m_manageBounds = b;
+    }
+    
+    /**
+     * @@see prefuse.render.Renderer#render(java.awt.Graphics2D, prefuse.visual.VisualItem)
+     */
+    public void render(Graphics2D g, VisualItem item) {
+        Shape shape = getShape(item);
+        if (shape != null)
+            drawShape(g, item, shape);
+    }
+    
+    /**
+     * Draws the specified shape into the provided Graphics context, using
+     * stroke and fill color values from the specified VisualItem. This method
+     * can be called by subclasses in custom rendering routines. 
+     */
+    protected void drawShape(Graphics2D g, VisualItem item, Shape shape) {
+        // render the shape
+        Stroke s = g.getStroke();
+        Stroke is = getStroke(item);
+        if ( is != null ) g.setStroke(is);
+        
+        GraphicsLib.paint(g, item, shape, getRenderType(item));
+        
+        g.setStroke(s);
+    }
+
+    /**
+     * Returns the shape describing the boundary of an item. The shape's
+     * coordinates should be in abolute (item-space) coordinates.
+     * @@param item the item for which to get the Shape
+     */
+    public Shape getShape(VisualItem item) {
+        AffineTransform at = getTransform(item);
+        Shape rawShape = getRawShape(item);
+        return (at==null || rawShape==null ? rawShape 
+                 : at.createTransformedShape(rawShape));
+    }
+
+    /**
+     * Return a non-transformed shape for the visual representation of the
+     * item. Subclasses must implement this method.
+     * @@param item the VisualItem being drawn
+     * @@return the "raw", untransformed shape.
+     */
+    protected abstract Shape getRawShape(VisualItem item);
+
+    /**
+     * Returns the Stroke used to draw the shapes. By default, this method
+     * returns null to indicate the default stroke. Subclasses can override
+     * this method to control custom stroke assignment.
+     * @@param item the VisualItem being drawn
+     * @@return the Stroke to use for drawing the item
+     */
+    protected BasicStroke getStroke(VisualItem item) {
+        return null;
+    }
+    
+    /**
+     * Return the graphics space transform applied to this item's shape, if any.
+     * Subclasses can implement this method, otherwise it will return null 
+     * to indicate no transformation is needed.
+     * @@param item the VisualItem
+     * @@return the graphics space transform, or null if none
+     */
+    protected AffineTransform getTransform(VisualItem item) {
+        return null;
+    }
+
+    /**
+     * Returns a value indicating if a shape is drawn by its outline, by a 
+     * fill, or both. The default is to draw both.
+     * @@return the rendering type
+     */
+    public int getRenderType(VisualItem item) {
+        return m_renderType;
+    }
+    
+    /**
+     * Sets a value indicating if a shape is drawn by its outline, by a fill, 
+     * or both. The default is to draw both.
+     * @@param type the new rendering type. Should be one of
+     *  {@@link #RENDER_TYPE_NONE}, {@@link #RENDER_TYPE_DRAW},
+     *  {@@link #RENDER_TYPE_FILL}, or {@@link #RENDER_TYPE_DRAW_AND_FILL}.
+     */
+    public void setRenderType(int type) {
+        if ( type < RENDER_TYPE_NONE || type > RENDER_TYPE_DRAW_AND_FILL ) {
+            throw new IllegalArgumentException("Unrecognized render type.");
+        }
+        m_renderType = type;
+    }
+    
+    /**
+     * @@see prefuse.render.Renderer#locatePoint(java.awt.geom.Point2D, prefuse.visual.VisualItem)
+     */
+    public boolean locatePoint(Point2D p, VisualItem item) {
+        if ( item.getBounds().contains(p) ) {
+            // if within bounds, check within shape outline
+            Shape s = getShape(item);
+            return (s != null ? s.contains(p) : false);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @@see prefuse.render.Renderer#setBounds(prefuse.visual.VisualItem)
+     */
+    public void setBounds(VisualItem item) {
+        if ( !m_manageBounds ) return;
+        Shape s = getShape(item);
+        if ( s == null ) {
+            item.setBounds(item.getX(), item.getY(), 0, 0);
+        } else {
+            GraphicsLib.setBounds(item, s, getStroke(item));
+        }
+    }
+
+} // end of abstract class AbstractShapeRenderer
+@
+

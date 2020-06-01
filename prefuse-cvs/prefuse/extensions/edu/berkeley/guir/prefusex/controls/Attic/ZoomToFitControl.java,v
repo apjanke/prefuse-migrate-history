@@ -1,0 +1,98 @@
+head	1.2;
+access;
+symbols
+	alpha:1.1.0.2
+	Root_alpha:1.1
+	prefuse-alpha-20051229:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2006.02.11.06.38.43;	author jheer;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2005.09.24.17.32.57;	author jheer;	state Exp;
+branches
+	1.1.4.1;
+next	;
+
+1.1.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefusex.controls;
+
+import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
+
+import edu.berkeley.guir.prefuse.Display;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.event.ControlAdapter;
+import edu.berkeley.guir.prefuse.util.display.DisplayLib;
+
+/**
+ * Zooms a display such that all nodes will fit.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ZoomToFitControl extends ControlAdapter {
+
+    private int margin;
+    private int mouseButton = MouseEvent.BUTTON3;
+    
+    public ZoomToFitControl() {
+        this(50);
+    } //
+    
+    public ZoomToFitControl(int margin) {
+        this.margin = margin;
+    } //
+    
+    public void itemClicked(VisualItem item, MouseEvent e) {
+        mouseClicked(e);
+    } //
+    
+    public void mouseClicked(MouseEvent e) {
+        if ( e.getButton() == mouseButton ) {
+            Display display = (Display)e.getComponent();
+	        ItemRegistry registry = display.getRegistry();
+	        Rectangle2D b = DisplayLib.getNodeBounds(registry,margin);
+	        DisplayLib.fitViewToBounds(display, b);
+        }
+    } //
+    
+} // end of class ZoomToFitControl
+@
+
+
+1.1
+log
+@Added ZoomToFit Control
+@
+text
+@@
+
+
+1.1.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+

@@ -1,0 +1,126 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.15;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.force;
+
+/**
+ * Interface for numerical integration routines. These routines are used
+ * to update the position and velocity of items in response to forces
+ * over a given time step.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface Integrator {
+
+    public void integrate(ForceSimulator sim, long timestep);
+    
+} // end of interface Integrator
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d13 1
+a13 1
+
+@
+
+
+1.1
+log
+@file Integrator.java was initially added on branch beta.
+@
+text
+@d1 14
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 14
+package prefuse.util.force;
+
+/**
+ * Interface for numerical integration routines. These routines are used
+ * to update the position and velocity of items in response to forces.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public interface Integrator {
+
+    public void integrate(ForceSimulator sim, long timestep);
+    
+} // end of interface Integrator
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d5 1
+a5 2
+ * to update the position and velocity of items in response to forces
+ * over a given time step.
+d7 2
+a8 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

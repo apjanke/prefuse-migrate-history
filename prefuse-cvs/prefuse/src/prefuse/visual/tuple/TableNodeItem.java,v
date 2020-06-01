@@ -1,0 +1,775 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.49;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.08;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.01.19.22.44;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.visual.tuple;
+
+import java.util.Iterator;
+
+import prefuse.data.Edge;
+import prefuse.data.Graph;
+import prefuse.data.Node;
+import prefuse.data.Table;
+import prefuse.visual.NodeItem;
+
+/**
+ * NodeItem implementation that used data values from a backing
+ * VisualTable of nodes.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class TableNodeItem extends TableVisualItem implements NodeItem {
+
+    protected Graph m_graph;
+
+    /**
+     * Initialize a new TableNodeItem for the given graph, table, and row.
+     * This method is used by the appropriate TupleManager instance, and
+     * should not be called directly by client code, unless by a
+     * client-supplied custom TupleManager.
+     * @@param table the backing VisualTable
+     * @@param graph the backing VisualGraph
+     * @@param row the row in the node table to which this Node instance
+     *  corresponds.
+     */
+    protected void init(Table table, Graph graph, int row) {
+        m_table = table;
+        m_graph = graph;
+        m_row = m_table.isValidRow(row) ? row : -1;
+    }
+    
+    /**
+     * @@see prefuse.data.Node#getGraph()
+     */
+    public Graph getGraph() {
+        return m_graph;
+    }
+    
+    // ------------------------------------------------------------------------
+    // If only we had multiple inheritance or categories....
+    // Instead we must re-implement the entire Node interface.
+    
+    /**
+     * @@see prefuse.data.Node#getInDegree()
+     */
+    public int getInDegree() {
+        return m_graph.getInDegree(this);
+    }
+
+    /**
+     * @@see prefuse.data.Node#getOutDegree()
+     */
+    public int getOutDegree() {
+        return m_graph.getOutDegree(this);
+    }
+
+    /**
+     * @@see prefuse.data.Node#getDegree()
+     */
+    public int getDegree() {
+        return m_graph.getDegree(this);
+    }
+
+    /**
+     * @@see prefuse.data.Node#inEdges()
+     */
+    public Iterator inEdges() {
+        return m_graph.inEdges(this);
+    }
+
+    /**
+     * @@see prefuse.data.Node#outEdges()
+     */
+    public Iterator outEdges() {
+        return m_graph.outEdges(this);
+    }
+    
+    /**
+     * @@see prefuse.data.Node#edges()
+     */
+    public Iterator edges() {
+        return m_graph.edges(this);
+    }
+    
+    /**
+     * @@see prefuse.data.Node#inNeighbors()
+     */
+    public Iterator inNeighbors() {
+        return m_graph.inNeighbors(this);
+    }
+    
+    /**
+     * @@see prefuse.data.Node#outNeighbors()
+     */
+    public Iterator outNeighbors() {
+        return m_graph.outNeighbors(this);
+    }
+    
+    /**
+     * @@see prefuse.data.Node#neighbors()
+     */
+    public Iterator neighbors() {
+        return m_graph.neighbors(this);
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.data.Node#getParent()
+     */
+    public Node getParent() {
+        return m_graph.getSpanningTree().getParent(this);
+    }
+
+    /**
+     * @@see prefuse.data.Node#getParentEdge()
+     */
+    public Edge getParentEdge() {
+        return m_graph.getSpanningTree().getParentEdge(this);
+    }
+    
+    /**
+     * @@see prefuse.data.Node#getChildCount()
+     */
+    public int getChildCount() {
+        return m_graph.getSpanningTree().getChildCount(m_row);
+    }
+
+    /**
+     * @@see prefuse.data.Node#getChildIndex(prefuse.data.Node)
+     */
+    public int getChildIndex(Node child) {
+        return m_graph.getSpanningTree().getChildIndex(this, child);
+    }
+    
+    /**
+     * @@see prefuse.data.Node#getChild(int)
+     */
+    public Node getChild(int idx) {
+        return m_graph.getSpanningTree().getChild(this, idx);
+    }
+    
+    /**
+     * @@see prefuse.data.Node#getFirstChild()
+     */
+    public Node getFirstChild() {
+        return m_graph.getSpanningTree().getFirstChild(this);
+    }
+    
+    /**
+     * @@see prefuse.data.Node#getLastChild()
+     */
+    public Node getLastChild() {
+        return m_graph.getSpanningTree().getLastChild(this);
+    }
+    
+    /**
+     * @@see prefuse.data.Node#getPreviousSibling()
+     */
+    public Node getPreviousSibling() {
+        return m_graph.getSpanningTree().getPreviousSibling(this);
+    }
+    
+    /**
+     * @@see prefuse.data.Node#getNextSibling()
+     */
+    public Node getNextSibling() {
+        return m_graph.getSpanningTree().getNextSibling(this);
+    }
+    
+    /**
+     * @@see prefuse.data.Node#children()
+     */
+    public Iterator children() {
+        return m_graph.getSpanningTree().children(this);
+    }
+
+    /**
+     * @@see prefuse.data.Node#childEdges()
+     */
+    public Iterator childEdges() {
+        return m_graph.getSpanningTree().childEdges(this);
+    }
+
+    /**
+     * @@see prefuse.data.Node#getDepth()
+     */
+    public int getDepth() {
+        return m_graph.getSpanningTree().getDepth(m_row);
+    }
+    
+} // end of class TableNodeItem
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d3 1
+a3 1
+import java.util.List;
+d5 1
+d7 1
+d14 1
+a14 1
+ *
+d17 1
+a17 1
+public class TableNodeItem extends TableVisualItem<TableNodeItem> implements NodeItem<TableNodeItem,TableEdgeItem> {
+d19 1
+a19 1
+    protected Graph<?,TableNodeItem,TableEdgeItem> m_graph;
+d31 1
+a31 2
+    @@Override
+	public void init(Table table, Graph graph, int row) {
+d36 1
+a36 1
+
+d38 1
+a38 1
+     *
+d40 1
+a40 1
+    public Graph<?,TableNodeItem,TableEdgeItem> getGraph() {
+d43 1
+a43 1
+
+d47 1
+a47 1
+
+d72 1
+a72 1
+    public List<TableEdgeItem> inEdges() {
+d79 1
+a79 1
+    public List<TableEdgeItem> outEdges() {
+d82 1
+a82 1
+
+d86 1
+a86 1
+    public List<TableEdgeItem> edges() {
+d89 1
+a89 1
+
+d93 1
+a93 1
+    public List<TableNodeItem> inNeighbors() {
+d96 1
+a96 1
+
+d100 1
+a100 1
+    public List<TableNodeItem> outNeighbors() {
+d103 1
+a103 1
+
+d107 1
+a107 1
+    public List<TableNodeItem> neighbors() {
+d112 1
+a112 1
+
+d116 1
+a116 1
+    public TableNodeItem getParent() {
+d123 1
+a123 1
+    public TableEdgeItem getParentEdge() {
+d126 7
+d135 28
+d165 1
+a165 1
+    public TableNodeItem getPreviousSibling() {
+d168 1
+a168 1
+
+d172 1
+a172 1
+    public TableNodeItem getNextSibling() {
+d175 1
+a175 1
+
+d179 1
+a179 1
+    public List<TableNodeItem> children() {
+d186 1
+a186 1
+    public List<TableEdgeItem> childEdges() {
+d194 1
+a194 1
+        return m_graph.getSpanningTree().getDepth(this);
+d196 1
+a196 1
+
+@
+
+
+1.1
+log
+@file TableNodeItem.java was initially added on branch beta.
+@
+text
+@d1 197
+@
+
+
+1.1.2.1
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a0 151
+package prefuse.visual.tuple;
+
+import java.util.Iterator;
+
+import prefuse.data.Graph;
+import prefuse.data.Table;
+import prefuse.data.tuple.Edge;
+import prefuse.data.tuple.Node;
+import prefuse.visual.NodeItem;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class TableNodeItem extends TableVisualItem implements NodeItem {
+
+    protected Graph m_graph;
+    
+    public TableNodeItem(Graph graph, Table table, int row) {
+        super(table, row);
+        m_graph = graph;
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Node#getGraph()
+     */
+    public Graph getGraph() {
+        return m_graph;
+    }
+    
+    // ------------------------------------------------------------------------
+    // If only we had multiple inheritance or categories....
+    // Instead we must re-implement the entire Node interface.
+    
+    /**
+     * @@see prefuse.data.tuple.Node#getInDegree()
+     */
+    public int getInDegree() {
+        return m_graph.getInDegree(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Node#getOutDegree()
+     */
+    public int getOutDegree() {
+        return m_graph.getOutDegree(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Node#getDegree()
+     */
+    public int getDegree() {
+        return m_graph.getDegree(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Node#inEdges()
+     */
+    public Iterator inEdges() {
+        return m_graph.inEdges(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Node#outEdges()
+     */
+    public Iterator outEdges() {
+        return m_graph.outEdges(this);
+    }
+    
+    /**
+     * @@see prefuse.data.tuple.Node#edges()
+     */
+    public Iterator edges() {
+        return m_graph.edges(this);
+    }
+    
+    /**
+     * @@see prefuse.data.tuple.Node#neighbors()
+     */
+    public Iterator neighbors() {
+        return m_graph.neighbors(this);
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.data.tuple.TreeNode#getParent()
+     */
+    public Node getParent() {
+        return m_graph.getSpanningTree().getParent(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.TreeNode#getParentEdge()
+     */
+    public Edge getParentEdge() {
+        return m_graph.getSpanningTree().getParentEdge(this);
+    }
+    
+    /**
+     * @@see prefuse.data.tuple.TreeNode#getChildCount()
+     */
+    public int getChildCount() {
+        return m_graph.getSpanningTree().getChildCount(m_row);
+    }
+
+    public int getChildIndex(Node child) {
+    	return m_graph.getSpanningTree().getChildIndex(this, child);
+    }
+    
+    public Node getChild(int idx) {
+        return m_graph.getSpanningTree().getChild(this, idx);
+    }
+    
+    public Node getFirstChild() {
+        return m_graph.getSpanningTree().getFirstChild(this);
+    }
+    
+    public Node getLastChild() {
+        return m_graph.getSpanningTree().getLastChild(this);
+    }
+    
+    public Node getPreviousSibling() {
+        return m_graph.getSpanningTree().getPreviousSibling(this);
+    }
+    
+    public Node getNextSibling() {
+        return m_graph.getSpanningTree().getNextSibling(this);
+    }
+    
+    /**
+     * @@see prefuse.data.tuple.TreeNode#children()
+     */
+    public Iterator children() {
+        return m_graph.getSpanningTree().children(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.TreeNode#childEdges()
+     */
+    public Iterator childEdges() {
+        return m_graph.getSpanningTree().childEdges(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.TreeNode#getDepth()
+     */
+    public int getDepth() {
+        return m_graph.getSpanningTree().getDepth(m_row);
+    }
+    
+} // end of class TableNodeItem
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d107 1
+a107 1
+        return m_graph.getSpanningTree().getChildIndex(this, child);
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@a11 3
+ * NodeItem implementation that used data values from a backing
+ * VisualTable of nodes.
+ * 
+a17 9
+    /**
+     * Create a new TableNodeItem for the given graph, table, and row.
+     * This method is used by the appropriate TupleManager instance, and
+     * should not be called directly by client code, unless by a
+     * client-supplied custom TupleManager.
+     * @@param the backing VisualGraph
+     * @@param table the backing VisualTable
+     * @@param row the table row index
+     */
+a76 14
+     * @@see prefuse.data.tuple.Node#inNeighbors()
+     */
+    public Iterator inNeighbors() {
+        return m_graph.inNeighbors(this);
+    }
+    
+    /**
+     * @@see prefuse.data.tuple.Node#outNeighbors()
+     */
+    public Iterator outNeighbors() {
+        return m_graph.outNeighbors(this);
+    }
+    
+    /**
+d86 1
+a86 1
+     * @@see prefuse.data.tuple.Node#getParent()
+d93 1
+a93 1
+     * @@see prefuse.data.tuple.Node#getParentEdge()
+d100 1
+a100 1
+     * @@see prefuse.data.tuple.Node#getChildCount()
+a105 3
+    /**
+     * @@see prefuse.data.tuple.Node#getChildIndex(prefuse.data.tuple.Node)
+     */
+a109 3
+    /**
+     * @@see prefuse.data.tuple.Node#getChild(int)
+     */
+a113 3
+    /**
+     * @@see prefuse.data.tuple.Node#getFirstChild()
+     */
+a117 3
+    /**
+     * @@see prefuse.data.tuple.Node#getLastChild()
+     */
+a121 3
+    /**
+     * @@see prefuse.data.tuple.Node#getPreviousSibling()
+     */
+a125 3
+    /**
+     * @@see prefuse.data.tuple.Node#getNextSibling()
+     */
+d131 1
+a131 1
+     * @@see prefuse.data.tuple.Node#children()
+d138 1
+a138 1
+     * @@see prefuse.data.tuple.Node#childEdges()
+d145 1
+a145 1
+     * @@see prefuse.data.tuple.Node#getDepth()
+@
+
+
+1.1.2.4
+log
+@Javadoc'd.
+@
+text
+@d26 1
+a26 1
+     * @@param graph the backing VisualGraph
+@
+
+
+1.1.2.5
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d15 1
+a15 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d20 1
+a20 1
+
+d22 1
+a22 1
+     * Initialize a new TableNodeItem for the given graph, table, and row.
+d26 1
+d28 1
+a28 3
+     * @@param graph the backing VisualGraph
+     * @@param row the row in the node table to which this Node instance
+     *  corresponds.
+d30 2
+a31 2
+    protected void init(Table table, Graph graph, int row) {
+        m_table = table;
+a32 1
+        m_row = m_table.isValidRow(row) ? row : -1;
+d34 1
+a34 1
+    
+@
+
+
+1.1.2.6
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a4 1
+import prefuse.data.Edge;
+a5 1
+import prefuse.data.Node;
+d7 2
+d38 1
+a38 1
+     * @@see prefuse.data.Node#getGraph()
+d49 1
+a49 1
+     * @@see prefuse.data.Node#getInDegree()
+d56 1
+a56 1
+     * @@see prefuse.data.Node#getOutDegree()
+d63 1
+a63 1
+     * @@see prefuse.data.Node#getDegree()
+d70 1
+a70 1
+     * @@see prefuse.data.Node#inEdges()
+d77 1
+a77 1
+     * @@see prefuse.data.Node#outEdges()
+d84 1
+a84 1
+     * @@see prefuse.data.Node#edges()
+d91 1
+a91 1
+     * @@see prefuse.data.Node#inNeighbors()
+d98 1
+a98 1
+     * @@see prefuse.data.Node#outNeighbors()
+d105 1
+a105 1
+     * @@see prefuse.data.Node#neighbors()
+d114 1
+a114 1
+     * @@see prefuse.data.Node#getParent()
+d121 1
+a121 1
+     * @@see prefuse.data.Node#getParentEdge()
+d128 1
+a128 1
+     * @@see prefuse.data.Node#getChildCount()
+d135 1
+a135 1
+     * @@see prefuse.data.Node#getChildIndex(prefuse.data.Node)
+d142 1
+a142 1
+     * @@see prefuse.data.Node#getChild(int)
+d149 1
+a149 1
+     * @@see prefuse.data.Node#getFirstChild()
+d156 1
+a156 1
+     * @@see prefuse.data.Node#getLastChild()
+d163 1
+a163 1
+     * @@see prefuse.data.Node#getPreviousSibling()
+d170 1
+a170 1
+     * @@see prefuse.data.Node#getNextSibling()
+d177 1
+a177 1
+     * @@see prefuse.data.Node#children()
+d184 1
+a184 1
+     * @@see prefuse.data.Node#childEdges()
+d191 1
+a191 1
+     * @@see prefuse.data.Node#getDepth()
+@
+
+

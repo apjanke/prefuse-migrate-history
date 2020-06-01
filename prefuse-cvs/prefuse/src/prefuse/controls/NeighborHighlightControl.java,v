@@ -1,0 +1,545 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.32;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.32;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.01.19.22.44;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.40;	author jogiles;	state Exp;
+branches;
+next	2.0.4.2;
+
+2.0.4.2
+date	2008.04.15.05.03.23;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.controls;
+
+import java.awt.event.MouseEvent;
+import java.util.Iterator;
+
+import prefuse.visual.EdgeItem;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * <p>
+ * A ControlListener that sets the highlighted status (using the
+ * {@@link prefuse.visual.VisualItem#setHighlighted(boolean)
+ * VisualItem.setHighlighted} method) for nodes neighboring the node 
+ * currently under the mouse pointer. The highlight flag might then be used
+ * by a color function to change node appearance as desired.
+ * </p>
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class NeighborHighlightControl extends ControlAdapter {
+
+    private String activity = null;
+    private boolean highlightWithInvisibleEdge = false;
+    
+    /**
+     * Creates a new highlight control.
+     */
+    public NeighborHighlightControl() {
+        this(null);
+    }
+    
+    /**
+     * Creates a new highlight control that runs the given activity
+     * whenever the neighbor highlight changes.
+     * @@param activity the update Activity to run
+     */
+    public NeighborHighlightControl(String activity) {
+        this.activity = activity;
+    }
+    
+    /**
+     * @@see prefuse.controls.Control#itemEntered(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemEntered(VisualItem item, MouseEvent e) {
+        if ( item instanceof NodeItem )
+            setNeighborHighlight((NodeItem)item, true);
+    }
+    
+    /**
+     * @@see prefuse.controls.Control#itemExited(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemExited(VisualItem item, MouseEvent e) {
+        if ( item instanceof NodeItem )
+            setNeighborHighlight((NodeItem)item, false);
+    }
+    
+    /**
+     * Set the highlighted state of the neighbors of a node.
+     * @@param n the node under consideration
+     * @@param state the highlighting state to apply to neighbors
+     */
+    protected void setNeighborHighlight(NodeItem n, boolean state) {
+        Iterator iter = n.edges();
+        while ( iter.hasNext() ) {
+            EdgeItem eitem = (EdgeItem)iter.next();
+            NodeItem nitem = eitem.getAdjacentItem(n);
+            if (eitem.isVisible() || highlightWithInvisibleEdge) {
+                eitem.setHighlighted(state);
+                nitem.setHighlighted(state);
+            }
+        }
+        if ( activity != null )
+            n.getVisualization().run(activity);
+    }
+    
+    /**
+     * Indicates if neighbor nodes with edges currently not visible still
+     * get highlighted.
+     * @@return true if neighbors with invisible edges still get highlighted,
+     * false otherwise.
+     */
+    public boolean isHighlightWithInvisibleEdge() {
+        return highlightWithInvisibleEdge;
+    }
+   
+    /**
+     * Determines if neighbor nodes with edges currently not visible still
+     * get highlighted.
+     * @@param highlightWithInvisibleEdge assign true if neighbors with invisible
+     * edges should still get highlighted, false otherwise.
+     */
+    public void setHighlightWithInvisibleEdge(boolean highlightWithInvisibleEdge) {
+        this.highlightWithInvisibleEdge = highlightWithInvisibleEdge;
+    }
+    
+} // end of class NeighborHighlightControl
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d4 1
+d15 1
+a15 1
+ * VisualItem.setHighlighted} method) for nodes neighboring the node
+d26 1
+a26 1
+
+d33 1
+a33 1
+
+d42 1
+a42 1
+
+d46 3
+a48 5
+    @@Override
+	public void itemEntered(VisualItem<?> item, MouseEvent e) {
+        if ( item instanceof NodeItem ) {
+			this.<NodeItem,EdgeItem>setNeighborHighlight((NodeItem<?,?>)item, true);
+		}
+d50 1
+a50 1
+
+d54 3
+a56 5
+    @@Override
+	public void itemExited(VisualItem<?> item, MouseEvent e) {
+        if ( item instanceof NodeItem ) {
+			this.<NodeItem,EdgeItem>setNeighborHighlight((NodeItem<?,?>) item, false);
+		}
+d58 1
+a58 1
+
+d64 5
+a68 3
+    protected <N extends NodeItem<N,E>, E extends EdgeItem<N,E>> void setNeighborHighlight(N n, boolean state) {
+        for ( EdgeItem<N,?> eitem : n.edges()) {
+            N nitem = eitem.getAdjacentNode(n);
+d74 2
+a75 3
+        if ( activity != null ) {
+			n.getVisualization().run(activity);
+		}
+d77 1
+a77 1
+
+d87 1
+a87 1
+
+d97 1
+a97 1
+
+@
+
+
+2.0.4.2
+log
+@exposed activity via interface
+@
+text
+@d9 1
+d14 3
+a16 3
+ * VisualItem.setHighlighted} method) for nodes neighboring the node currently
+ * under the mouse pointer. The highlight flag might then be used by a color
+ * function to change node appearance as desired.
+d23 2
+a24 2
+	private String activity = null;
+	private boolean highlightWithInvisibleEdge = false;
+d26 20
+a45 23
+	/**
+	 * Creates a new highlight control.
+	 */
+	public NeighborHighlightControl() {
+		this(null);
+	}
+
+	/**
+	 * Creates a new highlight control that runs the given activity whenever the
+	 * neighbor highlight changes.
+	 *
+	 * @@param activity
+	 *            the update Activity to run
+	 */
+	public NeighborHighlightControl(String activity) {
+		this.activity = activity;
+	}
+
+	/**
+	 * @@see prefuse.controls.Control#itemEntered(prefuse.visual.VisualItem,
+	 *      java.awt.event.MouseEvent)
+	 */
+	@@Override
+d47 2
+a48 3
+		if (item instanceof NodeItem) {
+			this.<NodeItem, EdgeItem> setNeighborHighlight(
+					(NodeItem<?, ?>) item, true);
+d50 1
+a50 1
+	}
+d52 4
+a55 5
+	/**
+	 * @@see prefuse.controls.Control#itemExited(prefuse.visual.VisualItem,
+	 *      java.awt.event.MouseEvent)
+	 */
+	@@Override
+d57 2
+a58 3
+		if (item instanceof NodeItem) {
+			this.<NodeItem, EdgeItem> setNeighborHighlight(
+					(NodeItem<?, ?>) item, false);
+d60 1
+a60 1
+	}
+d62 14
+a75 18
+	/**
+	 * Set the highlighted state of the neighbors of a node.
+	 *
+	 * @@param n
+	 *            the node under consideration
+	 * @@param state
+	 *            the highlighting state to apply to neighbors
+	 */
+	protected <N extends NodeItem<N, E>, E extends EdgeItem<N, E>> void setNeighborHighlight(
+			N n, boolean state) {
+		for (EdgeItem<N, ?> eitem : n.edges()) {
+			N nitem = eitem.getAdjacentNode(n);
+			if (eitem.isVisible() || highlightWithInvisibleEdge) {
+				eitem.setHighlighted(state);
+				nitem.setHighlighted(state);
+			}
+		}
+		if (activity != null) {
+d78 1
+a78 1
+	}
+d80 19
+a98 38
+	/**
+	 * Indicates if neighbor nodes with edges currently not visible still get
+	 * highlighted.
+	 *
+	 * @@return true if neighbors with invisible edges still get highlighted,
+	 *         false otherwise.
+	 */
+	public boolean isHighlightWithInvisibleEdge() {
+		return highlightWithInvisibleEdge;
+	}
+
+	/**
+	 * Determines if neighbor nodes with edges currently not visible still get
+	 * highlighted.
+	 *
+	 * @@param highlightWithInvisibleEdge
+	 *            assign true if neighbors with invisible edges should still get
+	 *            highlighted, false otherwise.
+	 */
+	public void setHighlightWithInvisibleEdge(boolean highlightWithInvisibleEdge) {
+		this.highlightWithInvisibleEdge = highlightWithInvisibleEdge;
+	}
+
+	/**
+	 *
+	 * @@return the activity that is run when the neighbor highlight changes
+	 */
+	public String getActivity() {
+		return activity;
+	}
+
+	/**
+	 * Sets the activity that is run when the neighbor highlight changes
+	 * @@param activity
+	 */
+	public void setActivity(String activity) {
+		this.activity = activity;
+	}
+@
+
+
+1.1
+log
+@file NeighborHighlightControl.java was initially added on branch beta.
+@
+text
+@d1 98
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 88
+package prefuse.controls;
+
+import java.awt.event.MouseEvent;
+import java.util.Iterator;
+
+import prefuse.visual.EdgeItem;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * <p>
+ * A ControlListener that sets the highlighted status (using the
+ * {@@link prefuse.a_old.VisualItem#setHighlighted(boolean)
+ * VisualItem.setHighlighted} method) for nodes neighboring the node 
+ * currently under the mouse pointer. The highlight flag can then be used
+ * by a color function to change node appearance as desired.
+ * </p>
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class NeighborHighlightControl extends ControlAdapter {
+
+    private String activity = null;
+    private boolean highlightWithInvisibleEdge = false;
+    
+    /**
+     * Creates a new highlight control.
+     */
+    public NeighborHighlightControl() {
+        this(null);
+    } //
+    
+    /**
+     * Creates a new highlight control that runs the given activity
+     * whenever the neighbor highlight changes.
+     * @@param update the update Activity to run
+     */
+    public NeighborHighlightControl(String activity) {
+        this.activity = activity;
+    } //
+    
+    public void itemEntered(VisualItem item, MouseEvent e) {
+        if ( item instanceof NodeItem )
+            setNeighborHighlight((NodeItem)item, true);
+    } //
+    
+    public void itemExited(VisualItem item, MouseEvent e) {
+        if ( item instanceof NodeItem )
+            setNeighborHighlight((NodeItem)item, false);
+    } //
+    
+    public void setNeighborHighlight(NodeItem n, boolean state) {
+        Iterator iter = n.getEdges();
+        while ( iter.hasNext() ) {
+            EdgeItem eitem = (EdgeItem)iter.next();
+            NodeItem nitem = eitem.getAdjacentItem(n);
+            if (eitem.isVisible() || highlightWithInvisibleEdge) {
+                eitem.setHighlighted(state);
+                nitem.setHighlighted(state);
+            }
+        }
+        if ( activity != null )
+            n.getVisualization().run(activity);
+    } //
+    
+    /**
+     * Indicates if neighbor nodes with edges currently not visible still
+     * get highlighted.
+     * @@return true if neighbors with invisible edges still get highlighted,
+     * false otherwise.
+     */
+    public boolean isHighlightWithInvisibleEdge() {
+        return highlightWithInvisibleEdge;
+    } //
+   
+    /**
+     * Determines if neighbor nodes with edges currently not visible still
+     * get highlighted.
+     * @@param highlightWithInvisibleEdge assign true if neighbors with invisible
+     * edges should still get highlighted, false otherwise.
+     */
+    public void setHighlightWithInvisibleEdge(boolean highlightWithInvisibleEdge) {
+        this.highlightWithInvisibleEdge = highlightWithInvisibleEdge;
+    } //
+    
+} // end of class NeighborHighlightControl
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d55 1
+a55 1
+        Iterator iter = n.edges();
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@d14 1
+a14 1
+ * {@@link prefuse.visual.VisualItem#setHighlighted(boolean)
+d16 1
+a16 1
+ * currently under the mouse pointer. The highlight flag might then be used
+d20 2
+a21 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d33 1
+a33 1
+    }
+d42 1
+a42 1
+    }
+a43 3
+    /**
+     * @@see prefuse.controls.Control#itemEntered(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+d47 1
+a47 1
+    }
+a48 3
+    /**
+     * @@see prefuse.controls.Control#itemExited(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+d52 1
+a52 1
+    }
+d54 1
+a54 6
+    /**
+     * Set the highlighted state of the neighbors of a node.
+     * @@param n the node under consideration
+     * @@param state the highlighting state to apply to neighbors
+     */
+    protected void setNeighborHighlight(NodeItem n, boolean state) {
+d66 1
+a66 1
+    }
+d76 1
+a76 1
+    }
+d86 1
+a86 1
+    }
+@
+
+
+1.1.2.4
+log
+@Javadoc'd.
+@
+text
+@d37 1
+a37 1
+     * @@param activity the update Activity to run
+@
+
+

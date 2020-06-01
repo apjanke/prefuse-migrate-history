@@ -1,0 +1,2646 @@
+head	2.4;
+access;
+symbols
+	java_1_5:2.4.0.4
+	Root_java_1_5:2.4
+	beta:2.4.0.2
+	beta-20080113:2.4
+	beta-20071021:2.4
+	beta-20060220:2.1
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2007.10.21.21.36.05;	author jheer;	state Exp;
+branches
+	2.4.4.1;
+next	2.3;
+
+2.3
+date	2006.03.15.04.41.52;	author jheer;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.02.27.03.59.10;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.17.18.08.28;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.24.02.31.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.24.18.46.25;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	1.1.2.7;
+
+1.1.2.7
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.4.4.1
+date	2008.01.23.23.55.41;	author jogiles;	state Exp;
+branches;
+next	2.4.4.2;
+
+2.4.4.2
+date	2008.02.24.00.22.30;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Added root node checks to TreeNodeIterator to avoid iteration errors
+Updated IOLib to support relative file paths (Bug #1775875 from anonymous)
+Updated JRangeSlider to support drags from arrow buttons (Bug #1747778 from colincombe)
+Updated ExpressionParser to avoid long parse bug (Bug #1741759)
+Updated TupleManager to expand tuple list in face of valid rows from CascadedTable instances (Bug #1741106)
+Added checks for min==max condition in NumberRangeModel (Bug #1731911)
+Added patch to Activity and ActivityManager to avoid deadlock on Activity.cancel() (Bug #1708926 fix from joperry)
+Fixed javadoc example for DefaultRendererFactory (Bug #1674371 from cab938)
+Fixed ENDPOLYGON field in VisualItem (Bug #1554408 from dimerman)
+Fixed FisheyeMenu demo to avoid deadlock (Bug #1672798)
+Updated Tree.getDepth to return -1 if node is valid (in the node table) but not in tree (fix from joperry)
+Added Display.reset method to release used memory from an idle, unused Display instance
+Added Graph.removeAllGraphListeners() method
+Added Table.removeAllTableListeners() method
+Added isAsynchronous / setAsynchronous methods to ImageFactory
+Updated Visualization.invalidate to invalidate just the group specified (it incorrectly was invalidating all groups)
+Updated ActivityManager._schedule to call notifyAll when an already scheduled item is re-scheduled
+@
+text
+@package prefuse.visual;
+
+import java.awt.BasicStroke;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.Visualization;
+import prefuse.data.Schema;
+import prefuse.data.Tuple;
+import prefuse.data.tuple.TupleSet;
+import prefuse.render.Renderer;
+import prefuse.util.PrefuseLib;
+
+/**
+ * <p>Base interface for representing a visual item, a data object with a
+ * visual interactive form. VisualItems are Tuple instances, and so
+ * can support any number of data fields in a backing data table. VisualItems
+ * also support data fields specific to visualization, such as a location,
+ * bounding box, colors, size, and font. The VisualItem interface provides
+ * convenience methods for accessing these common visual properties, but
+ * the underlying mechanism is the same as any Tuple -- data stored in
+ * a tabular format. Just as all Tuple instances are backed by a data Table,
+ * each VisualItem is backed by a VisualTable. Additionally, each VisualItem
+ * is associated with one and only one {@@link prefuse.Visualization}.</p>
+ * 
+ * <p>VisualItems are only responsible for storing their visual data
+ * properties. The final visual appearance of an item is determined by
+ * a {@@link prefuse.render.Renderer}, which contains instructions for drawing
+ * the item. The Renderer to use for a given item is decided by the
+ * {@@link prefuse.render.RendererFactory} associated with the item's
+ * backing Visualization.</p>
+ * 
+ * <p>Finally, actually setting the visual properties of VisualItems is
+ * commonly done by the many {@@link prefuse.action.Action} modules available
+ * for processing visual data. This includes spatial layout as well as
+ * color, size, and font assignment.</p> 
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface VisualItem extends Tuple {
+
+    /**
+     * Get the backing Visualization of which this VisualItem is a part.
+     * @@return the backing Visualization
+     */
+    public Visualization getVisualization();
+    
+    /**
+     * Get the primary data group of which this VisualItem is a member.
+     * Returns the name of the group of this item's backing VisualTable.
+     * @@return the item's primary group
+     */
+    public String getGroup();
+    
+    /**
+     * Indicates if this item is a member of a given group. This includes both
+     * the item's primary group (that of it's backing VisualTable) and any
+     * number of additional focus groups associated with the Visualization.
+     * @@param group the group to check for membership.
+     * @@return true if this item is in the group, false otherwise.
+     */
+    public boolean isInGroup(String group);
+    
+    /**
+     * Returns the original backing data set from which this VisualItem is
+     * derived. This could be a Table, Graph, or Tree instance. This method
+     * returns null if this VisualItem is not derived from backing data.
+     * @@return the backing data set from which this VisualItem is derived,
+     * or null if none.
+     */
+    public TupleSet getSourceData();
+
+    /**
+     * Returns the original backing data tuple from which this VisualItem is
+     * derived. This could be a Tuple, Node, or Edge instance. This method
+     * returns null if this VisualItem is not derived from backing data.
+     * @@return the backing data tuple from which this VisualItem is derived,
+     * or null if none.
+     */
+    public Tuple getSourceTuple();
+    
+    
+    // ------------------------------------------------------------------------
+    // VisualItem Methods
+    
+    /**
+     * Render this item to the given graphics context. This is typically done
+     * by requesting the appropriate Renderer from the backing Visualization's
+     * RendererFactory, and then using the Renderer to draw this item.
+     * @@param g the graphics context to render into.
+     */
+    public void render(Graphics2D g);
+    
+    /**
+     * Get the Renderer instance for drawing this VisualItem. The Renderer is
+     * retrieved by requesting it from the backing Visualization's
+     * RendererFactory.
+     * @@return the Renderer for this VisualItem
+     */
+    public Renderer getRenderer();
+    
+    /**
+     * Validate the bounds of this VisualItem. When a data value for a
+     * VisualItem is updated, it's bounds are invalidated, as the data change
+     * may have changed to appearance of the item. Revalidating the bounds
+     * causes the bounds of the item to be recomputed and made current.
+     * @@return the validated boundig box of this item
+     */
+    public Rectangle2D validateBounds();
+    
+    // -- Boolean Flags -------------------------------------------------------
+      
+    /**
+     * Indicates if this VisualItem is currently validated. If not,
+     * validateBounds() must be run to update the bounds to a current value.
+     * @@return true if validated, false otherwise
+     * @@see #VALIDATED
+     */
+    public boolean isValidated();
+    
+    /**
+     * Set this item's validated flag. This is for internal use by prefuse and,
+     * in general, should not be called by application code.
+     * @@param value the value of the validated flag to set.
+     * @@see #VALIDATED
+     */
+    public void setValidated(boolean value);
+    
+    /**
+     * Indicates if this VisualItem is currently set to be visible. Items with
+     * the visible flag set false will not be drawn by a display. Invisible
+     * items are also by necessity not interactive, regardless of the value of
+     * the interactive flag.
+     * @@return true if visible, false if invisible
+     * @@see #VISIBLE
+     */
+    public boolean isVisible();
+    
+    /**
+     * Set this item's visibility.
+     * @@param value true to make the item visible, false otherwise.
+     * @@see #VISIBLE
+     */
+    public void setVisible(boolean value);
+    
+    /**
+     * Indicates if the start visible flag is set to true. This is the
+     * visibility value consulted for the staring value of the visibility
+     * field at the beginning of an animated transition.
+     * @@return true if this item starts out visible, false otherwise.
+     * @@see #STARTVISIBLE
+     */
+    public boolean isStartVisible();
+    
+    /**
+     * Set the start visible flag.
+     * @@param value true to set the start visible flag, false otherwise
+     * @@see #STARTVISIBLE
+     */
+    public void setStartVisible(boolean value);
+
+    /**
+     * Indictes if the end visible flag is set to true. This is the
+     * visibility value consulted for the ending value of the visibility
+     * field at the end of an animated transition.
+     * @@return true if this items ends visible, false otherwise.
+     * @@see #ENDVISIBLE
+     */
+    public boolean isEndVisible();
+    
+    /**
+     * Set the end visible flag.
+     * @@param value true to set the end visible flag, false otherwise
+     * @@see #ENDVISIBLE
+     */
+    public void setEndVisible(boolean value);
+    
+    /**
+     * Indicates if this item is interactive, meaning it can potentially
+     * respond to mouse and keyboard input events.
+     * @@return true if the item is interactive, false otherwise
+     * @@see #INTERACTIVE
+     */
+    public boolean isInteractive();
+
+    /**
+     * Set the interactive status of this VisualItem.
+     * @@param value true for interactive, false for non-interactive
+     * @@see #INTERACTIVE
+     */
+    public void setInteractive(boolean value);
+    
+    /**
+     * Indicates this item is expanded. Only used for items that are
+     * part of a graph structure. 
+     * @@return true if expanded, false otherwise
+     * @@see #EXPANDED
+     */
+    public boolean isExpanded();
+
+    /**
+     * Set the expanded flag.
+     * @@param value true to set as expanded, false as collapsed.
+     * @@see #EXPANDED
+     */
+    public void setExpanded(boolean value);
+    
+    /**
+     * Indicates if the item is fixed, and so will not have its position
+     * changed by any layout or distortion actions.
+     * @@return true if the item has a fixed position, false otherwise
+     * @@see #FIXED
+     */
+    public boolean isFixed();
+
+    /**
+     * Sets if the item is fixed in its position.
+     * @@param value true to fix the item, false otherwise
+     * @@see #FIXED
+     */
+    public void setFixed(boolean value);
+    
+    /**
+     * Indicates if the item is highlighted.
+     * @@return true for highlighted, false for not highlighted
+     * @@see #HIGHLIGHT
+     */
+    public boolean isHighlighted();
+    
+    /**
+     * Set the highlighted status of this item. How higlighting values are
+     * interpreted by the system depends on the various processing actions
+     * set up for an application (e.g., how a
+     * {@@link prefuse.action.assignment.ColorAction} might assign colors
+     * based on the flag).
+     * @@param value true to highlight the item, false for no highlighting.
+     * @@see #HIGHLIGHT
+     */
+    public void setHighlighted(boolean value);
+
+    /**
+     * Indicates if the item currently has the mouse pointer over it.
+     * @@return true if the mouse pointer is over this item, false otherwise
+     * @@see #HOVER
+     */
+    public boolean isHover();
+    
+    /**
+     * Set the hover flag. This is set automatically by the prefuse framework,
+     * so should not need to be set explicitly by application code.
+     * @@param value true to set the hover flag, false otherwise
+     * @@see #HOVER
+     */
+    public void setHover(boolean value);
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current x-coordinate of this item.
+     * @@return the current x-coordinate
+     * @@see #X
+     */
+    public double getX();
+
+    /**
+     * Set the current x-coordinate of this item.
+     * @@param x the new current x-coordinate
+     * @@see #X
+     */
+    public void setX(double x);
+    
+    /**
+     * Get the current y-coordinate of this item.
+     * @@return the current y-coordinate
+     * @@see #Y
+     */
+    public double getY();
+    
+    /**
+     * Set the current y-coordinate of this item.
+     * @@param y the new current y-coordinate
+     * @@see #Y
+     */
+    public void setY(double y);
+    
+    /**
+     * Get the starting x-coordinate of this item.
+     * @@return the starting x-coordinate
+     * @@see #STARTX
+     */
+    public double getStartX();
+    
+    /**
+     * Set the starting x-coordinate of this item.
+     * @@param x the new starting x-coordinate
+     * @@see #STARTX
+     */
+    public void setStartX(double x);
+    
+    /**
+     * Get the starting y-coordinate of this item.
+     * @@return the starting y-coordinate
+     * @@see #STARTY
+     */
+    public double getStartY();
+    
+    /**
+     * Set the starting y-coordinate of this item.
+     * @@param y the new starting y-coordinate
+     * @@see #STARTY
+     */
+    public void setStartY(double y);
+    
+    /**
+     * Get the ending x-coordinate of this item.
+     * @@return the ending x-coordinate
+     * @@see #ENDX
+     */
+    public double getEndX();
+    
+    /**
+     * Set the ending x-coordinate of this item.
+     * @@param x the new ending x-coordinate
+     * @@see #ENDX
+     */
+    public void setEndX(double x);
+    
+    /**
+     * Get the ending y-coordinate of this item.
+     * @@return the ending y-coordinate
+     * @@see #ENDY
+     */
+    public double getEndY();
+    
+    /**
+     * Set the ending y-coordinate of this item.
+     * @@param y the new ending y-coordinate
+     * @@see #ENDY
+     */
+    public void setEndY(double y);
+
+    /**
+     * Get the bounding box for this VisualItem. If necessary, the bounds
+     * will be validated before returning the bounding box.
+     * @@return the item's bounding box
+     * @@see #BOUNDS
+     */
+    public Rectangle2D getBounds();
+    
+    /**
+     * Set the bounding box for this item. This method is used by Renderer
+     * modules when the bounds are validated, or set by processing Actions
+     * used in conjunction with Renderers that do not perform bounds
+     * management.
+     * @@param x the minimum x-coordinate
+     * @@param y the minimum y-coorindate
+     * @@param w the width of this item
+     * @@param h the height of this item
+     * @@see #BOUNDS
+     */
+    public void setBounds(double x, double y, double w, double h);
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current stroke color of this item. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the current stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #STROKECOLOR
+     */
+    public int getStrokeColor();
+    
+    /**
+     * Set the current stroke color of this item. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the current stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #STROKECOLOR
+     */
+    public void setStrokeColor(int color);
+    
+    /**
+     * Get the starting stroke color of this item. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the starting stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #STARTSTROKECOLOR
+     */
+    public int getStartStrokeColor();
+    
+    /**
+     * Set the starting stroke color of this item. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the starting stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #STARTSTROKECOLOR
+     */
+    public void setStartStrokeColor(int color);
+    
+    /**
+     * Get the ending stroke color of this item. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the ending stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #ENDSTROKECOLOR
+     */
+    public int getEndStrokeColor();
+    
+    /**
+     * Set the ending stroke color of this item. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the ending stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #ENDSTROKECOLOR
+     */
+    public void setEndStrokeColor(int color);
+    
+    /**
+     * Get the current fill color of this item. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the current fill color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #FILLCOLOR
+     */
+    public int getFillColor();
+    
+    /**
+     * Set the current fill color of this item. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the current fill color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #FILLCOLOR
+     */
+    public void setFillColor(int color);
+    
+    /**
+     * Get the starting fill color of this item. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the starting fill color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #STARTFILLCOLOR
+     */
+    public int getStartFillColor();
+
+    /**
+     * Set the starting fill color of this item. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the starting fill color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #STARTFILLCOLOR
+     */
+    public void setStartFillColor(int color);
+    
+    /**
+     * Get the ending fill color of this item. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the ending fill color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #ENDFILLCOLOR
+     */
+    public int getEndFillColor();
+    
+    /**
+     * Set the ending fill color of this item. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the ending fill color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #ENDFILLCOLOR
+     */
+    public void setEndFillColor(int color);
+    
+    /**
+     * Get the current text color of this item. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the current text color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #TEXTCOLOR
+     */
+    public int getTextColor();
+    
+    /**
+     * Set the current text color of this item. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the current text color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #TEXTCOLOR
+     */
+    public void setTextColor(int color);
+    
+    /**
+     * Get the starting text color of this item. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the starting text color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #STARTTEXTCOLOR
+     */
+    public int getStartTextColor();
+    
+    /**
+     * Set the starting text color of this item. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the starting text color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #STARTTEXTCOLOR
+     */
+    public void setStartTextColor(int color);
+    
+    /**
+     * Get the ending text color of this item. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the ending text color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #ENDTEXTCOLOR
+     */
+    public int getEndTextColor();
+    
+    /**
+     * Set the ending text color of this item. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the ending text color, represented as an integer
+     * @@see prefuse.util.ColorLib
+     * @@see #ENDTEXTCOLOR
+     */
+    public void setEndTextColor(int color);
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current size value of the item. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@return the current size value
+     * @@see #SIZE
+     */
+    public double getSize();
+    
+    /**
+     * Set the current size value of the item. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param size the current size value
+     * @@see #SIZE
+     */
+    public void setSize(double size);
+    
+    /**
+     * Get the starting size value of the item. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@return the starting size value
+     * @@see #STARTSIZE
+     */
+    public double getStartSize();
+    
+    /**
+     * Set the starting size value of the item. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param size the starting size value
+     * @@see #STARTSIZE
+     */
+    public void setStartSize(double size);
+    
+    /**
+     * Get the ending size value of the item. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@return the ending size value
+     * @@see #ENDSIZE
+     */
+    public double getEndSize();
+    
+    /**
+     * Set the ending size value of the item. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param size the ending size value
+     * @@see #ENDSIZE
+     */
+    public void setEndSize(double size);
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current shape value of the item. One of the SHAPE constants
+     * included in the {@@link prefuse.Constants} class. This value only has an
+     * effect if a Renderer that supports different shapes is used
+     * (e.g., {@@link prefuse.render.ShapeRenderer}.
+     * @@return the current shape value
+     * @@see #SHAPE
+     */
+    public int getShape();
+    
+    /**
+     * Set the current shape value of the item. One of the SHAPE constants
+     * included in the {@@link prefuse.Constants} class. This value only has an
+     * effect if a Renderer that supports different shapes is used
+     * (e.g., {@@link prefuse.render.ShapeRenderer}.
+     * @@param shape the shape value to use
+     * @@see #SHAPE
+     */
+    public void setShape(int shape);
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current stroke used to draw lines and shape outlines.
+     * @@return the stroke used to draw lines and shape outlines
+     */
+    public BasicStroke getStroke();
+    
+    /**
+     * Set the current stroke used to draw lines and shape outlines.
+     * @@param stroke the stroke to use to draw lines and shape outlines
+     */
+    public void setStroke(BasicStroke stroke);
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current font for the item. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@return the current font value
+     * @@see #FONT
+     */
+    public Font getFont();
+
+    /**
+     * Set the current font for the item. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param font the current font value
+     * @@see #FONT
+     */
+    public void setFont(Font font);
+    
+    /**
+     * Get the starting font for the item. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@return the starting font value
+     * @@see #STARTFONT
+     */
+    public Font getStartFont();
+
+    /**
+     * Set the starting font for the item. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param font the starting font value
+     * @@see #STARTFONT
+     */
+    public void setStartFont(Font font);
+    
+    /**
+     * Get the ending font for the item. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@return the ending font value
+     * @@see #ENDFONT
+     */
+    public Font getEndFont();
+    
+    /**
+     * Set the ending font for the item. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param font the ending font value
+     * @@see #ENDFONT
+     */
+    public void setEndFont(Font font);
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the degree-of-interest (DOI) value. The degree-of-interet is an
+     * optional value that can be used to sort items by importance, control
+     * item visibility, or influence particular visual encodings. A common
+     * example is to use the DOI to store the graph distance of a node from
+     * the nearest selected focus node.
+     * @@return the DOI value of this item
+     * @@see #DOI
+     */
+    public double getDOI();
+    
+    /**
+     * Set the degree-of-interest (DOI) value. The degree-of-interet is an
+     * optional value that can be used to sort items by importance, control
+     * item visibility, or influence particular visual encodings. A common
+     * example is to use the DOI to store the graph distance of a node from
+     * the nearest selected focus node.
+     * @@param doi the DOI value of this item
+     * @@see #DOI
+     */
+    public void setDOI(double doi);
+    
+    // ------------------------------------------------------------------------
+    // VisualItem Base Schema
+        
+    /** The validated data field */
+    public static final String VALIDATED
+        = PrefuseLib.FIELD_PREFIX+"validated";
+    /** The visible data field */
+    public static final String VISIBLE
+        = PrefuseLib.FIELD_PREFIX+"visible";
+    /** The start visible data field */
+    public static final String STARTVISIBLE
+        = PrefuseLib.getStartField(VISIBLE);
+    /** The end visible data field */
+    public static final String ENDVISIBLE
+        = PrefuseLib.getEndField(VISIBLE);
+    /** The interactive data field */
+    public static final String INTERACTIVE
+        = PrefuseLib.FIELD_PREFIX+"interactive";
+    /** The expanded data field */
+    public static final String EXPANDED
+        = PrefuseLib.FIELD_PREFIX+"expanded";
+    /** The fixed data field */
+    public static final String FIXED
+        = PrefuseLib.FIELD_PREFIX+"fixed";
+    /** The highlight data field */
+    public static final String HIGHLIGHT
+        = PrefuseLib.FIELD_PREFIX+"highlight";
+    /** The hover data field */
+    public static final String HOVER
+        = PrefuseLib.FIELD_PREFIX+"hover";
+    /** The x data field */
+    public static final String X
+        = PrefuseLib.FIELD_PREFIX+"x";
+    /** The y data field */
+    public static final String Y
+        = PrefuseLib.FIELD_PREFIX+"y";
+    /** The start x data field */
+    public static final String STARTX
+        = PrefuseLib.getStartField(X);
+    /** The start y data field */
+    public static final String STARTY
+        = PrefuseLib.getStartField(Y);
+    /** The end x data field */
+    public static final String ENDX
+        = PrefuseLib.getEndField(X);
+    /** The end y data field */
+    public static final String ENDY
+        = PrefuseLib.getEndField(Y);
+    /** The bounds data field */
+    public static final String BOUNDS
+        = PrefuseLib.FIELD_PREFIX+"bounds";
+    /** The stroke color data field */
+    public static final String STROKECOLOR
+        = PrefuseLib.FIELD_PREFIX+"strokeColor";
+    /** The start stroke color data field */
+    public static final String STARTSTROKECOLOR
+        = PrefuseLib.getStartField(STROKECOLOR);
+    /** The end stroke color data field */
+    public static final String ENDSTROKECOLOR
+        = PrefuseLib.getEndField(STROKECOLOR);
+    /** The fill color data field */
+    public static final String FILLCOLOR
+        = PrefuseLib.FIELD_PREFIX+"fillColor";
+    /** The start fill color data field */
+    public static final String STARTFILLCOLOR
+        = PrefuseLib.getStartField(FILLCOLOR);
+    /** The end fill color data field */
+    public static final String ENDFILLCOLOR
+        = PrefuseLib.getEndField(FILLCOLOR);
+    /** The text color data field */
+    public static final String TEXTCOLOR
+        = PrefuseLib.FIELD_PREFIX+"textColor";
+    /** The start text color data field */
+    public static final String STARTTEXTCOLOR
+        = PrefuseLib.getStartField(TEXTCOLOR);
+    /** The end text color data field */
+    public static final String ENDTEXTCOLOR
+        = PrefuseLib.getEndField(TEXTCOLOR);
+    /** The size data field */
+    public static final String SIZE
+        = PrefuseLib.FIELD_PREFIX+"size";
+    /** The start size data field */
+    public static final String STARTSIZE
+        = PrefuseLib.getStartField(SIZE);
+    /** The end size data field */
+    public static final String ENDSIZE
+        = PrefuseLib.getEndField(SIZE);
+    /** The shape data field */
+    public static final String SHAPE
+        = PrefuseLib.FIELD_PREFIX+"shape";
+    /** The stroke data field */
+    public static final String STROKE
+        = PrefuseLib.FIELD_PREFIX+"stroke";
+    /** The font data field */
+    public static final String FONT
+        = PrefuseLib.FIELD_PREFIX+"font";
+    /** The start font data field */
+    public static final String STARTFONT
+        = PrefuseLib.getStartField(FONT);
+    /** The end font data field */
+    public static final String ENDFONT
+        = PrefuseLib.getEndField(FONT);
+    /** The doi data field */
+    public static final String DOI
+        = PrefuseLib.FIELD_PREFIX+"doi";
+    
+    /** A permanent, locked copy of the base VisualItem schema */
+    public static final Schema SCHEMA
+        = PrefuseLib.getVisualItemSchema().lockSchema();
+    
+    /** 
+     *  The column index of the validated data field. This should be safe to do
+     *  because a unique (non-inherited) validated field is required of all
+     *  VisualItems, and should always be the first field included.
+     */
+    public static final int IDX_VALIDATED 
+        = SCHEMA.getColumnIndex(VALIDATED);
+    
+    // ------------------------------------------------------------------------
+    // VisualItem Extended Schema
+    
+    /** The label data field.
+     * Not included in the VisualItem schema by default */
+    public static final String LABEL
+        = PrefuseLib.FIELD_PREFIX+"label";
+    /** The value data field.
+     * Not included in the VisualItem schema by default */
+    public static final String VALUE
+        = PrefuseLib.FIELD_PREFIX+"value";
+    
+    /** The polygon data field.
+     * Not included in the VisualItem schema by default */
+    public static final String POLYGON
+        = PrefuseLib.FIELD_PREFIX+"polygon";
+    /** The start polygon data field.
+     * Not included in the VisualItem schema by default */
+    public static final String STARTPOLYGON
+        = PrefuseLib.getStartField(POLYGON);
+    /** The end polygon data field.
+     * Not included in the VisualItem schema by default */
+    public static final String ENDPOLYGON
+        = PrefuseLib.getEndField(POLYGON);
+    
+    /** The x2 data field.
+     * Not included in the VisualItem schema by default */
+    public static final String X2
+        = PrefuseLib.FIELD_PREFIX+"x2";
+    /** The y2 data field.
+     * Not included in the VisualItem schema by default */
+    public static final String Y2
+        = PrefuseLib.FIELD_PREFIX+"y2";
+    /** The start x2 data field.
+     * Not included in the VisualItem schema by default */
+    public static final String STARTX2
+        = PrefuseLib.getStartField(X2);
+    /** The start y2 data field.
+     * Not included in the VisualItem schema by default */
+    public static final String STARTY2
+        = PrefuseLib.getStartField(Y2);
+    /** The end x2 data field.
+     * Not included in the VisualItem schema by default */
+    public static final String ENDX2
+        = PrefuseLib.getEndField(X2);
+    /** The end y2 data field.
+     * Not included in the VisualItem schema by default */
+    public static final String ENDY2
+        = PrefuseLib.getEndField(Y2);
+    
+} // end of interface VisualItem
+@
+
+
+2.4.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a7 1
+import prefuse.ShapeType;
+d26 1
+a26 1
+ *
+d33 1
+a33 1
+ *
+d37 2
+a38 2
+ * color, size, and font assignment.</p>
+ *
+d41 1
+a41 1
+public interface VisualItem <T extends VisualItem<?>> extends Tuple<T> {
+d43 1
+a43 3
+    /** The absolute minimum degree-of-interest (DOI) value */
+	public static final double MINIMUM_DOI = -Double.MAX_VALUE;
+	/**
+d48 1
+a48 1
+
+d55 1
+a55 1
+
+d64 1
+a64 1
+
+d72 1
+a72 1
+    public TupleSet<?> getSourceData();
+d81 3
+a83 3
+    public Tuple<?> getSourceTuple();
+
+
+d86 1
+a86 1
+
+d94 1
+a94 1
+
+d102 1
+a102 1
+
+d111 1
+a111 1
+
+d113 1
+a113 1
+
+d121 1
+a121 1
+
+d129 1
+a129 1
+
+d139 1
+a139 1
+
+d146 1
+a146 1
+
+d155 1
+a155 1
+
+d171 1
+a171 1
+
+d178 1
+a178 1
+
+d193 1
+a193 1
+
+d196 1
+a196 1
+     * part of a graph structure.
+d208 1
+a208 1
+
+d223 1
+a223 1
+
+d230 1
+a230 1
+
+d248 1
+a248 1
+
+d256 1
+a256 1
+
+d258 1
+a258 1
+
+d272 1
+a272 1
+
+d279 1
+a279 1
+
+d286 1
+a286 1
+
+d293 1
+a293 1
+
+d300 1
+a300 1
+
+d307 1
+a307 1
+
+d314 1
+a314 1
+
+d321 1
+a321 1
+
+d328 1
+a328 1
+
+d335 1
+a335 1
+
+d350 1
+a350 1
+
+d357 1
+a357 1
+     * @@param y the minimum y-coordindate
+d363 1
+a363 1
+
+d365 1
+a365 1
+
+d377 1
+a377 1
+
+d389 1
+a389 1
+
+d401 1
+a401 1
+
+d413 1
+a413 1
+
+d425 1
+a425 1
+
+d437 1
+a437 1
+
+d449 1
+a449 1
+
+d461 1
+a461 1
+
+d485 1
+a485 1
+
+d497 1
+a497 1
+
+d509 1
+a509 1
+
+d521 1
+a521 1
+
+d533 1
+a533 1
+
+d545 1
+a545 1
+
+d557 1
+a557 1
+
+d569 1
+a569 1
+
+d581 1
+a581 1
+
+d583 1
+a583 1
+
+d592 1
+a592 1
+
+d601 1
+a601 1
+
+d610 1
+a610 1
+
+d619 1
+a619 1
+
+d628 1
+a628 1
+
+d637 1
+a637 1
+
+d639 1
+a639 1
+
+d641 2
+a642 1
+     * Get the current shape value of the item. This value only has an
+d646 1
+d648 2
+a649 2
+    public ShapeType getShape();
+
+d651 2
+a652 1
+     * Set the current shape value of the item. This value only has an
+d658 2
+a659 2
+    public void setShape(ShapeType shape);
+
+d661 1
+a661 1
+
+d667 1
+a667 1
+
+d673 1
+a673 1
+
+d675 1
+a675 1
+
+d691 1
+a691 1
+
+d707 1
+a707 1
+
+d715 1
+a715 1
+
+d723 1
+a723 1
+
+d725 1
+a725 1
+
+d736 1
+a736 1
+
+d747 1
+a747 1
+
+d750 1
+a750 1
+
+d853 1
+a853 1
+
+d857 2
+a858 2
+
+    /**
+d863 1
+a863 1
+    public static final int IDX_VALIDATED
+d865 1
+a865 1
+
+d868 1
+a868 1
+
+d877 1
+a877 1
+
+d889 2
+a890 1
+    = PrefuseLib.getEndField(POLYGON);
+d915 1
+a915 1
+
+@
+
+
+2.4.4.2
+log
+@Refactored the shape work to allow for custom ShapeBuilders. VisualItem.SHAPE has been replaced with VisualItem.SHAPEBUILDER.
+@
+text
+@d8 1
+a8 1
+import prefuse.ShapeBuilder;
+d649 1
+a649 1
+    public ShapeBuilder getShapeBuilder();
+d652 1
+a652 1
+     * Set the current shape builder for the item. This value only has an
+d655 2
+a656 2
+     * @@param shapeBuilder the shape builder to use
+     * @@see #SHAPEBUILDER
+d658 1
+a658 1
+    public void setShapeBuilder(ShapeBuilder shapeBuilder);
+d836 2
+a837 2
+    public static final String SHAPEBUILDER
+        = PrefuseLib.FIELD_PREFIX+"shapeBuilder";
+@
+
+
+2.3
+log
+@Fixed javadoc error for fill color methods
+@
+text
+@d889 1
+a889 1
+        = PrefuseLib.getStartField(POLYGON);
+@
+
+
+2.2
+log
+@Fixes and test cases for Visualizations and VisualItems.
+Revisited reset, removeGroup, getSourceData, and getSourceTuple.
+Added getSourceXXX methods to VisualItem
+Added new test cases
+@
+text
+@d451 1
+a451 1
+     * Set the current fill color of this item. The stroke color is used to
+d475 1
+a475 1
+     * Set the starting fill color of this item. The stroke color is used to
+d499 1
+a499 1
+     * Set the ending fill color of this item. The stroke color is used to
+@
+
+
+2.1
+log
+@Added "stroke" visual property for configuring line drawing.
+EdgeRenderer now draws directed edges (more) correctly, and allow parameterization of the arrow head size.
+@
+text
+@d11 1
+d65 19
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d3 1
+d640 15
+a654 1
+    // ------------------------------------------------------------------------    
+d818 3
+@
+
+
+1.1
+log
+@file VisualItem.java was initially added on branch beta.
+@
+text
+@d1 878
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 347
+package prefuse.visual;
+
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.Visualization;
+import prefuse.data.Schema;
+import prefuse.data.tuple.Tuple;
+import prefuse.render.Renderer;
+import prefuse.util.PrefuseLib;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public interface VisualItem extends Tuple {
+
+    public Visualization getVisualization();
+    
+    public String getGroup();
+    
+    public boolean isInGroup(String group);
+    
+    // ------------------------------------------------------------------------
+    // VisualItem Methods
+    
+    public void render(Graphics2D g);
+    
+    public Renderer getRenderer();
+    
+    public Rectangle2D validateBounds();
+    
+    // -- Boolean Flags -------------------------------------------------------
+       
+    public boolean isValidated();
+    
+    public void setValidated(boolean value);
+    
+    public boolean isVisible();
+    
+    public void setVisible(boolean value);
+    
+    public boolean isStartVisible();
+    
+    public void setStartVisible(boolean value);
+
+    public boolean isEndVisible();
+    
+    public void setEndVisible(boolean value);
+    
+    public boolean isInteractive();
+
+    public void setInteractive(boolean value);
+    
+    public boolean isExpanded();
+
+    public void setExpanded(boolean value);
+    
+    public boolean isFixed();
+
+    public void setFixed(boolean value);
+    
+    public boolean isHighlighted();
+    
+    public void setHighlighted(boolean value);
+
+    public boolean isHover();
+    
+    public void setHover(boolean value);
+    
+    // ------------------------------------------------------------------------
+    
+    public double getX();
+    
+    public void setX(double x);
+    
+    public double getY();
+    
+    public void setY(double y);
+    
+    public double getStartX();
+    
+    public void setStartX(double x);
+    
+    public double getStartY();
+    
+    public void setStartY(double y);
+    
+    public double getEndX();
+    
+    public void setEndX(double x);
+    
+    public double getEndY();
+    
+    public void setEndY(double y);
+
+    public Rectangle2D getBounds();
+    
+    public void setBounds(double x, double y, double w, double h);
+    
+    // ------------------------------------------------------------------------
+    
+    public int getStrokeColor();
+    
+    public void setStrokeColor(int color);
+    
+    public int getStartStrokeColor();
+    
+    public void setStartStrokeColor(int color);
+    
+    public int getEndStrokeColor();
+    
+    public void setEndStrokeColor(int color);
+    
+    public int getFillColor();
+    
+    public void setFillColor(int color);
+    
+    public int getStartFillColor();
+
+    public void setStartFillColor(int color);
+    
+    public int getEndFillColor();
+    
+    public void setEndFillColor(int color);
+    
+    public int getTextColor();
+    
+    public void setTextColor(int color);
+    
+    public int getStartTextColor();
+    
+    public void setStartTextColor(int color);
+    
+    public int getEndTextColor();
+    
+    public void setEndTextColor(int color);
+    
+    // ------------------------------------------------------------------------
+    
+    public double getSize();
+    
+    public double getSize2D();
+    
+    public void setSize(double size);
+    
+    public double getStartSize();
+    
+    public void setStartSize(double size);
+    
+    public double getEndSize();
+    
+    public void setEndSize(double size);
+    
+    // ------------------------------------------------------------------------    
+    
+    public Font getFont();
+
+    public void setFont(Font font);
+    
+    public Font getStartFont();
+
+    public void setStartFont(Font font);
+    
+    public Font getEndFont();
+    
+    public void setEndFont(Font font);
+    
+    // ------------------------------------------------------------------------
+    
+    public double getDOI();
+    
+    public void setDOI(double doi);
+    
+    // ------------------------------------------------------------------------
+    // VisualItem Base Schema
+        
+    public static final String GROUP
+        = PrefuseLib.FIELD_PREFIX+"group";
+    public static final String VALIDATED
+        = PrefuseLib.FIELD_PREFIX+"validated";
+    
+    public static final String VISIBLE
+        = PrefuseLib.FIELD_PREFIX+"visible";
+    public static final String STARTVISIBLE
+        = PrefuseLib.getStartField(VISIBLE);
+    public static final String ENDVISIBLE
+        = PrefuseLib.getEndField(VISIBLE);
+    public static final String INTERACTIVE
+        = PrefuseLib.FIELD_PREFIX+"interactive";
+    public static final String EXPANDED
+        = PrefuseLib.FIELD_PREFIX+"expanded";
+    public static final String FIXED
+        = PrefuseLib.FIELD_PREFIX+"fixed";
+    public static final String HIGHLIGHT
+        = PrefuseLib.FIELD_PREFIX+"highlight";
+    public static final String HOVER
+        = PrefuseLib.FIELD_PREFIX+"hover";
+    public static final String X
+        = PrefuseLib.FIELD_PREFIX+"x";
+    public static final String Y
+        = PrefuseLib.FIELD_PREFIX+"y";
+    public static final String STARTX
+        = PrefuseLib.getStartField(X);
+    public static final String STARTY
+        = PrefuseLib.getStartField(Y);
+    public static final String ENDX
+        = PrefuseLib.getEndField(X);
+    public static final String ENDY
+        = PrefuseLib.getEndField(Y);
+    public static final String BOUNDS
+        = PrefuseLib.FIELD_PREFIX+"bounds";
+    public static final String STROKECOLOR
+        = PrefuseLib.FIELD_PREFIX+"strokeColor";
+    public static final String STARTSTROKECOLOR
+        = PrefuseLib.getStartField(STROKECOLOR);
+    public static final String ENDSTROKECOLOR
+        = PrefuseLib.getEndField(STROKECOLOR);
+    public static final String FILLCOLOR
+        = PrefuseLib.FIELD_PREFIX+"fillColor";
+    public static final String STARTFILLCOLOR
+        = PrefuseLib.getStartField(FILLCOLOR);
+    public static final String ENDFILLCOLOR
+        = PrefuseLib.getEndField(FILLCOLOR);
+    public static final String TEXTCOLOR
+        = PrefuseLib.FIELD_PREFIX+"textColor";
+    public static final String STARTTEXTCOLOR
+        = PrefuseLib.getStartField(TEXTCOLOR);
+    public static final String ENDTEXTCOLOR
+        = PrefuseLib.getEndField(TEXTCOLOR);
+    public static final String SIZE
+        = PrefuseLib.FIELD_PREFIX+"size";
+    public static final String STARTSIZE
+        = PrefuseLib.getStartField(SIZE);
+    public static final String ENDSIZE
+        = PrefuseLib.getEndField(SIZE);
+    public static final String FONT
+        = PrefuseLib.FIELD_PREFIX+"font";
+    public static final String STARTFONT
+        = PrefuseLib.getStartField(FONT);
+    public static final String ENDFONT
+        = PrefuseLib.getEndField(FONT);
+    public static final String DOI
+        = PrefuseLib.FIELD_PREFIX+"doi";
+    
+    /** A permanent, locked copy of the base VisualItem schema */
+    public static final Schema SCHEMA
+        = PrefuseLib.getVisualItemSchema().lockSchema();
+        
+    public static final int IDX_GROUP
+        = SCHEMA.getColumnIndex(GROUP);
+    public static final int IDX_VALIDATED 
+        = SCHEMA.getColumnIndex(VALIDATED);
+    public static final int IDX_VISIBLE 
+        = SCHEMA.getColumnIndex(VISIBLE);
+    public static final int IDX_STARTVISIBLE 
+        = SCHEMA.getColumnIndex(STARTVISIBLE);
+    public static final int IDX_ENDVISIBLE 
+        = SCHEMA.getColumnIndex(ENDVISIBLE);
+    public static final int IDX_INTERACTIVE 
+        = SCHEMA.getColumnIndex(INTERACTIVE);
+    public static final int IDX_EXPANDED 
+        = SCHEMA.getColumnIndex(EXPANDED);
+    public static final int IDX_FIXED
+        = SCHEMA.getColumnIndex(FIXED);
+    public static final int IDX_HIGHLIGHT 
+        = SCHEMA.getColumnIndex(HIGHLIGHT);
+    public static final int IDX_HOVER 
+        = SCHEMA.getColumnIndex(HOVER);
+    public static final int IDX_X 
+        = SCHEMA.getColumnIndex(X);
+    public static final int IDX_Y 
+        = SCHEMA.getColumnIndex(Y);
+    public static final int IDX_STARTX 
+        = SCHEMA.getColumnIndex(STARTX);
+    public static final int IDX_STARTY 
+        = SCHEMA.getColumnIndex(STARTY);
+    public static final int IDX_ENDX 
+        = SCHEMA.getColumnIndex(ENDX);
+    public static final int IDX_ENDY 
+        = SCHEMA.getColumnIndex(ENDY);
+    public static final int IDX_BOUNDS 
+        = SCHEMA.getColumnIndex(BOUNDS);
+    public static final int IDX_STROKECOLOR 
+        = SCHEMA.getColumnIndex(STROKECOLOR);
+    public static final int IDX_STARTSTROKECOLOR 
+        = SCHEMA.getColumnIndex(STARTSTROKECOLOR);
+    public static final int IDX_ENDSTROKECOLOR 
+        = SCHEMA.getColumnIndex(ENDSTROKECOLOR);
+    public static final int IDX_FILLCOLOR 
+        = SCHEMA.getColumnIndex(FILLCOLOR);
+    public static final int IDX_STARTFILLCOLOR 
+        = SCHEMA.getColumnIndex(STARTFILLCOLOR);
+    public static final int IDX_ENDFILLCOLOR 
+        = SCHEMA.getColumnIndex(ENDFILLCOLOR);
+    public static final int IDX_TEXTCOLOR 
+        = SCHEMA.getColumnIndex(TEXTCOLOR);
+    public static final int IDX_STARTTEXTCOLOR 
+        = SCHEMA.getColumnIndex(STARTTEXTCOLOR);
+    public static final int IDX_ENDTEXTCOLOR 
+        = SCHEMA.getColumnIndex(ENDTEXTCOLOR);
+    public static final int IDX_SIZE 
+        = SCHEMA.getColumnIndex(SIZE);
+    public static final int IDX_STARTSIZE 
+        = SCHEMA.getColumnIndex(STARTSIZE);
+    public static final int IDX_ENDSIZE 
+        = SCHEMA.getColumnIndex(ENDSIZE);
+    public static final int IDX_FONT 
+        = SCHEMA.getColumnIndex(FONT);
+    public static final int IDX_STARTFONT 
+        = SCHEMA.getColumnIndex(STARTFONT);
+    public static final int IDX_ENDFONT 
+        = SCHEMA.getColumnIndex(ENDFONT);
+    public static final int IDX_DOI 
+        = SCHEMA.getColumnIndex(DOI);
+    
+    // ------------------------------------------------------------------------
+    // VisualItem Extended Schema
+    
+    public static final String LABEL
+        = PrefuseLib.FIELD_PREFIX+"label";
+    public static final String SHAPE
+        = PrefuseLib.FIELD_PREFIX+"shape";
+    public static final String VALUE
+        = PrefuseLib.FIELD_PREFIX+"value";
+    
+    public static final String POLYGON
+        = PrefuseLib.FIELD_PREFIX+"shape";
+    public static final String STARTPOLYGON
+        = PrefuseLib.getStartField(POLYGON);
+    public static final String ENDPOLYGON
+        = PrefuseLib.getStartField(POLYGON);
+    
+    public static final String X2
+        = PrefuseLib.FIELD_PREFIX+"x2";
+    public static final String Y2
+        = PrefuseLib.FIELD_PREFIX+"y2";
+    public static final String STARTX2
+        = PrefuseLib.getStartField(X2);
+    public static final String STARTY2
+        = PrefuseLib.getStartField(Y2);
+    public static final String ENDX2
+        = PrefuseLib.getEndField(X2);
+    public static final String ENDY2
+        = PrefuseLib.getEndField(Y2);
+    
+} // end of interface VisualItem
+@
+
+
+1.1.2.2
+log
+@Removed automatic 2D interpretation of size field.
+@
+text
+@d143 2
+@
+
+
+1.1.2.3
+log
+@Javadoc fixes, other clean-up
+@
+text
+@d248 2
+d252 62
+@
+
+
+1.1.2.4
+log
+@Much more javadoc
+@
+text
+@d14 1
+a14 24
+ * <p>Base interface for representing a visual item, a data object with a
+ * visual interactive form. VisualItems are Tuple instances, and so
+ * can support any number of data fields in a backing data table. VisualItems
+ * also support data fields specific to visualization, such as a location,
+ * bounding box, colors, size, and font. The VisualItem interface provides
+ * convenience methods for accessing these common visual properties, but
+ * the underlying mechanism is the same as any Tuple -- data stored in
+ * a tabular format. Just as all Tuple instances are backed by a data Table,
+ * each VisualItem is backed by a VisualTable. Additionally, each VisualItem
+ * is associated with one and only one {@@link prefuse.Visualization}.</p>
+ * 
+ * <p>VisualItems are only responsible for storing their visual data
+ * properties. The final visual appearance of an item is determined by
+ * a {@@link prefuse.render.Renderer}, which contains instructions for drawing
+ * the item. The Renderer to use for a given item is decided by the
+ * {@@link prefuse.render.RendererFactory} associated with the item's
+ * backing Visualization.</p>
+ * 
+ * <p>Finally, actually setting the visual properties of VisualItems is
+ * commonly done by the many {@@link prefuse.action.Action} modules available
+ * for processing visual data. This includes spatial layout as well as
+ * color, size, and font assignment.</p> 
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a17 4
+    /**
+     * Get the backing Visualization of which this VisualItem is a part.
+     * @@return the backing Visualization
+     */
+a19 5
+    /**
+     * Get the primary data group of which this VisualItem is a member.
+     * Returns the name of the group of this item's backing VisualTable.
+     * @@return the item's primary group
+     */
+a21 7
+    /**
+     * Indicates if this item is a member of a given group. This includes both
+     * the item's primary group (that of it's backing VisualTable) and any
+     * number of additional focus groups associated with the Visualization.
+     * @@param group the group to check for membership.
+     * @@return true if this item is in the group, false otherwise.
+     */
+a26 6
+    /**
+     * Render this item to the given graphics context. This is typically done
+     * by requesting the appropriate Renderer from the backing Visualization's
+     * RendererFactory, and then using the Renderer to draw this item.
+     * @@param g the graphics context to render into.
+     */
+a28 6
+    /**
+     * Get the Renderer instance for drawing this VisualItem. The Renderer is
+     * retrieved by requesting it from the backing Visualization's
+     * RendererFactory.
+     * @@return the Renderer for this VisualItem
+     */
+a30 7
+    /**
+     * Validate the bounds of this VisualItem. When a data value for a
+     * VisualItem is updated, it's bounds are invalidated, as the data change
+     * may have changed to appearance of the item. Revalidating the bounds
+     * causes the bounds of the item to be recomputed and made current.
+     * @@return the validated boundig box of this item
+     */
+d34 1
+a34 7
+      
+    /**
+     * Indicates if this VisualItem is currently validated. If not,
+     * validateBounds() must be run to update the bounds to a current value.
+     * @@return true if validated, false otherwise
+     * @@see #VALIDATED
+     */
+a36 6
+    /**
+     * Set this item's validated flag. This is for internal use by prefuse and,
+     * in general, should not be called by application code.
+     * @@param value the value of the validated flag to set.
+     * @@see #VALIDATED
+     */
+a38 8
+    /**
+     * Indicates if this VisualItem is currently set to be visible. Items with
+     * the visible flag set false will not be drawn by a display. Invisible
+     * items are also by necessity not interactive, regardless of the value of
+     * the interactive flag.
+     * @@return true if visible, false if invisible
+     * @@see #VISIBLE
+     */
+a40 5
+    /**
+     * Set this item's visibility.
+     * @@param value true to make the item visible, false otherwise.
+     * @@see #VISIBLE
+     */
+a42 7
+    /**
+     * Indicates if the start visible flag is set to true. This is the
+     * visibility value consulted for the staring value of the visibility
+     * field at the beginning of an animated transition.
+     * @@return true if this item starts out visible, false otherwise.
+     * @@see #STARTVISIBLE
+     */
+a44 5
+    /**
+     * Set the start visible flag.
+     * @@param value true to set the start visible flag, false otherwise
+     * @@see #STARTVISIBLE
+     */
+a46 7
+    /**
+     * Indictes if the end visible flag is set to true. This is the
+     * visibility value consulted for the ending value of the visibility
+     * field at the end of an animated transition.
+     * @@return true if this items ends visible, false otherwise.
+     * @@see #ENDVISIBLE
+     */
+a48 5
+    /**
+     * Set the end visible flag.
+     * @@param value true to set the end visible flag, false otherwise
+     * @@see #ENDVISIBLE
+     */
+a50 6
+    /**
+     * Indicates if this item is interactive, meaning it can potentially
+     * respond to mouse and keyboard input events.
+     * @@return true if the item is interactive, false otherwise
+     * @@see #INTERACTIVE
+     */
+a52 5
+    /**
+     * Set the interactive status of this VisualItem.
+     * @@param value true for interactive, false for non-interactive
+     * @@see #INTERACTIVE
+     */
+a54 6
+    /**
+     * Indicates this item is expanded. Only used for items that are
+     * part of a graph structure. 
+     * @@return true if expanded, false otherwise
+     * @@see #EXPANDED
+     */
+a56 5
+    /**
+     * Set the expanded flag.
+     * @@param value true to set as expanded, false as collapsed.
+     * @@see #EXPANDED
+     */
+a58 6
+    /**
+     * Indicates if the item is fixed, and so will not have its position
+     * changed by any layout or distortion actions.
+     * @@return true if the item has a fixed position, false otherwise
+     * @@see #FIXED
+     */
+a60 5
+    /**
+     * Sets if the item is fixed in its position.
+     * @@param value true to fix the item, false otherwise
+     * @@see #FIXED
+     */
+a62 5
+    /**
+     * Indicates if the item is highlighted.
+     * @@return true for highlighted, false for not highlighted
+     * @@see #HIGHLIGHT
+     */
+a64 9
+    /**
+     * Set the highlighted status of this item. How higlighting values are
+     * interpreted by the system depends on the various processing actions
+     * set up for an application (e.g., how a
+     * {@@link prefuse.action.assignment.ColorFunction} might assign colors
+     * based on the flag).
+     * @@param value true to highlight the item, false for no highlighting.
+     * @@see #HIGHLIGHT
+     */
+a66 5
+    /**
+     * Indicates if the item currently has the mouse pointer over it.
+     * @@return true if the mouse pointer is over this item, false otherwise
+     * @@see #HOVER
+     */
+a68 6
+    /**
+     * Set the hover flag. This is set automatically by the prefuse framework,
+     * so should not need to be set explicitly by application code.
+     * @@param value true to set the hover flag, false otherwise
+     * @@see #HOVER
+     */
+a72 5
+    /**
+     * Get the current x-coordinate of this item.
+     * @@return the current x-coordinate
+     * @@see #X
+     */
+d74 1
+a74 6
+
+    /**
+     * Set the current x-coordinate of this item.
+     * @@param x the new current x-coordinate
+     * @@see #X
+     */
+a76 5
+    /**
+     * Get the current y-coordinate of this item.
+     * @@return the current y-coordinate
+     * @@see #Y
+     */
+a78 5
+    /**
+     * Set the current y-coordinate of this item.
+     * @@param y the new current y-coordinate
+     * @@see #Y
+     */
+a80 5
+    /**
+     * Get the starting x-coordinate of this item.
+     * @@return the starting x-coordinate
+     * @@see #STARTX
+     */
+a82 5
+    /**
+     * Set the starting x-coordinate of this item.
+     * @@param x the new starting x-coordinate
+     * @@see #STARTX
+     */
+a84 5
+    /**
+     * Get the starting y-coordinate of this item.
+     * @@return the starting y-coordinate
+     * @@see #STARTY
+     */
+a86 5
+    /**
+     * Set the starting y-coordinate of this item.
+     * @@param y the new starting y-coordinate
+     * @@see #STARTY
+     */
+a88 5
+    /**
+     * Get the ending x-coordinate of this item.
+     * @@return the ending x-coordinate
+     * @@see #ENDX
+     */
+a90 5
+    /**
+     * Set the ending x-coordinate of this item.
+     * @@param x the new ending x-coordinate
+     * @@see #ENDX
+     */
+a92 5
+    /**
+     * Get the ending y-coordinate of this item.
+     * @@return the ending y-coordinate
+     * @@see #ENDY
+     */
+a94 5
+    /**
+     * Set the ending y-coordinate of this item.
+     * @@param y the new ending y-coordinate
+     * @@see #ENDY
+     */
+a96 6
+    /**
+     * Get the bounding box for this VisualItem. If necessary, the bounds
+     * will be validated before returning the bounding box.
+     * @@return the item's bounding box
+     * @@see #BOUNDS
+     */
+a98 11
+    /**
+     * Set the bounding box for this item. This method is used by Renderer
+     * modules when the bounds are validated, or set by processing Actions
+     * used in conjunction with Renderers that do not perform bounds
+     * management.
+     * @@param x the minimum x-coordinate
+     * @@param y the minimum y-coorindate
+     * @@param w the width of this item
+     * @@param h the height of this item
+     * @@see #BOUNDS
+     */
+a102 10
+    /**
+     * Get the current stroke color of this item. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the current stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #STROKECOLOR
+     */
+a104 10
+    /**
+     * Set the current stroke color of this item. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the current stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #STROKECOLOR
+     */
+a106 10
+    /**
+     * Get the starting stroke color of this item. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the starting stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #STARTSTROKECOLOR
+     */
+a108 10
+    /**
+     * Set the starting stroke color of this item. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the starting stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #STARTSTROKECOLOR
+     */
+a110 10
+    /**
+     * Get the ending stroke color of this item. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the ending stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #ENDSTROKECOLOR
+     */
+a112 10
+    /**
+     * Set the ending stroke color of this item. The stroke color is used to
+     * draw lines and the outlines of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the ending stroke color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #ENDSTROKECOLOR
+     */
+a114 10
+    /**
+     * Get the current fill color of this item. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the current fill color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #FILLCOLOR
+     */
+a116 10
+    /**
+     * Set the current fill color of this item. The stroke color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the current fill color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #FILLCOLOR
+     */
+a118 10
+    /**
+     * Get the starting fill color of this item. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the starting fill color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #STARTFILLCOLOR
+     */
+a120 10
+    /**
+     * Set the starting fill color of this item. The stroke color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the starting fill color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #STARTFILLCOLOR
+     */
+a122 10
+    /**
+     * Get the ending fill color of this item. The fill color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the ending fill color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #ENDFILLCOLOR
+     */
+a124 10
+    /**
+     * Set the ending fill color of this item. The stroke color is used to
+     * fill the interior of shapes. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the ending fill color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #ENDFILLCOLOR
+     */
+a126 10
+    /**
+     * Get the current text color of this item. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the current text color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #TEXTCOLOR
+     */
+a128 10
+    /**
+     * Set the current text color of this item. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the current text color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #TEXTCOLOR
+     */
+a130 10
+    /**
+     * Get the starting text color of this item. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the starting text color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #STARTTEXTCOLOR
+     */
+a132 10
+    /**
+     * Set the starting text color of this item. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the starting text color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #STARTTEXTCOLOR
+     */
+a134 10
+    /**
+     * Get the ending text color of this item. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@return the ending text color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #ENDTEXTCOLOR
+     */
+a136 10
+    /**
+     * Set the ending text color of this item. The text color is used to
+     * draw text strings for the item. Color values as represented as an
+     * integer containing the red, green, blue, and alpha (transparency)
+     * color channels. A color with a zero alpha component is fully
+     * transparent and will not be drawn.
+     * @@param color the ending text color, represented as an integer
+     * @@see prefuse.util.ColorLib.
+     * @@see #ENDTEXTCOLOR
+     */
+a140 7
+    /**
+     * Get the current size value of the item. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@return the current size value
+     * @@see #SIZE
+     */
+a142 7
+    /**
+     * Set the current size value of the item. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param size the current size value
+     * @@see #SIZE
+     */
+a144 7
+    /**
+     * Get the starting size value of the item. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@return the starting size value
+     * @@see #STARTSIZE
+     */
+a146 7
+    /**
+     * Set the starting size value of the item. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param size the starting size value
+     * @@see #STARTSIZE
+     */
+a148 7
+    /**
+     * Get the ending size value of the item. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@return the ending size value
+     * @@see #ENDSIZE
+     */
+a150 7
+    /**
+     * Set the ending size value of the item. Size values are typically used
+     * to scale an item, either in one-dimension (e.g., a bar chart length) or
+     * two-dimensions (e.g., using pixel area to encode a quantitative value).
+     * @@param size the ending size value
+     * @@see #ENDSIZE
+     */
+a154 6
+    /**
+     * Get the current font for the item. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@return the current font value
+     * @@see #FONT
+     */
+a156 6
+    /**
+     * Set the current font for the item. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param font the current font value
+     * @@see #FONT
+     */
+a158 6
+    /**
+     * Get the starting font for the item. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@return the starting font value
+     * @@see #STARTFONT
+     */
+a160 6
+    /**
+     * Set the starting font for the item. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param font the starting font value
+     * @@see #STARTFONT
+     */
+a162 6
+    /**
+     * Get the ending font for the item. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@return the ending font value
+     * @@see #ENDFONT
+     */
+a164 6
+    /**
+     * Set the ending font for the item. The font is used as the default
+     * typeface for drawing text for this item.
+     * @@param font the ending font value
+     * @@see #ENDFONT
+     */
+a168 9
+    /**
+     * Get the degree-of-interest (DOI) value. The degree-of-interet is an
+     * optional value that can be used to sort items by importance, control
+     * item visibility, or influence particular visual encodings. A common
+     * example is to use the DOI to store the graph distance of a node from
+     * the nearest selected focus node.
+     * @@return the DOI value of this item
+     * @@see #DOI
+     */
+a170 9
+    /**
+     * Set the degree-of-interest (DOI) value. The degree-of-interet is an
+     * optional value that can be used to sort items by importance, control
+     * item visibility, or influence particular visual encodings. A common
+     * example is to use the DOI to store the graph distance of a node from
+     * the nearest selected focus node.
+     * @@param doi the DOI value of this item
+     * @@see #DOI
+     */
+d176 2
+a177 1
+    /** The validated data field */
+d180 1
+a180 1
+    /** The visible data field */
+a182 1
+    /** The start visible data field */
+a184 1
+    /** The end visible data field */
+a186 1
+    /** The interactive data field */
+a188 1
+    /** The expanded data field */
+a190 1
+    /** The fixed data field */
+a192 1
+    /** The highlight data field */
+a194 1
+    /** The hover data field */
+a196 1
+    /** The x data field */
+a198 1
+    /** The y data field */
+a200 1
+    /** The start x data field */
+a202 1
+    /** The start y data field */
+a204 1
+    /** The end x data field */
+a206 1
+    /** The end y data field */
+a208 1
+    /** The bounds data field */
+a210 1
+    /** The stroke color data field */
+a212 1
+    /** The start stroke color data field */
+a214 1
+    /** The end stroke color data field */
+a216 1
+    /** The fill color data field */
+a218 1
+    /** The start fill color data field */
+a220 1
+    /** The end fill color data field */
+a222 1
+    /** The text color data field */
+a224 1
+    /** The start text color data field */
+a226 1
+    /** The end text color data field */
+a228 1
+    /** The size data field */
+a230 1
+    /** The start size data field */
+a232 1
+    /** The end size data field */
+a234 1
+    /** The font data field */
+a236 1
+    /** The start font data field */
+a238 1
+    /** The end font data field */
+a240 1
+    /** The doi data field */
+d247 1
+a247 6
+    
+    /** 
+     *  The column index of the validated data field. This should be safe to do
+     *  because a unique (non-inherited) validated field is required of all
+     *  VisualItems, and should always be the first field included.
+     */
+a253 2
+    /** The label data field.
+     * Not included in the VisualItem schema by default */
+a255 2
+    /** The shape data field.
+     * Not included in the VisualItem schema by default */
+a257 2
+    /** The value data field.
+     * Not included in the VisualItem schema by default */
+a260 2
+    /** The polygon data field.
+     * Not included in the VisualItem schema by default */
+d262 1
+a262 3
+        = PrefuseLib.FIELD_PREFIX+"polygon";
+    /** The start polygon data field.
+     * Not included in the VisualItem schema by default */
+a264 2
+    /** The end polygon data field.
+     * Not included in the VisualItem schema by default */
+a267 2
+    /** The x2 data field.
+     * Not included in the VisualItem schema by default */
+a269 2
+    /** The y2 data field.
+     * Not included in the VisualItem schema by default */
+a271 2
+    /** The start x2 data field.
+     * Not included in the VisualItem schema by default */
+a273 2
+    /** The start y2 data field.
+     * Not included in the VisualItem schema by default */
+a275 2
+    /** The end x2 data field.
+     * Not included in the VisualItem schema by default */
+a277 2
+    /** The end y2 data field.
+     * Not included in the VisualItem schema by default */
+@
+
+
+1.1.2.5
+log
+@Javadoc'd.
+@
+text
+@d352 1
+a352 1
+     * @@see prefuse.util.ColorLib
+d364 1
+a364 1
+     * @@see prefuse.util.ColorLib
+d376 1
+a376 1
+     * @@see prefuse.util.ColorLib
+d388 1
+a388 1
+     * @@see prefuse.util.ColorLib
+d400 1
+a400 1
+     * @@see prefuse.util.ColorLib
+d412 1
+a412 1
+     * @@see prefuse.util.ColorLib
+d424 1
+a424 1
+     * @@see prefuse.util.ColorLib
+d436 1
+a436 1
+     * @@see prefuse.util.ColorLib
+d448 1
+a448 1
+     * @@see prefuse.util.ColorLib
+d460 1
+a460 1
+     * @@see prefuse.util.ColorLib
+d472 1
+a472 1
+     * @@see prefuse.util.ColorLib
+d484 1
+a484 1
+     * @@see prefuse.util.ColorLib
+d496 1
+a496 1
+     * @@see prefuse.util.ColorLib
+d508 1
+a508 1
+     * @@see prefuse.util.ColorLib
+d520 1
+a520 1
+     * @@see prefuse.util.ColorLib
+d532 1
+a532 1
+     * @@see prefuse.util.ColorLib
+d544 1
+a544 1
+     * @@see prefuse.util.ColorLib
+d556 1
+a556 1
+     * @@see prefuse.util.ColorLib
+@
+
+
+1.1.2.6
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@d9 1
+a9 1
+import prefuse.data.Tuple;
+d214 1
+a214 1
+     * {@@link prefuse.action.assignment.ColorAction} might assign colors
+a616 22
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the current shape value of the item. One of the SHAPE constants
+     * included in the {@@link prefuse.Constants} class. This value only has an
+     * effect if a Renderer that supports different shapes is used
+     * (e.g., {@@link prefuse.render.ShapeItemRenderer}.
+     * @@return the current shape value
+     * @@see #SHAPE
+     */
+    public int getShape();
+    
+    /**
+     * Set the current shape value of the item. One of the SHAPE constants
+     * included in the {@@link prefuse.Constants} class. This value only has an
+     * effect if a Renderer that supports different shapes is used
+     * (e.g., {@@link prefuse.render.ShapeItemRenderer}.
+     * @@param shape the shape value to use
+     * @@see #SHAPE
+     */
+    public void setShape(int shape);
+    
+a777 3
+    /** The shape data field */
+    public static final String SHAPE
+        = PrefuseLib.FIELD_PREFIX+"shape";
+d810 4
+@
+
+
+1.1.2.7
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d623 1
+a623 1
+     * (e.g., {@@link prefuse.render.ShapeRenderer}.
+d633 1
+a633 1
+     * (e.g., {@@link prefuse.render.ShapeRenderer}.
+@
+
+

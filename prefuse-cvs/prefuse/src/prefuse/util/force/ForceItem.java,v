@@ -1,0 +1,275 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.15;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.force;
+
+/**
+ * Represents a point particle in a force simulation, maintaining values for
+ * mass, forces, velocity, and position.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ForceItem implements Cloneable {
+    
+    /**
+     * Create a new ForceItem.
+     */
+    public ForceItem() {
+        mass = 1.0f;
+        force = new float[] { 0.f, 0.f };
+        velocity = new float[] { 0.f, 0.f };
+        location = new float[] { 0.f, 0.f };
+        plocation = new float[] { 0.f, 0.f };
+        k = new float[4][2];
+        l = new float[4][2];
+    }
+    
+    /**
+     * Clone a ForceItem.
+     * @@see java.lang.Object#clone()
+     */
+    public Object clone() {
+        ForceItem item = new ForceItem();
+        item.mass = this.mass;
+        System.arraycopy(force,0,item.force,0,2);
+        System.arraycopy(velocity,0,item.velocity,0,2);
+        System.arraycopy(location,0,item.location,0,2);
+        System.arraycopy(plocation,0,item.plocation,0,2);
+        for ( int i=0; i<k.length; ++i ) {
+            System.arraycopy(k[i],0,item.k[i],0,2);
+            System.arraycopy(l[i],0,item.l[i],0,2);
+        }
+        return item;
+    }
+    
+    /** The mass value of this ForceItem. */
+    public float   mass;
+    /** The values of the forces acting on this ForceItem. */
+    public float[] force;
+    /** The velocity values of this ForceItem. */
+    public float[] velocity;
+    /** The location values of this ForceItem. */
+    public float[] location;
+    /** The previous location values of this ForceItem. */
+    public float[] plocation;
+    /** Temporary variables for Runge-Kutta integration */
+    public float[][] k;
+    /** Temporary variables for Runge-Kutta integration */
+    public float[][] l;
+    
+    /**
+     * Checks a ForceItem to make sure its values are all valid numbers
+     * (i.e., not NaNs).
+     * @@param item the item to check
+     * @@return true if all the values are valid, false otherwise
+     */
+    public static final boolean isValid(ForceItem item) {
+        return
+          !( Float.isNaN(item.location[0])  || Float.isNaN(item.location[1])  || 
+             Float.isNaN(item.plocation[0]) || Float.isNaN(item.plocation[1]) ||
+             Float.isNaN(item.velocity[0])  || Float.isNaN(item.velocity[1])  ||
+             Float.isNaN(item.force[0])     || Float.isNaN(item.force[1]) );
+    }
+    
+} // end of class ForceItem
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d10 1
+a10 1
+
+d23 1
+a23 1
+
+d28 1
+a28 2
+    @@Override
+	public Object clone() {
+d41 1
+a41 1
+
+d56 1
+a56 1
+
+d65 1
+a65 1
+          !( Float.isNaN(item.location[0])  || Float.isNaN(item.location[1])  ||
+d70 1
+a70 1
+
+@
+
+
+1.1
+log
+@file ForceItem.java was initially added on branch beta.
+@
+text
+@d1 71
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 52
+package prefuse.util.force;
+
+/**
+ * Wrapper class for force simulation variables associated with a
+ * visual item instance.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ForceItem implements Cloneable {
+    
+    public ForceItem() {
+        mass = 1.0f;
+        force = new float[] { 0.f, 0.f };
+        velocity = new float[] { 0.f, 0.f };
+        location = new float[] { 0.f, 0.f };
+        plocation = new float[] { 0.f, 0.f };
+        k = new float[4][2];
+        l = new float[4][2];
+    }
+    
+    public Object clone() {
+        ForceItem item = new ForceItem();
+        item.mass = this.mass;
+        System.arraycopy(force,0,item.force,0,2);
+        System.arraycopy(velocity,0,item.velocity,0,2);
+        System.arraycopy(location,0,item.location,0,2);
+        System.arraycopy(plocation,0,item.plocation,0,2);
+        for ( int i=0; i<k.length; ++i ) {
+            System.arraycopy(k[i],0,item.k[i],0,2);
+            System.arraycopy(l[i],0,item.l[i],0,2);
+        }
+        return item;
+    }
+    
+    public float   mass;
+    public float[] force;
+    public float[] velocity;
+    public float[] location;
+    public float[] plocation; // stores the previous location
+    public float[][] k; // temp variables for Runge-Kutta integration
+    public float[][] l; // temp variables for Runge-Kutta integration
+    
+    public static final boolean isValid(ForceItem item) {
+        return
+          !( Float.isNaN(item.location[0])  || Float.isNaN(item.location[1])  || 
+             Float.isNaN(item.plocation[0]) || Float.isNaN(item.plocation[1]) ||
+             Float.isNaN(item.velocity[0])  || Float.isNaN(item.velocity[1])  ||
+             Float.isNaN(item.force[0])     || Float.isNaN(item.force[1]) );
+    } //
+    
+} // end of class ForceItem
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d4 2
+a5 2
+ * Represents a point particle in a force simulation, maintaining values for
+ * mass, forces, velocity, and position.
+d7 2
+a8 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a11 3
+    /**
+     * Create a new ForceItem.
+     */
+a21 4
+    /**
+     * Clone a ForceItem.
+     * @@see java.lang.Object#clone()
+     */
+a35 1
+    /** The mass value of this ForceItem. */
+a36 1
+    /** The values of the forces acting on this ForceItem. */
+a37 1
+    /** The velocity values of this ForceItem. */
+a38 1
+    /** The location values of this ForceItem. */
+d40 3
+a42 6
+    /** The previous location values of this ForceItem. */
+    public float[] plocation;
+    /** Temporary variables for Runge-Kutta integration */
+    public float[][] k;
+    /** Temporary variables for Runge-Kutta integration */
+    public float[][] l;
+a43 6
+    /**
+     * Checks a ForceItem to make sure its values are all valid numbers
+     * (i.e., not NaNs).
+     * @@param item the item to check
+     * @@return true if all the values are valid, false otherwise
+     */
+d50 1
+a50 1
+    }
+@
+
+

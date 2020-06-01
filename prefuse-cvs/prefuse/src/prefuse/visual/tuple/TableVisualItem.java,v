@@ -1,0 +1,2199 @@
+head	2.4;
+access;
+symbols
+	java_1_5:2.4.0.4
+	Root_java_1_5:2.4
+	beta:2.4.0.2
+	beta-20080113:2.4
+	beta-20071021:2.4
+	beta-20060220:2.3
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2006.02.27.03.59.10;	author jheer;	state Exp;
+branches
+	2.4.4.1;
+next	2.3;
+
+2.3
+date	2006.02.20.09.37.40;	author jheer;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.02.17.18.47.27;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.17.18.08.28;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.49;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.24.02.31.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.08;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.07.00.42.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.4.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state Exp;
+branches;
+next	2.4.4.2;
+
+2.4.4.2
+date	2008.02.24.00.22.31;	author amarsden;	state Exp;
+branches;
+next	2.4.4.3;
+
+2.4.4.3
+date	2008.03.03.06.20.52;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Fixes and test cases for Visualizations and VisualItems.
+Revisited reset, removeGroup, getSourceData, and getSourceTuple.
+Added getSourceXXX methods to VisualItem
+Added new test cases
+@
+text
+@package prefuse.visual.tuple;
+
+import java.awt.BasicStroke;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.Visualization;
+import prefuse.data.Graph;
+import prefuse.data.Table;
+import prefuse.data.Tuple;
+import prefuse.data.tuple.TableTuple;
+import prefuse.data.tuple.TupleSet;
+import prefuse.render.Renderer;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTable;
+
+/**
+ * VisualItem implementation that uses data values from a backing VisualTable.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class TableVisualItem extends TableTuple implements VisualItem {
+
+    /**
+     * Initialize a new TableVisualItem for the given table and row. This
+     * method is used by the appropriate TupleManager instance, and should
+     * not be called directly by client code, unless by a client-supplied
+     * custom TupleManager.
+     * @@param table the data Table
+     * @@param graph ignored by this class
+     * @@param row the table row index
+     */
+    protected void init(Table table, Graph graph, int row) {
+        m_table = table;
+        m_row = m_table.isValidRow(row) ? row : -1;
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getVisualization()
+     */
+    public Visualization getVisualization() {
+        return ((VisualTable)m_table).getVisualization();
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getGroup()
+     */
+    public String getGroup() {
+        return ((VisualTable)m_table).getGroup();
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#isInGroup(java.lang.String)
+     */
+    public boolean isInGroup(String group) {
+        return getVisualization().isInGroup(this, group);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getSourceData()
+     */
+    public TupleSet getSourceData() {
+        VisualTable vt = (VisualTable)m_table;
+        return vt.getVisualization().getSourceData(vt.getGroup());
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getSourceTuple()
+     */
+    public Tuple getSourceTuple() {
+        VisualTable vt = (VisualTable)m_table;
+        return vt.getVisualization().getSourceTuple(this);
+    }
+    
+    /**
+     * @@see java.lang.Object#toString()
+     */
+    public String toString() {
+        StringBuffer sbuf = new StringBuffer();
+        sbuf.append("VisualItem[").append(getGroup());
+        sbuf.append(",").append(m_row).append(',');
+        VisualTable vt = (VisualTable)m_table;
+        int local = vt.getLocalColumnCount();
+        int inherited = vt.getColumnCount()-local;
+        for ( int i=0; i<inherited; ++i ) {
+            if ( i > 0 ) sbuf.append(',');
+            String name = vt.getColumnName(local+i);
+            sbuf.append(name);
+            sbuf.append('=');
+            if ( vt.canGetString(name) )
+                sbuf.append(vt.getString(m_row, name));
+            else
+                sbuf.append(vt.get(m_row, name).toString());
+        }
+        sbuf.append(']');
+        
+        return sbuf.toString();
+    }
+    
+    // ------------------------------------------------------------------------
+    // VisualItem Methods
+    
+    /**
+     * @@see prefuse.visual.VisualItem#render(java.awt.Graphics2D)
+     */
+    public void render(Graphics2D g) {
+        getRenderer().render(g, this);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getRenderer()
+     */
+    public Renderer getRenderer() {
+        return getVisualization().getRenderer(this);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#validateBounds()
+     */
+    public Rectangle2D validateBounds() {
+        if ( isValidated() ) return getBounds();
+        
+        Visualization v = getVisualization();
+                
+        // set the new bounds from the renderer and validate
+        getRenderer().setBounds(this);
+        setValidated(true);
+        
+        // report damage from the new bounds and return
+        Rectangle2D bounds = getBounds();
+        v.damageReport(this, bounds);
+        return bounds;
+    }
+    
+    // -- Boolean Flags -------------------------------------------------------
+       
+    /**
+     * @@see prefuse.visual.VisualItem#isValidated()
+     */
+    public boolean isValidated() {
+        return ((VisualTable)m_table).isValidated(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setValidated(boolean)
+     */
+    public void setValidated(boolean value) {
+        ((VisualTable)m_table).setValidated(m_row, value);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#isVisible()
+     */
+    public boolean isVisible() {
+        return ((VisualTable)m_table).isVisible(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setVisible(boolean)
+     */
+    public void setVisible(boolean value) {
+        ((VisualTable)m_table).setVisible(m_row, value);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#isStartVisible()
+     */
+    public boolean isStartVisible() {
+        return ((VisualTable)m_table).isStartVisible(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setStartVisible(boolean)
+     */
+    public void setStartVisible(boolean value) {
+        ((VisualTable)m_table).setStartVisible(m_row, value);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#isEndVisible()
+     */
+    public boolean isEndVisible() {
+        return ((VisualTable)m_table).isEndVisible(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setEndVisible(boolean)
+     */
+    public void setEndVisible(boolean value) {
+        ((VisualTable)m_table).setEndVisible(m_row, value);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#isInteractive()
+     */
+    public boolean isInteractive() {
+        return ((VisualTable)m_table).isInteractive(m_row);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setInteractive(boolean)
+     */
+    public void setInteractive(boolean value) {
+        ((VisualTable)m_table).setInteractive(m_row, value);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#isExpanded()
+     */
+    public boolean isExpanded() {
+        return ((VisualTable)m_table).isExpanded(m_row);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setExpanded(boolean)
+     */
+    public void setExpanded(boolean value) {
+        ((VisualTable)m_table).setExpanded(m_row, value);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#isFixed()
+     */
+    public boolean isFixed() {
+        return ((VisualTable)m_table).isFixed(m_row);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setFixed(boolean)
+     */
+    public void setFixed(boolean value) {
+        ((VisualTable)m_table).setFixed(m_row, value);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#isHighlighted()
+     */
+    public boolean isHighlighted() {
+        return ((VisualTable)m_table).isHighlighted(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setHighlighted(boolean)
+     */
+    public void setHighlighted(boolean value) {
+        ((VisualTable)m_table).setHighlighted(m_row, value);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#isHover()
+     */
+    public boolean isHover() {
+        return ((VisualTable)m_table).isHover(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setHover(boolean)
+     */
+    public void setHover(boolean value) {
+        ((VisualTable)m_table).setHover(m_row, value);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getX()
+     */
+    public double getX() {
+        return ((VisualTable)m_table).getX(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setX(double)
+     */
+    public void setX(double x) {
+        ((VisualTable)m_table).setX(m_row, x);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getY()
+     */
+    public double getY() {
+        return ((VisualTable)m_table).getY(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setY(double)
+     */
+    public void setY(double y) {
+        ((VisualTable)m_table).setY(m_row, y);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getStartX()
+     */
+    public double getStartX() {
+        return ((VisualTable)m_table).getStartX(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setStartX(double)
+     */
+    public void setStartX(double x) {
+        ((VisualTable)m_table).setStartX(m_row, x);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getStartY()
+     */
+    public double getStartY() {
+        return ((VisualTable)m_table).getStartY(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setStartY(double)
+     */
+    public void setStartY(double y) {
+        ((VisualTable)m_table).setStartY(m_row, y);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getEndX()
+     */
+    public double getEndX() {
+        return ((VisualTable)m_table).getEndX(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setEndX(double)
+     */
+    public void setEndX(double x) {
+        ((VisualTable)m_table).setEndX(m_row, x);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getEndY()
+     */
+    public double getEndY() {
+        return ((VisualTable)m_table).getEndY(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setEndY(double)
+     */
+    public void setEndY(double y) {
+        ((VisualTable)m_table).setEndY(m_row, y);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#getBounds()
+     */
+    public Rectangle2D getBounds() {
+        if ( !isValidated() ) {
+            return validateBounds();
+        }
+        return ((VisualTable)m_table).getBounds(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setBounds(double, double, double, double)
+     */
+    public void setBounds(double x, double y, double w, double h) {
+        ((VisualTable)m_table).setBounds(m_row, x, y, w, h);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getStrokeColor()
+     */
+    public int getStrokeColor() {
+        return ((VisualTable)m_table).getStrokeColor(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setStrokeColor(int)
+     */
+    public void setStrokeColor(int color) {
+        ((VisualTable)m_table).setStrokeColor(m_row, color);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getStartStrokeColor()
+     */
+    public int getStartStrokeColor() {
+        return ((VisualTable)m_table).getStartStrokeColor(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setStartStrokeColor(int)
+     */
+    public void setStartStrokeColor(int color) {
+        ((VisualTable)m_table).setStartStrokeColor(m_row, color);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getEndStrokeColor()
+     */
+    public int getEndStrokeColor() {
+        return ((VisualTable)m_table).getEndStrokeColor(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setEndStrokeColor(int)
+     */
+    public void setEndStrokeColor(int color) {
+        ((VisualTable)m_table).setEndStrokeColor(m_row, color);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getFillColor()
+     */
+    public int getFillColor() {
+        return ((VisualTable)m_table).getFillColor(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setFillColor(int)
+     */
+    public void setFillColor(int color) {
+        ((VisualTable)m_table).setFillColor(m_row, color);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getStartFillColor()
+     */
+    public int getStartFillColor() {
+        return ((VisualTable)m_table).getStartFillColor(m_row);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setStartFillColor(int)
+     */
+    public void setStartFillColor(int color) {
+        ((VisualTable)m_table).setStartFillColor(m_row, color);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getEndFillColor()
+     */
+    public int getEndFillColor() {
+        return ((VisualTable)m_table).getEndFillColor(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setEndFillColor(int)
+     */
+    public void setEndFillColor(int color) {
+        ((VisualTable)m_table).setEndFillColor(m_row, color);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getTextColor()
+     */
+    public int getTextColor() {
+        return ((VisualTable)m_table).getTextColor(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setTextColor(int)
+     */
+    public void setTextColor(int color) {
+        ((VisualTable)m_table).setTextColor(m_row, color);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getStartTextColor()
+     */
+    public int getStartTextColor() {
+        return ((VisualTable)m_table).getStartTextColor(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setStartTextColor(int)
+     */
+    public void setStartTextColor(int color) {
+        ((VisualTable)m_table).setStartTextColor(m_row, color);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getEndTextColor()
+     */
+    public int getEndTextColor() {
+        return ((VisualTable)m_table).getEndTextColor(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setEndTextColor(int)
+     */
+    public void setEndTextColor(int color) {
+        ((VisualTable)m_table).setEndTextColor(m_row, color);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getSize()
+     */
+    public double getSize() {
+        return ((VisualTable)m_table).getSize(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setSize(double)
+     */
+    public void setSize(double size) {
+        ((VisualTable)m_table).setSize(m_row, size);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getStartSize()
+     */
+    public double getStartSize() {
+        return ((VisualTable)m_table).getStartSize(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setStartSize(double)
+     */
+    public void setStartSize(double size) {
+        ((VisualTable)m_table).setStartSize(m_row, size);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getEndSize()
+     */
+    public double getEndSize() {
+        return ((VisualTable)m_table).getEndSize(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setEndSize(double)
+     */
+    public void setEndSize(double size) {
+        ((VisualTable)m_table).setEndSize(m_row, size);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getShape()
+     */
+    public int getShape() {
+        return ((VisualTable)m_table).getShape(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setShape(int)
+     */
+    public void setShape(int shape) {
+        ((VisualTable)m_table).setShape(m_row, shape);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getStroke()
+     */
+    public BasicStroke getStroke() {
+        return ((VisualTable)m_table).getStroke(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setStroke(java.awt.BasicStroke)
+     */
+    public void setStroke(BasicStroke stroke) {
+        ((VisualTable)m_table).setStroke(m_row, stroke);
+    }
+    
+    // ------------------------------------------------------------------------    
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getFont()
+     */
+    public Font getFont() {
+        return ((VisualTable)m_table).getFont(m_row);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setFont(java.awt.Font)
+     */
+    public void setFont(Font font) {
+        ((VisualTable)m_table).setFont(m_row, font);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getStartFont()
+     */
+    public Font getStartFont() {
+        return ((VisualTable)m_table).getStartFont(m_row);
+    }
+
+    /**
+     * @@see prefuse.visual.VisualItem#setStartFont(java.awt.Font)
+     */
+    public void setStartFont(Font font) {
+        ((VisualTable)m_table).setStartFont(m_row, font);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getEndFont()
+     */
+    public Font getEndFont() {
+        return ((VisualTable)m_table).getEndFont(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setEndFont(java.awt.Font)
+     */
+    public void setEndFont(Font font) {
+        ((VisualTable)m_table).setEndFont(m_row, font);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getDOI()
+     */
+    public double getDOI() {
+        return ((VisualTable)m_table).getDOI(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setDOI(double)
+     */
+    public void setDOI(double doi) {
+        ((VisualTable)m_table).setDOI(m_row, doi);
+    }
+    
+} // end of class TableVisualItem
+@
+
+
+2.4.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a7 1
+import prefuse.ShapeType;
+d20 1
+a20 1
+ *
+d23 1
+a23 1
+public class TableVisualItem <T extends TableVisualItem<?>> extends TableTuple<T> implements VisualItem<T> {
+d34 1
+a34 2
+    @@Override
+	public void init(Table table, Graph graph, int row) {
+d38 1
+a38 1
+
+d43 1
+a43 1
+        return ((VisualTable<?,?>)m_table).getVisualization();
+d45 1
+a45 1
+
+d50 1
+a50 1
+        return ((VisualTable<?,?>)m_table).getGroup();
+d52 1
+a52 1
+
+d59 1
+a59 1
+
+d63 2
+a64 2
+    public TupleSet<?> getSourceData() {
+        VisualTable<?,?> vt = (VisualTable<?,?>)m_table;
+d71 2
+a72 2
+    public Tuple<?> getSourceTuple() {
+        VisualTable<?,?> vt = (VisualTable<?,?>)m_table;
+d75 1
+a75 1
+
+d79 1
+a79 2
+    @@Override
+	public String toString() {
+d83 1
+a83 1
+        VisualTable<?,?> vt = (VisualTable<?,?>)m_table;
+d87 1
+a87 3
+            if ( i > 0 ) {
+				sbuf.append(',');
+			}
+d91 4
+a94 5
+            if ( vt.canGetString(name) ) {
+				sbuf.append(vt.getString(m_row, name));
+			} else {
+				sbuf.append(vt.get(m_row, name).toString());
+			}
+d97 1
+a97 1
+
+d100 1
+a100 1
+
+d103 1
+a103 1
+
+d110 1
+a110 1
+
+d117 1
+a117 1
+
+d122 2
+a123 4
+        if ( isValidated() ) {
+			return getBounds();
+		}
+
+d125 1
+a125 1
+
+d127 1
+a127 6
+        Renderer renderer = getRenderer();
+        if(renderer.managesBounds()) {
+        	Rectangle2D bounds = new Rectangle2D.Double();
+    		getRenderer().calculateBounds(this, bounds);
+        	setBounds(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight());
+        }
+d129 1
+a129 1
+
+d135 1
+a135 1
+
+d137 1
+a137 1
+
+d142 1
+a142 1
+        return ((VisualTable<?,?>)m_table).isValidated(m_row);
+d144 1
+a144 1
+
+d149 1
+a149 1
+        ((VisualTable<?,?>)m_table).setValidated(m_row, value);
+d151 1
+a151 1
+
+d156 1
+a156 1
+        return ((VisualTable<?,?>)m_table).isVisible(m_row);
+d158 1
+a158 1
+
+d163 1
+a163 1
+        ((VisualTable<?,?>)m_table).setVisible(m_row, value);
+d165 1
+a165 1
+
+d170 1
+a170 1
+        return ((VisualTable<?,?>)m_table).isStartVisible(m_row);
+d172 1
+a172 1
+
+d177 1
+a177 1
+        ((VisualTable<?,?>)m_table).setStartVisible(m_row, value);
+d179 1
+a179 1
+
+d184 1
+a184 1
+        return ((VisualTable<?,?>)m_table).isEndVisible(m_row);
+d186 1
+a186 1
+
+d191 1
+a191 1
+        ((VisualTable<?,?>)m_table).setEndVisible(m_row, value);
+d193 1
+a193 1
+
+d198 1
+a198 1
+        return ((VisualTable<?,?>)m_table).isInteractive(m_row);
+d205 1
+a205 1
+        ((VisualTable<?,?>)m_table).setInteractive(m_row, value);
+d207 1
+a207 1
+
+d212 1
+a212 1
+        return ((VisualTable<?,?>)m_table).isExpanded(m_row);
+d219 1
+a219 1
+        ((VisualTable<?,?>)m_table).setExpanded(m_row, value);
+d221 1
+a221 1
+
+d226 1
+a226 1
+        return ((VisualTable<?,?>)m_table).isFixed(m_row);
+d233 1
+a233 1
+        ((VisualTable<?,?>)m_table).setFixed(m_row, value);
+d235 1
+a235 1
+
+d240 1
+a240 1
+        return ((VisualTable<?,?>)m_table).isHighlighted(m_row);
+d242 1
+a242 1
+
+d247 1
+a247 1
+        ((VisualTable<?,?>)m_table).setHighlighted(m_row, value);
+d254 1
+a254 1
+        return ((VisualTable<?,?>)m_table).isHover(m_row);
+d256 1
+a256 1
+
+d261 1
+a261 1
+        ((VisualTable<?,?>)m_table).setHover(m_row, value);
+d263 1
+a263 1
+
+d265 1
+a265 1
+
+d270 1
+a270 1
+        return ((VisualTable<?,?>)m_table).getX(m_row);
+d272 1
+a272 1
+
+d277 1
+a277 1
+        ((VisualTable<?,?>)m_table).setX(m_row, x);
+d279 1
+a279 1
+
+d284 1
+a284 1
+        return ((VisualTable<?,?>)m_table).getY(m_row);
+d286 1
+a286 1
+
+d291 1
+a291 1
+        ((VisualTable<?,?>)m_table).setY(m_row, y);
+d293 1
+a293 1
+
+d298 1
+a298 1
+        return ((VisualTable<?,?>)m_table).getStartX(m_row);
+d300 1
+a300 1
+
+d305 1
+a305 1
+        ((VisualTable<?,?>)m_table).setStartX(m_row, x);
+d307 1
+a307 1
+
+d312 1
+a312 1
+        return ((VisualTable<?,?>)m_table).getStartY(m_row);
+d314 1
+a314 1
+
+d319 1
+a319 1
+        ((VisualTable<?,?>)m_table).setStartY(m_row, y);
+d321 1
+a321 1
+
+d326 1
+a326 1
+        return ((VisualTable<?,?>)m_table).getEndX(m_row);
+d328 1
+a328 1
+
+d333 1
+a333 1
+        ((VisualTable<?,?>)m_table).setEndX(m_row, x);
+d335 1
+a335 1
+
+d340 1
+a340 1
+        return ((VisualTable<?,?>)m_table).getEndY(m_row);
+d342 1
+a342 1
+
+d347 1
+a347 1
+        ((VisualTable<?,?>)m_table).setEndY(m_row, y);
+d357 1
+a357 1
+        return ((VisualTable<?,?>)m_table).getBounds(m_row);
+d359 1
+a359 1
+
+d364 1
+a364 1
+        ((VisualTable<?,?>)m_table).setBounds(m_row, x, y, w, h);
+d366 1
+a366 1
+
+d368 1
+a368 1
+
+d373 1
+a373 1
+        return ((VisualTable<?,?>)m_table).getStrokeColor(m_row);
+d375 1
+a375 1
+
+d380 1
+a380 1
+        ((VisualTable<?,?>)m_table).setStrokeColor(m_row, color);
+d382 1
+a382 1
+
+d387 1
+a387 1
+        return ((VisualTable<?,?>)m_table).getStartStrokeColor(m_row);
+d389 1
+a389 1
+
+d394 1
+a394 1
+        ((VisualTable<?,?>)m_table).setStartStrokeColor(m_row, color);
+d396 1
+a396 1
+
+d401 1
+a401 1
+        return ((VisualTable<?,?>)m_table).getEndStrokeColor(m_row);
+d403 1
+a403 1
+
+d408 1
+a408 1
+        ((VisualTable<?,?>)m_table).setEndStrokeColor(m_row, color);
+d410 1
+a410 1
+
+d415 1
+a415 1
+        return ((VisualTable<?,?>)m_table).getFillColor(m_row);
+d417 1
+a417 1
+
+d422 1
+a422 1
+        ((VisualTable<?,?>)m_table).setFillColor(m_row, color);
+d424 1
+a424 1
+
+d429 1
+a429 1
+        return ((VisualTable<?,?>)m_table).getStartFillColor(m_row);
+d436 1
+a436 1
+        ((VisualTable<?,?>)m_table).setStartFillColor(m_row, color);
+d438 1
+a438 1
+
+d443 1
+a443 1
+        return ((VisualTable<?,?>)m_table).getEndFillColor(m_row);
+d445 1
+a445 1
+
+d450 1
+a450 1
+        ((VisualTable<?,?>)m_table).setEndFillColor(m_row, color);
+d452 1
+a452 1
+
+d457 1
+a457 1
+        return ((VisualTable<?,?>)m_table).getTextColor(m_row);
+d459 1
+a459 1
+
+d464 1
+a464 1
+        ((VisualTable<?,?>)m_table).setTextColor(m_row, color);
+d466 1
+a466 1
+
+d471 1
+a471 1
+        return ((VisualTable<?,?>)m_table).getStartTextColor(m_row);
+d473 1
+a473 1
+
+d478 1
+a478 1
+        ((VisualTable<?,?>)m_table).setStartTextColor(m_row, color);
+d480 1
+a480 1
+
+d485 1
+a485 1
+        return ((VisualTable<?,?>)m_table).getEndTextColor(m_row);
+d487 1
+a487 1
+
+d492 1
+a492 1
+        ((VisualTable<?,?>)m_table).setEndTextColor(m_row, color);
+d494 1
+a494 1
+
+d496 1
+a496 1
+
+d501 1
+a501 1
+        return ((VisualTable<?,?>)m_table).getSize(m_row);
+d503 1
+a503 1
+
+d508 1
+a508 1
+        ((VisualTable<?,?>)m_table).setSize(m_row, size);
+d510 1
+a510 1
+
+d515 1
+a515 1
+        return ((VisualTable<?,?>)m_table).getStartSize(m_row);
+d517 1
+a517 1
+
+d522 1
+a522 1
+        ((VisualTable<?,?>)m_table).setStartSize(m_row, size);
+d524 1
+a524 1
+
+d529 1
+a529 1
+        return ((VisualTable<?,?>)m_table).getEndSize(m_row);
+d531 1
+a531 1
+
+d536 1
+a536 1
+        ((VisualTable<?,?>)m_table).setEndSize(m_row, size);
+d538 1
+a538 1
+
+d540 1
+a540 1
+
+d544 2
+a545 2
+    public ShapeType getShape() {
+        return ((VisualTable<?,?>)m_table).getShape(m_row);
+d547 1
+a547 1
+
+d549 1
+a549 1
+     * @@see prefuse.visual.VisualItem#setShape(ShapeType)
+d551 2
+a552 2
+    public void setShape(ShapeType shape) {
+        ((VisualTable<?,?>)m_table).setShape(m_row, shape);
+d554 1
+a554 1
+
+d556 1
+a556 1
+
+d561 1
+a561 1
+        return ((VisualTable<?,?>)m_table).getStroke(m_row);
+d563 1
+a563 1
+
+d568 1
+a568 1
+        ((VisualTable<?,?>)m_table).setStroke(m_row, stroke);
+d570 3
+a572 3
+
+    // ------------------------------------------------------------------------
+
+d577 1
+a577 1
+        return ((VisualTable<?,?>)m_table).getFont(m_row);
+d584 1
+a584 1
+        ((VisualTable<?,?>)m_table).setFont(m_row, font);
+d586 1
+a586 1
+
+d591 1
+a591 1
+        return ((VisualTable<?,?>)m_table).getStartFont(m_row);
+d598 1
+a598 1
+        ((VisualTable<?,?>)m_table).setStartFont(m_row, font);
+d600 1
+a600 1
+
+d605 1
+a605 1
+        return ((VisualTable<?,?>)m_table).getEndFont(m_row);
+d607 1
+a607 1
+
+d612 1
+a612 1
+        ((VisualTable<?,?>)m_table).setEndFont(m_row, font);
+d614 1
+a614 1
+
+d616 1
+a616 1
+
+d621 1
+a621 1
+        return ((VisualTable<?,?>)m_table).getDOI(m_row);
+d623 1
+a623 1
+
+d628 1
+a628 1
+        ((VisualTable<?,?>)m_table).setDOI(m_row, doi);
+d630 1
+a630 1
+
+@
+
+
+2.4.4.2
+log
+@Refactored the shape work to allow for custom ShapeBuilders. VisualItem.SHAPE has been replaced with VisualItem.SHAPEBUILDER.
+@
+text
+@d8 1
+a8 2
+import prefuse.ShapeBuilder;
+import prefuse.PredefinedShape;
+d555 1
+a555 1
+     * @@see prefuse.visual.VisualItem#getShapeBuilder()
+d557 2
+a558 2
+    public ShapeBuilder getShapeBuilder() {
+        return ((VisualTable<?,?>)m_table).getShapeBuilder(m_row);
+d562 1
+a562 1
+     * @@see prefuse.visual.VisualItem#setShapeBuilder(ShapeBuilder)
+d564 2
+a565 2
+    public void setShapeBuilder(ShapeBuilder shapeBuilder) {
+        ((VisualTable<?,?>)m_table).setShapeBuilder(m_row, shapeBuilder);
+@
+
+
+2.4.4.3
+log
+@removed unused imports
+@
+text
+@d9 1
+@
+
+
+2.3
+log
+@Moved damage report for invalidation to the event handler.
+@
+text
+@d11 1
+d13 1
+d61 16
+@
+
+
+2.2
+log
+@Fixed Javadoc bug
+@
+text
+@d107 1
+a107 5
+        
+        // retrieve the old bounds to report damage
+        // access through the table to avoid infinite recursion
+        v.damageReport(this, ((VisualTable)m_table).getBounds(m_row));
+        
+@
+
+
+2.1
+log
+@Added "stroke" visual property for configuring line drawing.
+EdgeRenderer now draws directed edges (more) correctly, and allow parameterization of the arrow head size.
+@
+text
+@a542 1
+    
+d551 1
+a551 1
+     * @@see prefuse.visual.VisualItem#setStroke(java.awt.Stroke)
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d3 1
+d541 17
+@
+
+
+1.1
+log
+@file TableVisualItem.java was initially added on branch beta.
+@
+text
+@d1 600
+@
+
+
+1.1.2.1
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a0 363
+package prefuse.visual.tuple;
+
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.Visualization;
+import prefuse.data.Table;
+import prefuse.data.tuple.TableTuple;
+import prefuse.render.Renderer;
+import prefuse.util.PrefuseLib;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTable;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class TableVisualItem extends TableTuple implements VisualItem {
+    
+    public TableVisualItem(Table table, int row) {
+        super(table, row);
+    }
+
+    public Visualization getVisualization() {
+        return ((VisualTable)m_table).getVisualization();
+    }
+    
+    public String getGroup() {
+        return ((VisualTable)m_table).getGroup();
+    }
+    
+    public boolean isInGroup(String group) {
+        return getVisualization().isInGroup(this, group);
+    }
+    
+    public String toString() {
+        StringBuffer sbuf = new StringBuffer();
+        sbuf.append("VisualItem[").append(getGroup());
+        sbuf.append(",").append(m_row).append(',');
+        VisualTable vt = (VisualTable)m_table;
+        int local = vt.getLocalColumnCount();
+        int inherited = vt.getColumnCount()-local;
+        for ( int i=0; i<inherited; ++i ) {
+            if ( i > 0 ) sbuf.append(',');
+            String name = vt.getColumnName(local+i);
+            sbuf.append(name);
+            sbuf.append('=');
+            if ( vt.canGetString(name) )
+                sbuf.append(vt.getString(m_row, name));
+            else
+                sbuf.append(vt.get(m_row, name).toString());
+        }
+        sbuf.append(']');
+        
+        return sbuf.toString();
+    }
+    
+    // ------------------------------------------------------------------------
+    // VisualItem Methods
+    
+    public void render(Graphics2D g) {
+        getRenderer().render(g, this);
+    }
+    
+    public Renderer getRenderer() {
+        return getVisualization().getRenderer(this);
+    }
+    
+    public Rectangle2D validateBounds() {
+        if ( isValidated() ) return getBounds();
+        
+        Visualization v = getVisualization();
+        
+        // retrieve the old bounds to report damage
+        // access through the table to avoid infinite recursion
+        v.damageReport(this, ((VisualTable)m_table).getBounds(m_row));
+        
+        // set the new bounds from the renderer and validate
+        getRenderer().setBounds(this);
+        setValidated(true);
+        
+        // report damage from the new bounds and return
+        Rectangle2D bounds = getBounds();
+        v.damageReport(this, bounds);
+        return bounds;
+    }
+    
+    // -- Boolean Flags -------------------------------------------------------
+       
+    public boolean isValidated() {
+        return ((VisualTable)m_table).isValidated(m_row);
+    }
+    
+    public void setValidated(boolean value) {
+        ((VisualTable)m_table).setValidated(value, m_row);
+    }
+    
+    public boolean isVisible() {
+        return ((VisualTable)m_table).isVisible(m_row);
+    }
+    
+    public void setVisible(boolean value) {
+        ((VisualTable)m_table).setVisible(value, m_row);
+    }
+    
+    public boolean isStartVisible() {
+        return ((VisualTable)m_table).isStartVisible(m_row);
+    }
+    
+    public void setStartVisible(boolean value) {
+        ((VisualTable)m_table).setStartVisible(value, m_row);
+    }
+    
+    public boolean isEndVisible() {
+        return ((VisualTable)m_table).isEndVisible(m_row);
+    }
+    
+    public void setEndVisible(boolean value) {
+        ((VisualTable)m_table).setEndVisible(value, m_row);
+    }
+    
+    public boolean isInteractive() {
+        return ((VisualTable)m_table).isInteractive(m_row);
+    }
+
+    public void setInteractive(boolean value) {
+        ((VisualTable)m_table).setInteractive(value, m_row);
+    }
+    
+    public boolean isExpanded() {
+        return ((VisualTable)m_table).isExpanded(m_row);
+    }
+
+    public void setExpanded(boolean value) {
+        ((VisualTable)m_table).setExpanded(value, m_row);
+    }
+    
+    public boolean isFixed() {
+        return ((VisualTable)m_table).isFixed(m_row);
+    }
+
+    public void setFixed(boolean value) {
+        ((VisualTable)m_table).setFixed(value, m_row);
+    }
+    
+    public boolean isHighlighted() {
+        return ((VisualTable)m_table).isHighlighted(m_row);
+    }
+    
+    public void setHighlighted(boolean value) {
+        ((VisualTable)m_table).setHighlighted(value, m_row);
+    }
+
+    public boolean isHover() {
+        return ((VisualTable)m_table).isHover(m_row);
+    }
+    
+    public void setHover(boolean value) {
+        ((VisualTable)m_table).setHover(value, m_row);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public double getX() {
+        return ((VisualTable)m_table).getX(m_row);
+    }
+    
+    public void setX(double x) {
+        ((VisualTable)m_table).setX(x, m_row);
+    }
+    
+    public double getY() {
+        return ((VisualTable)m_table).getY(m_row);
+    }
+    
+    public void setY(double y) {
+        ((VisualTable)m_table).setY(y, m_row);
+    }
+    
+    public double getStartX() {
+        return ((VisualTable)m_table).getStartX(m_row);
+    }
+    
+    public void setStartX(double x) {
+        ((VisualTable)m_table).setStartX(x, m_row);
+    }
+    
+    public double getStartY() {
+        return ((VisualTable)m_table).getStartY(m_row);
+    }
+    
+    public void setStartY(double y) {
+        ((VisualTable)m_table).setStartY(y, m_row);
+    }
+    
+    public double getEndX() {
+        return ((VisualTable)m_table).getEndX(m_row);
+    }
+    
+    public void setEndX(double x) {
+        ((VisualTable)m_table).setEndX(x, m_row);
+    }
+    
+    public double getEndY() {
+        return ((VisualTable)m_table).getEndY(m_row);
+    }
+    
+    public void setEndY(double y) {
+        ((VisualTable)m_table).setEndY(y, m_row);
+    }
+
+    public Rectangle2D getBounds() {
+        if ( !isValidated() ) {
+            return validateBounds();
+        }
+        return ((VisualTable)m_table).getBounds(m_row);
+    }
+    
+    public void setBounds(double x, double y, double w, double h) {
+        ((VisualTable)m_table).setBounds(x, y, w, h, m_row);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public int getStrokeColor() {
+        return ((VisualTable)m_table).getStrokeColor(m_row);
+    }
+    
+    public void setStrokeColor(int color) {
+        ((VisualTable)m_table).setStrokeColor(color, m_row);
+    }
+    
+    public int getStartStrokeColor() {
+        return ((VisualTable)m_table).getStartStrokeColor(m_row);
+    }
+    
+    public void setStartStrokeColor(int color) {
+        ((VisualTable)m_table).setStartStrokeColor(color, m_row);
+    }
+    
+    public int getEndStrokeColor() {
+        return ((VisualTable)m_table).getEndStrokeColor(m_row);
+    }
+    
+    public void setEndStrokeColor(int color) {
+        ((VisualTable)m_table).setEndStrokeColor(color, m_row);
+    }
+    
+    public int getFillColor() {
+        return ((VisualTable)m_table).getFillColor(m_row);
+    }
+    
+    public void setFillColor(int color) {
+        ((VisualTable)m_table).setFillColor(color, m_row);
+    }
+    
+    public int getStartFillColor() {
+        return ((VisualTable)m_table).getStartFillColor(m_row);
+    }
+
+    public void setStartFillColor(int color) {
+        ((VisualTable)m_table).setStartFillColor(color, m_row);
+    }
+    
+    public int getEndFillColor() {
+        return ((VisualTable)m_table).getEndFillColor(m_row);
+    }
+    
+    public void setEndFillColor(int color) {
+        ((VisualTable)m_table).setEndFillColor(color, m_row);
+    }
+    
+    public int getTextColor() {
+        return ((VisualTable)m_table).getTextColor(m_row);
+    }
+    
+    public void setTextColor(int color) {
+        ((VisualTable)m_table).setTextColor(color, m_row);
+    }
+    
+    public int getStartTextColor() {
+        return ((VisualTable)m_table).getStartTextColor(m_row);
+    }
+    
+    public void setStartTextColor(int color) {
+        ((VisualTable)m_table).setStartTextColor(color, m_row);
+    }
+    
+    public int getEndTextColor() {
+        return ((VisualTable)m_table).getEndTextColor(m_row);
+    }
+    
+    public void setEndTextColor(int color) {
+        ((VisualTable)m_table).setEndTextColor(color, m_row);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public double getSize() {
+        return ((VisualTable)m_table).getSize(m_row);
+    }
+    
+    public double getSize2D() {
+        return PrefuseLib.getSize2D(getSize());
+    }
+    
+    public void setSize(double size) {
+        ((VisualTable)m_table).setSize(size, m_row);
+    }
+    
+    public double getStartSize() {
+        return ((VisualTable)m_table).getStartSize(m_row);
+    }
+    
+    public void setStartSize(double size) {
+        ((VisualTable)m_table).setStartSize(size, m_row);
+    }
+    
+    public double getEndSize() {
+        return ((VisualTable)m_table).getEndSize(m_row);
+    }
+    
+    public void setEndSize(double size) {
+        ((VisualTable)m_table).setEndSize(size, m_row);
+    }
+    
+    // ------------------------------------------------------------------------    
+    
+    public Font getFont() {
+        return ((VisualTable)m_table).getFont(m_row);
+    }
+
+    public void setFont(Font font) {
+        ((VisualTable)m_table).setFont(font, m_row);
+    }
+    
+    public Font getStartFont() {
+        return ((VisualTable)m_table).getStartFont(m_row);
+    }
+
+    public void setStartFont(Font font) {
+        ((VisualTable)m_table).setStartFont(font, m_row);
+    }
+    
+    public Font getEndFont() {
+        return ((VisualTable)m_table).getEndFont(m_row);
+    }
+    
+    public void setEndFont(Font font) {
+        ((VisualTable)m_table).setEndFont(font, m_row);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public double getDOI() {
+        return ((VisualTable)m_table).getDOI(m_row);
+    }
+    
+    public void setDOI(double doi) {
+        ((VisualTable)m_table).setDOI(doi, m_row);
+    }
+    
+} // end of class TableVisualItem
+@
+
+
+1.1.2.2
+log
+@Removed automatic 2D interpretation of size field.
+@
+text
+@d11 1
+d303 4
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@d15 1
+a15 3
+ * VisualItem implementation that uses data values from a backing VisualTable.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a18 8
+    /**
+     * Create a new TableVisualItem for the given table and row. This method
+     * is used by the appropriate TupleManager instance, and should not be
+     * called directly by client code, unless by a client-supplied custom
+     * TupleManager.
+     * @@param table the data Table
+     * @@param row the table row index
+     */
+a22 3
+    /**
+     * @@see prefuse.visual.VisualItem#getVisualization()
+     */
+a26 3
+    /**
+     * @@see prefuse.visual.VisualItem#getGroup()
+     */
+a30 3
+    /**
+     * @@see prefuse.visual.VisualItem#isInGroup(java.lang.String)
+     */
+a34 3
+    /**
+     * @@see java.lang.Object#toString()
+     */
+a59 3
+    /**
+     * @@see prefuse.visual.VisualItem#render(java.awt.Graphics2D)
+     */
+a63 3
+    /**
+     * @@see prefuse.visual.VisualItem#getRenderer()
+     */
+a67 3
+    /**
+     * @@see prefuse.visual.VisualItem#validateBounds()
+     */
+a88 3
+    /**
+     * @@see prefuse.visual.VisualItem#isValidated()
+     */
+a92 3
+    /**
+     * @@see prefuse.visual.VisualItem#setValidated(boolean)
+     */
+d94 1
+a94 1
+        ((VisualTable)m_table).setValidated(m_row, value);
+a96 3
+    /**
+     * @@see prefuse.visual.VisualItem#isVisible()
+     */
+a100 3
+    /**
+     * @@see prefuse.visual.VisualItem#setVisible(boolean)
+     */
+d102 1
+a102 1
+        ((VisualTable)m_table).setVisible(m_row, value);
+a104 3
+    /**
+     * @@see prefuse.visual.VisualItem#isStartVisible()
+     */
+a108 3
+    /**
+     * @@see prefuse.visual.VisualItem#setStartVisible(boolean)
+     */
+d110 1
+a110 1
+        ((VisualTable)m_table).setStartVisible(m_row, value);
+a112 3
+    /**
+     * @@see prefuse.visual.VisualItem#isEndVisible()
+     */
+a116 3
+    /**
+     * @@see prefuse.visual.VisualItem#setEndVisible(boolean)
+     */
+d118 1
+a118 1
+        ((VisualTable)m_table).setEndVisible(m_row, value);
+a120 3
+    /**
+     * @@see prefuse.visual.VisualItem#isInteractive()
+     */
+a124 3
+    /**
+     * @@see prefuse.visual.VisualItem#setInteractive(boolean)
+     */
+d126 1
+a126 1
+        ((VisualTable)m_table).setInteractive(m_row, value);
+a128 3
+    /**
+     * @@see prefuse.visual.VisualItem#isExpanded()
+     */
+a132 3
+    /**
+     * @@see prefuse.visual.VisualItem#setExpanded(boolean)
+     */
+d134 1
+a134 1
+        ((VisualTable)m_table).setExpanded(m_row, value);
+a136 3
+    /**
+     * @@see prefuse.visual.VisualItem#isFixed()
+     */
+a140 3
+    /**
+     * @@see prefuse.visual.VisualItem#setFixed(boolean)
+     */
+d142 1
+a142 1
+        ((VisualTable)m_table).setFixed(m_row, value);
+a144 3
+    /**
+     * @@see prefuse.visual.VisualItem#isHighlighted()
+     */
+a148 3
+    /**
+     * @@see prefuse.visual.VisualItem#setHighlighted(boolean)
+     */
+d150 1
+a150 1
+        ((VisualTable)m_table).setHighlighted(m_row, value);
+a152 3
+    /**
+     * @@see prefuse.visual.VisualItem#isHover()
+     */
+a156 3
+    /**
+     * @@see prefuse.visual.VisualItem#setHover(boolean)
+     */
+d158 1
+a158 1
+        ((VisualTable)m_table).setHover(m_row, value);
+a162 3
+    /**
+     * @@see prefuse.visual.VisualItem#getX()
+     */
+a166 3
+    /**
+     * @@see prefuse.visual.VisualItem#setX(double)
+     */
+d168 1
+a168 1
+        ((VisualTable)m_table).setX(m_row, x);
+a170 3
+    /**
+     * @@see prefuse.visual.VisualItem#getY()
+     */
+a174 3
+    /**
+     * @@see prefuse.visual.VisualItem#setY(double)
+     */
+d176 1
+a176 1
+        ((VisualTable)m_table).setY(m_row, y);
+a178 3
+    /**
+     * @@see prefuse.visual.VisualItem#getStartX()
+     */
+a182 3
+    /**
+     * @@see prefuse.visual.VisualItem#setStartX(double)
+     */
+d184 1
+a184 1
+        ((VisualTable)m_table).setStartX(m_row, x);
+a186 3
+    /**
+     * @@see prefuse.visual.VisualItem#getStartY()
+     */
+a190 3
+    /**
+     * @@see prefuse.visual.VisualItem#setStartY(double)
+     */
+d192 1
+a192 1
+        ((VisualTable)m_table).setStartY(m_row, y);
+a194 3
+    /**
+     * @@see prefuse.visual.VisualItem#getEndX()
+     */
+a198 3
+    /**
+     * @@see prefuse.visual.VisualItem#setEndX(double)
+     */
+d200 1
+a200 1
+        ((VisualTable)m_table).setEndX(m_row, x);
+a202 3
+    /**
+     * @@see prefuse.visual.VisualItem#getEndY()
+     */
+a206 3
+    /**
+     * @@see prefuse.visual.VisualItem#setEndY(double)
+     */
+d208 1
+a208 1
+        ((VisualTable)m_table).setEndY(m_row, y);
+a210 3
+    /**
+     * @@see prefuse.visual.VisualItem#getBounds()
+     */
+a217 3
+    /**
+     * @@see prefuse.visual.VisualItem#setBounds(double, double, double, double)
+     */
+d219 1
+a219 1
+        ((VisualTable)m_table).setBounds(m_row, x, y, w, h);
+a223 3
+    /**
+     * @@see prefuse.visual.VisualItem#getStrokeColor()
+     */
+a227 3
+    /**
+     * @@see prefuse.visual.VisualItem#setStrokeColor(int)
+     */
+d229 1
+a229 1
+        ((VisualTable)m_table).setStrokeColor(m_row, color);
+a231 3
+    /**
+     * @@see prefuse.visual.VisualItem#getStartStrokeColor()
+     */
+a235 3
+    /**
+     * @@see prefuse.visual.VisualItem#setStartStrokeColor(int)
+     */
+d237 1
+a237 1
+        ((VisualTable)m_table).setStartStrokeColor(m_row, color);
+a239 3
+    /**
+     * @@see prefuse.visual.VisualItem#getEndStrokeColor()
+     */
+a243 3
+    /**
+     * @@see prefuse.visual.VisualItem#setEndStrokeColor(int)
+     */
+d245 1
+a245 1
+        ((VisualTable)m_table).setEndStrokeColor(m_row, color);
+a247 3
+    /**
+     * @@see prefuse.visual.VisualItem#getFillColor()
+     */
+a251 3
+    /**
+     * @@see prefuse.visual.VisualItem#setFillColor(int)
+     */
+d253 1
+a253 1
+        ((VisualTable)m_table).setFillColor(m_row, color);
+a255 3
+    /**
+     * @@see prefuse.visual.VisualItem#getStartFillColor()
+     */
+a259 3
+    /**
+     * @@see prefuse.visual.VisualItem#setStartFillColor(int)
+     */
+d261 1
+a261 1
+        ((VisualTable)m_table).setStartFillColor(m_row, color);
+a263 3
+    /**
+     * @@see prefuse.visual.VisualItem#getEndFillColor()
+     */
+a267 3
+    /**
+     * @@see prefuse.visual.VisualItem#setEndFillColor(int)
+     */
+d269 1
+a269 1
+        ((VisualTable)m_table).setEndFillColor(m_row, color);
+a271 3
+    /**
+     * @@see prefuse.visual.VisualItem#getTextColor()
+     */
+a275 3
+    /**
+     * @@see prefuse.visual.VisualItem#setTextColor(int)
+     */
+d277 1
+a277 1
+        ((VisualTable)m_table).setTextColor(m_row, color);
+a279 3
+    /**
+     * @@see prefuse.visual.VisualItem#getStartTextColor()
+     */
+a283 3
+    /**
+     * @@see prefuse.visual.VisualItem#setStartTextColor(int)
+     */
+d285 1
+a285 1
+        ((VisualTable)m_table).setStartTextColor(m_row, color);
+a287 3
+    /**
+     * @@see prefuse.visual.VisualItem#getEndTextColor()
+     */
+a291 3
+    /**
+     * @@see prefuse.visual.VisualItem#setEndTextColor(int)
+     */
+d293 1
+a293 1
+        ((VisualTable)m_table).setEndTextColor(m_row, color);
+a297 3
+    /**
+     * @@see prefuse.visual.VisualItem#getSize()
+     */
+a301 3
+    /**
+     * @@see prefuse.visual.VisualItem#setSize(double)
+     */
+d303 1
+a303 1
+        ((VisualTable)m_table).setSize(m_row, size);
+a305 3
+    /**
+     * @@see prefuse.visual.VisualItem#getStartSize()
+     */
+a309 3
+    /**
+     * @@see prefuse.visual.VisualItem#setStartSize(double)
+     */
+d311 1
+a311 1
+        ((VisualTable)m_table).setStartSize(m_row, size);
+a313 3
+    /**
+     * @@see prefuse.visual.VisualItem#getEndSize()
+     */
+a317 3
+    /**
+     * @@see prefuse.visual.VisualItem#setEndSize(double)
+     */
+d319 1
+a319 1
+        ((VisualTable)m_table).setEndSize(m_row, size);
+a323 3
+    /**
+     * @@see prefuse.visual.VisualItem#getFont()
+     */
+a327 3
+    /**
+     * @@see prefuse.visual.VisualItem#setFont(java.awt.Font)
+     */
+d329 1
+a329 1
+        ((VisualTable)m_table).setFont(m_row, font);
+a331 3
+    /**
+     * @@see prefuse.visual.VisualItem#getStartFont()
+     */
+a335 3
+    /**
+     * @@see prefuse.visual.VisualItem#setStartFont(java.awt.Font)
+     */
+d337 1
+a337 1
+        ((VisualTable)m_table).setStartFont(m_row, font);
+a339 3
+    /**
+     * @@see prefuse.visual.VisualItem#getEndFont()
+     */
+a343 3
+    /**
+     * @@see prefuse.visual.VisualItem#setEndFont(java.awt.Font)
+     */
+d345 1
+a345 1
+        ((VisualTable)m_table).setEndFont(m_row, font);
+a349 3
+    /**
+     * @@see prefuse.visual.VisualItem#getDOI()
+     */
+a353 3
+    /**
+     * @@see prefuse.visual.VisualItem#setDOI(double)
+     */
+d355 1
+a355 1
+        ((VisualTable)m_table).setDOI(m_row, doi);
+@
+
+
+1.1.2.4
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@a7 1
+import prefuse.data.Graph;
+d20 1
+a20 1
+
+d22 4
+a25 4
+     * Initialize a new TableVisualItem for the given table and row. This
+     * method is used by the appropriate TupleManager instance, and should
+     * not be called directly by client code, unless by a client-supplied
+     * custom TupleManager.
+a26 1
+     * @@param graph ignored by this class
+d29 2
+a30 3
+    protected void init(Table table, Graph graph, int row) {
+        m_table = table;
+        m_row = m_table.isValidRow(row) ? row : -1;
+d32 1
+a32 1
+    
+@
+
+
+1.1.2.5
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a523 16
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.visual.VisualItem#getShape()
+     */
+    public int getShape() {
+        return ((VisualTable)m_table).getShape(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.VisualItem#setShape(int)
+     */
+    public void setShape(int shape) {
+        ((VisualTable)m_table).setShape(m_row, shape);
+    }
+    
+@
+
+

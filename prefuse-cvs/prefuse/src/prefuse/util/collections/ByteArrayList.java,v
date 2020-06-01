@@ -1,0 +1,343 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.04.10.18.25.48;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.02.19.01.51;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	2.1.4.2;
+
+2.1.4.2
+date	2008.02.29.06.13.24;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Added toArray method for getting a standard byte array
+@
+text
+@package prefuse.util.collections;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
+/**
+ * A resizable array that maintains a list of byte values.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ByteArrayList {
+
+    private byte[] m_bytes;
+    private int m_size;
+    
+    public ByteArrayList() {
+        this(4096);
+    }
+    
+    public ByteArrayList(int capacity) {
+        m_bytes = new byte[capacity];
+        m_size = 0;
+    }
+    
+    private void rangeCheck(int i) {
+        if ( i < 0 || i >= m_size ) 
+            throw new IndexOutOfBoundsException(
+                    "Index: "+i+" Size: " + m_size);
+    }
+    
+    private void ensureCapacity(int cap) {
+        if ( m_bytes.length < cap ) {
+            int capacity = Math.max((3*m_bytes.length)/2 + 1, cap);
+            byte[] nbytes = new byte[capacity];
+            System.arraycopy(m_bytes, 0, nbytes, 0, m_size);
+            m_bytes = nbytes;
+        }
+    }
+    
+    public byte get(int i) {
+        rangeCheck(i);
+        return m_bytes[i];
+    }
+    
+    public void set(int i, byte b) {
+        rangeCheck(i);
+        m_bytes[i] = b;
+    }
+    
+    public int size() {
+        return m_size;
+    }
+    
+    public void add(byte b) {
+        ensureCapacity(m_size+1);
+        m_bytes[m_size++] = b;
+    }
+    
+    public void add(byte[] b, int start, int len) {
+        ensureCapacity(m_size+len);
+        System.arraycopy(b,start,m_bytes,m_size,len);
+        m_size += len;
+    }
+    
+    public InputStream getAsInputStream() {
+        return new ByteArrayInputStream(m_bytes,0,m_size);
+    }
+    
+    public byte[] toArray() {
+        byte[] b = new byte[m_size];
+        System.arraycopy(m_bytes,0,b,0,m_size);
+        return b;
+    }
+}
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d8 1
+a8 1
+ *
+d15 1
+a15 1
+
+d19 1
+a19 1
+
+d24 1
+a24 1
+
+d26 2
+a27 2
+        if ( i < 0 || i >= m_size ) {
+			throw new IndexOutOfBoundsException(
+a28 1
+		}
+d30 1
+a30 1
+
+d33 1
+a33 1
+            int capacity = Math.max(3*m_bytes.length/2 + 1, cap);
+d39 1
+a39 1
+
+d44 1
+a44 1
+
+d49 1
+a49 1
+
+d53 1
+a53 1
+
+d58 1
+a58 1
+
+d64 1
+a64 1
+
+d68 1
+a68 1
+
+@
+
+
+2.1.4.2
+log
+@Extended ByteArrayOutputStream rather than reinventing the wheel
+@
+text
+@a3 1
+import java.io.ByteArrayOutputStream;
+d7 1
+a7 2
+ * A minor extension to ByteArrayOutputStream which prevents unnecessary copying
+ * of data when creating an InputStream.
+d11 54
+a64 1
+public class ByteArrayList extends ByteArrayOutputStream {
+a65 21
+    /**
+     * Creates a new ByteArrayList. The buffer capacity is
+     * initially 32 bytes, though its size increases if necessary.
+     */
+	public ByteArrayList() {
+	}
+
+    /**
+     * Creates a new ByteArrayList, with a buffer capacity of
+     * the specified size, in bytes.
+     *
+     * @@param   size   the initial size.
+     * @@exception  IllegalArgumentException if size is negative.
+     */
+	public ByteArrayList(int size) {
+		super(size);
+	}
+
+	/**
+	 * @@return an InputStream which contains the underlying buffer's data.
+	 */
+d67 1
+a67 1
+        return new ByteArrayInputStream(buf, 0, count);
+d70 5
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d68 6
+@
+
+
+1.1
+log
+@file ByteArrayList.java was initially added on branch beta.
+@
+text
+@d1 68
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 66
+package prefuse.util.collections;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class ByteArrayList {
+
+    private byte[] m_bytes;
+    private int m_size;
+    
+    public ByteArrayList() {
+        this(4096);
+    }
+    
+    public ByteArrayList(int capacity) {
+        m_bytes = new byte[capacity];
+        m_size = 0;
+    }
+    
+    private void rangeCheck(int i) {
+        if ( i < 0 || i >= m_size ) 
+            throw new IndexOutOfBoundsException(
+                    "Index: "+i+" Size: " + m_size);
+    }
+    
+    private void ensureCapacity(int cap) {
+        if ( m_bytes.length < cap ) {
+            int capacity = Math.max((3*m_bytes.length)/2 + 1, cap);
+            byte[] nbytes = new byte[capacity];
+            System.arraycopy(m_bytes, 0, nbytes, 0, m_size);
+            m_bytes = nbytes;
+        }
+    }
+    
+    public byte get(int i) {
+        rangeCheck(i);
+        return m_bytes[i];
+    }
+    
+    public void set(int i, byte b) {
+        rangeCheck(i);
+        m_bytes[i] = b;
+    }
+    
+    public int size() {
+        return m_size;
+    }
+    
+    public void add(byte b) {
+        ensureCapacity(m_size+1);
+        m_bytes[m_size++] = b;
+    }
+    
+    public void add(byte[] b, int start, int len) {
+        ensureCapacity(m_size+len);
+        System.arraycopy(b,start,m_bytes,m_size,len);
+        m_size += len;
+    }
+    
+    public InputStream getAsInputStream() {
+        return new ByteArrayInputStream(m_bytes,0,m_size);
+    }
+}
+@
+
+
+1.1.2.2
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d7 1
+a7 3
+ * A resizable array that maintains a list of byte values.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

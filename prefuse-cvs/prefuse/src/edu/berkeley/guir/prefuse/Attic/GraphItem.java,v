@@ -1,0 +1,627 @@
+head	1.7;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2004.03.23.03.54.56;	author jheer;	state dead;
+branches;
+next	1.6;
+
+1.6
+date	2004.03.16.03.05.17;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.07.18.03.24;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.06.00.49.35;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.03.08.11.05;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.09.59;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Major refactor
+@
+text
+@package edu.berkeley.guir.prefuse;
+
+import java.awt.Font;
+import java.awt.Paint;
+import java.awt.Rectangle;
+import java.awt.geom.Point2D;
+import java.util.HashMap;
+import java.util.Map;
+
+import edu.berkeley.guir.prefuse.graph.Entity;
+import edu.berkeley.guir.prefuse.render.Renderer;
+
+/**
+ * Abstract class for a visual representation of a graph element. Subclasses
+ * include NodeItem, EdgeItem, and AggregateItem.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public abstract class GraphItem {
+    
+    // TODO: abstract the various properties into the attributes map?
+	
+	protected ItemRegistry m_registry;  // the item registry this item is associated with
+	protected String       m_itemClass; // the item class this item belongs to
+	protected Entity       m_entity;    // the graph entity this item maps to
+	protected int          m_dirty;     // used to keep track of dirty status
+
+	protected boolean m_visible;
+	protected boolean m_newlyVisible;
+	
+	protected Map m_attrs;
+	protected double  m_doi;
+	protected Point2D m_location;
+	protected Point2D m_startLocation;
+	protected Point2D m_endLocation;
+	protected Paint   m_color;
+	protected Paint   m_startColor;
+	protected Paint   m_endColor;
+	protected Paint   m_fillColor;
+	protected Paint   m_startFillColor;
+	protected Paint   m_endFillColor;
+    protected boolean m_fixed = false;
+	protected double m_size = 1.;
+	protected double m_startSize = 1.;
+	protected double m_endSize = 1.;
+	protected Font   m_font;
+	
+	/**
+	 * Default constructor.
+	 */
+	public GraphItem() {
+			m_attrs         = new HashMap(5);
+			m_location      = new Point2D.Float();
+			m_startLocation = new Point2D.Float();
+			m_endLocation   = new Point2D.Float();
+	} //
+	
+	public String toString() {
+		return m_entity.toString();
+	} //
+	
+	/**
+	 * Initialize this GraphItem, binding it to the given
+	 * ItemRegistry and Entity.
+	 * @@param registry the ItemRegistry monitoring this GraphItem
+	 * @@param entity the Entity represented by this GraphItem
+	 */
+	public void init(ItemRegistry registry, String itemClass, Entity entity) {
+		m_itemClass = itemClass;
+		m_registry = registry;
+		m_entity   = entity;
+		m_dirty    = 0;
+		m_visible  = false;
+		m_newlyVisible = false;
+		m_doi = Integer.MIN_VALUE;
+		
+		/// XXX DEBUG
+		//System.out.println("Initializing Item: " + this.getClass().getName()
+		//	 + " - " + this.getAttribute("Text"));
+	} //
+	
+	/**
+	 * Clear the state of this GraphItem.
+	 */
+	public void clear() {
+		m_registry = null;
+		m_entity   = null;
+		m_attrs.clear();
+		
+		m_location.setLocation(0,0);
+		m_startLocation.setLocation(0,0);
+		m_endLocation.setLocation(0,0);
+		m_color = null;
+		m_startColor = null;
+		m_endColor = null;
+		m_fillColor = null;
+		m_startFillColor = null;
+		m_endFillColor = null;
+		m_size = 1;
+		m_startSize = 1;
+		m_endSize = 1;
+	} //
+
+	/**
+	 * Return the ItemRegistry associated with this GraphItem.
+	 * @@return the ItemRegistry
+	 */
+	public ItemRegistry getItemRegistry() {
+		return m_registry;
+	} //
+
+	/**
+	 * Return the item class this item belongs to.
+	 * @@return String label of this item's item class
+	 */
+	public String getItemClass() {
+		return m_itemClass;
+	} //
+
+	/**
+	 * Return the Entity this GraphItem represents.
+	 * @@return the Entity
+	 */
+	public Entity getEntity() {
+		return m_entity;
+	} //
+
+	/**
+	 * Get an entity attribute (a value associated with the actual graph data structure).
+	 * @@param name the name of the attribute
+	 * @@return String
+	 */
+	public String getAttribute(String name) {
+		if ( m_entity == null ) {
+			throw new IllegalStateException("This item has no assigned entity.");
+		} else {
+			return m_entity.getAttribute(name);
+		}		
+	} //
+
+	/**
+	 * Set an entity attribute (a value associated with the actual graph data structure).
+	 * @@param name the name of the attribute
+	 * @@param value
+	 */
+	public void setAttribute(String name, String value) {
+		if ( m_entity == null ) {
+			throw new IllegalStateException("This item has no assigned entity.");
+		} else {
+			m_entity.setAttribute(name, value);
+		}		
+	} //
+	
+	/**
+	 * Get a visualization attribute for this item.
+	 * @@param name the name of the attribute
+	 * @@return String
+	 */
+	public Object getVizAttribute(String name) {
+		return m_attrs.get(name);
+	} //
+	
+	/**
+	 * Set a visualization attribute for this item.
+	 * @@param name the name of the attribute
+	 * @@param value
+	 */
+	public void setVizAttribute(String name, Object value) {
+		m_attrs.put(name, value);
+	} //
+	
+	/**
+	 * Remove a visualization attribute for this item.
+	 * @@param name the name of the attribute
+	 */
+	public void removeVizAttribute(String name) {
+		m_attrs.remove(name);
+	} //
+	
+	/**
+	 * Updates an interpolated attribute, setting the current value of the attribute as the
+	 * start value, and setting the specified value as the ending value. The current value is
+	 * left unchanged.
+	 * @@param name - the name of the attribute (e.g. color)
+	 * @@param startName - the name of the start value for the attribute (e.g. startColor)
+	 * @@param endName - the name of the end value for the attribute (e.g. endColor)
+	 * @@param value - the new ending value of the attribute.
+	 */
+	public void updateVizAttribute(String name, String startName, String endName, Object value) {
+		Object curVal = getVizAttribute(name);
+		setVizAttribute(startName, curVal);
+		setVizAttribute(endName, value);
+	} //
+
+	/**
+	 * "Touching" an item tells the system that the item is to be used
+	 * in the visualization, and so resets any garbage collecting data
+	 * to it's freshest state. If an item has been retrieved using
+	 * the <code>ItemRegistry.getNodeItem(node, true)</code> method it is
+	 * touched automatically.
+	 */
+	public void touch() {
+		m_dirty = 0;
+	} //
+
+	/**
+	 * Gets the dirty counter for this item. This counter is used
+	 * by the ItemRegistry to control garbage collection. 
+	 * @@return the dirty counter
+	 */
+	public int getDirty() {
+		return m_dirty;
+	} //
+	
+	/**
+	 * Sets the dirty counter for this item. This counter is used
+	 * by the ItemRegistry to control garbage collection. 
+	 * @@param dirty the new value of the dirty counter
+	 */
+	public void setDirty(int dirty) {
+		m_dirty = dirty;
+	} //
+
+	/**
+	 * Returns true if this item became visible within the last
+	 * processing cycle.
+	 * @@return true if newly visible, false otherwise
+	 */
+	public boolean isNewlyVisible() {
+		return m_newlyVisible;
+	} //
+
+	/**
+	 * Indicates if this GraphItem is currently visible in the visualization.
+	 * @@return true if visible, false otherwise
+	 */
+	public boolean isVisible() {
+		return m_visible;
+	} //
+
+	/**
+	 * Sets the visible status of this GraphItem. If set false, this item will
+	 * not be visited by the rendering loop.
+	 * @@param s the new visibility status of this item.
+	 */
+	public void setVisible(boolean s) {
+		m_newlyVisible = ( !m_visible && s );
+		m_visible = s;
+	} //
+
+    public boolean isFocus() {
+        FocusManager fmanager = m_registry.getFocusManager();
+        return fmanager.isFocus(m_entity);
+    } //
+    
+	/**
+	 * Get the renderer for drawing this GraphItem.
+	 * @@return this item's Renderer
+	 */
+	public Renderer getRenderer() {
+		try {
+			return m_registry.getRendererFactory().getRenderer(this);
+		} catch ( Exception e ) {
+			System.out.println("processing reclaimed item!!! -- " + this.getClass().getName());
+			//e.printStackTrace();
+		}
+		return null;
+	} //
+	
+	/**
+	 * Returns true if the given point is contained within this GraphItem.
+	 * @@param point the point to test for containment
+	 * @@return true if the point is within this GraphItem
+	 */
+	public boolean locatePoint(Point2D point) {
+		return getRenderer().locatePoint(point, this);
+	} //
+	
+	/**
+	 * Returns the bounding box of this GraphItem, determined by it's renderer.
+	 * @@return a Rectangle representing the bounding box for this GraphItem
+	 */
+	public Rectangle getBounds() {
+		return getRenderer().getBoundsRef(this);
+	} //
+
+
+	// == convenience methods for viz attributes ==============================
+
+    public boolean isFixed() {
+        return m_fixed;
+    } //
+    
+    public void setFixed(boolean s) {
+        m_fixed = s;
+    } //
+    
+	public double getDOI() { return m_doi; } //
+	
+	public void setDOI(double doi) { m_doi = doi; } //
+
+	public Point2D getStartLocation() {
+		return m_startLocation;
+	} //
+
+	public Point2D getEndLocation() {
+		return m_endLocation;
+	} //
+	
+	public Point2D getLocation() {
+		return m_location;
+	} //
+
+	public void setLocation(Point2D loc) {
+		m_location.setLocation(loc);
+	} //
+
+	public void setLocation(double x, double y) {
+		m_location.setLocation(x,y);
+	} //
+
+	public void setStartLocation(Point2D loc) {
+		m_startLocation.setLocation(loc);
+	} //
+
+	public void setStartLocation(double x, double y) {
+		m_startLocation.setLocation(x,y);
+	} //
+
+	public void setEndLocation(Point2D loc) {
+		m_endLocation.setLocation(loc);
+	} //
+
+	public void setEndLocation(double x, double y) {
+		m_endLocation.setLocation(x,y);
+	} //
+
+	public void updateLocation(Point2D loc) {
+		m_startLocation.setLocation(m_location);
+		m_endLocation.setLocation(loc);
+	} //
+
+	public void updateLocation(double x, double y) {
+		m_startLocation.setLocation(m_location);
+		m_endLocation.setLocation(x,y);
+	} //
+	
+	public double getX() {
+		return m_location.getX();
+	} //
+	
+	public double getY() {
+		return m_location.getY();
+	} //
+	
+	public Paint getStartColor() {
+		return m_startColor;
+	} //
+	
+	public Paint getEndColor() {
+		return m_endColor;
+	} //
+	
+	public Paint getColor() {
+		return m_color;
+	} //	
+	
+	public void setColor(Paint color) {
+		m_color = color;
+	} //
+	
+	public void updateColor(Paint color) {
+		m_startColor = m_color;
+		m_endColor = color;
+	} //
+	
+	public Paint getStartFillColor() {
+		return m_startFillColor;
+	} //
+	
+	public Paint getEndFillColor() {
+		return m_endFillColor;
+	} //
+	
+	public Paint getFillColor() {
+		return m_fillColor;
+	} //	
+	
+	public void setFillColor(Paint color) {
+		m_fillColor = color;
+	} //
+	
+	public void updateFillColor(Paint color) {
+		m_startFillColor = m_fillColor;
+		m_endFillColor = color;
+	} //
+	
+	public double getStartSize() {
+		return m_startSize;
+	} //
+	
+	public double getEndSize() {
+		return m_endSize;
+	} //
+	
+	public double getSize() {
+		return m_size;
+	} //
+	
+	public void setSize(double size) {
+		m_size = size;
+	} //
+	
+	public void setStartSize(double size) {
+		m_startSize = size;
+	} //
+
+	public void setEndSize(double size) {
+		m_endSize = size;
+	} //
+			
+	public void updateSize(double size) {
+		m_startSize = m_size;
+		m_endSize = size;
+	} //
+	
+	public Font getFont() {
+		return m_font;
+	} //
+	
+	public void setFont(Font f) {
+		m_font = f;
+	} //
+
+} // end of abstract class GraphItem
+@
+
+
+1.6
+log
+@More Javadoc updates
+@
+text
+@@
+
+
+1.5
+log
+@Updated node "fixing"
+@
+text
+@d44 3
+a46 3
+	protected double m_size;
+	protected double m_startSize;
+	protected double m_endSize;
+@
+
+
+1.4
+log
+@Minor updates
+@
+text
+@d43 1
+d100 3
+a102 3
+		m_size = 0;
+		m_startSize = 0;
+		m_endSize = 0;
+d291 8
+@
+
+
+1.3
+log
+@Added javadoc documentation
+@
+text
+@a23 3
+	public static final Class POINT_TYPE = Point2D.Float.class;
+	public static final Class MAP_TYPE   = HashMap.class; 
+	
+d52 4
+a55 8
+		try {
+			m_attrs         = (Map)MAP_TYPE.newInstance();
+			m_location      = (Point2D)POINT_TYPE.newInstance();
+			m_startLocation = (Point2D)POINT_TYPE.newInstance();
+			m_endLocation   = (Point2D)POINT_TYPE.newInstance();
+		} catch ( Exception e ) {
+			e.printStackTrace();
+		}
+@
+
+
+1.2
+log
+@Major commit of updated architecture
+@
+text
+@d14 2
+a15 6
+ * Abstract class for representing an entity to be visualized. Subclasses
+ * include Node, Edge, and Aggregate.
+ * 
+ * TODO: abstract the various properties into the attributes map?
+ * 
+ * Apr 22, 2003 - jheer - Created class
+d18 1
+a18 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+d21 2
+d27 1
+a27 1
+	protected ItemRegistry m_registry;  // the item registry this item is assoicated with
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@a2 1
+import java.awt.Color;
+d4 1
+d17 1
+a17 1
+ * TODO: abstract the various properties into the attributes map.
+d42 6
+a47 6
+	protected Color   m_color;
+	protected Color   m_startColor;
+	protected Color   m_endColor;
+	protected Color   m_fillColor;
+	protected Color   m_startFillColor;
+	protected Color   m_endFillColor;
+d260 5
+d293 1
+a293 1
+		return getRenderer().getBounds(this);
+d357 1
+a357 1
+	public Color getStartColor() {
+d361 1
+a361 1
+	public Color getEndColor() {
+d365 1
+a365 1
+	public Color getColor() {
+d369 1
+a369 1
+	public void setColor(Color color) {
+d373 1
+a373 1
+	public void updateColor(Color color) {
+d378 1
+a378 1
+	public Color getStartFillColor() {
+d382 1
+a382 1
+	public Color getEndFillColor() {
+d386 1
+a386 1
+	public Color getFillColor() {
+d390 1
+a390 1
+	public void setFillColor(Color color) {
+d394 1
+a394 1
+	public void updateFillColor(Color color) {
+@
+

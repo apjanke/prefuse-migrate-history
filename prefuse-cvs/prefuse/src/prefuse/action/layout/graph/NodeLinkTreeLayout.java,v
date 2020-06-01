@@ -1,0 +1,1464 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.1
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.02.20.09.33.16;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.27.09.05.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Updated end of class comment
+@
+text
+@package prefuse.action.layout.graph;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.data.Graph;
+import prefuse.data.Schema;
+import prefuse.data.tuple.TupleSet;
+import prefuse.util.ArrayLib;
+import prefuse.visual.NodeItem;
+
+/**
+ * <p>TreeLayout that computes a tidy layout of a node-link tree
+ * diagram. This algorithm lays out a rooted tree such that each
+ * depth level of the tree is on a shared line. The orientation of the
+ * tree can be set such that the tree goes left-to-right (default),
+ * right-to-left, top-to-bottom, or bottom-to-top.</p>
+ * 
+ * <p>The algorithm used is that of Christoph Buchheim, Michael Jünger,
+ * and Sebastian Leipert from their research paper
+ * <a href="http://citeseer.ist.psu.edu/buchheim02improving.html">
+ * Improving Walker's Algorithm to Run in Linear Time</a>, Graph Drawing 2002.
+ * This algorithm corrects performance issues in Walker's algorithm, which
+ * generalizes Reingold and Tilford's method for tidy drawings of trees to
+ * support trees with an arbitrary number of children at any given node.</p>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class NodeLinkTreeLayout extends TreeLayout {
+    
+    private int    m_orientation;  // the orientation of the tree
+    private double m_bspace = 5;   // the spacing between sibling nodes
+    private double m_tspace = 25;  // the spacing between subtrees
+    private double m_dspace = 50;  // the spacing between depth levels
+    private double m_offset = 50;  // pixel offset for root node position
+    
+    private double[] m_depths = new double[10];
+    private int      m_maxDepth = 0;
+    
+    private double m_ax, m_ay; // for holding anchor co-ordinates
+    
+    /**
+     * Create a new NodeLinkTreeLayout. A left-to-right orientation is assumed.
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+     */
+    public NodeLinkTreeLayout(String group) {
+        super(group);
+        m_orientation = Constants.ORIENT_LEFT_RIGHT;
+    }
+    
+    /**
+     * Create a new NodeLinkTreeLayout.
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+     * @@param orientation the orientation of the tree layout. One of
+     * {@@link prefuse.Constants#ORIENT_LEFT_RIGHT},
+     * {@@link prefuse.Constants#ORIENT_RIGHT_LEFT},
+     * {@@link prefuse.Constants#ORIENT_TOP_BOTTOM}, or
+     * {@@link prefuse.Constants#ORIENT_BOTTOM_TOP}.
+     * @@param dspace the spacing to maintain between depth levels of the tree
+     * @@param bspace the spacing to maintain between sibling nodes
+     * @@param tspace the spacing to maintain between neighboring subtrees
+     */
+    public NodeLinkTreeLayout(String group, int orientation,
+            double dspace, double bspace, double tspace)
+    {
+        super(group);
+        m_orientation = orientation;
+        m_dspace = dspace;
+        m_bspace = bspace;
+        m_tspace = tspace;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Set the orientation of the tree layout.
+     * @@param orientation the orientation value. One of
+     * {@@link prefuse.Constants#ORIENT_LEFT_RIGHT},
+     * {@@link prefuse.Constants#ORIENT_RIGHT_LEFT},
+     * {@@link prefuse.Constants#ORIENT_TOP_BOTTOM}, or
+     * {@@link prefuse.Constants#ORIENT_BOTTOM_TOP}.
+     */
+    public void setOrientation(int orientation) {
+        if ( orientation < 0 || 
+             orientation >= Constants.ORIENTATION_COUNT ||
+             orientation == Constants.ORIENT_CENTER )
+        {
+            throw new IllegalArgumentException(
+                "Unsupported orientation value: "+orientation);
+        }
+        m_orientation = orientation;
+    }
+    
+    /**
+     * Get the orientation of the tree layout.
+     * @@return the orientation value. One of
+     * {@@link prefuse.Constants#ORIENT_LEFT_RIGHT},
+     * {@@link prefuse.Constants#ORIENT_RIGHT_LEFT},
+     * {@@link prefuse.Constants#ORIENT_TOP_BOTTOM}, or
+     * {@@link prefuse.Constants#ORIENT_BOTTOM_TOP}.
+     */
+    public int getOrientation() {
+        return m_orientation;
+    }
+    
+    /**
+     * Set the spacing between depth levels.
+     * @@param d the depth spacing to use
+     */
+    public void setDepthSpacing(double d) {
+        m_dspace = d;
+    }
+    
+    /**
+     * Get the spacing between depth levels.
+     * @@return the depth spacing
+     */
+    public double getDepthSpacing() {
+        return m_dspace;
+    }
+    
+    /**
+     * Set the spacing between neighbor nodes.
+     * @@param b the breadth spacing to use
+     */
+    public void setBreadthSpacing(double b) {
+        m_bspace = b;
+    }
+    
+    /**
+     * Get the spacing between neighbor nodes.
+     * @@return the breadth spacing
+     */
+    public double getBreadthSpacing() {
+        return m_bspace;
+    }
+    
+    /**
+     * Set the spacing between neighboring subtrees.
+     * @@param s the subtree spacing to use
+     */
+    public void setSubtreeSpacing(double s) {
+        m_tspace = s;
+    }
+    
+    /**
+     * Get the spacing between neighboring subtrees.
+     * @@return the subtree spacing
+     */
+    public double getSubtreeSpacing() {
+        return m_tspace;
+    }
+    
+    /**
+     * Set the offset value for placing the root node of the tree. The
+     * dimension in which this offset is applied is dependent upon the
+     * orientation of the tree. For example, in a left-to-right orientation,
+     * the offset will a horizontal offset from the left edge of the layout
+     * bounds.
+     * @@param o the value by which to offset the root node of the tree
+     */
+    public void setRootNodeOffset(double o) {
+        m_offset = o;
+    }
+    
+    /**
+     * Get the offset value for placing the root node of the tree.
+     * @@return the value by which the root node of the tree is offset
+     */
+    public double getRootNodeOffset() {
+        return m_offset;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.layout.Layout#getLayoutAnchor()
+     */
+    public Point2D getLayoutAnchor() {
+        if ( m_anchor != null )
+            return m_anchor;
+        
+        m_tmpa.setLocation(0,0);
+        if ( m_vis != null ) {
+            Display d = m_vis.getDisplay(0);
+            Rectangle2D b = this.getLayoutBounds();
+            switch ( m_orientation ) {
+            case Constants.ORIENT_LEFT_RIGHT:
+                m_tmpa.setLocation(m_offset, d.getHeight()/2.0);
+                break;
+            case Constants.ORIENT_RIGHT_LEFT:
+                m_tmpa.setLocation(b.getMaxX()-m_offset, d.getHeight()/2.0);
+                break;
+            case Constants.ORIENT_TOP_BOTTOM:
+                m_tmpa.setLocation(d.getWidth()/2.0, m_offset);
+                break;
+            case Constants.ORIENT_BOTTOM_TOP:
+                m_tmpa.setLocation(d.getWidth()/2.0, b.getMaxY()-m_offset);
+                break;
+            }
+            d.getInverseTransform().transform(m_tmpa, m_tmpa);
+        }
+        return m_tmpa;
+    }
+    
+    private double spacing(NodeItem l, NodeItem r, boolean siblings) {
+        boolean w = ( m_orientation == Constants.ORIENT_TOP_BOTTOM ||
+                      m_orientation == Constants.ORIENT_BOTTOM_TOP );
+        return (siblings ? m_bspace : m_tspace) + 0.5 *
+            ( w ? l.getBounds().getWidth() + r.getBounds().getWidth()
+                : l.getBounds().getHeight() + r.getBounds().getHeight() );
+    }
+    
+    private void updateDepths(int depth, NodeItem item) {
+        boolean v = ( m_orientation == Constants.ORIENT_TOP_BOTTOM ||
+                      m_orientation == Constants.ORIENT_BOTTOM_TOP );
+        double d = ( v ? item.getBounds().getHeight() 
+                       : item.getBounds().getWidth() );
+        if ( m_depths.length <= depth )
+            m_depths = ArrayLib.resize(m_depths, 3*depth/2);
+        m_depths[depth] = Math.max(m_depths[depth], d);
+        m_maxDepth = Math.max(m_maxDepth, depth);
+    }
+    
+    private void determineDepths() {
+        for ( int i=1; i<m_maxDepth; ++i )
+            m_depths[i] += m_depths[i-1] + m_dspace;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        Graph g = (Graph)m_vis.getGroup(m_group);
+        initSchema(g.getNodes());
+        
+        Arrays.fill(m_depths, 0);
+        m_maxDepth = 0;
+        
+        Point2D a = getLayoutAnchor();
+        m_ax = a.getX();
+        m_ay = a.getY();
+        
+        NodeItem root = getLayoutRoot();
+        Params rp = getParams(root);
+        
+        // do first pass - compute breadth information, collect depth info
+        firstWalk(root, 0, 1);
+        
+        // sum up the depth info
+        determineDepths();
+        
+        // do second pass - assign layout positions
+        secondWalk(root, null, -rp.prelim, 0);
+    }
+
+    private void firstWalk(NodeItem n, int num, int depth) {
+        Params np = getParams(n);
+        np.number = num;
+        updateDepths(depth, n);
+        
+        boolean expanded = n.isExpanded();
+        if ( n.getChildCount() == 0 || !expanded ) // is leaf
+        { 
+            NodeItem l = (NodeItem)n.getPreviousSibling();
+            if ( l == null ) {
+                np.prelim = 0;
+            } else {
+                np.prelim = getParams(l).prelim + spacing(l,n,true);
+            }
+        }
+        else if ( expanded )
+        {
+            NodeItem leftMost = (NodeItem)n.getFirstChild();
+            NodeItem rightMost = (NodeItem)n.getLastChild();
+            NodeItem defaultAncestor = leftMost;
+            NodeItem c = leftMost;
+            for ( int i=0; c != null; ++i, c = (NodeItem)c.getNextSibling() )
+            {
+                firstWalk(c, i, depth+1);
+                defaultAncestor = apportion(c, defaultAncestor);
+            }
+            
+            executeShifts(n);
+            
+            double midpoint = 0.5 *
+                (getParams(leftMost).prelim + getParams(rightMost).prelim);
+            
+            NodeItem left = (NodeItem)n.getPreviousSibling();
+            if ( left != null ) {
+                np.prelim = getParams(left).prelim + spacing(left, n, true);
+                np.mod = np.prelim - midpoint;
+            } else {
+                np.prelim = midpoint;
+            }
+        }
+    }
+    
+    private NodeItem apportion(NodeItem v, NodeItem a) {        
+        NodeItem w = (NodeItem)v.getPreviousSibling();
+        if ( w != null ) {
+            NodeItem vip, vim, vop, vom;
+            double   sip, sim, sop, som;
+            
+            vip = vop = v;
+            vim = w;
+            vom = (NodeItem)vip.getParent().getFirstChild();
+            
+            sip = getParams(vip).mod;
+            sop = getParams(vop).mod;
+            sim = getParams(vim).mod;
+            som = getParams(vom).mod;
+            
+            NodeItem nr = nextRight(vim);
+            NodeItem nl = nextLeft(vip);
+            while ( nr != null && nl != null ) {
+                vim = nr;
+                vip = nl;
+                vom = nextLeft(vom);
+                vop = nextRight(vop);
+                getParams(vop).ancestor = v;
+                double shift = (getParams(vim).prelim + sim) - 
+                    (getParams(vip).prelim + sip) + spacing(vim,vip,false);
+                if ( shift > 0 ) {
+                    moveSubtree(ancestor(vim,v,a), v, shift);
+                    sip += shift;
+                    sop += shift;
+                }
+                sim += getParams(vim).mod;
+                sip += getParams(vip).mod;
+                som += getParams(vom).mod;
+                sop += getParams(vop).mod;
+                
+                nr = nextRight(vim);
+                nl = nextLeft(vip);
+            }
+            if ( nr != null && nextRight(vop) == null ) {
+                Params vopp = getParams(vop);
+                vopp.thread = nr;
+                vopp.mod += sim - sop;
+            }
+            if ( nl != null && nextLeft(vom) == null ) {
+                Params vomp = getParams(vom);
+                vomp.thread = nl;
+                vomp.mod += sip - som;
+                a = v;
+            }
+        }
+        return a;
+    }
+    
+    private NodeItem nextLeft(NodeItem n) {
+        NodeItem c = null;
+        if ( n.isExpanded() ) c = (NodeItem)n.getFirstChild();
+        return ( c != null ? c : getParams(n).thread );
+    }
+    
+    private NodeItem nextRight(NodeItem n) {
+        NodeItem c = null;
+        if ( n.isExpanded() ) c = (NodeItem)n.getLastChild();
+        return ( c != null ? c : getParams(n).thread );
+    }
+    
+    private void moveSubtree(NodeItem wm, NodeItem wp, double shift) {
+        Params wmp = getParams(wm);
+        Params wpp = getParams(wp);
+        double subtrees = wpp.number - wmp.number;
+        wpp.change -= shift/subtrees;
+        wpp.shift += shift;
+        wmp.change += shift/subtrees;
+        wpp.prelim += shift;
+        wpp.mod += shift;
+    }
+    
+    private void executeShifts(NodeItem n) {
+        double shift = 0, change = 0;
+        for ( NodeItem c = (NodeItem)n.getLastChild();
+              c != null; c = (NodeItem)c.getPreviousSibling() )
+        {
+            Params cp = getParams(c);
+            cp.prelim += shift;
+            cp.mod += shift;
+            change += cp.change;
+            shift += cp.shift + change;
+        }
+    }
+    
+    private NodeItem ancestor(NodeItem vim, NodeItem v, NodeItem a) {
+        NodeItem p = (NodeItem)v.getParent();
+        Params vimp = getParams(vim);
+        if ( vimp.ancestor.getParent() == p ) {
+            return vimp.ancestor;
+        } else {
+            return a;
+        }
+    }
+    
+    private void secondWalk(NodeItem n, NodeItem p, double m, int depth) {
+        Params np = getParams(n);
+        setBreadth(n, p, np.prelim + m);
+        setDepth(n, p, m_depths[depth]);
+        
+        if ( n.isExpanded() ) {
+            depth += 1;
+            for ( NodeItem c = (NodeItem)n.getFirstChild();
+                  c != null; c = (NodeItem)c.getNextSibling() )
+            {
+                secondWalk(c, n, m + np.mod, depth);
+            }
+        }
+        
+        np.clear();
+    }
+    
+    private void setBreadth(NodeItem n, NodeItem p, double b) {
+        switch ( m_orientation ) {
+        case Constants.ORIENT_LEFT_RIGHT:
+        case Constants.ORIENT_RIGHT_LEFT:
+            setY(n, p, m_ay + b);
+            break;
+        case Constants.ORIENT_TOP_BOTTOM:
+        case Constants.ORIENT_BOTTOM_TOP:
+            setX(n, p, m_ax + b);
+            break;
+        default:
+            throw new IllegalStateException();
+        }
+    }
+    
+    private void setDepth(NodeItem n, NodeItem p, double d) {
+        switch ( m_orientation ) {
+        case Constants.ORIENT_LEFT_RIGHT:
+            setX(n, p, m_ax + d);
+            break;
+        case Constants.ORIENT_RIGHT_LEFT:
+            setX(n, p, m_ax - d);
+            break;
+        case Constants.ORIENT_TOP_BOTTOM:
+            setY(n, p, m_ay + d);
+            break;
+        case Constants.ORIENT_BOTTOM_TOP:
+            setY(n, p, m_ay - d);
+            break;
+        default:
+            throw new IllegalStateException();
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Params Schema
+    
+    /**
+     * The data field in which the parameters used by this layout are stored.
+     */
+    public static final String PARAMS = "_reingoldTilfordParams";
+    /**
+     * The schema for the parameters used by this layout.
+     */
+    public static final Schema PARAMS_SCHEMA = new Schema();
+    static {
+        PARAMS_SCHEMA.addColumn(PARAMS, Params.class);
+    }
+    
+    protected void initSchema(TupleSet ts) {
+        ts.addColumns(PARAMS_SCHEMA);
+    }
+    
+    private Params getParams(NodeItem item) {
+        Params rp = (Params)item.get(PARAMS);
+        if ( rp == null ) {
+            rp = new Params();
+            item.set(PARAMS, rp);
+        }
+        if ( rp.number == -2 ) {
+            rp.init(item);
+        }
+        return rp;
+    }
+    
+    /**
+     * Wrapper class holding parameters used for each node in this layout.
+     */
+    public static class Params implements Cloneable {
+        double prelim;
+        double mod;
+        double shift;
+        double change;
+        int    number = -2;
+        NodeItem ancestor = null;
+        NodeItem thread = null;
+        
+        public void init(NodeItem item) {
+            ancestor = item;
+            number = -1;
+        }
+        
+        public void clear() {
+            number = -2;
+            prelim = mod = shift = change = 0;
+            ancestor = thread = null;
+        }
+    }
+    
+} // end of class NodeLinkTreeLayout
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a5 1
+import java.util.List;
+d7 1
+a8 1
+import prefuse.action.layout.Orientation;
+d21 1
+a21 1
+ *
+d29 1
+a29 1
+ *
+d33 2
+a34 2
+
+    private Orientation    m_orientation;  // the orientation of the tree
+d39 1
+a39 1
+
+d42 1
+a42 1
+
+d44 1
+a44 1
+
+d51 1
+a51 1
+        m_orientation = Orientation.LEFT_RIGHT;
+d53 1
+a53 1
+
+d58 4
+a61 4
+     * {@@link Orientation#LEFT_RIGHT},
+     * {@@link Orientation#RIGHT_LEFT},
+     * {@@link Orientation#TOP_BOTTOM}, or
+     * {@@link Orientation#BOTTOM_TOP}.
+d66 1
+a66 1
+    public NodeLinkTreeLayout(String group, Orientation orientation,
+d75 1
+a75 1
+
+d77 1
+a77 1
+
+d81 9
+a89 7
+     * {@@link Orientation#LEFT_RIGHT},
+     * {@@link Orientation#RIGHT_LEFT},
+     * {@@link Orientation#TOP_BOTTOM}, or
+     * {@@link Orientation#BOTTOM_TOP}.
+     */
+    public void setOrientation(Orientation orientation) {
+        if ( orientation == Orientation.CENTER )
+d96 1
+a96 1
+
+d100 4
+a103 4
+     * {@@link Orientation#LEFT_RIGHT},
+     * {@@link Orientation#RIGHT_LEFT},
+     * {@@link Orientation#TOP_BOTTOM}, or
+     * {@@link Orientation#BOTTOM_TOP}.
+d105 1
+a105 1
+    public Orientation getOrientation() {
+d108 1
+a108 1
+
+d116 1
+a116 1
+
+d124 1
+a124 1
+
+d132 1
+a132 1
+
+d140 1
+a140 1
+
+d148 1
+a148 1
+
+d156 1
+a156 1
+
+d168 1
+a168 1
+
+d176 1
+a176 1
+
+d178 1
+a178 1
+
+d182 4
+a185 6
+    @@Override
+	public Point2D getLayoutAnchor() {
+        if ( m_anchor != null ) {
+			return m_anchor;
+		}
+
+d191 1
+a191 1
+            case LEFT_RIGHT:
+d194 1
+a194 1
+            case RIGHT_LEFT:
+d197 1
+a197 1
+            case TOP_BOTTOM:
+d200 1
+a200 1
+            case BOTTOM_TOP:
+d208 16
+a223 28
+
+    private double spacing(NodeItem<?,?> l, NodeItem<?,?> r, boolean siblings) {
+
+		switch (m_orientation) {
+		case LEFT_RIGHT:
+		case RIGHT_LEFT: {
+			return (siblings ? m_bspace : m_tspace) + l.getBounds().getHeight();
+		}
+		case TOP_BOTTOM:
+		case BOTTOM_TOP: {
+			return (siblings ? m_bspace : m_tspace) + l.getBounds().getWidth();
+		}
+
+		default: {
+			throw new IllegalStateException("unexpected orientation!");
+		}
+		}
+
+	}
+
+    private void updateDepths(int depth, NodeItem<?,?> item) {
+        boolean v = m_orientation == Orientation.TOP_BOTTOM ||
+                      m_orientation == Orientation.BOTTOM_TOP;
+        double d = v ? item.getBounds().getHeight()
+                       : item.getBounds().getWidth();
+        if ( m_depths.length <= depth ) {
+			m_depths = ArrayLib.resize(m_depths, 3*depth/2);
+		}
+d227 1
+a227 1
+
+d229 2
+a230 3
+        for ( int i=1; i<m_maxDepth; ++i ) {
+			m_depths[i] += m_depths[i-1] + m_dspace;
+		}
+d232 1
+a232 1
+
+d234 1
+a234 1
+
+d238 2
+a239 3
+    @@Override
+	public void run(double frac) {
+        Graph<?,?,?> g = (Graph<?,?,?>) m_vis.getGroup(m_group);
+d241 1
+a241 1
+
+d244 1
+a244 1
+
+d248 2
+a249 2
+
+        NodeItem<?,?> root = getLayoutRoot();
+d251 1
+a251 1
+
+d254 1
+a254 1
+
+d257 1
+a257 1
+
+d262 1
+a262 1
+    private void firstWalk(NodeItem<?,?> n, int num, int depth) {
+d266 1
+a266 1
+
+d268 3
+a270 3
+        if ( n.children().isEmpty() || !expanded ) // is leaf
+        {
+            NodeItem<?,?> l = n.getPreviousSibling();
+d279 10
+a288 17
+            NodeItem<?, ?> leftMost = null;
+			NodeItem<?, ?> rightMost = null;
+			{
+				NodeItem<?, ?> defaultAncestor = null;
+				int i = 0;
+				for (NodeItem<?, ?> c : n.children()) {
+					if (leftMost == null) {
+						leftMost = c;
+						defaultAncestor = c;
+					}
+					firstWalk(c, i, depth + 1);
+					defaultAncestor = apportion(c, defaultAncestor);
+					i++;
+					rightMost = c;
+				}
+			}
+
+d290 1
+a290 1
+
+d293 2
+a294 2
+
+            NodeItem<?,?> left = n.getPreviousSibling();
+d303 3
+a305 3
+
+    private NodeItem<?,?> apportion(NodeItem<?,?> v, NodeItem<?,?> a) {
+        NodeItem<?,?> w = v.getPreviousSibling();
+d307 1
+a307 1
+            NodeItem<?,?> vip, vim, vop, vom;
+d309 1
+a309 1
+
+d312 2
+a313 2
+            vom = vip.getParent().children().get(0);
+
+d318 3
+a320 3
+
+            NodeItem<?,?> nr = nextRight(vim);
+            NodeItem<?,?> nl = nextLeft(vip);
+d327 1
+a327 1
+                double shift = getParams(vim).prelim + sim -
+d338 1
+a338 1
+
+d356 11
+a366 17
+
+    private NodeItem<?,?> nextLeft(NodeItem<?,?> n) {
+        NodeItem<?,?> c = null;
+        if ( n.isExpanded() ) {
+        	List<NodeItem<?,?>> cc = (List<NodeItem<?,?>>) (Object) n.children();
+        	c = (cc.isEmpty() ? null : cc.get(0));
+		}
+        return c != null ? c : getParams(n).thread;
+    }
+
+    private NodeItem<?,?> nextRight(NodeItem<?,?> n) {
+        NodeItem<?,?> c = null;
+        if ( n.isExpanded() ) {
+        	List<NodeItem<?,?>> cc = (List<NodeItem<?,?>>) (Object) n.children();
+        	c = (cc.isEmpty() ? null : cc.get(cc.size() - 1));
+		}
+        return c != null ? c : getParams(n).thread;
+d368 2
+a369 2
+
+    private void moveSubtree(NodeItem<?,?> wm, NodeItem<?,?> wp, double shift) {
+d379 2
+a380 2
+
+    private void executeShifts(NodeItem<?,?> n) {
+d382 3
+a384 4
+
+    	List<NodeItem<?,?>> cc = (List<NodeItem<?,?>>) (Object) n.children();
+    	for(int i = cc.size() - 1; i >= 0; i--) {
+    		NodeItem<?,?> c = cc.get(i);
+d392 3
+a394 3
+
+    private NodeItem<?,?> ancestor(NodeItem<?,?> vim, NodeItem<?,?> v, NodeItem<?,?> a) {
+        NodeItem<?,?> p = v.getParent();
+d402 2
+a403 2
+
+    private void secondWalk(NodeItem<?,?> n, NodeItem<?,?> p, double m, int depth) {
+d407 1
+a407 1
+
+d409 4
+a412 2
+            depth++;
+            for (NodeItem<?,?> c : n.children()) {
+d416 1
+a416 1
+
+d419 2
+a420 2
+
+    private void setBreadth(NodeItem<?,?> n, NodeItem<?,?> p, double b) {
+d422 2
+a423 2
+        case LEFT_RIGHT:
+        case RIGHT_LEFT:
+d426 2
+a427 2
+        case TOP_BOTTOM:
+        case BOTTOM_TOP:
+d434 2
+a435 2
+
+    private void setDepth(NodeItem<?,?> n, NodeItem<?,?> p, double d) {
+d437 1
+a437 1
+        case LEFT_RIGHT:
+d440 1
+a440 1
+        case RIGHT_LEFT:
+d443 1
+a443 1
+        case TOP_BOTTOM:
+d446 1
+a446 1
+        case BOTTOM_TOP:
+d453 1
+a453 1
+
+d456 1
+a456 1
+
+d468 2
+a469 2
+
+    protected void initSchema(TupleSet<?> ts) {
+d472 2
+a473 2
+
+    private Params getParams(NodeItem<?,?> item) {
+d484 1
+a484 1
+
+d494 4
+a497 4
+        NodeItem<?,?> ancestor = null;
+        NodeItem<?,?> thread = null;
+
+        public void init(NodeItem<?,?> item) {
+d501 1
+a501 1
+
+d508 1
+a508 1
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d509 1
+a509 1
+} // end of class ReingoldTilfordLayout
+@
+
+
+1.1
+log
+@file NodeLinkTreeLayout.java was initially added on branch beta.
+@
+text
+@d1 509
+@
+
+
+1.1.2.1
+log
+@Lots of javadoc
+@
+text
+@a0 509
+package prefuse.action.layout.graph;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.data.Graph;
+import prefuse.data.Schema;
+import prefuse.data.tuple.TupleSet;
+import prefuse.util.ArrayLib;
+import prefuse.visual.NodeItem;
+
+/**
+ * <p>TreeLayout that computes a tidy layout of a node-link tree
+ * diagram. This algorithm lays out a rooted tree such that each
+ * depth level of the tree is on a shared line. The orientation of the
+ * tree can be set such that the tree goes left-to-right (default),
+ * right-to-left, top-to-bottom, or bottom-to-top.</p>
+ * 
+ * <p>The algorithm used is that of Christoph Buchheim, Michael Jünger,
+ * and Sebastian Leipert from their research paper
+ * <a href="http://citeseer.ist.psu.edu/buchheim02improving.html">
+ * Improving Walker's Algorithm to Run in Linear Time</a>, Graph Drawing 2002.
+ * This algorithm corrects performance issues in Walker's algorithm, which
+ * generalizes Reingold and Tilford's method for tidy drawings of trees to
+ * support trees with an arbitrary number of children at any given node.</p>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class NodeLinkTreeLayout extends TreeLayout {
+    
+    private int    m_orientation;  // the orientation of the tree
+    private double m_bspace = 5;   // the spacing between sibling nodes
+    private double m_tspace = 25;  // the spacing between subtrees
+    private double m_dspace = 50;  // the spacing between depth levels
+    private double m_offset = 50;  // pixel offset for root node position
+    
+    private double[] m_depths = new double[10];
+    private int      m_maxDepth = 0;
+    
+    private double m_ax, m_ay; // for holding anchor co-ordinates
+    
+    /**
+     * Create a new NodeLinkTreeLayout. A left-to-right orientation is assumed.
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+     */
+    public NodeLinkTreeLayout(String group) {
+        super(group);
+        m_orientation = Constants.ORIENT_LEFT_RIGHT;
+    }
+    
+    /**
+     * Create a new NodeLinkTreeLayout.
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+     * @@param orientation the orientation of the tree layout. One of
+     * {@@link prefuse.Constants#ORIENT_LEFT_RIGHT},
+     * {@@link prefuse.Constants#ORIENT_RIGHT_LEFT},
+     * {@@link prefuse.Constants#ORIENT_TOP_BOTTOM}, or
+     * {@@link prefuse.Constants#ORIENT_BOTTOM_TOP}.
+     * @@param dspace the spacing to maintain between depth levels of the tree
+     * @@param bspace the spacing to maintain between sibling nodes
+     * @@param tspace the spacing to maintain between neighboring subtrees
+     */
+    public NodeLinkTreeLayout(String group, int orientation,
+            double dspace, double bspace, double tspace)
+    {
+        super(group);
+        m_orientation = orientation;
+        m_dspace = dspace;
+        m_bspace = bspace;
+        m_tspace = tspace;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Set the orientation of the tree layout.
+     * @@param orientation the orientation value. One of
+     * {@@link prefuse.Constants#ORIENT_LEFT_RIGHT},
+     * {@@link prefuse.Constants#ORIENT_RIGHT_LEFT},
+     * {@@link prefuse.Constants#ORIENT_TOP_BOTTOM}, or
+     * {@@link prefuse.Constants#ORIENT_BOTTOM_TOP}.
+     */
+    public void setOrientation(int orientation) {
+        if ( orientation < 0 || 
+             orientation >= Constants.ORIENTATION_COUNT ||
+             orientation == Constants.ORIENT_CENTER )
+        {
+            throw new IllegalArgumentException(
+                "Unsupported orientation value: "+orientation);
+        }
+        m_orientation = orientation;
+    }
+    
+    /**
+     * Get the orientation of the tree layout.
+     * @@return the orientation value. One of
+     * {@@link prefuse.Constants#ORIENT_LEFT_RIGHT},
+     * {@@link prefuse.Constants#ORIENT_RIGHT_LEFT},
+     * {@@link prefuse.Constants#ORIENT_TOP_BOTTOM}, or
+     * {@@link prefuse.Constants#ORIENT_BOTTOM_TOP}.
+     */
+    public int getOrientation() {
+        return m_orientation;
+    }
+    
+    /**
+     * Set the spacing between depth levels.
+     * @@param d the depth spacing to use
+     */
+    public void setDepthSpacing(double d) {
+        m_dspace = d;
+    }
+    
+    /**
+     * Get the spacing between depth levels.
+     * @@return the depth spacing
+     */
+    public double getDepthSpacing() {
+        return m_dspace;
+    }
+    
+    /**
+     * Set the spacing between neighbor nodes.
+     * @@param b the breadth spacing to use
+     */
+    public void setBreadthSpacing(double b) {
+        m_bspace = b;
+    }
+    
+    /**
+     * Get the spacing between neighbor nodes.
+     * @@return the breadth spacing
+     */
+    public double getBreadthSpacing() {
+        return m_bspace;
+    }
+    
+    /**
+     * Set the spacing between neighboring subtrees.
+     * @@param s the subtree spacing to use
+     */
+    public void setSubtreeSpacing(double s) {
+        m_tspace = s;
+    }
+    
+    /**
+     * Get the spacing between neighboring subtrees.
+     * @@return the subtree spacing
+     */
+    public double getSubtreeSpacing() {
+        return m_tspace;
+    }
+    
+    /**
+     * Set the offset value for placing the root node of the tree. The
+     * dimension in which this offset is applied is dependent upon the
+     * orientation of the tree. For example, in a left-to-right orientation,
+     * the offset will a horizontal offset from the left edge of the layout
+     * bounds.
+     * @@param o the value by which to offset the root node of the tree
+     */
+    public void setRootNodeOffset(double o) {
+        m_offset = o;
+    }
+    
+    /**
+     * Get the offset value for placing the root node of the tree.
+     * @@return the value by which the root node of the tree is offset
+     */
+    public double getRootNodeOffset() {
+        return m_offset;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.layout.Layout#getLayoutAnchor()
+     */
+    public Point2D getLayoutAnchor() {
+        if ( m_anchor != null )
+            return m_anchor;
+        
+        m_tmpa.setLocation(0,0);
+        if ( m_vis != null ) {
+            Display d = m_vis.getDisplay(0);
+            Rectangle2D b = this.getLayoutBounds();
+            switch ( m_orientation ) {
+            case Constants.ORIENT_LEFT_RIGHT:
+                m_tmpa.setLocation(m_offset, d.getHeight()/2.0);
+                break;
+            case Constants.ORIENT_RIGHT_LEFT:
+                m_tmpa.setLocation(b.getMaxX()-m_offset, d.getHeight()/2.0);
+                break;
+            case Constants.ORIENT_TOP_BOTTOM:
+                m_tmpa.setLocation(d.getWidth()/2.0, m_offset);
+                break;
+            case Constants.ORIENT_BOTTOM_TOP:
+                m_tmpa.setLocation(d.getWidth()/2.0, b.getMaxY()-m_offset);
+                break;
+            }
+            d.getInverseTransform().transform(m_tmpa, m_tmpa);
+        }
+        return m_tmpa;
+    }
+    
+    private double spacing(NodeItem l, NodeItem r, boolean siblings) {
+        boolean w = ( m_orientation == Constants.ORIENT_TOP_BOTTOM ||
+                      m_orientation == Constants.ORIENT_BOTTOM_TOP );
+        return (siblings ? m_bspace : m_tspace) + 0.5 *
+            ( w ? l.getBounds().getWidth() + r.getBounds().getWidth()
+                : l.getBounds().getHeight() + r.getBounds().getHeight() );
+    }
+    
+    private void updateDepths(int depth, NodeItem item) {
+        boolean v = ( m_orientation == Constants.ORIENT_TOP_BOTTOM ||
+                      m_orientation == Constants.ORIENT_BOTTOM_TOP );
+        double d = ( v ? item.getBounds().getHeight() 
+                       : item.getBounds().getWidth() );
+        if ( m_depths.length <= depth )
+            m_depths = ArrayLib.resize(m_depths, 3*depth/2);
+        m_depths[depth] = Math.max(m_depths[depth], d);
+        m_maxDepth = Math.max(m_maxDepth, depth);
+    }
+    
+    private void determineDepths() {
+        for ( int i=1; i<m_maxDepth; ++i )
+            m_depths[i] += m_depths[i-1] + m_dspace;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        Graph g = (Graph)m_vis.getGroup(m_group);
+        initSchema(g.getNodes());
+        
+        Arrays.fill(m_depths, 0);
+        m_maxDepth = 0;
+        
+        Point2D a = getLayoutAnchor();
+        m_ax = a.getX();
+        m_ay = a.getY();
+        
+        NodeItem root = getLayoutRoot();
+        Params rp = getParams(root);
+        
+        // do first pass - compute breadth information, collect depth info
+        firstWalk(root, 0, 1);
+        
+        // sum up the depth info
+        determineDepths();
+        
+        // do second pass - assign layout positions
+        secondWalk(root, null, -rp.prelim, 0);
+    }
+
+    private void firstWalk(NodeItem n, int num, int depth) {
+        Params np = getParams(n);
+        np.number = num;
+        updateDepths(depth, n);
+        
+        boolean expanded = n.isExpanded();
+        if ( n.getChildCount() == 0 || !expanded ) // is leaf
+        { 
+            NodeItem l = (NodeItem)n.getPreviousSibling();
+            if ( l == null ) {
+                np.prelim = 0;
+            } else {
+                np.prelim = getParams(l).prelim + spacing(l,n,true);
+            }
+        }
+        else if ( expanded )
+        {
+            NodeItem leftMost = (NodeItem)n.getFirstChild();
+            NodeItem rightMost = (NodeItem)n.getLastChild();
+            NodeItem defaultAncestor = leftMost;
+            NodeItem c = leftMost;
+            for ( int i=0; c != null; ++i, c = (NodeItem)c.getNextSibling() )
+            {
+                firstWalk(c, i, depth+1);
+                defaultAncestor = apportion(c, defaultAncestor);
+            }
+            
+            executeShifts(n);
+            
+            double midpoint = 0.5 *
+                (getParams(leftMost).prelim + getParams(rightMost).prelim);
+            
+            NodeItem left = (NodeItem)n.getPreviousSibling();
+            if ( left != null ) {
+                np.prelim = getParams(left).prelim + spacing(left, n, true);
+                np.mod = np.prelim - midpoint;
+            } else {
+                np.prelim = midpoint;
+            }
+        }
+    }
+    
+    private NodeItem apportion(NodeItem v, NodeItem a) {        
+        NodeItem w = (NodeItem)v.getPreviousSibling();
+        if ( w != null ) {
+            NodeItem vip, vim, vop, vom;
+            double   sip, sim, sop, som;
+            
+            vip = vop = v;
+            vim = w;
+            vom = (NodeItem)vip.getParent().getFirstChild();
+            
+            sip = getParams(vip).mod;
+            sop = getParams(vop).mod;
+            sim = getParams(vim).mod;
+            som = getParams(vom).mod;
+            
+            NodeItem nr = nextRight(vim);
+            NodeItem nl = nextLeft(vip);
+            while ( nr != null && nl != null ) {
+                vim = nr;
+                vip = nl;
+                vom = nextLeft(vom);
+                vop = nextRight(vop);
+                getParams(vop).ancestor = v;
+                double shift = (getParams(vim).prelim + sim) - 
+                    (getParams(vip).prelim + sip) + spacing(vim,vip,false);
+                if ( shift > 0 ) {
+                    moveSubtree(ancestor(vim,v,a), v, shift);
+                    sip += shift;
+                    sop += shift;
+                }
+                sim += getParams(vim).mod;
+                sip += getParams(vip).mod;
+                som += getParams(vom).mod;
+                sop += getParams(vop).mod;
+                
+                nr = nextRight(vim);
+                nl = nextLeft(vip);
+            }
+            if ( nr != null && nextRight(vop) == null ) {
+                Params vopp = getParams(vop);
+                vopp.thread = nr;
+                vopp.mod += sim - sop;
+            }
+            if ( nl != null && nextLeft(vom) == null ) {
+                Params vomp = getParams(vom);
+                vomp.thread = nl;
+                vomp.mod += sip - som;
+                a = v;
+            }
+        }
+        return a;
+    }
+    
+    private NodeItem nextLeft(NodeItem n) {
+        NodeItem c = null;
+        if ( n.isExpanded() ) c = (NodeItem)n.getFirstChild();
+        return ( c != null ? c : getParams(n).thread );
+    }
+    
+    private NodeItem nextRight(NodeItem n) {
+        NodeItem c = null;
+        if ( n.isExpanded() ) c = (NodeItem)n.getLastChild();
+        return ( c != null ? c : getParams(n).thread );
+    }
+    
+    private void moveSubtree(NodeItem wm, NodeItem wp, double shift) {
+        Params wmp = getParams(wm);
+        Params wpp = getParams(wp);
+        double subtrees = wpp.number - wmp.number;
+        wpp.change -= shift/subtrees;
+        wpp.shift += shift;
+        wmp.change += shift/subtrees;
+        wpp.prelim += shift;
+        wpp.mod += shift;
+    }
+    
+    private void executeShifts(NodeItem n) {
+        double shift = 0, change = 0;
+        for ( NodeItem c = (NodeItem)n.getLastChild();
+              c != null; c = (NodeItem)c.getPreviousSibling() )
+        {
+            Params cp = getParams(c);
+            cp.prelim += shift;
+            cp.mod += shift;
+            change += cp.change;
+            shift += cp.shift + change;
+        }
+    }
+    
+    private NodeItem ancestor(NodeItem vim, NodeItem v, NodeItem a) {
+        NodeItem p = (NodeItem)v.getParent();
+        Params vimp = getParams(vim);
+        if ( vimp.ancestor.getParent() == p ) {
+            return vimp.ancestor;
+        } else {
+            return a;
+        }
+    }
+    
+    private void secondWalk(NodeItem n, NodeItem p, double m, int depth) {
+        Params np = getParams(n);
+        setBreadth(n, p, np.prelim + m);
+        setDepth(n, p, m_depths[depth]);
+        
+        if ( n.isExpanded() ) {
+            depth += 1;
+            for ( NodeItem c = (NodeItem)n.getFirstChild();
+                  c != null; c = (NodeItem)c.getNextSibling() )
+            {
+                secondWalk(c, n, m + np.mod, depth);
+            }
+        }
+        
+        np.clear();
+    }
+    
+    private void setBreadth(NodeItem n, NodeItem p, double b) {
+        switch ( m_orientation ) {
+        case Constants.ORIENT_LEFT_RIGHT:
+        case Constants.ORIENT_RIGHT_LEFT:
+            setY(n, p, m_ay + b);
+            break;
+        case Constants.ORIENT_TOP_BOTTOM:
+        case Constants.ORIENT_BOTTOM_TOP:
+            setX(n, p, m_ax + b);
+            break;
+        default:
+            throw new IllegalStateException();
+        }
+    }
+    
+    private void setDepth(NodeItem n, NodeItem p, double d) {
+        switch ( m_orientation ) {
+        case Constants.ORIENT_LEFT_RIGHT:
+            setX(n, p, m_ax + d);
+            break;
+        case Constants.ORIENT_RIGHT_LEFT:
+            setX(n, p, m_ax - d);
+            break;
+        case Constants.ORIENT_TOP_BOTTOM:
+            setY(n, p, m_ay + d);
+            break;
+        case Constants.ORIENT_BOTTOM_TOP:
+            setY(n, p, m_ay - d);
+            break;
+        default:
+            throw new IllegalStateException();
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Params Schema
+    
+    /**
+     * The data field in which the parameters used by this layout are stored.
+     */
+    public static final String PARAMS = "_reingoldTilfordParams";
+    /**
+     * The schema for the parameters used by this layout.
+     */
+    public static final Schema PARAMS_SCHEMA = new Schema();
+    static {
+        PARAMS_SCHEMA.addColumn(PARAMS, Params.class);
+    }
+    
+    protected void initSchema(TupleSet ts) {
+        ts.addColumns(PARAMS_SCHEMA);
+    }
+    
+    private Params getParams(NodeItem item) {
+        Params rp = (Params)item.get(PARAMS);
+        if ( rp == null ) {
+            rp = new Params();
+            item.set(PARAMS, rp);
+        }
+        if ( rp.number == -2 ) {
+            rp.init(item);
+        }
+        return rp;
+    }
+    
+    /**
+     * Wrapper class holding parameters used for each node in this layout.
+     */
+    public static class Params implements Cloneable {
+        double prelim;
+        double mod;
+        double shift;
+        double change;
+        int    number = -2;
+        NodeItem ancestor = null;
+        NodeItem thread = null;
+        
+        public void init(NodeItem item) {
+            ancestor = item;
+            number = -1;
+        }
+        
+        public void clear() {
+            number = -2;
+            prelim = mod = shift = change = 0;
+            ancestor = thread = null;
+        }
+    }
+    
+} // end of class ReingoldTilfordLayout
+@
+

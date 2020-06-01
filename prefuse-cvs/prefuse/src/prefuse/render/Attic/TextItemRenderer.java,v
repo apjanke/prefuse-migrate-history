@@ -1,0 +1,734 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.17;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.24.02.31.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.30.09.08.04;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.09.05.12.45;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file TextItemRenderer.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 289
+package prefuse.render;
+
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Shape;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RectangularShape;
+import java.awt.geom.RoundRectangle2D;
+
+import prefuse.Constants;
+import prefuse.util.ColorLib;
+import prefuse.util.FontLib;
+import prefuse.util.text.StringAbbreviator;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Renders an item as a text string. The text string used by default is the
+ * value of the "label" attribute. To use a different attribute, use the
+ * <code>setTextAttributeName</code> method. To perform custom String
+ * selection, simply subclass this Renderer and override the 
+ * <code>getText</code> method.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class TextItemRenderer extends ShapeRenderer {
+
+	protected String m_labelName = "label";
+	protected int m_xAlign = Constants.CENTER;
+	protected int m_yAlign = Constants.CENTER;
+	protected int m_horizBorder = 3;
+	protected int m_vertBorder = 0;
+
+	protected int m_maxTextWidth = -1;
+	protected int m_abbrevType = StringAbbreviator.TRUNCATE;
+	protected StringAbbreviator m_abbrev = StringAbbreviator.getInstance();
+	
+	protected RectangularShape m_textBox  = new Rectangle2D.Float();
+	protected Font m_font = FontLib.getFont("SansSerif", Font.PLAIN, 10);
+    
+	protected Point2D     m_tmpPoint = new Point2D.Float();
+
+	public TextItemRenderer() {
+	} //
+    
+    public TextItemRenderer(String field) {
+        this.setTextAttributeName(field);
+    } //
+
+    /**
+     * Sets the default font used by this Renderer. If calling getFont() on
+     * a VisualItem returns a non-null value, the returned Font will be used
+     * instead of this default one.
+     * @@param f the default font to use. Note that this will ONLY be used when
+     * if a VisualItem's getFont() method returns null.
+     */
+	public void setFont(Font f) {
+		m_font = f;
+	} //
+    
+    /**
+     * Rounds the corners of the bounding rectangle in which the text
+     * string is rendered.
+     * @@param arcWidth the width of the curved corner
+     * @@param arcHeight the height of the curved corner
+     */
+    public void setRoundedCorner(int arcWidth, int arcHeight) {
+        if ( (arcWidth == 0 || arcHeight == 0) && 
+            !(m_textBox instanceof Rectangle2D) ) {
+            m_textBox = new Rectangle2D.Float();
+        } else {
+            if ( !(m_textBox instanceof RoundRectangle2D) )
+                m_textBox = new RoundRectangle2D.Float();
+            ((RoundRectangle2D)m_textBox)
+                .setRoundRect(0,0,10,10,arcWidth,arcHeight);                    
+        }
+    } //
+
+	/**
+	 * Get the attribute name of the text to draw.
+	 * @@return the text tattribute name
+	 */
+	public String getTextAttributeName() {
+		return m_labelName;
+	} //
+	
+	/**
+	 * Set the attribute name for the text to draw.
+	 * @@param name the text attribute name
+	 */
+	public void setTextAttributeName(String name) {
+		m_labelName = name;
+	} //
+
+	/**
+	 * Sets the maximum width that should be allowed of the text label.
+	 * A value of -1 specifies no limit (this is the default).
+	 * @@param maxWidth the maximum width of the text or -1 for no limit
+	 */
+	public void setMaxTextWidth(int maxWidth) {
+	    m_maxTextWidth = maxWidth;
+	} //
+	
+	/**
+	 * Sets the type of abbreviation to be used if a text label is longer
+	 * than the maximum text width. The value should be one of the constants
+	 * provided by the {@@link prefuse.util.text.StringAbbreviator
+	 * StringAbbreviator} class. To enable abbreviation, you must first set
+	 * the maximum text width using the {@@link #setMaxTextWidth(int) 
+	 * setMaxTextWidth} method.
+	 * @@param abbrevType the abbreviation type to use. Should be one of the
+	 * constants provided by the 
+	 * {@@link prefuse.util.text.StringAbbreviator
+	 * StringAbbreviator} class (e.g. StringAbbreviator.TRUNCATE or 
+	 * StringAbbreviator.NAME).
+	 */
+	public void setAbbrevType(int abbrevType) {
+	    m_abbrevType = abbrevType;
+	} //
+	
+	/**
+	 * Returns the text to draw. Subclasses can override this class to
+	 * perform custom text rendering.
+	 * @@param item the item to represent as a <code>String</code>
+	 * @@return a <code>String</code> to draw
+	 */
+	protected String getText(VisualItem item) {
+        String s = null;
+        if ( item.canGetString(m_labelName) ) {
+    		s = item.getString(m_labelName);
+    		if ( m_maxTextWidth > -1 ) {
+    		    Font font = item.getFont();
+    		    if ( font == null ) { font = m_font; }
+    		    FontMetrics fm = DEFAULT_GRAPHICS.getFontMetrics(font);
+    		    if ( fm.stringWidth(s) > m_maxTextWidth ) {
+    		        s = m_abbrev.abbreviate(s, m_abbrevType, fm, m_maxTextWidth);		
+    		    }
+    		}
+        }
+		return s;
+	}
+
+	/**
+	 * @@see prefuse.render.ShapeRenderer#getRawShape(prefuse.a_old.VisualItem)
+	 */
+	protected Shape getRawShape(VisualItem item) {
+	    String s = getText(item);
+	    if ( s == null ) { s = ""; }
+	    m_font = item.getFont();
+        
+        // make renderer size-aware
+	    double size = item.getSize2D();
+	    if ( size != 1 )
+            m_font = FontLib.getFont(m_font.getName(), m_font.getStyle(),
+                    size*m_font.getSize());
+        
+		FontMetrics fm = DEFAULT_GRAPHICS.getFontMetrics(m_font);
+		double h = fm.getHeight() + size*2*m_vertBorder;
+		double w = fm.stringWidth(s) + size*2*m_horizBorder;
+		getAlignedPoint(m_tmpPoint, item, w, h, m_xAlign, m_yAlign);
+		m_textBox.setFrame(m_tmpPoint.getX(),m_tmpPoint.getY(),w,h);
+		return m_textBox;
+	} //
+	
+	/**
+	 * Helper method, which calculates the top-left co-ordinate of a node
+	 * given the node's alignment.
+	 */
+	protected static void getAlignedPoint(Point2D p, VisualItem item, 
+            double w, double h, int xAlign, int yAlign)
+    {
+		double x = item.getX(), y = item.getY();
+        if ( Double.isNaN(x) || Double.isInfinite(x) )
+            x = 0;
+        if ( Double.isNaN(y) || Double.isInfinite(y) )
+            y = 0;
+        
+		if ( xAlign == Constants.CENTER ) {
+			x = x-(w/2);
+		} else if ( xAlign == Constants.RIGHT ) {
+			x = x-w;
+		}
+		if ( yAlign == Constants.CENTER ) {
+			y = y-(h/2);
+		} else if ( yAlign == Constants.BOTTOM ) {
+			y = y-h;
+		}
+		p.setLocation(x,y);
+	} //
+
+	/**
+	 * @@see prefuse.render.Renderer#render(java.awt.Graphics2D, prefuse.a_old.VisualItem)
+	 */
+	public void render(Graphics2D g, VisualItem item) {
+        Shape shape = getShape(item);
+        if ( shape != null ) {
+            super.drawShape(g, item, shape);
+        
+            // now render the text
+			String s = getText(item);
+			if ( s != null ) {
+                Rectangle2D r = shape.getBounds2D();
+                g.setPaint(ColorLib.getColor(item.getTextColor()));
+                g.setFont(m_font);
+                FontMetrics fm = g.getFontMetrics();
+                double size = item.getSize2D();
+                double x = r.getX() + size*m_horizBorder;
+                double y = r.getY() + size*m_vertBorder;
+                g.drawString(s, (float)x, (float)y+fm.getAscent());
+			}
+		}
+	} //
+	
+	/**
+	 * Get the horizontal alignment of this node with respect to it's
+	 * location co-ordinate.
+	 * @@return the horizontal alignment
+	 */
+	public int getHorizontalAlignment() {
+		return m_xAlign;
+	} //
+	
+	/**
+	 * Get the vertical alignment of this node with respect to it's
+	 * location co-ordinate.
+	 * @@return the vertical alignment
+	 */
+	public int getVerticalAlignment() {
+		return m_yAlign;
+	} //
+	
+	/**
+	 * Set the horizontal alignment of this node with respect to it's
+	 * location co-ordinate.
+	 * @@param align the horizontal alignment
+	 */	
+	public void setHorizontalAlignment(int align) {
+		m_xAlign = align;
+	} //
+	
+	/**
+	 * Set the vertical alignment of this node with respect to it's
+	 * location co-ordinate.
+	 * @@param align the vertical alignment
+	 */	
+	public void setVerticalAlignment(int align) {
+		m_yAlign = align;
+	} //
+	
+    /**
+     * Returns the amount of padding in pixels between text 
+     * and the border of this item along the horizontal dimension.
+     * @@return the horizontal padding
+     */
+    public int getHorizontalPadding() {
+        return m_horizBorder;
+    } //
+    
+    /**
+     * Sets the amount of padding in pixels between text 
+     * and the border of this item along the horizontal dimension.
+     * @@param xpad the horizontal padding to set
+     */
+    public void setHorizontalPadding(int xpad) {
+        m_horizBorder = xpad;
+    } //
+    
+    /**
+     * Returns the amount of padding in pixels between text 
+     * and the border of this item along the vertical dimension.
+     * @@return the vertical padding
+     */
+    public int getVerticalPadding() {
+        return m_vertBorder;
+    } //
+    
+    /**
+     * Sets the amount of padding in pixels between text 
+     * and the border of this item along the vertical dimension.
+     * @@param ypad the vertical padding
+     */
+    public void setVerticalPadding(int ypad) {
+        m_vertBorder = ypad;
+    } //
+    
+} // end of class TextItemRenderer
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d31 5
+a35 5
+    protected String m_labelName = "label";
+    protected int m_xAlign = Constants.CENTER;
+    protected int m_yAlign = Constants.CENTER;
+    protected int m_horizBorder = 3;
+    protected int m_vertBorder = 0;
+d37 6
+a42 3
+    protected int m_maxTextWidth = -1;
+    protected int m_abbrevType = StringAbbreviator.TRUNCATE;
+    protected StringAbbreviator m_abbrev = StringAbbreviator.getInstance();
+d44 1
+a44 4
+    protected RectangularShape m_textBox  = new Rectangle2D.Float();
+    protected Font m_font = FontLib.getFont("SansSerif", Font.PLAIN, 10);
+    
+    protected Point2D     m_tmpPoint = new Point2D.Float();
+d46 2
+a47 2
+    public TextItemRenderer() {
+    } //
+d60 3
+a62 3
+    public void setFont(Font f) {
+        m_font = f;
+    } //
+d82 15
+a96 15
+    /**
+     * Get the attribute name of the text to draw.
+     * @@return the text tattribute name
+     */
+    public String getTextAttributeName() {
+        return m_labelName;
+    } //
+    
+    /**
+     * Set the attribute name for the text to draw.
+     * @@param name the text attribute name
+     */
+    public void setTextAttributeName(String name) {
+        m_labelName = name;
+    } //
+d98 33
+a130 33
+    /**
+     * Sets the maximum width that should be allowed of the text label.
+     * A value of -1 specifies no limit (this is the default).
+     * @@param maxWidth the maximum width of the text or -1 for no limit
+     */
+    public void setMaxTextWidth(int maxWidth) {
+        m_maxTextWidth = maxWidth;
+    } //
+    
+    /**
+     * Sets the type of abbreviation to be used if a text label is longer
+     * than the maximum text width. The value should be one of the constants
+     * provided by the {@@link prefuse.util.text.StringAbbreviator
+     * StringAbbreviator} class. To enable abbreviation, you must first set
+     * the maximum text width using the {@@link #setMaxTextWidth(int) 
+     * setMaxTextWidth} method.
+     * @@param abbrevType the abbreviation type to use. Should be one of the
+     * constants provided by the 
+     * {@@link prefuse.util.text.StringAbbreviator
+     * StringAbbreviator} class (e.g. StringAbbreviator.TRUNCATE or 
+     * StringAbbreviator.NAME).
+     */
+    public void setAbbrevType(int abbrevType) {
+        m_abbrevType = abbrevType;
+    } //
+    
+    /**
+     * Returns the text to draw. Subclasses can override this class to
+     * perform custom text rendering.
+     * @@param item the item to represent as a <code>String</code>
+     * @@return a <code>String</code> to draw
+     */
+    protected String getText(VisualItem item) {
+d133 9
+a141 9
+            s = item.getString(m_labelName);
+            if ( m_maxTextWidth > -1 ) {
+                Font font = item.getFont();
+                if ( font == null ) { font = m_font; }
+                FontMetrics fm = DEFAULT_GRAPHICS.getFontMetrics(font);
+                if ( fm.stringWidth(s) > m_maxTextWidth ) {
+                    s = m_abbrev.abbreviate(s, m_abbrevType, fm, m_maxTextWidth);       
+                }
+            }
+d143 2
+a144 2
+        return s;
+    }
+d146 7
+a152 7
+    /**
+     * @@see prefuse.render.ShapeRenderer#getRawShape(prefuse.a_old.VisualItem)
+     */
+    protected Shape getRawShape(VisualItem item) {
+        String s = getText(item);
+        if ( s == null ) { s = ""; }
+        m_font = item.getFont();
+d155 2
+a156 2
+        double size = item.getSize2D();
+        if ( size != 1 )
+d160 13
+a172 13
+        FontMetrics fm = DEFAULT_GRAPHICS.getFontMetrics(m_font);
+        double h = fm.getHeight() + size*2*m_vertBorder;
+        double w = fm.stringWidth(s) + size*2*m_horizBorder;
+        getAlignedPoint(m_tmpPoint, item, w, h, m_xAlign, m_yAlign);
+        m_textBox.setFrame(m_tmpPoint.getX(),m_tmpPoint.getY(),w,h);
+        return m_textBox;
+    } //
+    
+    /**
+     * Helper method, which calculates the top-left co-ordinate of a node
+     * given the node's alignment.
+     */
+    protected static void getAlignedPoint(Point2D p, VisualItem item, 
+d175 1
+a175 1
+        double x = item.getX(), y = item.getY();
+d181 12
+a192 12
+        if ( xAlign == Constants.CENTER ) {
+            x = x-(w/2);
+        } else if ( xAlign == Constants.RIGHT ) {
+            x = x-w;
+        }
+        if ( yAlign == Constants.CENTER ) {
+            y = y-(h/2);
+        } else if ( yAlign == Constants.BOTTOM ) {
+            y = y-h;
+        }
+        p.setLocation(x,y);
+    } //
+d194 4
+a197 4
+    /**
+     * @@see prefuse.render.Renderer#render(java.awt.Graphics2D, prefuse.a_old.VisualItem)
+     */
+    public void render(Graphics2D g, VisualItem item) {
+d203 2
+a204 2
+            String s = getText(item);
+            if ( s != null ) {
+d213 40
+a252 40
+            }
+        }
+    } //
+    
+    /**
+     * Get the horizontal alignment of this node with respect to it's
+     * location co-ordinate.
+     * @@return the horizontal alignment
+     */
+    public int getHorizontalAlignment() {
+        return m_xAlign;
+    } //
+    
+    /**
+     * Get the vertical alignment of this node with respect to it's
+     * location co-ordinate.
+     * @@return the vertical alignment
+     */
+    public int getVerticalAlignment() {
+        return m_yAlign;
+    } //
+    
+    /**
+     * Set the horizontal alignment of this node with respect to it's
+     * location co-ordinate.
+     * @@param align the horizontal alignment
+     */ 
+    public void setHorizontalAlignment(int align) {
+        m_xAlign = align;
+    } //
+    
+    /**
+     * Set the vertical alignment of this node with respect to it's
+     * location co-ordinate.
+     * @@param align the vertical alignment
+     */ 
+    public void setVerticalAlignment(int align) {
+        m_yAlign = align;
+    } //
+    
+@
+
+
+1.1.2.3
+log
+@Removed automatic 2D interpretation of size field.
+@
+text
+@d155 1
+a155 1
+        double size = item.getSize();
+d209 1
+a209 1
+                double size = item.getSize();
+@
+
+
+1.1.2.4
+log
+@Much more javadoc
+@
+text
+@d20 5
+a24 5
+ * Renderer that draws a text string. The text string used by default is the
+ * value of the "label" field. To use a different field, use the
+ * {@@link #setTextField(String)} method. To perform custom String
+ * selection, subclass this Renderer and override the 
+ * {@@link #getText(VisualItem)} method.
+d26 2
+a27 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a45 4
+    /**
+     * Create a new TextItemRenderer. By default the "label" is used as the
+     * field name for looking up text.
+     */
+d47 1
+a47 1
+    }
+a48 4
+    /**
+     * Create a new TextItemRenderer.
+     * @@param field the field to use for looking up text.
+     */
+d50 2
+a51 2
+        this.setTextField(field);
+    }
+d62 1
+a62 1
+    }
+d80 1
+a80 1
+    }
+d83 2
+a84 2
+     * Get the field name of the text to draw.
+     * @@return the text field name
+d86 1
+a86 1
+    public String getTextField() {
+d88 1
+a88 1
+    }
+d91 2
+a92 2
+     * Set the field name for the text to draw.
+     * @@param name the text field name
+d94 1
+a94 1
+    public void setTextField(String name) {
+d96 1
+a96 1
+    }
+d105 1
+a105 1
+    }
+d122 1
+a122 1
+    }
+d126 1
+a126 1
+     * perform custom text selection.
+d147 1
+a147 1
+     * @@see prefuse.render.ShapeRenderer#getRawShape(prefuse.visual.VisualItem)
+d166 1
+a166 1
+    }
+d192 2
+a193 2
+    }
+    
+d195 1
+a195 1
+     * @@see prefuse.render.Renderer#render(java.awt.Graphics2D, prefuse.visual.VisualItem)
+d215 1
+a215 1
+    }
+d220 1
+a220 3
+     * @@return the horizontal alignment, one of
+     * {@@link prefuse.Constants#LEFT}, {@@link prefuse.Constants#RIGHT}, or
+     * {@@link prefuse.Constants#CENTER}.
+d224 1
+a224 1
+    }
+d229 1
+a229 3
+     * @@return the vertical alignment, one of
+     * {@@link prefuse.Constants#TOP}, {@@link prefuse.Constants#BOTTOM}, or
+     * {@@link prefuse.Constants#CENTER}.
+d233 1
+a233 1
+    }
+d238 1
+a238 3
+     * @@param align the horizontal alignment, one of
+     * {@@link prefuse.Constants#LEFT}, {@@link prefuse.Constants#RIGHT}, or
+     * {@@link prefuse.Constants#CENTER}.
+d242 1
+a242 1
+    }
+d247 1
+a247 3
+     * @@param align the vertical alignment, one of
+     * {@@link prefuse.Constants#TOP}, {@@link prefuse.Constants#BOTTOM}, or
+     * {@@link prefuse.Constants#CENTER}.
+d251 1
+a251 1
+    }
+d260 1
+a260 1
+    }
+d269 1
+a269 1
+    }
+d278 1
+a278 1
+    }
+d287 1
+a287 1
+    }
+@
+
+
+1.1.2.5
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@d15 1
+a15 1
+import prefuse.util.StringLib;
+d37 2
+d115 17
+d146 1
+a146 1
+                    s = StringLib.abbreviate(s, fm, m_maxTextWidth);       
+@
+
+
+1.1.2.6
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@@
+
+

@@ -1,0 +1,53 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.01.23.23.55.37;	author jogiles;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file BinConstants.java was initially added on branch java_1_5.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a0 13
+package prefuse.action.assignment;
+
+/**
+ * This class is here as a transitional holder for a single constant. It should be removed in due course.
+ *
+ * @@author Anton Marsden
+ */
+public interface BinConstants {
+
+	/** Indicates a continuous (non-discrete) spectrum */
+	public static final int CONTINUOUS = -1;
+
+}
+@
+

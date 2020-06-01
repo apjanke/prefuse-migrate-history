@@ -1,0 +1,328 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.06;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.visual.expression;
+
+import prefuse.data.Schema;
+import prefuse.data.Tuple;
+import prefuse.data.expression.Predicate;
+import prefuse.visual.VisualItem;
+
+/**
+ * Expression that indicates if an item is currently a member of a particular
+ * data group. The data group name is provided by a String-valued
+ * sub-expression.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class InGroupPredicate extends GroupExpression implements Predicate {
+    
+    /**
+     * Create a new InGroupPredicate.
+     */
+    public InGroupPredicate() {
+    }
+    
+    /**
+     * Create a new InGroupPredicate.
+     * @@param group @@param group the data group name to use as a parameter
+     */
+    public InGroupPredicate(String group) {
+        super(group);
+    }
+    
+    /**
+     * @@see prefuse.data.expression.Expression#get(prefuse.data.Tuple)
+     */
+    public Object get(Tuple t) {
+        return getBoolean(t) ? Boolean.TRUE : Boolean.FALSE;
+    }
+    
+    /**
+     * @@see prefuse.data.expression.Expression#getBoolean(prefuse.data.Tuple)
+     */
+    public boolean getBoolean(Tuple t) {
+        if ( !(t instanceof VisualItem) )
+            return false;
+        
+        String group = getGroup(t);
+        if ( group == null ) {
+            return false;
+        }
+        VisualItem item = (VisualItem)t;
+        return item.getVisualization().isInGroup(item, group);
+    }
+
+    /**
+     * @@see prefuse.data.expression.Function#getName()
+     */
+    public String getName() {
+        return "INGROUP";
+    }
+
+    /**
+     * @@see prefuse.data.expression.Expression#getType(prefuse.data.Schema)
+     */
+    public Class getType(Schema s) {
+        return boolean.class;
+    }
+    
+} // end of class InGroupPredicate
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d12 1
+a12 1
+ *
+d16 1
+a16 1
+
+d22 1
+a22 1
+
+d30 1
+a30 1
+
+d34 1
+a34 2
+    @@Override
+	public Object get(Tuple<?> t) {
+d37 1
+a37 1
+
+d41 4
+a44 6
+    @@Override
+	public boolean getBoolean(Tuple<?> t) {
+        if ( !(t instanceof VisualItem) ) {
+			return false;
+		}
+
+d49 1
+a49 1
+        VisualItem<?> item = (VisualItem<?>)t;
+d66 1
+a66 1
+
+@
+
+
+1.1
+log
+@file InGroupPredicate.java was initially added on branch beta.
+@
+text
+@d1 67
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 44
+package prefuse.visual.expression;
+
+import prefuse.data.Schema;
+import prefuse.data.expression.Predicate;
+import prefuse.data.tuple.Tuple;
+import prefuse.visual.VisualItem;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class InGroupPredicate extends GroupExpression implements Predicate {
+    
+    public InGroupPredicate() {
+    }
+    
+    public InGroupPredicate(String group) {
+        super(group);
+    }
+    
+    public Object get(Tuple t) {
+        return getBoolean(t) ? Boolean.TRUE : Boolean.FALSE;
+    }
+    
+    public boolean getBoolean(Tuple t) {
+        if ( !(t instanceof VisualItem) )
+            return false;
+        
+        String group = getGroup(t);
+        if ( group == null ) {
+            return false;
+        }
+        VisualItem item = (VisualItem)t;
+        return item.getVisualization().isInGroup(item, group);
+    }
+
+    public String getName() {
+        return "INGROUP";
+    }
+
+    public Class getClass(Schema s) {
+        return boolean.class;
+    }
+    
+} // end of class InGroupPredicate
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@a8 4
+ * Expression that indicates if an item is currently a member of a particular
+ * data group. The data group name is provided by a String-valued
+ * sub-expression.
+ * 
+a12 3
+    /**
+     * Create a new InGroupPredicate.
+     */
+a15 4
+    /**
+     * Create a new InGroupPredicate.
+     * @@param group @@param group the data group name to use as a parameter
+     */
+a19 3
+    /**
+     * @@see prefuse.data.expression.Expression#get(prefuse.data.tuple.Tuple)
+     */
+a23 3
+    /**
+     * @@see prefuse.data.expression.Expression#getBoolean(prefuse.data.tuple.Tuple)
+     */
+a35 3
+    /**
+     * @@see prefuse.data.expression.Function#getName()
+     */
+a39 3
+    /**
+     * @@see prefuse.data.expression.Expression#getClass(prefuse.data.Schema)
+     */
+@
+
+
+1.1.2.3
+log
+@Javadoc'd.
+@
+text
+@d61 1
+a61 1
+     * @@see prefuse.data.expression.Expression#getType(prefuse.data.Schema)
+d63 1
+a63 1
+    public Class getType(Schema s) {
+@
+
+
+1.1.2.4
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d13 1
+a13 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.5
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a3 1
+import prefuse.data.Tuple;
+d5 1
+d32 1
+a32 1
+     * @@see prefuse.data.expression.Expression#get(prefuse.data.Tuple)
+d39 1
+a39 1
+     * @@see prefuse.data.expression.Expression#getBoolean(prefuse.data.Tuple)
+@
+
+

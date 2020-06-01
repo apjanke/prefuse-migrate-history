@@ -1,0 +1,444 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file TableVisualItem.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 362
+package prefuse.visual;
+
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.Visualization;
+import prefuse.data.Table;
+import prefuse.data.tuple.TableTuple;
+import prefuse.render.Renderer;
+import prefuse.util.PrefuseLib;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class TableVisualItem extends TableTuple implements VisualItem {
+    
+    public TableVisualItem(Visualization vis, String group, int row) {
+        super((Table)vis.getVisualGroup(group), row);
+        m_table.set(group, GROUP, row);
+    }
+
+    public Visualization getVisualization() {
+        return ((VisualTable)m_table).getVisualization();
+    }
+    
+    public String getGroup() {
+        return ((VisualTable)m_table).getGroup();
+    }
+    
+    public boolean isInGroup(String group) {
+        return getVisualization().isInGroup(this, group);
+    }
+    
+    public String toString() {
+        StringBuffer sbuf = new StringBuffer();
+        sbuf.append("VisualItem[").append(getGroup());
+        sbuf.append(",").append(m_row).append(',');
+        VisualTable vt = (VisualTable)m_table;
+        int local = vt.getLocalColumnCount();
+        int inherited = vt.getColumnCount()-local;
+        for ( int i=0; i<inherited; ++i ) {
+            if ( i > 0 ) sbuf.append(',');
+            String name = vt.getColumnName(local+i);
+            sbuf.append(name);
+            sbuf.append('=');
+            if ( vt.canGetString(name) )
+                sbuf.append(vt.getString(name, m_row));
+            else
+                sbuf.append(vt.get(name, m_row).toString());
+        }
+        sbuf.append(']');
+        
+        return sbuf.toString();
+    }
+    
+    // ------------------------------------------------------------------------
+    // VisualItem Methods
+    
+    public void render(Graphics2D g) {
+        getRenderer().render(g, this);
+    }
+    
+    public Renderer getRenderer() {
+        return getVisualization().getRenderer(this);
+    }
+    
+    public Rectangle2D validateBounds() {
+        if ( isValidated() ) return getBounds();
+        
+        Visualization v = getVisualization();
+        
+        // retrieve the old bounds to report damage
+        // access through the table to avoid infinite recursion
+        v.damageReport(this, ((VisualTable)m_table).getBounds(m_row));
+        
+        // set the new bounds from the renderer and validate
+        getRenderer().setBounds(this);
+        setValidated(true);
+        
+        // report damage from the new bounds and return
+        Rectangle2D bounds = getBounds();
+        v.damageReport(this, bounds);
+        return bounds;
+    }
+    
+    // -- Boolean Flags -------------------------------------------------------
+       
+    public boolean isValidated() {
+        return ((VisualTable)m_table).isValidated(m_row);
+    }
+    
+    public void setValidated(boolean value) {
+        ((VisualTable)m_table).setValidated(value, m_row);
+    }
+    
+    public boolean isVisible() {
+        return ((VisualTable)m_table).isVisible(m_row);
+    }
+    
+    public void setVisible(boolean value) {
+        ((VisualTable)m_table).setVisible(value, m_row);
+    }
+    
+    public boolean isStartVisible() {
+        return ((VisualTable)m_table).isStartVisible(m_row);
+    }
+    
+    public void setStartVisible(boolean value) {
+        ((VisualTable)m_table).setStartVisible(value, m_row);
+    }
+    
+    public boolean isEndVisible() {
+        return ((VisualTable)m_table).isEndVisible(m_row);
+    }
+    
+    public void setEndVisible(boolean value) {
+        ((VisualTable)m_table).setEndVisible(value, m_row);
+    }
+    
+    public boolean isInteractive() {
+        return ((VisualTable)m_table).isInteractive(m_row);
+    }
+
+    public void setInteractive(boolean value) {
+        ((VisualTable)m_table).setInteractive(value, m_row);
+    }
+    
+    public boolean isExpanded() {
+        return ((VisualTable)m_table).isExpanded(m_row);
+    }
+
+    public void setExpanded(boolean value) {
+        ((VisualTable)m_table).setExpanded(value, m_row);
+    }
+    
+    public boolean isFixed() {
+        return ((VisualTable)m_table).isFixed(m_row);
+    }
+
+    public void setFixed(boolean value) {
+        ((VisualTable)m_table).setFixed(value, m_row);
+    }
+    
+    public boolean isHighlighted() {
+        return ((VisualTable)m_table).isHighlighted(m_row);
+    }
+    
+    public void setHighlighted(boolean value) {
+        ((VisualTable)m_table).setHighlighted(value, m_row);
+    }
+
+    public boolean isHover() {
+        return ((VisualTable)m_table).isHover(m_row);
+    }
+    
+    public void setHover(boolean value) {
+        ((VisualTable)m_table).setHover(value, m_row);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public double getX() {
+        return ((VisualTable)m_table).getX(m_row);
+    }
+    
+    public void setX(double x) {
+        ((VisualTable)m_table).setX(x, m_row);
+    }
+    
+    public double getY() {
+        return ((VisualTable)m_table).getY(m_row);
+    }
+    
+    public void setY(double y) {
+        ((VisualTable)m_table).setY(y, m_row);
+    }
+    
+    public double getStartX() {
+        return ((VisualTable)m_table).getStartX(m_row);
+    }
+    
+    public void setStartX(double x) {
+        ((VisualTable)m_table).setStartX(x, m_row);
+    }
+    
+    public double getStartY() {
+        return ((VisualTable)m_table).getStartY(m_row);
+    }
+    
+    public void setStartY(double y) {
+        ((VisualTable)m_table).setStartY(y, m_row);
+    }
+    
+    public double getEndX() {
+        return ((VisualTable)m_table).getEndX(m_row);
+    }
+    
+    public void setEndX(double x) {
+        ((VisualTable)m_table).setEndX(x, m_row);
+    }
+    
+    public double getEndY() {
+        return ((VisualTable)m_table).getEndY(m_row);
+    }
+    
+    public void setEndY(double y) {
+        ((VisualTable)m_table).setEndY(y, m_row);
+    }
+
+    public Rectangle2D getBounds() {
+        if ( !isValidated() ) {
+            return validateBounds();
+        }
+        return ((VisualTable)m_table).getBounds(m_row);
+    }
+    
+    public void setBounds(double x, double y, double w, double h) {
+        ((VisualTable)m_table).setBounds(x, y, w, h, m_row);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public int getStrokeColor() {
+        return ((VisualTable)m_table).getStrokeColor(m_row);
+    }
+    
+    public void setStrokeColor(int color) {
+        ((VisualTable)m_table).setStrokeColor(color, m_row);
+    }
+    
+    public int getStartStrokeColor() {
+        return ((VisualTable)m_table).getStartStrokeColor(m_row);
+    }
+    
+    public void setStartStrokeColor(int color) {
+        ((VisualTable)m_table).setStartStrokeColor(color, m_row);
+    }
+    
+    public int getEndStrokeColor() {
+        return ((VisualTable)m_table).getEndStrokeColor(m_row);
+    }
+    
+    public void setEndStrokeColor(int color) {
+        ((VisualTable)m_table).setEndStrokeColor(color, m_row);
+    }
+    
+    public int getFillColor() {
+        return ((VisualTable)m_table).getFillColor(m_row);
+    }
+    
+    public void setFillColor(int color) {
+        ((VisualTable)m_table).setFillColor(color, m_row);
+    }
+    
+    public int getStartFillColor() {
+        return ((VisualTable)m_table).getStartFillColor(m_row);
+    }
+
+    public void setStartFillColor(int color) {
+        ((VisualTable)m_table).setStartFillColor(color, m_row);
+    }
+    
+    public int getEndFillColor() {
+        return ((VisualTable)m_table).getEndFillColor(m_row);
+    }
+    
+    public void setEndFillColor(int color) {
+        ((VisualTable)m_table).setEndFillColor(color, m_row);
+    }
+    
+    public int getTextColor() {
+        return ((VisualTable)m_table).getTextColor(m_row);
+    }
+    
+    public void setTextColor(int color) {
+        ((VisualTable)m_table).setTextColor(color, m_row);
+    }
+    
+    public int getStartTextColor() {
+        return ((VisualTable)m_table).getStartTextColor(m_row);
+    }
+    
+    public void setStartTextColor(int color) {
+        ((VisualTable)m_table).setStartTextColor(color, m_row);
+    }
+    
+    public int getEndTextColor() {
+        return ((VisualTable)m_table).getEndTextColor(m_row);
+    }
+    
+    public void setEndTextColor(int color) {
+        ((VisualTable)m_table).setEndTextColor(color, m_row);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public double getSize() {
+        return ((VisualTable)m_table).getSize(m_row);
+    }
+    
+    public double getSize2D() {
+        return PrefuseLib.getSize2D(getSize());
+    }
+    
+    public void setSize(double size) {
+        ((VisualTable)m_table).setSize(size, m_row);
+    }
+    
+    public double getStartSize() {
+        return ((VisualTable)m_table).getStartSize(m_row);
+    }
+    
+    public void setStartSize(double size) {
+        ((VisualTable)m_table).setStartSize(size, m_row);
+    }
+    
+    public double getEndSize() {
+        return ((VisualTable)m_table).getEndSize(m_row);
+    }
+    
+    public void setEndSize(double size) {
+        ((VisualTable)m_table).setEndSize(size, m_row);
+    }
+    
+    // ------------------------------------------------------------------------    
+    
+    public Font getFont() {
+        return ((VisualTable)m_table).getFont(m_row);
+    }
+
+    public void setFont(Font font) {
+        ((VisualTable)m_table).setFont(font, m_row);
+    }
+    
+    public Font getStartFont() {
+        return ((VisualTable)m_table).getStartFont(m_row);
+    }
+
+    public void setStartFont(Font font) {
+        ((VisualTable)m_table).setStartFont(font, m_row);
+    }
+    
+    public Font getEndFont() {
+        return ((VisualTable)m_table).getEndFont(m_row);
+    }
+    
+    public void setEndFont(Font font) {
+        ((VisualTable)m_table).setEndFont(font, m_row);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public double getDOI() {
+        return ((VisualTable)m_table).getDOI(m_row);
+    }
+    
+    public void setDOI(double doi) {
+        ((VisualTable)m_table).setDOI(doi, m_row);
+    }
+    
+} // end of class TableVisualItem
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d20 1
+a20 1
+        m_table.set(row, GROUP, group);
+d48 1
+a48 1
+                sbuf.append(vt.getString(m_row, name));
+d50 1
+a50 1
+                sbuf.append(vt.get(m_row, name).toString());
+@
+
+
+1.1.2.3
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@@
+
+

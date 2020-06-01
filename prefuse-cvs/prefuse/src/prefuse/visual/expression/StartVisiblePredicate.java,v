@@ -1,0 +1,154 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.06;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.visual.expression;
+
+import prefuse.data.expression.ColumnExpression;
+import prefuse.data.expression.NotPredicate;
+import prefuse.data.expression.Predicate;
+import prefuse.visual.VisualItem;
+
+/**
+ * Expression that indicates if an item's start visible flag is set.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class StartVisiblePredicate extends ColumnExpression implements Predicate {
+
+    /** Convenience instance for the start visible == true case. */
+    public static final Predicate TRUE = new StartVisiblePredicate();
+    /** Convenience instance for the start visible == false case. */
+    public static final Predicate FALSE = new NotPredicate(TRUE);
+    
+    /**
+     * Create a new StartVisiblePredicate.
+     */
+    public StartVisiblePredicate() {
+        super(VisualItem.STARTVISIBLE);
+    }
+
+} // end of class StartVisiblePredicate
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d10 1
+a10 1
+ *
+d19 1
+a19 1
+
+@
+
+
+1.1
+log
+@file StartVisiblePredicate.java was initially added on branch beta.
+@
+text
+@d1 27
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 20
+package prefuse.visual.expression;
+
+import prefuse.data.expression.ColumnExpression;
+import prefuse.data.expression.NotPredicate;
+import prefuse.data.expression.Predicate;
+import prefuse.visual.VisualItem;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class StartVisiblePredicate extends ColumnExpression implements Predicate {
+
+    public static final Predicate TRUE = new StartVisiblePredicate();
+    public static final Predicate FALSE = new NotPredicate(TRUE);
+    
+    public StartVisiblePredicate() {
+        super(VisualItem.STARTVISIBLE);
+    }
+
+} // end of class StartVisiblePredicate
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d9 1
+a9 3
+ * Expression that indicates if an item's start visible flag is set.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a12 1
+    /** Convenience instance for the start visible == true case. */
+a13 1
+    /** Convenience instance for the start visible == false case. */
+a15 3
+    /**
+     * Create a new StartVisiblePredicate.
+     */
+@
+
+

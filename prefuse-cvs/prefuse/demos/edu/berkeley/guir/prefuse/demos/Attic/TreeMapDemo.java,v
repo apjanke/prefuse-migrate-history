@@ -1,0 +1,505 @@
+head	1.11;
+access;
+symbols
+	alpha:1.10.0.2
+	Root_alpha:1.10
+	prefuse-alpha-20051229:1.10
+	P20050401_Alpha_PreCHI:1.10;
+locks; strict;
+comment	@# @;
+
+
+1.11
+date	2006.02.11.06.38.42;	author jheer;	state dead;
+branches;
+next	1.10;
+
+1.10
+date	2005.01.14.23.13.05;	author jheer;	state Exp;
+branches
+	1.10.4.1;
+next	1.9;
+
+1.9
+date	2004.11.08.02.53.31;	author jheer;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.03.24.01.57.26;	author jheer;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.03.23.04.00.10;	author jheer;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.03.16.03.05.17;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.15.03.33.29;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.07.03.32.51;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.06.07.40.01;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.06.00.46.51;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.05.01.54.50;	author jheer;	state Exp;
+branches;
+next	;
+
+1.10.4.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.11
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.demos;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Paint;
+import java.awt.Shape;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Comparator;
+import java.util.Iterator;
+
+import javax.swing.JFrame;
+
+import edu.berkeley.guir.prefuse.Display;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.NodeItem;
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.action.AbstractAction;
+import edu.berkeley.guir.prefuse.action.RepaintAction;
+import edu.berkeley.guir.prefuse.action.assignment.ColorFunction;
+import edu.berkeley.guir.prefuse.action.filter.TreeFilter;
+import edu.berkeley.guir.prefuse.activity.ActionList;
+import edu.berkeley.guir.prefuse.graph.Graph;
+import edu.berkeley.guir.prefuse.graph.io.HDirTreeReader;
+import edu.berkeley.guir.prefuse.render.DefaultRendererFactory;
+import edu.berkeley.guir.prefuse.render.ShapeRenderer;
+import edu.berkeley.guir.prefuse.util.ColorMap;
+import edu.berkeley.guir.prefusex.controls.PanControl;
+import edu.berkeley.guir.prefusex.controls.ToolTipControl;
+import edu.berkeley.guir.prefusex.controls.ZoomControl;
+import edu.berkeley.guir.prefusex.layout.SquarifiedTreeMapLayout;
+
+/**
+ * Demonstration showcasing a TreeMap layout of a hierarchical data
+ * set and the use of a ColorMap to assign colors to items.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class TreeMapDemo extends JFrame {
+
+    public static final String TREE_CHI = "etc/chitest.hdir";
+    
+    private ItemRegistry registry;
+    
+    public TreeMapDemo() {
+        super("prefuse TreeMap Demo");
+        
+        try {
+            // load graph and initialize the item registry
+            Graph g = (new HDirTreeReader()).loadTree(TREE_CHI);
+            registry = new ItemRegistry(g);
+            registry.setRendererFactory(new DefaultRendererFactory(new RectangleRenderer()));
+            // make sure we draw from larger->smaller to prevent
+            // occlusion from parent node boxes
+            registry.setItemComparator(new Comparator() {
+                public int compare(Object o1, Object o2) {
+                    double s1 = ((VisualItem)o1).getSize();
+                    double s2 = ((VisualItem)o2).getSize();
+                    return ( s1>s2 ? -1 : (s1<s2 ? 1 : 0));
+                } //
+            });
+            
+            // initialize our display
+            Display display = new Display();
+            display.setItemRegistry(registry);
+            display.setUseCustomTooltips(true);
+            PanControl  pH = new PanControl();
+            ZoomControl zH = new ZoomControl();
+            display.addMouseListener(pH);
+            display.addMouseMotionListener(pH);
+            display.addMouseListener(zH);
+            display.addMouseMotionListener(zH);
+            display.addControlListener(new ToolTipControl());
+            display.setSize(700,700);
+            
+            // create the single filtering and layout action list
+            ActionList filter = new ActionList(registry);
+            filter.add(new TreeFilter(false, false));
+            filter.add(new TreeMapSizeFunction());
+            filter.add(new SquarifiedTreeMapLayout(4));
+            filter.add(new TreeMapColorFunction());
+            filter.add(new RepaintAction());
+            
+            // create and display application window
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            getContentPane().add(display);
+            pack();
+            setVisible(true);
+            
+            // filter graph and perform layout
+            filter.runNow();
+            
+        } catch ( Exception e ) {
+            e.printStackTrace();
+        }
+    } //
+    
+    public static void main(String argv[]) {
+        new TreeMapDemo();
+    } //
+    
+    public class TreeMapColorFunction extends ColorFunction {
+        Color c1 = new Color(0.5f,0.5f,0.f);
+        Color c2 = new Color(0.5f,0.5f,1.f);
+        ColorMap cmap = new ColorMap(ColorMap.getInterpolatedMap(10,c1,c2),0,9);
+        public Paint getColor(VisualItem item) {
+            return Color.WHITE;
+        } //
+        public Paint getFillColor(VisualItem item) {
+            double v = (item instanceof NodeItem ? ((NodeItem)item).getDepth():0);
+            return cmap.getColor(v);
+        } //
+    } // end of inner class TreeMapColorFunction
+    
+    public class TreeMapSizeFunction extends AbstractAction {
+        public void run(ItemRegistry registry, double frac) {
+            int leafCount = 0;
+            Iterator iter = registry.getNodeItems();
+            while ( iter.hasNext() ) {
+                NodeItem n = (NodeItem)iter.next();
+                if ( n.getChildCount() == 0 ) {
+                    n.setSize(1.0);
+                    NodeItem p = (NodeItem)n.getParent();
+                    for (; p!=null; p=(NodeItem)p.getParent())
+                        p.setSize(1.0+p.getSize());
+                    leafCount++;
+                }
+            }
+            
+            Dimension d = registry.getDisplay(0).getSize();
+            double area = d.width*d.height;
+            double divisor = ((double)leafCount)/area;
+            iter = registry.getNodeItems();
+            while ( iter.hasNext() ) {
+                NodeItem n = (NodeItem)iter.next();
+                n.setSize(n.getSize()/divisor);
+            }
+            
+            System.out.println("leafCount = " + leafCount);
+        } //
+    } // end of inner class TreeMapSizeFunction
+    
+    public class RectangleRenderer extends ShapeRenderer {
+        private Rectangle2D bounds = new Rectangle2D.Double();
+        protected Shape getRawShape(VisualItem item) {
+            Point2D d = (Point2D)item.getVizAttribute("dimension");
+            if (d == null)
+                System.out.println("uh-oh");
+            bounds.setRect(item.getX(),item.getY(),d.getX(),d.getY());
+            return bounds;
+        } //
+    } // end of inner class NodeRenderer
+    
+} // end of class TreeMapDemo
+@
+
+
+1.10
+log
+@Some facelifts and updates to the prefuse demos
+@
+text
+@@
+
+
+1.10.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.9
+log
+@Fixed multicaster bug, other small updates
+@
+text
+@a2 1
+import java.awt.BorderLayout;
+a6 1
+import java.awt.event.MouseEvent;
+a22 1
+import edu.berkeley.guir.prefuse.event.ControlAdapter;
+d29 1
+d53 1
+a53 2
+            registry.setRendererFactory(new DefaultRendererFactory(
+                new NodeRenderer(), null, null));
+d74 1
+a74 10
+            display.addControlListener(new ControlAdapter() {
+               public void itemEntered(VisualItem item, MouseEvent e) {
+                   Display d = (Display)e.getSource();
+                   d.setToolTipText(item.getAttribute("label"));
+               } //
+               public void itemExited(VisualItem item, MouseEvent e) {
+                   Display d = (Display)e.getSource();
+                   d.setToolTipText(null);
+               } //
+            });
+d79 1
+a79 1
+            filter.add(new TreeFilter(false));
+d86 2
+a87 2
+            this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            getContentPane().add(display, BorderLayout.CENTER);
+d144 1
+a144 1
+    public class NodeRenderer extends ShapeRenderer {
+@
+
+
+1.8
+log
+@New filters added plus more
+@
+text
+@a8 2
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+d98 1
+a98 5
+            addWindowListener(new WindowAdapter() {
+                public void windowClosing(WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+@
+
+
+1.7
+log
+@Major refactor
+@
+text
+@a22 2
+import edu.berkeley.guir.prefuse.action.ColorFunction;
+import edu.berkeley.guir.prefuse.action.GraphNodeFilter;
+d24 3
+a26 2
+import edu.berkeley.guir.prefuse.action.TreeEdgeFilter;
+import edu.berkeley.guir.prefuse.activity.ActionPipeline;
+d28 1
+a28 1
+import edu.berkeley.guir.prefuse.graph.Tree;
+d46 1
+a46 1
+    public static final String TREE_CHI = "../prefuse/etc/chitest.hdir";
+d55 2
+a56 2
+            Tree tree = (new HDirTreeReader()).loadTree(TREE_CHI);
+            registry = new ItemRegistry(tree);
+d91 3
+a93 4
+            // create the single filtering and layout pipeline
+            ActionPipeline filter = new ActionPipeline(registry);
+            filter.add(new GraphNodeFilter());
+            filter.add(new TreeEdgeFilter(false));
+d166 2
+@
+
+
+1.6
+log
+@More Javadoc updates
+@
+text
+@a18 1
+import edu.berkeley.guir.prefuse.GraphItem;
+d21 1
+a27 1
+import edu.berkeley.guir.prefuse.activity.ActivityManager;
+d64 2
+a65 2
+                    double s1 = ((GraphItem)o1).getSize();
+                    double s2 = ((GraphItem)o2).getSize();
+d72 1
+a72 1
+            display.setRegistry(registry);
+d81 1
+a81 1
+               public void itemEntered(GraphItem item, MouseEvent e) {
+d85 1
+a85 1
+               public void itemExited(GraphItem item, MouseEvent e) {
+d111 2
+a112 4
+            // because awt doesn't always give us 
+            // our graphics context right away...
+            while ( display.getGraphics() == null );
+            ActivityManager.scheduleNow(filter);
+d127 1
+a127 1
+        public Paint getColor(GraphItem item) {
+d130 1
+a130 1
+        public Paint getFillColor(GraphItem item) {
+d144 2
+a145 1
+                    for (NodeItem p=n.getParent(); p!=null; p=p.getParent())
+d166 1
+a166 1
+        protected Shape getRawShape(GraphItem item) {
+@
+
+
+1.5
+log
+@Updated Javadoc
+@
+text
+@a10 1
+import java.awt.geom.AffineTransform;
+a167 3
+        protected int getRenderType() {
+            return RENDER_TYPE_DRAW_AND_FILL;
+        } //
+a172 4
+
+        protected AffineTransform getGraphicsSpaceTransform(GraphItem item) {
+            return null;
+        } //
+@
+
+
+1.4
+log
+@Updated color map usage
+@
+text
+@d36 2
+a37 2
+import edu.berkeley.guir.prefusex.controls.PanHandler;
+import edu.berkeley.guir.prefusex.controls.ZoomHandler;
+d76 2
+a77 2
+            PanHandler  pH = new PanHandler();
+            ZoomHandler zH = new ZoomHandler();
+d146 1
+a146 1
+                if ( n.getNumChildren() == 0 ) {
+@
+
+
+1.3
+log
+@Added ColorMap functionality
+@
+text
+@d24 1
+a24 1
+import edu.berkeley.guir.prefuse.action.ColorMapColorFunction;
+d41 2
+a42 1
+ * Demonstration showcasing a TreeMap layout
+d127 4
+a130 5
+    public class TreeMapColorFunction extends ColorMapColorFunction { 
+        public TreeMapColorFunction() {
+            super(new ColorMap(ColorMap.getInterpolatedMap(
+               10,new Color(0.5f,0.5f,0.f),new Color(0.5f,0.5f,1.f)),0,9));
+        } //
+d134 3
+a136 2
+        public double getIndexValue(GraphItem item) {
+            return (item instanceof NodeItem ? ((NodeItem)item).getDepth():0);
+@
+
+
+1.2
+log
+@Improved TreeMap demo
+@
+text
+@d24 1
+a24 1
+import edu.berkeley.guir.prefuse.action.ColorFunction;
+d35 1
+d126 5
+a130 1
+    public class TreeMapColorFunction extends ColorFunction {
+d134 2
+a135 7
+        public Paint getFillColor(GraphItem item) {
+            float c;
+            if ( item instanceof NodeItem )
+                c = Math.max(0,1-(((float)((NodeItem)item).getDepth())/8.0f));
+            else
+                c = 0.5f;
+            return new Color(0.5f,0.5f,c);
+@
+
+
+1.1
+log
+@Added TreeMap layout and demo
+@
+text
+@d35 2
+d55 1
+a55 1
+            // load graph
+d60 2
+d70 1
+d73 7
+d92 1
+d95 1
+a95 1
+            filter.add(new TreeEdgeFilter());
+d97 1
+a97 1
+            filter.add(new SquarifiedTreeMapLayout());
+d130 6
+a135 1
+            return new Color(0.5f,0.5f,(float)Math.random());
+d161 2
+a163 1
+        
+@
+

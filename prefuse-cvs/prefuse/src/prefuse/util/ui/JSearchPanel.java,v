@@ -1,0 +1,1615 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.07.15.18.18.16;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.04.14.06.58.21;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.25.21.33.09;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	2.2.4.2;
+
+2.2.4.2
+date	2008.03.17.20.22.01;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Added accessor method for getting the query string
+@
+text
+@package prefuse.util.ui;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.Document;
+
+import prefuse.Visualization;
+import prefuse.data.Tuple;
+import prefuse.data.event.TupleSetListener;
+import prefuse.data.search.PrefixSearchTupleSet;
+import prefuse.data.search.SearchTupleSet;
+import prefuse.data.tuple.TupleSet;
+import prefuse.util.ColorLib;
+
+/**
+ * Swing component that enables keyword search over prefuse data tuples.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ * @@see prefuse.data.query.SearchQueryBinding
+ */
+public class JSearchPanel extends JPanel
+    implements DocumentListener, ActionListener
+{
+    private Object m_lock;
+    private SearchTupleSet m_searcher;
+
+    private JTextField m_queryF  = new JTextField(15);
+    private JLabel     m_resultL = new JLabel("          ");
+    private JLabel     m_searchL = new JLabel("search >> ");
+    private Box        m_sbox    = new Box(BoxLayout.X_AXIS);
+
+    private String[] m_fields;
+    
+    private Color m_cancelColor = ColorLib.getColor(255,75,75);
+    
+    private boolean m_includeHitCount = false;
+    private boolean m_monitorKeys = false;
+    private boolean m_autoIndex = true;
+    
+    private boolean m_showBorder = true;
+    private boolean m_showCancel = true;
+
+    // ------------------------------------------------------------------------
+    // Free form constructors
+    
+    /**
+     * Create a new JSearchPanel.
+     * @@param search the search tuple set conducting the searches
+     * @@param field the data field being searched
+     */
+    public JSearchPanel(SearchTupleSet search, String field) {
+        this(search, field, false);
+    }
+    
+    /**
+     * Create a new JSearchPanel.
+     * @@param search the search tuple set conducting the searches
+     * @@param field the data field being searched
+     * @@param monitorKeystrokes indicates if each keystroke event should result
+     * in a new search being issued (true) or if searches should only be
+     * initiated by hitting the enter key (false)
+     */
+    public JSearchPanel(SearchTupleSet search, String field, 
+            boolean monitorKeystrokes)
+    {
+        this(null, search, new String[] {field}, false, monitorKeystrokes);
+    }
+    
+    /**
+     * Create a new JSearchPanel.
+     * @@param source the source set of tuples that should be searched over
+     * @@param search the search tuple set conducting the searches
+     * @@param fields the data fields being searched
+     * @@param monitorKeystrokes indicates if each keystroke event should result
+     * in a new search being issued (true) or if searches should only be
+     * initiated by hitting the enter key (false)
+     */
+    public JSearchPanel(TupleSet source, SearchTupleSet search, 
+            String[] fields, boolean autoIndex, boolean monitorKeystrokes)
+    {
+        m_lock = new Object();
+        m_fields = fields;
+        m_autoIndex = autoIndex;
+        m_monitorKeys = monitorKeystrokes;
+
+        m_searcher = ( search != null ? search : new PrefixSearchTupleSet() );
+        
+        init(source);
+    }
+    
+    // ------------------------------------------------------------------------
+    // Visualization-based constructors
+    
+    /**
+     * Create a new JSearchPanel. The default search tuple set for the
+     * visualization will be used.
+     * @@param vis the Visualization to search over
+     * @@param field the data field being searched
+     */
+    public JSearchPanel(Visualization vis, String field) {
+        this(vis, Visualization.ALL_ITEMS, field, true);
+    }
+    
+    /**
+     * Create a new JSearchPanel. The default search tuple set for the
+     * visualization will be used.
+     * @@param vis the Visualization to search over
+     * @@param group the particular data group to search over
+     * @@param field the data field being searched
+     */
+    public JSearchPanel(Visualization vis, String group, String field) {
+        this(vis, group, field, true);
+    }
+    
+    /**
+     * Create a new JSearchPanel. The default search tuple set for the
+     * visualization will be used.
+     * @@param vis the Visualization to search over
+     * @@param group the particular data group to search over
+     * @@param field the data field being searched
+     * @@param autoIndex indicates if items should be automatically
+     * indexed and unindexed as their membership in the source group
+     * changes.
+     */
+    public JSearchPanel(Visualization vis, String group, String field, 
+            boolean autoIndex)
+    {
+        this(vis, group, Visualization.SEARCH_ITEMS, 
+                new String[] {field}, autoIndex, false);
+    }
+    
+    /**
+     * Create a new JSearchPanel. The default search tuple set for the
+     * visualization will be used.
+     * @@param vis the Visualization to search over
+     * @@param group the particular data group to search over
+     * @@param field the data field being searched
+     * @@param autoIndex indicates if items should be automatically
+     * indexed and unindexed as their membership in the source group
+     * changes.
+     * @@param monitorKeystrokes indicates if each keystroke event should result
+     * in a new search being issued (true) or if searches should only be
+     * initiated by hitting the enter key (false)
+     */
+    public JSearchPanel(Visualization vis, String group, String field, 
+            boolean autoIndex, boolean monitorKeystrokes)
+    {
+        this(vis, group, Visualization.SEARCH_ITEMS, 
+                new String[] {field}, autoIndex, true);
+    }
+    
+    /**
+     * Create a new JSearchPanel.
+     * @@param vis the Visualization to search over
+     * @@param group the particular data group to search over
+     * @@param searchGroup the group name that resolves to the SearchTupleSet
+     * to use
+     * @@param field the data field being searched
+     * @@param autoIndex indicates if items should be automatically
+     * indexed and unindexed as their membership in the source group
+     * changes.
+     * @@param monitorKeystrokes indicates if each keystroke event should result
+     * in a new search being issued (true) or if searches should only be
+     * initiated by hitting the enter key (false)
+     */
+    public JSearchPanel(Visualization vis, String group, String searchGroup, 
+            String field, boolean autoIndex, boolean monitorKeystrokes)
+    {
+        this(vis, group, searchGroup, new String[] {field}, autoIndex,
+                monitorKeystrokes);
+    }
+    
+    /**
+     * Create a new JSearchPanel.
+     * @@param vis the Visualization to search over
+     * @@param group the particular data group to search over
+     * @@param searchGroup the group name that resolves to the SearchTupleSet
+     * to use
+     * @@param fields the data fields being searched
+     * @@param autoIndex indicates if items should be automatically
+     * indexed and unindexed as their membership in the source group
+     * changes.
+     * @@param monitorKeystrokes indicates if each keystroke event should result
+     * in a new search being issued (true) or if searches should only be
+     * initiated by hitting the enter key (false)
+     */
+    public JSearchPanel(Visualization vis, String group, String searchGroup, 
+            String[] fields, boolean autoIndex, boolean monitorKeystrokes)
+    {
+        m_lock = vis;
+        m_fields = fields;
+        m_autoIndex = autoIndex;
+        m_monitorKeys = monitorKeystrokes;
+
+        TupleSet search = vis.getGroup(searchGroup);
+
+        if ( search != null ) {
+            if ( search instanceof SearchTupleSet ) {
+                m_searcher = (SearchTupleSet)search;
+            } else {
+                throw new IllegalStateException(
+                    "Search focus set not instance of SearchTupleSet!");
+            }
+        } else {
+            m_searcher = new PrefixSearchTupleSet();
+            vis.addFocusGroup(searchGroup, m_searcher);
+        }
+        
+        init(vis.getGroup(group));
+    }
+
+    // ------------------------------------------------------------------------
+    // Initialization
+    
+    private void init(TupleSet source) {
+        if ( m_autoIndex && source != null ) {
+            // index everything already there
+            for ( int i=0; i < m_fields.length; i++ )
+                m_searcher.index(source.tuples(), m_fields[i]);
+            
+            // add a listener to dynamically build search index
+            source.addTupleSetListener(new TupleSetListener() {
+                public void tupleSetChanged(TupleSet tset, 
+                        Tuple[] add, Tuple[] rem)
+                {
+                    if ( add != null ) {
+                        for ( int i=0; i<add.length; ++i ) {
+                            for ( int j=0; j<m_fields.length; j++ )
+                                m_searcher.index(add[i], m_fields[j]);
+                        }
+                    }
+                    if ( rem != null && m_searcher.isUnindexSupported() ) {
+                        for ( int i=0; i<rem.length; ++i )  {
+                            for ( int j=0; j<m_fields.length; j++ )
+                                m_searcher.unindex(rem[i], m_fields[j]);
+                        }
+                    }
+                }
+            });
+        }
+        
+        m_queryF.addActionListener(this);
+        if ( m_monitorKeys )
+            m_queryF.getDocument().addDocumentListener(this);
+        m_queryF.setMaximumSize(new Dimension(400, 100));
+        m_queryF.setPreferredSize(new Dimension(200, 20));
+        m_queryF.setBorder(null);
+        setBackground(Color.WHITE);
+        initUI();
+    }
+    
+    private void initUI() {
+        this.removeAll();
+        this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        
+        m_sbox.removeAll();
+        m_sbox.add(Box.createHorizontalStrut(3));
+        m_sbox.add(m_queryF);
+        m_sbox.add(Box.createHorizontalStrut(3));
+        if ( m_showCancel ) {
+            m_sbox.add(new CancelButton());
+            m_sbox.add(Box.createHorizontalStrut(3));
+        }
+        if ( m_showBorder )
+            m_sbox.setBorder(BorderFactory.createLineBorder(getForeground()));
+        else
+            m_sbox.setBorder(null);
+        m_sbox.setMaximumSize(new Dimension(400, 100));
+        m_sbox.setPreferredSize(new Dimension(171, 20));
+        
+        Box b = new Box(BoxLayout.X_AXIS);
+        if ( m_includeHitCount ) {
+            b.add(m_resultL);
+            b.add(Box.createHorizontalStrut(10));
+            //b.add(Box.createHorizontalGlue());
+        }
+        b.add(m_searchL);
+        b.add(Box.createHorizontalStrut(3));
+        b.add(m_sbox);
+        
+        this.add(b);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Request the keyboard focus for this component.
+     */
+    public void requestFocus() {
+        this.m_queryF.requestFocus();
+    }
+    
+    /**
+     * Set the lock, an object to synchronize on while issuing queries.
+     * @@param lock the synchronization lock
+     */
+    public void setLock(Object lock) {
+        m_lock = lock;
+    }
+    
+    /**
+     * Indicates if the component should show the number of search results.
+     * @@param b true to show the result count, false to hide it
+     */
+    public void setShowResultCount(boolean b) {
+        this.m_includeHitCount = b;
+        initUI();
+        validate();
+    }
+    
+    /**
+     * Indicates if the component should show a border around the text field.
+     * @@param b true to show the text field border, false to hide it
+     */
+    public void setShowBorder(boolean b) {
+        m_showBorder = b;
+        initUI();
+        validate();
+    }
+    
+    /**
+     * Indicates if the component should show the cancel query button.
+     * @@param b true to show the cancel query button, false to hide it
+     */
+    public void setShowCancel(boolean b) {
+        m_showCancel = b;
+        initUI();
+        validate();
+    }
+    
+    /**
+     * Update the search results based on the current query.
+     */
+    protected void searchUpdate() {
+        String query = m_queryF.getText();
+        synchronized ( m_lock ) {
+            m_searcher.search(query);
+            if ( m_searcher.getQuery().length() == 0 )
+                m_resultL.setText(null);
+            else {
+                int r = m_searcher.getTupleCount();
+                m_resultL.setText(r + " match" + (r==1?"":"es"));
+            }
+        }
+    }
+    
+    /**
+     * Set the query string in the text field.
+     * @@param query the query string to use
+     */
+    public void setQuery(String query) {
+        Document d = m_queryF.getDocument();
+        d.removeDocumentListener(this);
+        m_queryF.setText(query);
+        if ( m_monitorKeys )
+            d.addDocumentListener(this);
+        searchUpdate();
+    }
+    
+    /**
+     * Get the query string in the text field.
+     * @@return the current query string
+     */
+    public String getQuery() {
+        return m_queryF.getText();
+    }
+    
+    /**
+     * Set the fill color of the cancel 'x' button that appears
+     * when the button has the mouse pointer over it. 
+     * @@param c the cancel color
+     */
+    public void setCancelColor(Color c) {
+        m_cancelColor = c;
+    }
+    
+    /**
+     * @@see java.awt.Component#setBackground(java.awt.Color)
+     */
+    public void setBackground(Color bg) {
+        super.setBackground(bg);
+        if ( m_queryF  != null ) m_queryF.setBackground(bg);
+        if ( m_resultL != null ) m_resultL.setBackground(bg);
+        if ( m_searchL != null ) m_searchL.setBackground(bg);
+    }
+    
+    /**
+     * @@see java.awt.Component#setForeground(java.awt.Color)
+     */
+    public void setForeground(Color fg) {
+        super.setForeground(fg);
+        if ( m_queryF  != null ) {
+            m_queryF.setForeground(fg);
+            m_queryF.setCaretColor(fg);
+        }
+        if ( m_resultL != null ) m_resultL.setForeground(fg);
+        if ( m_searchL != null ) m_searchL.setForeground(fg);
+        if ( m_sbox != null && m_showBorder )
+            m_sbox.setBorder(BorderFactory.createLineBorder(fg));
+    }
+    
+    /**
+     * @@see javax.swing.JComponent#setOpaque(boolean)
+     */
+    public void setOpaque(boolean opaque) {
+        super.setOpaque(opaque);
+        if ( m_queryF  != null ) {
+            m_queryF.setOpaque(opaque);
+        }
+        if ( m_resultL != null ) m_resultL.setOpaque(opaque);
+        if ( m_searchL != null ) m_searchL.setOpaque(opaque);
+    }
+
+    /**
+     * @@see java.awt.Component#setFont(java.awt.Font)
+     */
+    public void setFont(Font f) {
+        super.setFont(f);;
+        if ( m_queryF  != null ) m_queryF.setFont(f);
+        if ( m_resultL != null ) m_resultL.setFont(f);
+        if ( m_searchL != null ) m_searchL.setFont(f);
+    }
+    
+    /**
+     * Set the label text used on this component.
+     * @@param text the label text, use null to show no label
+     */
+    public void setLabelText(String text) {
+        m_searchL.setText(text);
+    }
+    
+    
+    /**
+     * @@see javax.swing.event.DocumentListener#changedUpdate(javax.swing.event.DocumentEvent)
+     */
+    public void changedUpdate(DocumentEvent e) {
+        searchUpdate();
+    }
+    /**
+     * @@see javax.swing.event.DocumentListener#insertUpdate(javax.swing.event.DocumentEvent)
+     */
+    public void insertUpdate(DocumentEvent e) {
+        searchUpdate();
+    }
+    /**
+     * @@see javax.swing.event.DocumentListener#removeUpdate(javax.swing.event.DocumentEvent)
+     */
+    public void removeUpdate(DocumentEvent e) {
+        searchUpdate();
+    }
+
+    /**
+     * @@see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Object src = e.getSource();
+        if ( src == m_queryF ) {
+            searchUpdate();
+        }
+    }
+
+    /**
+     * A button depicted as an "X" that allows users to cancel the current query
+     * and clear the query field.
+     */
+    public class CancelButton extends JComponent implements MouseListener {
+
+        private boolean hover = false;
+        private int[] outline = new int[] {
+            0,0, 2,0, 4,2, 5,2, 7,0, 9,0, 9,2, 7,4, 7,5, 9,7, 9,9,
+            7,9, 5,7, 4,7, 2,9, 0,9, 0,7, 2,5, 2,4, 0,2, 0,0
+        };
+        private int[] fill = new int[] {
+            1,1,8,8, 1,2,7,8, 2,1,8,7, 7,1,1,7, 8,2,2,8, 1,8,8,1
+        };
+        
+        public CancelButton() {
+            // set button size
+            Dimension d = new Dimension(10,10);
+            this.setPreferredSize(d);
+            this.setMinimumSize(d);
+            this.setMaximumSize(d);
+            
+            // prevent the widget from getting the keyboard focus
+            this.setFocusable(false);
+            
+            // add callbacks
+            this.addMouseListener(this);
+        }
+        
+        public void paintComponent(Graphics g) {
+            if ( hover ) { // draw fill
+                g.setColor(m_cancelColor);
+                for ( int i=0; i+3 < fill.length; i+=4 ) {
+                    g.drawLine(fill[i],fill[i+1],fill[i+2],fill[i+3]);
+                }
+            }
+            g.setColor(JSearchPanel.this.getForeground());
+            for ( int i=0; i+3 < outline.length; i+=2 ) {
+                g.drawLine(outline[i],   outline[i+1],
+                           outline[i+2], outline[i+3]);
+            }
+        }
+
+        public void mouseClicked(MouseEvent arg0) {
+            setQuery(null);
+        }
+
+        public void mousePressed(MouseEvent arg0) {
+        }
+
+        public void mouseReleased(MouseEvent arg0) {
+        }
+
+        public void mouseEntered(MouseEvent arg0) {
+            hover = true;
+            repaint();
+        }
+
+        public void mouseExited(MouseEvent arg0) {
+            hover = false;
+            repaint();
+        }
+        
+    } // end of class CancelButton
+
+} // end of class JSearchPanel
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d43 4
+a46 6
+    private final JTextField m_queryF  = new JTextField(15);
+    private final JLabel     m_resultL = new JLabel("          ");
+    private final JLabel     m_searchL = new JLabel("search >> ");
+    private final Box        m_sbox    = new Box(BoxLayout.X_AXIS);
+
+    private final String[] m_fields;
+d48 2
+d51 1
+a51 1
+
+d55 1
+a55 1
+
+d61 1
+a61 1
+
+d70 1
+a70 1
+
+d79 1
+a79 1
+    public JSearchPanel(SearchTupleSet search, String field,
+d84 1
+a84 1
+
+d94 1
+a94 1
+    public JSearchPanel(TupleSet source, SearchTupleSet search,
+d102 2
+a103 2
+        m_searcher = search != null ? search : new PrefixSearchTupleSet();
+
+d106 1
+a106 1
+
+d109 1
+a109 1
+
+d119 1
+a119 1
+
+d130 1
+a130 1
+
+d141 1
+a141 1
+    public JSearchPanel(Visualization vis, String group, String field,
+d144 1
+a144 1
+        this(vis, group, Visualization.SEARCH_ITEMS,
+d147 1
+a147 1
+
+d161 1
+a161 1
+    public JSearchPanel(Visualization vis, String group, String field,
+d164 1
+a164 1
+        this(vis, group, Visualization.SEARCH_ITEMS,
+d167 1
+a167 1
+
+d182 1
+a182 1
+    public JSearchPanel(Visualization vis, String group, String searchGroup,
+d188 1
+a188 1
+
+d203 1
+a203 1
+    public JSearchPanel(Visualization vis, String group, String searchGroup,
+d211 1
+a211 1
+        TupleSet<?> search = vis.getGroup(searchGroup);
+d224 1
+a224 1
+
+d230 2
+a231 2
+
+    private void init(TupleSet<?> source) {
+d234 3
+a236 4
+            for (String element : m_fields) {
+				m_searcher.index(source.tuples(), element);
+			}
+
+d239 2
+a240 2
+                public void tupleSetChanged(TupleSet<?> tset,
+                        Tuple<?>[] add, Tuple<?>[] rem)
+d244 2
+a245 3
+                            for (String element : m_fields) {
+								m_searcher.index(add[i], element);
+							}
+d250 2
+a251 3
+                            for (String element : m_fields) {
+								m_searcher.unindex(rem[i], element);
+							}
+d257 1
+a257 1
+
+d259 2
+a260 3
+        if ( m_monitorKeys ) {
+			m_queryF.getDocument().addDocumentListener(this);
+		}
+d267 1
+a267 1
+
+d271 1
+a271 1
+
+d280 4
+a283 5
+        if ( m_showBorder ) {
+			m_sbox.setBorder(BorderFactory.createLineBorder(getForeground()));
+		} else {
+			m_sbox.setBorder(null);
+		}
+d286 1
+a286 1
+
+d296 1
+a296 1
+
+d299 1
+a299 1
+
+d301 1
+a301 1
+
+d305 1
+a305 2
+    @@Override
+	public void requestFocus() {
+d308 1
+a308 1
+
+d316 1
+a316 1
+
+d326 1
+a326 1
+
+d336 1
+a336 1
+
+d346 1
+a346 1
+
+d354 3
+a356 3
+            if ( m_searcher.getQuery().length() == 0 ) {
+				m_resultL.setText(null);
+			} else {
+d362 1
+a362 1
+
+d371 2
+a372 3
+        if ( m_monitorKeys ) {
+			d.addDocumentListener(this);
+		}
+d375 1
+a375 1
+
+d383 1
+a383 1
+
+d386 1
+a386 1
+     * when the button has the mouse pointer over it.
+d392 1
+a392 1
+
+d396 1
+a396 2
+    @@Override
+	public void setBackground(Color bg) {
+d398 3
+a400 9
+        if ( m_queryF  != null ) {
+			m_queryF.setBackground(bg);
+		}
+        if ( m_resultL != null ) {
+			m_resultL.setBackground(bg);
+		}
+        if ( m_searchL != null ) {
+			m_searchL.setBackground(bg);
+		}
+d402 1
+a402 1
+
+d406 1
+a406 2
+    @@Override
+	public void setForeground(Color fg) {
+d412 4
+a415 9
+        if ( m_resultL != null ) {
+			m_resultL.setForeground(fg);
+		}
+        if ( m_searchL != null ) {
+			m_searchL.setForeground(fg);
+		}
+        if ( m_sbox != null && m_showBorder ) {
+			m_sbox.setBorder(BorderFactory.createLineBorder(fg));
+		}
+d417 1
+a417 1
+
+d421 1
+a421 2
+    @@Override
+	public void setOpaque(boolean opaque) {
+d426 2
+a427 6
+        if ( m_resultL != null ) {
+			m_resultL.setOpaque(opaque);
+		}
+        if ( m_searchL != null ) {
+			m_searchL.setOpaque(opaque);
+		}
+d433 1
+a433 2
+    @@Override
+	public void setFont(Font f) {
+d435 3
+a437 9
+        if ( m_queryF  != null ) {
+			m_queryF.setFont(f);
+		}
+        if ( m_resultL != null ) {
+			m_resultL.setFont(f);
+		}
+        if ( m_searchL != null ) {
+			m_searchL.setFont(f);
+		}
+d439 1
+a439 1
+
+d447 2
+a448 2
+
+
+d485 1
+a485 1
+        private final int[] outline = new int[] {
+d489 1
+a489 1
+        private final int[] fill = new int[] {
+d492 1
+a492 1
+
+d499 1
+a499 1
+
+d502 1
+a502 1
+
+d506 2
+a507 3
+
+        @@Override
+		public void paintComponent(Graphics g) {
+d540 1
+a540 1
+
+@
+
+
+2.2.4.2
+log
+@changed some variables from private to protected to allow subclasses to control the look easier
+@
+text
+@d41 1
+a41 1
+    protected final SearchTupleSet m_searcher;
+d43 4
+a46 4
+    protected final JTextField m_queryF  = new JTextField(15);
+    protected final JLabel     m_resultL = new JLabel("          ");
+    protected final JLabel     m_searchL = new JLabel("search >> ");
+    protected final Box        m_sbox    = new Box(BoxLayout.X_AXIS);
+a382 2
+
+
+@
+
+
+2.1
+log
+@Fixed document listener management bug
+Added additional methods (setOpaque, setCancelColor)
+@
+text
+@d377 8
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d50 2
+d371 2
+a372 1
+        d.addDocumentListener(this);
+d377 9
+d409 12
+d501 1
+a501 1
+                g.setColor(ColorLib.getColor(255,75,75));
+@
+
+
+1.1
+log
+@file JSearchPanel.java was initially added on branch beta.
+@
+text
+@d1 511
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 368
+package prefuse.util.ui;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.Document;
+
+import prefuse.Visualization;
+import prefuse.data.event.TupleSetListener;
+import prefuse.data.search.PrefixSearchTupleSet;
+import prefuse.data.search.SearchTupleSet;
+import prefuse.data.tuple.Tuple;
+import prefuse.data.tuple.TupleSet;
+import prefuse.util.ColorLib;
+
+/**
+ * Provides keyword search over the currently visualized data.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class JSearchPanel extends JPanel
+    implements DocumentListener, ActionListener
+{
+    private Object m_lock;
+    private SearchTupleSet m_searcher;
+
+    private JTextField m_queryF  = new JTextField(15);
+    private JLabel     m_resultL = new JLabel("          ");
+    private JLabel     m_searchL = new JLabel("search >> ");
+    private Box        m_sbox    = new Box(BoxLayout.X_AXIS);
+
+    private String[] m_fields;
+    
+    private boolean m_includeHitCount = false;
+    private boolean m_monitorKeys = false;
+    private boolean m_autoIndex = true;
+    
+    private boolean m_showBorder = true;
+    private boolean m_showCancel = true;
+
+    // ------------------------------------------------------------------------
+    // Free form constructors
+    
+    public JSearchPanel(SearchTupleSet search, String field) {
+        this(search, field, false);
+    }
+    
+    public JSearchPanel(SearchTupleSet search, String field, 
+            boolean monitorKeystrokes)
+    {
+        this(null, search, new String[] {field}, false, monitorKeystrokes);
+    }
+    
+    public JSearchPanel(TupleSet source, SearchTupleSet search, 
+            String[] fields, boolean autoIndex, boolean monitorKeystrokes)
+    {
+        m_lock = new Object();
+        m_fields = fields;
+        m_autoIndex = autoIndex;
+        m_monitorKeys = monitorKeystrokes;
+
+        m_searcher = ( search != null ? search : new PrefixSearchTupleSet() );
+        
+        init(source);
+    }
+    
+    // ------------------------------------------------------------------------
+    // Visualization-based constructors
+    
+    public JSearchPanel(Visualization vis, String field) {
+        this(vis, Visualization.ALL_ITEMS, field, true);
+    }
+    
+    public JSearchPanel(Visualization vis, String group, String field) {
+        this(vis, group, field, true);
+    }
+    
+    public JSearchPanel(Visualization vis, String group, String field, 
+            boolean autoIndex)
+    {
+        this(vis, group, Visualization.SEARCH_ITEMS, 
+                new String[] {field}, autoIndex, false);
+    }
+    
+    public JSearchPanel(Visualization vis, String group, String field, 
+            boolean autoIndex, boolean monitorKeystrokes)
+    {
+        this(vis, group, Visualization.SEARCH_ITEMS, 
+                new String[] {field}, autoIndex, true);
+    }
+    
+    public JSearchPanel(Visualization vis, String group, String searchItems, 
+            String field, boolean autoIndex, boolean monitorKeystrokes)
+    {
+        this(vis, group, searchItems, new String[] {field}, autoIndex,
+                monitorKeystrokes);
+    }
+    
+    public JSearchPanel(Visualization vis, String group, String searchItems, 
+            String[] fields, boolean autoIndex, boolean monitorKeystrokes)
+    {
+        m_lock = vis;
+        m_fields = fields;
+        m_autoIndex = autoIndex;
+        m_monitorKeys = monitorKeystrokes;
+
+        TupleSet search = vis.getGroup(searchItems);
+
+        if ( search != null ) {
+            if ( search instanceof SearchTupleSet ) {
+                m_searcher = (SearchTupleSet)search;
+            } else {
+                throw new IllegalStateException(
+                    "Search focus set not instance of SearchTupleSet!");
+            }
+        } else {
+            m_searcher = new PrefixSearchTupleSet();
+            vis.addFocusGroup(searchItems, m_searcher);
+        }
+        
+        init(vis.getGroup(group));
+    }
+
+    // ------------------------------------------------------------------------
+    // Initialization
+    
+    private void init(TupleSet source) {
+        if ( m_autoIndex && source != null ) {
+            // index everything already there
+            for ( int i=0; i < m_fields.length; i++ )
+                m_searcher.index(source.tuples(), m_fields[i]);
+            
+	        // add a listener to dynamically build search index
+            source.addTupleSetListener(new TupleSetListener() {
+                public void tupleSetChanged(TupleSet tset, 
+                        Tuple[] add, Tuple[] rem)
+                {
+                    if ( add != null ) {
+                        for ( int i=0; i<add.length; ++i ) {
+                            for ( int j=0; j<m_fields.length; j++ )
+                                m_searcher.index(add[i], m_fields[j]);
+                        }
+                    }
+                    if ( rem != null && m_searcher.unindexSupported() ) {
+                        for ( int i=0; i<rem.length; ++i )  {
+                            for ( int j=0; j<m_fields.length; j++ )
+                                m_searcher.unindex(rem[i], m_fields[j]);
+                        }
+                    }
+                }
+            });
+        }
+        
+        m_queryF.addActionListener(this);
+        if ( m_monitorKeys )
+            m_queryF.getDocument().addDocumentListener(this);
+        m_queryF.setMaximumSize(new Dimension(400, 100));
+        m_queryF.setPreferredSize(new Dimension(200, 20));
+        m_queryF.setBorder(null);
+        setBackground(Color.WHITE);
+        initUI();
+    } //
+    
+    private void initUI() {
+        this.removeAll();
+        this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        
+        m_sbox.removeAll();
+        m_sbox.add(Box.createHorizontalStrut(3));
+        m_sbox.add(m_queryF);
+        m_sbox.add(Box.createHorizontalStrut(3));
+        if ( m_showCancel ) {
+            m_sbox.add(new ClearButton());
+            m_sbox.add(Box.createHorizontalStrut(3));
+        }
+        if ( m_showBorder )
+            m_sbox.setBorder(BorderFactory.createLineBorder(getForeground()));
+        else
+            m_sbox.setBorder(null);
+        m_sbox.setMaximumSize(new Dimension(400, 100));
+        m_sbox.setPreferredSize(new Dimension(171, 20));
+        
+        Box b = new Box(BoxLayout.X_AXIS);
+        if ( m_includeHitCount ) {
+            b.add(m_resultL);
+            b.add(Box.createHorizontalStrut(10));
+            //b.add(Box.createHorizontalGlue());
+        }
+        b.add(m_searchL);
+        b.add(Box.createHorizontalStrut(3));
+        b.add(m_sbox);
+        
+        this.add(b);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public void setLock(Object lock) {
+        m_lock = lock;
+    }
+    
+    public void setShowResultCount(boolean b) {
+        this.m_includeHitCount = b;
+        initUI();
+        validate();
+    }
+    
+    public void setShowBorder(boolean b) {
+        m_showBorder = b;
+        initUI();
+        validate();
+    }
+    
+    public void setShowCancel(boolean b) {
+        m_showCancel = b;
+        initUI();
+        validate();
+    }
+    
+    public void searchUpdate() {
+        String query = m_queryF.getText();
+        synchronized ( m_lock ) {
+            m_searcher.search(query);
+            if ( m_searcher.getQuery().length() == 0 )
+                m_resultL.setText(null);
+            else {
+                int r = m_searcher.getTupleCount();
+                m_resultL.setText(r + " match" + (r==1?"":"es"));
+            }
+        }
+    }
+    
+    public void setQuery(String query) {
+        Document d = m_queryF.getDocument();
+        d.removeDocumentListener(this);
+        m_queryF.setText(query);
+        d.addDocumentListener(this);
+        searchUpdate();
+    } //
+    
+    public void setBackground(Color bg) {
+        super.setBackground(bg);
+        if ( m_queryF  != null ) m_queryF.setBackground(bg);
+        if ( m_resultL != null ) m_resultL.setBackground(bg);
+        if ( m_searchL != null ) m_searchL.setBackground(bg);
+    }
+    
+    public void setForeground(Color fg) {
+        super.setForeground(fg);
+        if ( m_queryF  != null ) {
+            m_queryF.setForeground(fg);
+            m_queryF.setCaretColor(fg);
+        }
+        if ( m_resultL != null ) m_resultL.setForeground(fg);
+        if ( m_searchL != null ) m_searchL.setForeground(fg);
+        if ( m_sbox != null && m_showBorder )
+            m_sbox.setBorder(BorderFactory.createLineBorder(fg));
+    }
+
+    public void setFont(Font f) {
+        super.setFont(f);;
+        if ( m_queryF  != null ) m_queryF.setFont(f);
+        if ( m_resultL != null ) m_resultL.setFont(f);
+        if ( m_searchL != null ) m_searchL.setFont(f);
+    } //
+    
+    public void setLabelText(String text) {
+        m_searchL.setText(text);
+    }
+    
+    public void changedUpdate(DocumentEvent e) {
+        searchUpdate();
+    }
+    public void insertUpdate(DocumentEvent e) {
+        searchUpdate();
+    }
+    public void removeUpdate(DocumentEvent e) {
+        searchUpdate();
+    }
+
+    /**
+     * @@see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Object src = e.getSource();
+        if ( src == m_queryF ) {
+            searchUpdate();
+        }
+    }
+
+    public class ClearButton extends JComponent implements MouseListener {
+
+        private boolean hover = false;
+        private int[] outline = new int[] {
+            0,0, 2,0, 4,2, 5,2, 7,0, 9,0, 9,2, 7,4, 7,5, 9,7, 9,9,
+            7,9, 5,7, 4,7, 2,9, 0,9, 0,7, 2,5, 2,4, 0,2, 0,0
+        };
+        private int[] fill = new int[] {
+            1,1,8,8, 1,2,7,8, 2,1,8,7, 7,1,1,7, 8,2,2,8, 1,8,8,1
+        };
+        
+        public ClearButton() {
+    		// set button size
+            Dimension d = new Dimension(10,10);
+            this.setPreferredSize(d);
+            this.setMinimumSize(d);
+            this.setMaximumSize(d);
+            
+            // prevent the widget from getting the keyboard focus
+            this.setFocusable(false);
+            
+            // add callbacks
+            this.addMouseListener(this);
+        }
+        
+        public void paintComponent(Graphics g) {
+            if ( hover ) { // draw fill
+                g.setColor(ColorLib.getColor(255,75,75));
+                for ( int i=0; i+3 < fill.length; i+=4 ) {
+                    g.drawLine(fill[i],fill[i+1],fill[i+2],fill[i+3]);
+                }
+            }
+            g.setColor(JSearchPanel.this.getForeground());
+            for ( int i=0; i+3 < outline.length; i+=2 ) {
+                g.drawLine(outline[i],   outline[i+1],
+                           outline[i+2], outline[i+3]);
+            }
+        }
+
+        public void mouseClicked(MouseEvent arg0) {
+            setQuery(null);
+        }
+
+        public void mousePressed(MouseEvent arg0) {
+        }
+
+        public void mouseReleased(MouseEvent arg0) {
+        }
+
+        public void mouseEntered(MouseEvent arg0) {
+            hover = true;
+            repaint();
+        }
+
+        public void mouseExited(MouseEvent arg0) {
+            hover = false;
+            repaint();
+        }
+        
+    } // end of class ClearButton
+
+} // end of class JSearchPanel
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@a213 4
+    public void requestFocus() {
+        this.m_queryF.requestFocus();
+    }
+    
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d149 1
+a149 1
+            // add a listener to dynamically build search index
+d323 1
+a323 1
+            // set button size
+@
+
+
+1.1.2.4
+log
+@Updated reference to SearchTupleSet.isUnindexSupported
+@
+text
+@d160 1
+a160 1
+                    if ( rem != null && m_searcher.isUnindexSupported() ) {
+@
+
+
+1.1.2.5
+log
+@Much more javadoc
+@
+text
+@d32 1
+a32 1
+ * Swing component that enables keyword search over prefuse data tuples.
+d34 2
+a35 2
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ * @@see prefuse.data.query.SearchQueryBinding
+a59 5
+    /**
+     * Create a new JSearchPanel.
+     * @@param search the search tuple set conducting the searches
+     * @@param field the data field being searched
+     */
+a63 8
+    /**
+     * Create a new JSearchPanel.
+     * @@param search the search tuple set conducting the searches
+     * @@param field the data field being searched
+     * @@param monitorKeystrokes indicates if each keystroke event should result
+     * in a new search being issued (true) or if searches should only be
+     * initiated by hitting the enter key (false)
+     */
+a69 9
+    /**
+     * Create a new JSearchPanel.
+     * @@param source the source set of tuples that should be searched over
+     * @@param search the search tuple set conducting the searches
+     * @@param fields the data fields being searched
+     * @@param monitorKeystrokes indicates if each keystroke event should result
+     * in a new search being issued (true) or if searches should only be
+     * initiated by hitting the enter key (false)
+     */
+a85 6
+    /**
+     * Create a new JSearchPanel. The default search tuple set for the
+     * visualization will be used.
+     * @@param vis the Visualization to search over
+     * @@param field the data field being searched
+     */
+a89 7
+    /**
+     * Create a new JSearchPanel. The default search tuple set for the
+     * visualization will be used.
+     * @@param vis the Visualization to search over
+     * @@param group the particular data group to search over
+     * @@param field the data field being searched
+     */
+a93 10
+    /**
+     * Create a new JSearchPanel. The default search tuple set for the
+     * visualization will be used.
+     * @@param vis the Visualization to search over
+     * @@param group the particular data group to search over
+     * @@param field the data field being searched
+     * @@param autoIndex indicates if items should be automatically
+     * indexed and unindexed as their membership in the source group
+     * changes.
+     */
+a100 13
+    /**
+     * Create a new JSearchPanel. The default search tuple set for the
+     * visualization will be used.
+     * @@param vis the Visualization to search over
+     * @@param group the particular data group to search over
+     * @@param field the data field being searched
+     * @@param autoIndex indicates if items should be automatically
+     * indexed and unindexed as their membership in the source group
+     * changes.
+     * @@param monitorKeystrokes indicates if each keystroke event should result
+     * in a new search being issued (true) or if searches should only be
+     * initiated by hitting the enter key (false)
+     */
+d108 1
+a108 15
+    /**
+     * Create a new JSearchPanel.
+     * @@param vis the Visualization to search over
+     * @@param group the particular data group to search over
+     * @@param searchGroup the group name that resolves to the SearchTupleSet
+     * to use
+     * @@param field the data field being searched
+     * @@param autoIndex indicates if items should be automatically
+     * indexed and unindexed as their membership in the source group
+     * changes.
+     * @@param monitorKeystrokes indicates if each keystroke event should result
+     * in a new search being issued (true) or if searches should only be
+     * initiated by hitting the enter key (false)
+     */
+    public JSearchPanel(Visualization vis, String group, String searchGroup, 
+d111 1
+a111 1
+        this(vis, group, searchGroup, new String[] {field}, autoIndex,
+d115 1
+a115 15
+    /**
+     * Create a new JSearchPanel.
+     * @@param vis the Visualization to search over
+     * @@param group the particular data group to search over
+     * @@param searchGroup the group name that resolves to the SearchTupleSet
+     * to use
+     * @@param fields the data fields being searched
+     * @@param autoIndex indicates if items should be automatically
+     * indexed and unindexed as their membership in the source group
+     * changes.
+     * @@param monitorKeystrokes indicates if each keystroke event should result
+     * in a new search being issued (true) or if searches should only be
+     * initiated by hitting the enter key (false)
+     */
+    public JSearchPanel(Visualization vis, String group, String searchGroup, 
+d123 1
+a123 1
+        TupleSet search = vis.getGroup(searchGroup);
+d134 1
+a134 1
+            vis.addFocusGroup(searchGroup, m_searcher);
+d178 1
+a178 1
+    }
+d189 1
+a189 1
+            m_sbox.add(new CancelButton());
+a213 3
+    /**
+     * Request the keyboard focus for this component.
+     */
+a217 4
+    /**
+     * Set the lock, an object to synchronize on while issuing queries.
+     * @@param lock the synchronization lock
+     */
+a221 4
+    /**
+     * Indicates if the component should show the number of search results.
+     * @@param b true to show the result count, false to hide it
+     */
+a227 4
+    /**
+     * Indicates if the component should show a border around the text field.
+     * @@param b true to show the text field border, false to hide it
+     */
+a233 4
+    /**
+     * Indicates if the component should show the cancel query button.
+     * @@param b true to show the cancel query button, false to hide it
+     */
+d240 1
+a240 4
+    /**
+     * Update the search results based on the current query.
+     */
+    protected void searchUpdate() {
+a252 4
+    /**
+     * Set the query string in the text field.
+     * @@param query the query string to use
+     */
+d259 1
+a259 1
+    }
+a260 3
+    /**
+     * @@see java.awt.Component#setBackground(java.awt.Color)
+     */
+a267 3
+    /**
+     * @@see java.awt.Component#setForeground(java.awt.Color)
+     */
+a279 3
+    /**
+     * @@see java.awt.Component#setFont(java.awt.Font)
+     */
+d285 1
+a285 1
+    }
+a286 4
+    /**
+     * Set the label text used on this component.
+     * @@param text the label text, use null to show no label
+     */
+a290 4
+    
+    /**
+     * @@see javax.swing.event.DocumentListener#changedUpdate(javax.swing.event.DocumentEvent)
+     */
+a293 3
+    /**
+     * @@see javax.swing.event.DocumentListener#insertUpdate(javax.swing.event.DocumentEvent)
+     */
+a296 3
+    /**
+     * @@see javax.swing.event.DocumentListener#removeUpdate(javax.swing.event.DocumentEvent)
+     */
+d311 1
+a311 5
+    /**
+     * A button depicted as an "X" that allows users to cancel the current query
+     * and clear the query field.
+     */
+    public class CancelButton extends JComponent implements MouseListener {
+d322 1
+a322 1
+        public CancelButton() {
+d370 1
+a370 1
+    } // end of class CancelButton
+@
+
+
+1.1.2.6
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a23 1
+import prefuse.data.Tuple;
+d27 1
+@
+
+

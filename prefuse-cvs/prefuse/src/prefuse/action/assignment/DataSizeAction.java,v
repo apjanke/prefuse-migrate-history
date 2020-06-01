@@ -1,0 +1,1107 @@
+head	2.6;
+access;
+symbols
+	java_1_5:2.6.0.4
+	Root_java_1_5:2.6
+	beta:2.6.0.2
+	beta-20080113:2.6
+	beta-20071021:2.6
+	beta-20060220:2.2
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2006.04.10.18.54.41;	author jheer;	state Exp;
+branches
+	2.6.4.1;
+next	2.5;
+
+2.5
+date	2006.03.06.00.35.27;	author jheer;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2006.03.01.08.19.53;	author jheer;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2006.02.27.04.02.14;	author jheer;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.02.20.10.20.25;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.18.23.42.24;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.02.07.00.42.53;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.6.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Updated to allow cascaded rules.
+set/getBaseSize renamed to set/getMinimumSize
+Added get/setMaximumSize method
+@
+text
+@package prefuse.action.assignment;
+
+import java.util.logging.Logger;
+
+import prefuse.Constants;
+import prefuse.data.tuple.TupleSet;
+import prefuse.util.DataLib;
+import prefuse.util.MathLib;
+import prefuse.util.PrefuseLib;
+import prefuse.visual.VisualItem;
+
+/**
+ * <p>
+ * Assignment Action that assigns size values for a group of items based upon
+ * a data field. This action can be used to automatically vary item's on screen
+ * sizes proportionally to an underlying data value. Sizes can be assigned along
+ * a continuous scale, or can be binned into discrete size groups. Both 1D 
+ * (length) and 2D (area) encodings are supported by this function.
+ * 2D is assumed by default; use the setIs2DArea method to change this.</p>
+ * 
+ * <p>
+ * The size assignments for numerical data are continuous by default, but can
+ * be binned into a few discrete steps (see {@@link #setBinCount(int)}).
+ * Quantitative data can also be sized on different numerical scales. The
+ * default scale is a linear scale (specified by
+ * {@@link Constants#LINEAR_SCALE}), but logarithmic and square root scales can
+ * be used (specified by {@@link Constants#LOG_SCALE} and
+ * {@@link Constants#SQRT_SCALE} respectively. Finally, the scale can be broken
+ * into quantiles, reflecting the statistical distribution of the values rather
+ * than just the total data value range, using the
+ * {@@link Constants#QUANTILE_SCALE} value. For the quantile scale to work, you
+ * also need to specify the number of bins to use (see
+ * {@@link #setBinCount(int)}). This value will determine the number of
+ * quantiles that the data should be divided into. 
+ * </p>
+ * 
+ * <p>
+ * By default, the maximum size value is determined automatically from the
+ * data, faithfully representing the scale differences between data values.
+ * However, this can sometimes result in very large differences. For
+ * example, if the minimum data value is 1.0 and the largest is 200.0, the
+ * largest items will be 200 times larger than the smallest. While
+ * accurate, this may not result in the most readable display. To correct
+ * these cases, use the {@@link #setMaximumSize(double)} method to manually
+ * set the range of allowed sizes.  By default, the minimum size value is
+ * 1.0. This too can be changed using the {@@link #setMinimumSize(double)}
+ * method.
+ * </p>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class DataSizeAction extends SizeAction {
+    
+    protected static final double NO_SIZE = Double.NaN;
+    
+    protected String m_dataField;
+    
+    protected double m_minSize = 1;
+    protected double m_sizeRange;
+    
+    protected int m_scale = Constants.LINEAR_SCALE;
+    protected int m_bins = Constants.CONTINUOUS;
+    
+    protected boolean m_inferBounds = true;
+    protected boolean m_inferRange = true;
+    protected boolean m_is2DArea = true;
+    protected double[] m_dist;
+    
+    protected int m_tempScale;
+    
+    /**
+     * Create a new DataSizeAction.
+     * @@param group the data group to process
+     * @@param field the data field to base size assignments on
+     */
+    public DataSizeAction(String group, String field) {
+        super(group, NO_SIZE);
+        m_dataField = field;
+    }
+
+    /**
+     * Create a new DataSizeAction.
+     * @@param group the data group to process
+     * @@param field the data field to base size assignments on
+     * @@param bins the number of discrete size values to use
+     */
+    public DataSizeAction(String group, String field, int bins) {
+        this(group, field, bins, Constants.LINEAR_SCALE);
+    }
+
+    /**
+     * Create a new DataSizeAction.
+     * @@param group the data group to process
+     * @@param field the data field to base size assignments on
+     * @@param bins the number of discrete size values to use
+     * @@param scale the scale type to use. One of
+     * {@@link prefuse.Constants#LINEAR_SCALE},
+     * {@@link prefuse.Constants#LOG_SCALE},
+     * {@@link prefuse.Constants#SQRT_SCALE}, or
+     * {@@link prefuse.Constants#QUANTILE_SCALE}. If a quantile scale is
+     * used, the number of bins must be greater than zero. 
+     */
+    public DataSizeAction(String group, String field, int bins, int scale) {
+        super(group, NO_SIZE);
+        m_dataField = field;
+        setScale(scale);
+        setBinCount(bins);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Returns the data field used to encode size values.
+     * @@return the data field that is mapped to size values
+     */
+    public String getDataField() {
+        return m_dataField;
+    }
+    
+    /**
+     * Set the data field used to encode size values.
+     * @@param field the data field to map to size values
+     */
+    public void setDataField(String field) {
+        m_dataField = field;
+    }
+    
+    /**
+     * Returns the scale type used for encoding size values from the data.
+     * @@return the scale type. One of
+     * {@@link prefuse.Constants#LINEAR_SCALE},
+     * {@@link prefuse.Constants#LOG_SCALE}, 
+     * {@@link prefuse.Constants#SQRT_SCALE},
+     * {@@link prefuse.Constants#QUANTILE_SCALE}.
+     */
+    public int getScale() {
+        return m_scale;
+    }
+    
+    /**
+     * Set the scale (linear, square root, or log) to use for encoding size
+     * values from the data.
+     * @@param scale the scale type to use. This value should be one of
+     * {@@link prefuse.Constants#LINEAR_SCALE}, 
+     * {@@link prefuse.Constants#SQRT_SCALE},
+     * {@@link prefuse.Constants#LOG_SCALE},
+     * {@@link prefuse.Constants#QUANTILE_SCALE}.
+     * If {@@link prefuse.Constants#QUANTILE_SCALE} is used, the number of
+     * bins to use must also be specified to a value greater than zero using
+     * the {@@link #setBinCount(int)} method.
+     */
+    public void setScale(int scale) {
+        if ( scale < 0 || scale >= Constants.SCALE_COUNT )
+            throw new IllegalArgumentException(
+                    "Unrecognized scale value: "+scale);
+        m_scale = scale;
+    }
+    
+    /**
+     * Returns the number of "bins" or distinct categories of sizes
+     * @@return the number of bins.
+     */
+    public int getBinCount() {
+        return m_bins;
+    }
+
+    /**
+     * Sets the number of "bins" or distinct categories of sizes
+     * @@param count the number of bins to set. The value 
+     * {@@link Constants#CONTINUOUS} indicates not to use any binning. If the
+     * scale type set using the {@@link #setScale(int)} method is
+     * {@@link Constants#QUANTILE_SCALE}, the bin count <strong>must</strong>
+     * be greater than zero.
+     */
+    public void setBinCount(int count) {
+        if ( m_scale == Constants.QUANTILE_SCALE && count <= 0 ) {
+            throw new IllegalArgumentException(
+                "The quantile scale can not be used without binning. " +
+                "Use a bin value greater than zero.");
+        }
+        m_bins = count;
+    }
+    
+    /**
+     * Indicates if the size values set by this function represent 2D areas.
+     * That is, if the size is a 2D area or a 1D length. The size value will
+     * be scaled appropriately to facilitate better perception of size
+     * differences.
+     * @@return true if this instance is configured for area sizes, false for
+     *  length sizes.
+     * @@see prefuse.util.PrefuseLib#getSize2D(double)
+     */
+    public boolean is2DArea() {
+        return m_is2DArea;
+    }
+    
+    /**
+     * Sets if the size values set by this function represent 2D areas.
+     * That is, if the size is a 2D area or a 1D length. The size value will
+     * be scaled appropriately to facilitate better perception of size
+     * differences.
+     * @@param isArea true to configure this instance for area sizes, false for
+     *  length sizes
+     * @@see prefuse.util.PrefuseLib#getSize2D(double)
+     */
+    public void setIs2DArea(boolean isArea) {
+        m_is2DArea = isArea;
+    }
+
+    /**
+     * Gets the size assigned to the lowest-valued data items, typically 1.0.
+     * @@return the size for the lowest-valued data items
+     */
+    public double getMinimumSize() {
+        return m_minSize;
+    }
+
+    /**
+     * Sets the size assigned to the lowest-valued data items. By default,
+     * this value is 1.0.
+     * @@param size the new size for the lowest-valued data items
+     */
+    public void setMinimumSize(double size) {
+        if ( Double.isInfinite(size) || 
+             Double.isNaN(size)      ||
+             size <= 0 )
+        {
+           throw new IllegalArgumentException("Minimum size value must be a "
+                   + "finite number greater than zero.");
+        }
+        
+        if ( m_inferRange ) {
+            m_sizeRange += m_minSize - size;
+        }
+        m_minSize = size;
+    }    
+    
+    /**
+     * Gets the maximum size value that will be assigned by this action. By
+     * default, the maximum size value is determined automatically from the
+     * data, faithfully representing the scale differences between data values.
+     * However, this can sometimes result in very large differences. For
+     * example, if the minimum data value is 1.0 and the largest is 200.0, the
+     * largest items will be 200 times larger than the smallest. While
+     * accurate, this may not result in the most readable display. To correct
+     * these cases, use the {@@link #setMaximumSize(double)} method to manually
+     * set the range of allowed sizes.  
+     * @@return the current maximum size. For the returned value to accurately
+     * reflect the size range used by this action, either the action must
+     * have already been run (allowing the value to be automatically computed)
+     * or the maximum size must have been explicitly set.
+     */
+    public double getMaximumSize() {
+        return m_minSize + m_sizeRange;
+    }
+    
+    /**
+     * Set the maximum size value that will be assigned by this action. By
+     * default, the maximum size value is determined automatically from the
+     * data, faithfully representing the scale differences between data values.
+     * However, this can sometimes result in very large differences. For
+     * example, if the minimum data value is 1.0 and the largest is 200.0, the
+     * largest items will be 200 times larger than the smallest. While
+     * accurate, this may not result in the most readable display. To correct
+     * these cases, use the {@@link #setMaximumSize(double)} method to manually
+     * set the range of allowed sizes. 
+     * @@param maxSize the maximum size to use. If this value is less than or
+     * equal to zero, infinite, or not a number (NaN) then the input value
+     * will be ignored and instead automatic inference of the size range
+     * will be performed. 
+     */
+    public void setMaximumSize(double maxSize) {
+        if ( Double.isInfinite(maxSize) || 
+             Double.isNaN(maxSize)      ||
+             maxSize <= 0 )
+        {
+            m_inferRange = true;
+        } else {
+            m_inferRange = false;
+            m_sizeRange = maxSize-m_minSize;
+        }
+    }
+    
+    /**
+     * This operation is not supported by the DataSizeAction type.
+     * Calling this method will result in a thrown exception.
+     * @@see prefuse.action.assignment.SizeAction#setDefaultSize(double)
+     * @@throws UnsupportedOperationException
+     */
+    public void setDefaultSize(double defaultSize) {
+        throw new UnsupportedOperationException();
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.EncoderAction#setup()
+     */
+    protected void setup() {
+        TupleSet ts = m_vis.getGroup(m_group);
+        
+        // cache the scale value in case it gets changed due to error
+        m_tempScale = m_scale;
+        
+        if ( m_inferBounds ) {
+            if ( m_scale == Constants.QUANTILE_SCALE && m_bins > 0 ) {
+                double[] values =
+                    DataLib.toDoubleArray(ts.tuples(), m_dataField);
+                m_dist = MathLib.quantiles(m_bins, values);
+            } else {
+                // check for non-binned quantile scale error
+                if ( m_scale == Constants.QUANTILE_SCALE ) {
+                    Logger.getLogger(getClass().getName()).warning(
+                            "Can't use quantile scale with no binning. " +
+                            "Defaulting to linear scale. Set the bin value " +
+                            "greater than zero to use a quantile scale.");
+                    m_scale = Constants.LINEAR_SCALE;
+                }
+                m_dist = new double[2];
+                m_dist[0]= DataLib.min(ts, m_dataField).getDouble(m_dataField);
+                m_dist[1]= DataLib.max(ts, m_dataField).getDouble(m_dataField);
+            }
+            if ( m_inferRange ) {
+                m_sizeRange = m_dist[m_dist.length-1]/m_dist[0] - m_minSize;
+            }
+        }
+    }
+    
+    /**
+     * @@see prefuse.action.EncoderAction#finish()
+     */
+    protected void finish() {
+        // reset scale in case it needed to be changed due to errors
+        m_scale = m_tempScale;
+    }
+    
+    /**
+     * @@see prefuse.action.assignment.SizeAction#getSize(prefuse.visual.VisualItem)
+     */
+    public double getSize(VisualItem item) {
+        // check for any cascaded rules first
+        double size = super.getSize(item);
+        if ( !Double.isNaN(size) ) {
+            return size;
+        }
+        
+        // otherwise perform data-driven assignment
+        double v = item.getDouble(m_dataField);
+        double f = MathLib.interp(m_scale, v, m_dist);
+        if ( m_bins < 1 ) {
+            // continuous scale
+            v = m_minSize + f * m_sizeRange;
+        } else {
+            // binned sizes
+            int bin = f < 1.0 ? (int)(f*m_bins) : m_bins-1;
+            v = m_minSize + bin*(m_sizeRange/(m_bins-1));
+        }
+        // return the size value. if this action is configured to return
+        // 2-dimensional sizes (ie area rather than length) then the
+        // size value is appropriately scaled first
+        return m_is2DArea ? PrefuseLib.getSize2D(v) : v;
+    }
+    
+} // end of class DataSizeAction
+@
+
+
+2.6.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d5 1
+a9 1
+import prefuse.util.Scale;
+d17 1
+a17 1
+ * a continuous scale, or can be binned into discrete size groups. Both 1D
+d20 1
+a20 1
+ *
+d26 3
+a28 3
+ * {@@link Scale#LINEAR}), but logarithmic and square root scales can
+ * be used (specified by {@@link Scale#LOG} and
+ * {@@link Scale#SQRT} respectively. Finally, the scale can be broken
+d31 1
+a31 1
+ * {@@link Scale#QUANTILE} value. For the quantile scale to work, you
+d34 1
+a34 1
+ * quantiles that the data should be divided into.
+d36 1
+a36 1
+ *
+d49 1
+a49 1
+ *
+d53 1
+a53 1
+
+d55 1
+a55 1
+
+d57 1
+a57 1
+
+d60 4
+a63 4
+
+    protected Scale m_scale = Scale.LINEAR;
+    protected int m_bins = BinConstants.CONTINUOUS;
+
+d68 3
+a70 3
+
+    protected Scale m_tempScale;
+
+d88 1
+a88 1
+        this(group, field, bins, Scale.LINEAR);
+d97 5
+a101 5
+     * {@@link Scale#LINEAR},
+     * {@@link Scale#LOG},
+     * {@@link Scale#SQRT}, or
+     * {@@link Scale#QUANTILE}. If a quantile scale is
+     * used, the number of bins must be greater than zero.
+d103 1
+a103 1
+    public DataSizeAction(String group, String field, int bins, Scale scale) {
+d109 1
+a109 1
+
+d111 1
+a111 1
+
+d119 1
+a119 1
+
+d127 1
+a127 1
+
+d131 4
+a134 4
+     * {@@link Scale#LINEAR},
+     * {@@link Scale#LOG},
+     * {@@link Scale#SQRT},
+     * {@@link Scale#QUANTILE}.
+d136 1
+a136 1
+    public Scale getScale() {
+d139 1
+a139 1
+
+d144 5
+a148 5
+     * {@@link Scale#LINEAR},
+     * {@@link Scale#SQRT},
+     * {@@link Scale#LOG},
+     * {@@link Scale#QUANTILE}.
+     * If {@@link Scale#QUANTILE} is used, the number of
+d152 4
+a155 1
+    public void setScale(Scale scale) {
+d158 1
+a158 1
+
+d169 4
+a172 4
+     * @@param count the number of bins to set. The value
+     * {@@link BinConstants#CONTINUOUS} indicates not to use any binning. If the
+     * scale type set using the {@@link #setScale(Scale)} method is
+     * {@@link Scale#QUANTILE}, the bin count <strong>must</strong>
+d176 1
+a176 1
+        if ( m_scale == Scale.QUANTILE && count <= 0 ) {
+d183 1
+a183 1
+
+d196 1
+a196 1
+
+d224 1
+a224 1
+        if ( Double.isInfinite(size) ||
+d231 1
+a231 1
+
+d236 2
+a237 2
+    }
+
+d247 1
+a247 1
+     * set the range of allowed sizes.
+d256 1
+a256 1
+
+d266 1
+a266 1
+     * set the range of allowed sizes.
+d270 1
+a270 1
+     * will be performed.
+d273 1
+a273 1
+        if ( Double.isInfinite(maxSize) ||
+d283 1
+a283 1
+
+d290 1
+a290 2
+    @@Override
+	public void setDefaultSize(double defaultSize) {
+d293 1
+a293 1
+
+d295 1
+a295 1
+
+d299 3
+a301 4
+    @@Override
+	protected void setup() {
+        TupleSet<? extends VisualItem<?>> ts = m_vis.getGroup(m_group);
+
+d304 1
+a304 1
+
+d306 1
+a306 1
+            if ( m_scale == Scale.QUANTILE && m_bins > 0 ) {
+d312 1
+a312 1
+                if ( m_scale == Scale.QUANTILE ) {
+d317 1
+a317 1
+                    m_scale = Scale.LINEAR;
+d328 1
+a328 1
+
+d332 1
+a332 2
+    @@Override
+	protected void finish() {
+d336 1
+a336 1
+
+d340 1
+a340 2
+    @@Override
+	public double getSize(VisualItem<?> item) {
+d346 1
+a346 1
+
+d356 1
+a356 1
+            v = m_minSize + bin*m_sizeRange/(m_bins-1);
+d363 1
+a363 1
+
+@
+
+
+2.5
+log
+@Updated encoders and AxisLayout to work with arbitrary TupleSets, not just Tables
+@
+text
+@d37 13
+d54 1
+a54 2
+    // TODO: get data on just noticeable differences, use to select size
+    // values more intelligently?
+d58 1
+a58 1
+    protected double m_baseSize = 1;
+d65 1
+d77 1
+a77 1
+        super(group);
+d104 1
+a104 1
+        super(group);
+d214 2
+a215 2
+    public double getBaseSize() {
+        return m_baseSize;
+d223 13
+a235 2
+    public void setBaseSize(double size) {
+        m_baseSize = size;
+d238 56
+d323 3
+a325 1
+            m_sizeRange = m_dist[m_dist.length-1]/m_dist[0] - m_baseSize;
+d341 7
+d352 1
+a352 1
+            v = m_baseSize + f * m_sizeRange;
+d355 2
+a356 2
+            int bin = (int)((f-0.0001)*m_bins);
+            v = m_baseSize + bin*(m_sizeRange/(m_bins-1));
+@
+
+
+2.4
+log
+@Added new DataParser format(Object) functionality
+Added DataParser instance to AbstractColumn
+Added CSVTableWriter
+Deleted Columns class, replaced with DataLib
+Updated assignment Actions to work over arbitrary TupleSets (not just Tables)
+@
+text
+@a5 3
+import prefuse.data.Table;
+import prefuse.data.Tuple;
+import prefuse.data.column.ColumnMetadata;
+d240 2
+a241 11
+                if ( ts instanceof Table ) {
+                    Table t = (Table)ts;
+                    ColumnMetadata md = t.getMetadata(m_dataField);
+                    m_dist[0] = t.getDouble(md.getMinimumRow(), m_dataField);
+                    m_dist[1] = t.getDouble(md.getMaximumRow(), m_dataField);
+                } else {
+                    Tuple mint = DataLib.min(ts.tuples(), m_dataField);
+                    Tuple maxt = DataLib.max(ts.tuples(), m_dataField);
+                    m_dist[0] = mint.getDouble(m_dataField);
+                    m_dist[1] = maxt.getDouble(m_dataField);
+                }
+@
+
+
+2.3
+log
+@Added new EncoderAction abstract base class.
+Updated assignment package to subclass EncoderAction.
+setup() and finish() template methods now allow delegate assignment actions to be properly initialized.
+@
+text
+@d7 1
+a8 1
+import prefuse.data.column.Columns;
+d10 1
+a223 6
+        if ( !(ts instanceof Table) )
+            return; // TODO: exception?
+        Table t = (Table)ts;
+        
+        if ( !t.canGetDouble(m_dataField) ) 
+            return; // TODO: exception ?
+a227 1
+        ColumnMetadata md = t.getMetadata(m_dataField);
+d230 2
+a231 1
+                double[] values = Columns.toDoubleArray(t, m_dataField);
+a241 2
+                int minRow = md.getMinimumRow();
+                int maxRow = md.getMaximumRow();
+d243 11
+a253 2
+                m_dist[0] = t.getDouble(minRow, m_dataField);
+                m_dist[1] = t.getDouble(maxRow, m_dataField);
+@
+
+
+2.2
+log
+@Little Javadoc fixes
+@
+text
+@d58 2
+d217 1
+a217 1
+
+d219 1
+a219 1
+     * @@see prefuse.action.Action#run(double)
+d221 1
+a221 1
+    public void run(double frac) {
+d231 1
+a231 1
+        int scale = m_scale;
+d255 6
+a260 2
+        super.run(frac);
+        
+d262 1
+a262 1
+        m_scale = scale;
+@
+
+
+2.1
+log
+@Added quantile scale for statistics-driven binning of data values
+@
+text
+@d34 3
+a36 3
+ * also need to specify the number of bins to use {@@link #setBinCount(int)}.
+ * This value will determine the number of quantiles that the data should be
+ * divided into. 
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d3 2
+d8 1
+d23 16
+d56 1
+a56 2
+    protected double m_minValue;
+    protected double m_maxValue;
+d85 4
+a88 2
+     * {@@link prefuse.Constants#LOG_SCALE}, or
+     * {@@link prefuse.Constants#SQRT_SCALE}. 
+d118 4
+a121 3
+     * {@@link prefuse.Constants#LINEAR_SCALE}, 
+     * {@@link prefuse.Constants#SQRT_SCALE}, or
+     * {@@link prefuse.Constants#LOG_SCALE}.
+d132 6
+a137 2
+     * {@@link prefuse.Constants#SQRT_SCALE}, or
+     * {@@link prefuse.Constants#LOG_SCALE}.
+d156 5
+a160 2
+     * @@param count the number of bins to set. The value
+     * {@@link Constants#CONTINUOUS} indicates not to use any binning.
+d163 5
+d228 3
+d233 19
+a251 5
+            int minRow = md.getMinimumRow();
+            int maxRow = md.getMaximumRow();
+            m_minValue = t.getDouble(minRow, m_dataField);
+            m_maxValue = t.getDouble(maxRow, m_dataField);
+            m_sizeRange = m_maxValue/m_minValue - m_baseSize;
+d254 3
+d264 1
+a264 1
+        double f = MathLib.interp(m_scale, v, m_minValue, m_maxValue);
+@
+
+
+1.1
+log
+@file DataSizeAction.java was initially added on branch beta.
+@
+text
+@d1 226
+@
+
+
+1.1.2.1
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a0 226
+package prefuse.action.assignment;
+
+import prefuse.Constants;
+import prefuse.data.Table;
+import prefuse.data.column.ColumnMetadata;
+import prefuse.data.tuple.TupleSet;
+import prefuse.util.MathLib;
+import prefuse.util.PrefuseLib;
+import prefuse.visual.VisualItem;
+
+/**
+ * <p>
+ * Assignment Action that assigns size values for a group of items based upon
+ * a data field. This action can be used to automatically vary item's on screen
+ * sizes proportionally to an underlying data value. Sizes can be assigned along
+ * a continuous scale, or can be binned into discrete size groups. Both 1D 
+ * (length) and 2D (area) encodings are supported by this function.
+ * 2D is assumed by default; use the setIs2DArea method to change this.</p>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class DataSizeAction extends SizeAction {
+    
+    // TODO: get data on just noticeable differences, use to select size
+    // values more intelligently?
+    
+    protected String m_dataField;
+    
+    protected double m_baseSize = 1;
+    protected double m_sizeRange;
+    
+    protected int m_scale = Constants.LINEAR_SCALE;
+    protected int m_bins = Constants.CONTINUOUS;
+    
+    protected boolean m_inferBounds = true;
+    protected boolean m_is2DArea = true;
+    protected double m_minValue;
+    protected double m_maxValue;
+    
+    /**
+     * Create a new DataSizeAction.
+     * @@param group the data group to process
+     * @@param field the data field to base size assignments on
+     */
+    public DataSizeAction(String group, String field) {
+        super(group);
+        m_dataField = field;
+    }
+
+    /**
+     * Create a new DataSizeAction.
+     * @@param group the data group to process
+     * @@param field the data field to base size assignments on
+     * @@param bins the number of discrete size values to use
+     */
+    public DataSizeAction(String group, String field, int bins) {
+        this(group, field, bins, Constants.LINEAR_SCALE);
+    }
+
+    /**
+     * Create a new DataSizeAction.
+     * @@param group the data group to process
+     * @@param field the data field to base size assignments on
+     * @@param bins the number of discrete size values to use
+     * @@param scale the scale type to use. One of
+     * {@@link prefuse.Constants#LINEAR_SCALE},
+     * {@@link prefuse.Constants#LOG_SCALE}, or
+     * {@@link prefuse.Constants#SQRT_SCALE}. 
+     */
+    public DataSizeAction(String group, String field, int bins, int scale) {
+        super(group);
+        m_dataField = field;
+        setScale(scale);
+        setBinCount(bins);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Returns the data field used to encode size values.
+     * @@return the data field that is mapped to size values
+     */
+    public String getDataField() {
+        return m_dataField;
+    }
+    
+    /**
+     * Set the data field used to encode size values.
+     * @@param field the data field to map to size values
+     */
+    public void setDataField(String field) {
+        m_dataField = field;
+    }
+    
+    /**
+     * Returns the scale type used for encoding size values from the data.
+     * @@return the scale type. One of
+     * {@@link prefuse.Constants#LINEAR_SCALE}, 
+     * {@@link prefuse.Constants#SQRT_SCALE}, or
+     * {@@link prefuse.Constants#LOG_SCALE}.
+     */
+    public int getScale() {
+        return m_scale;
+    }
+    
+    /**
+     * Set the scale (linear, square root, or log) to use for encoding size
+     * values from the data.
+     * @@param scale the scale type to use. This value should be one of
+     * {@@link prefuse.Constants#LINEAR_SCALE}, 
+     * {@@link prefuse.Constants#SQRT_SCALE}, or
+     * {@@link prefuse.Constants#LOG_SCALE}.
+     */
+    public void setScale(int scale) {
+        if ( scale < 0 || scale >= Constants.SCALE_COUNT )
+            throw new IllegalArgumentException(
+                    "Unrecognized scale value: "+scale);
+        m_scale = scale;
+    }
+    
+    /**
+     * Returns the number of "bins" or distinct categories of sizes
+     * @@return the number of bins.
+     */
+    public int getBinCount() {
+        return m_bins;
+    }
+
+    /**
+     * Sets the number of "bins" or distinct categories of sizes
+     * @@param count the number of bins to set. The value Cosntants.CONTINUOUS
+     * indicates not to use any binning.
+     */
+    public void setBinCount(int count) {
+        m_bins = count;
+    }
+    
+    /**
+     * Indicates if the size values set by this function represent 2D areas.
+     * That is, if the size is a 2D area or a 1D length. The size value will
+     * be scaled appropriately to facilitate better perception of size
+     * differences.
+     * @@return true if this instance is configured for area sizes, false for
+     *  length sizes.
+     * @@see prefuse.util.PrefuseLib#getSize2D(double)
+     */
+    public boolean is2DArea() {
+        return m_is2DArea;
+    }
+    
+    /**
+     * Sets if the size values set by this function represent 2D areas.
+     * That is, if the size is a 2D area or a 1D length. The size value will
+     * be scaled appropriately to facilitate better perception of size
+     * differences.
+     * @@param isArea true to configure this instance for area sizes, false for
+     *  length sizes
+     * @@see prefuse.util.PrefuseLib#getSize2D(double)
+     */
+    public void setIs2DArea(boolean isArea) {
+        m_is2DArea = isArea;
+    }
+
+    /**
+     * Gets the size assigned to the lowest-valued data items, typically 1.0.
+     * @@return the size for the lowest-valued data items
+     */
+    public double getBaseSize() {
+        return m_baseSize;
+    }
+
+    /**
+     * Sets the size assigned to the lowest-valued data items. By default,
+     * this value is 1.0.
+     * @@param size the new size for the lowest-valued data items
+     */
+    public void setBaseSize(double size) {
+        m_baseSize = size;
+    }    
+    
+    // ------------------------------------------------------------------------
+
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        TupleSet ts = m_vis.getGroup(m_group);
+        if ( !(ts instanceof Table) )
+            return; // TODO: exception?
+        Table t = (Table)ts;
+        
+        if ( !t.canGetDouble(m_dataField) ) 
+            return; // TODO: exception ?
+        
+        ColumnMetadata md = t.getMetadata(m_dataField);
+        if ( m_inferBounds ) {
+            int minRow = md.getMinimumRow();
+            int maxRow = md.getMaximumRow();
+            m_minValue = t.getDouble(minRow, m_dataField);
+            m_maxValue = t.getDouble(maxRow, m_dataField);
+            m_sizeRange = m_maxValue/m_minValue - m_baseSize;
+        }
+        super.run(frac);
+    }
+    
+    /**
+     * @@see prefuse.action.assignment.SizeAction#getSize(prefuse.visual.VisualItem)
+     */
+    public double getSize(VisualItem item) {
+        double v = item.getDouble(m_dataField);
+        double f = MathLib.interp(m_scale, v, m_minValue, m_maxValue);
+        if ( m_bins < 1 ) {
+            // continuous scale
+            v = m_baseSize + f * m_sizeRange;
+        } else {
+            // binned sizes
+            int bin = (int)((f-0.0001)*m_bins);
+            v = m_baseSize + bin*(m_sizeRange/(m_bins-1));
+        }
+        // return the size value. if this action is configured to return
+        // 2-dimensional sizes (ie area rather than length) then the
+        // size value is appropriately scaled first
+        return m_is2DArea ? PrefuseLib.getSize2D(v) : v;
+    }
+    
+} // end of class DataSizeAction
+@
+
+
+1.1.2.2
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d131 2
+a132 2
+     * @@param count the number of bins to set. The value
+     * {@@link Constants#CONTINUOUS} indicates not to use any binning.
+@
+
+

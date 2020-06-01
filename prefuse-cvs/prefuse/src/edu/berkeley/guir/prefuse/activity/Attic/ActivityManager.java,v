@@ -1,0 +1,656 @@
+head	1.13;
+access;
+symbols
+	alpha:1.12.0.2
+	Root_alpha:1.12
+	prefuse-alpha-20051229:1.12
+	P20050401_Alpha_PreCHI:1.9;
+locks; strict;
+comment	@# @;
+
+
+1.13
+date	2006.02.11.06.38.46;	author jheer;	state dead;
+branches;
+next	1.12;
+
+1.12
+date	2005.10.31.21.52.35;	author jheer;	state Exp;
+branches
+	1.12.4.1;
+next	1.11;
+
+1.11
+date	2005.07.26.06.01.47;	author jheer;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2005.05.11.18.19.11;	author jheer;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2005.04.01.22.40.23;	author jheer;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2005.03.23.02.40.20;	author jheer;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2005.01.07.02.22.32;	author jheer;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.04.02.09.07.01;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.24.01.57.26;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.23.19.34.05;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.08.20.05.51;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.46;	author jheer;	state Exp;
+branches;
+next	;
+
+1.12.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.13
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.activity;
+
+import java.util.ArrayList;
+
+import edu.berkeley.guir.prefuse.event.ActivityAdapter;
+
+/**
+ * <p>The ActivityManager is responsible for scheduling and running timed 
+ * activities that perform graph processing and animation.</p>
+ * 
+ * <p>The AcivityManager runs in its own separate thread of execution, and
+ * one instance is used to schedule activities from any number of currently
+ * active visualizations. The class is implemented as a singleton; the single
+ * instance of this class is interacted with through static methods. These
+ * methods are called by an Activity's run methods, and so are made only
+ * package visible here.</p>
+ * 
+ * <p>Activity instances can be scheduled by using their 
+ * {@@link edu.berkeley.guir.prefuse.activity.Activity#run() run()}, 
+ * {@@link edu.berkeley.guir.prefuse.activity.Activity#runNow() runNow()},
+ * {@@link edu.berkeley.guir.prefuse.activity.Activity#runAt(long) runAt()}, and 
+ * {@@link edu.berkeley.guir.prefuse.activity.Activity#runAfter(Activity) 
+ * runAfter()} methods. These will automatically call the
+ * appropriate methods with the ActivityManager.</p>
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ * @@see Activity
+ * @@see ActionList
+ */
+public class ActivityManager extends Thread {
+
+    private static ActivityManager s_instance;
+    
+    private ArrayList m_activities;
+    private ArrayList m_tmp;
+    private long      m_nextTime;
+    private boolean   m_stop = false;
+    
+    /**
+     * Returns the active ActivityManager instance.
+     * @@return the ActivityManager
+     */
+    private synchronized static ActivityManager getInstance() {
+        if ( s_instance == null || !s_instance.isAlive() ) {
+            s_instance = new ActivityManager();
+        }
+        return s_instance;
+    } //
+    
+    /**
+     * Create a new ActivityManger.
+     */
+    private ActivityManager() {
+        super("prefuse_ActivityManager");
+        m_activities = new ArrayList();
+        m_tmp = new ArrayList();
+        m_nextTime = Long.MAX_VALUE;
+        
+        this.setDaemon(true);
+        this.start();
+    } //
+    
+    /**
+     * Instructs the the ActivityManager to shut down and die
+     */
+    public static void kill() {
+        ActivityManager instance = getInstance();
+        if ( instance.isAlive() ) {
+            getInstance()._stop();
+        }
+    }
+    
+    /**
+     * Schedules an Activity with the manager.
+     * @@param a the Activity to schedule
+     */
+    static void schedule(Activity a) {
+        getInstance()._schedule(a);
+    } //
+    
+    /**
+     * Schedules an Activity to start immediately, overwriting the
+     * Activity's currently set startTime.
+     * @@param a the Activity to schedule
+     */
+    static void scheduleNow(Activity a) {
+        getInstance()._scheduleNow(a);
+    } //
+    
+    /**
+     * Schedules an Activity at the specified startTime, overwriting the
+     * Activity's currently set startTime.
+     * @@param a the Activity to schedule
+     * @@param startTime the time at which the activity should run
+     */
+    static void scheduleAt(Activity a, long startTime) {
+        getInstance()._scheduleAt(a,startTime);
+    } //
+    
+    /**
+     * Schedules an Activity to start immediately after another Activity.
+     * The second Activity will be scheduled to start immediately after the
+     * first one finishes, overwriting any previously set startTime. If the
+     * first Activity is cancelled, the second one will not run.
+     * 
+     * This functionality is provided by using an ActivityListener to monitor
+     * the first Activity. The listener is removed upon completion or
+     * cancellation of the first Activity.
+     * 
+     * This method does not effect the scheduling of the first Activity.
+     * @@param before the first Activity to run
+     * @@param after the Activity to run immediately after the first
+     */
+    static void scheduleAfter(Activity before, Activity after) {
+        getInstance()._scheduleAfter(before, after);
+    } //
+    
+    /**
+     * Schedules an Activity to start immediately after another Activity.
+     * The second Activity will be scheduled to start immediately after the
+     * first one finishes, overwriting any previously set startTime. If the
+     * first Activity is cancelled, the second one will not run.
+     * 
+     * This functionality is provided by using an ActivityListener to monitor
+     * the first Activity. The listener will persist across mulitple runs,
+     * meaning the second Activity will always be evoked upon a successful
+     * finish of the first.
+     * 
+     * This method does not otherwise effect the scheduling of the first Activity.
+     * @@param before the first Activity to run
+     * @@param after the Activity to run immediately after the first
+     */
+    static void alwaysScheduleAfter(Activity before, Activity after) {
+        getInstance()._alwaysScheduleAfter(before, after);
+    } //
+    
+    /**
+     * Removes an Activity from this manager, called by an
+     * Activity when it finishes or is cancelled. Application 
+     * code should not call this method! Instead, use 
+     * Activity.cancel() to stop a sheduled or running Activity.
+     * @@param a
+     * @@return true if the activity was found and removed, false
+     *  if the activity is not scheduled with this manager.
+     */
+    static void removeActivity(Activity a) {
+        getInstance()._removeActivity(a);
+    } //
+    
+    /**
+     * Returns the number of scheduled activities
+     * @@return the number of scheduled activities
+     */
+    public static int activityCount() {
+        return getInstance()._activityCount();
+    } //
+    
+    /**
+     * Instructs the the ActivityManager to shut down
+     */
+    private synchronized void _stop() {
+        m_stop = true;
+        this.notify();
+    }
+    
+    /**
+     * Schedules an Activity with the manager.
+     * @@param a the Activity to schedule
+     */
+    private void _schedule(Activity a) {
+        if ( a.isScheduled() ) return; // already scheduled, do nothing
+        synchronized ( this ) {
+	        m_activities.add(a);
+	        a.setScheduled(true);
+	        long start = a.getStartTime();
+	        if ( start < m_nextTime ) { 
+	           m_nextTime = start;
+	           notify();
+	        }
+        }
+    } //
+    
+    /**
+     * Schedules an Activity at the specified startTime, overwriting the
+     * Activity's currently set startTime.
+     * @@param a the Activity to schedule
+     * @@param startTime the time at which the activity should run
+     */
+    private void _scheduleAt(Activity a, long startTime) {
+        if ( a.isScheduled() ) return; // already scheduled, do nothing
+        a.setStartTime(startTime);
+        schedule(a);
+    } //
+    
+    /**
+     * Schedules an Activity to start immediately, overwriting the
+     * Activity's currently set startTime.
+     * @@param a the Activity to schedule
+     */    
+    private void _scheduleNow(Activity a) {
+        if ( a.isScheduled() ) return; // already scheduled, do nothing
+        a.setStartTime(System.currentTimeMillis());
+        schedule(a);
+    } //
+    
+    /**
+     * Schedules an Activity to start immediately after another Activity.
+     * The second Activity will be scheduled to start immediately after the
+     * first one finishes, overwriting any previously set startTime. If the
+     * first Activity is cancelled, the second one will not run.
+     * 
+     * This functionality is provided by using an ActivityListener to monitor
+     * the first Activity. The listener is removed upon completion or
+     * cancellation of the first Activity.
+     * 
+     * This method does not effect the scheduling of the first Activity.
+     * @@param before the first Activity to run
+     * @@param after the Activity to run immediately after the first
+     */
+    private void _scheduleAfter(Activity before, Activity after) {
+        before.addActivityListener(new ScheduleAfterActivity(after,true));
+    } //
+    
+    /**
+     * Schedules an Activity to start immediately after another Activity.
+     * The second Activity will be scheduled to start immediately after the
+     * first one finishes, overwriting any previously set startTime. If the
+     * first Activity is cancelled, the second one will not run.
+     * 
+     * This functionality is provided by using an ActivityListener to monitor
+     * the first Activity. The listener will persist across mulitple runs,
+     * meaning the second Activity will always be evoked upon a successful
+     * finish of the first.
+     * 
+     * This method does not otherwise effect the scheduling of the first Activity.
+     * @@param before the first Activity to run
+     * @@param after the Activity to run immediately after the first
+     */
+    private void _alwaysScheduleAfter(Activity before, Activity after) {
+        before.addActivityListener(new ScheduleAfterActivity(after,false));
+    } //
+    
+    /**
+     * Removes an Activity from this manager, called by an
+     * Activity when it finishes or is cancelled. Application 
+     * code should not call this method! Instead, use 
+     * Activity.cancel() to stop a sheduled or running Activity.
+     * @@param a
+     * @@return true if the activity was found and removed, false
+     *  if the activity is not scheduled with this manager.
+     */
+    private boolean _removeActivity(Activity a) {
+        boolean r;
+        synchronized ( this ) {
+            r = m_activities.remove(a);
+            if ( r ) {
+                if ( m_activities.size() == 0 ) {
+                    m_nextTime = Long.MAX_VALUE;
+                }
+            }
+        }
+        if ( r ) {
+            a.setScheduled(false);
+        }
+        return r;
+    } //
+    
+    /**
+     * Returns the number of scheduled activities
+     * @@return the number of scheduled activities
+     */
+    private synchronized int _activityCount() {
+        return m_activities.size();
+    } //
+    
+    /**
+     * Main scheduling thread loop. This is automatically started upon
+     * initialization of the ActivityManager.
+     */
+    public void run() {
+        while ( true ) {
+            if ( m_stop ) {
+                // stops the ActivityManager
+                break;
+            }
+            if ( activityCount() > 0 ) {
+                long currentTime = System.currentTimeMillis();
+                long t = -1;
+                
+                synchronized (this) {
+                    // copy content of activities, as new activities might
+                    // be added while we process the current ones
+                    m_tmp.addAll(m_activities);
+                }
+                
+                for ( int i=0; i<m_tmp.size(); i++ ) {
+                    // run the activity - the activity will check for
+                    // itself if it should perform any action or not
+                    Activity a = (Activity)m_tmp.get(i);
+                    long s = a.runActivity(currentTime);
+                    // compute minimum time for next activity cycle
+                    t = (s<0 ? t : t<0 ? s : Math.min(t,s));
+                }
+
+                // clear the temporary list
+                m_tmp.clear();
+                
+                if ( t == -1 ) continue;
+                
+                // determine the next time we should run
+                synchronized (this) {
+                    try {
+                        wait(t);
+                    } catch (InterruptedException e) { }
+                }
+            } else {
+                // nothing to do, chill out until notified
+                try {
+                    synchronized (this) { wait(); }
+                } catch (InterruptedException e) { }
+            }
+        }
+
+        // reset the state
+        m_nextTime = Long.MAX_VALUE;
+        m_stop = false;
+        s_instance = null;
+    } //
+    
+    public class ScheduleAfterActivity extends ActivityAdapter {
+        Activity after;
+        boolean remove;
+        public ScheduleAfterActivity(Activity after, boolean remove) {
+            this.after = after;
+            this.remove = remove;
+        } //
+        public void activityFinished(Activity a) {
+            if ( remove ) a.removeActivityListener(this);
+            scheduleNow(after);
+        } //
+        public void activityCancelled(Activity a) {
+            if ( remove ) a.removeActivityListener(this);
+        } //
+    } // end of inner class ScheduleAfterActivity
+    
+} // end of class ActivityManager
+@
+
+
+1.12
+log
+@Synchronized the singleton accessor
+@
+text
+@@
+
+
+1.12.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.11
+log
+@Added kill() method to forcibly stop the ActivityManager
+@
+text
+@d44 1
+a44 1
+    private static ActivityManager getInstance() {
+@
+
+
+1.10
+log
+@Fixed Activity step time calc (fix due to vsarda)
+@
+text
+@d38 1
+d65 10
+d160 8
+d283 4
+d324 5
+@
+
+
+1.9
+log
+@Made ActivityManager a daemon thread
+@
+text
+@d278 3
+a280 1
+                    t = Math.max(t, a.runActivity(currentTime));
+@
+
+
+1.8
+log
+@Loosened the use of synchronization
+@
+text
+@d54 1
+a54 1
+        super("prefuse-activity-manager");
+d58 2
+@
+
+
+1.7
+log
+@Added alwaysRunAfter method
+@
+text
+@d54 1
+d150 1
+a150 1
+    private synchronized void _schedule(Activity a) {
+d152 8
+a159 6
+        m_activities.add(a);
+        a.setScheduled(true);
+        long start = a.getStartTime();
+        if ( start < m_nextTime ) { 
+           m_nextTime = start;
+           notify();
+d169 1
+a169 1
+    private synchronized void _scheduleAt(Activity a, long startTime) {
+d180 1
+a180 1
+    private synchronized void _scheduleNow(Activity a) {
+d200 1
+a200 1
+    private synchronized void _scheduleAfter(Activity before, Activity after) {
+d219 1
+a219 1
+    private synchronized void _alwaysScheduleAfter(Activity before, Activity after) {
+d232 10
+a241 2
+    private synchronized boolean _removeActivity(Activity a) {
+        boolean r = m_activities.remove(a);
+a243 3
+            if ( m_activities.size() == 0 ) {
+                m_nextTime = Long.MAX_VALUE;
+            }
+@
+
+
+1.6
+log
+@Added check to make sure ActivityManager thread is alive... helps for applets
+@
+text
+@d106 19
+d198 20
+a217 1
+        before.addActivityListener(new ScheduleAfterActivity(after));
+d293 2
+a294 1
+        public ScheduleAfterActivity(Activity after) {
+d296 1
+d299 1
+a299 1
+            a.removeActivityListener(this);
+d303 1
+a303 1
+            a.removeActivityListener(this);
+@
+
+
+1.5
+log
+@New filters added plus more
+@
+text
+@d44 1
+a44 1
+        if ( s_instance == null ) {
+@
+
+
+1.4
+log
+@More Javadoc updates
+@
+text
+@d29 1
+a29 1
+ * @@see ActionPipeline
+@
+
+
+1.3
+log
+@Major refactor
+@
+text
+@d19 5
+a23 4
+ * {@@link Activity.run() run()}, {@@link Activity.runNow() runNow()},
+ * {@@link Activity.runAt(long) runAt()}, and 
+ * {@@link Activity.runAfter(Activity) runAfter()}, 
+ * methods. These will automatically call the
+d28 2
+a29 2
+ * @@see edu.berkeley.guir.prefuse.activity.Activity
+ * @@see edu.berkeley.guir.prefuse.activity.ActionPipeline
+d35 3
+a37 3
+    private ArrayList    m_activities;
+    private ArrayList    m_tmp;
+    private long         m_nextTime;
+@
+
+
+1.2
+log
+@Javadoc update and fixes
+@
+text
+@d8 2
+a9 2
+ * The ActivityManager is responsible for scheduling and running timed 
+ * activities that perform graph processing and animation.
+d11 1
+a11 1
+ * The AcivityManager runs in its own separate thread of execution, and
+d14 3
+a16 1
+ * instance of this class is interacted with through static methods.
+d18 6
+a23 2
+ * Activity instances can be scheduled to run using the schedule(), 
+ * scheduleAt(), scheduleNow(), and scheduleAfter() methods.
+d63 1
+a63 1
+    public static void schedule(Activity a) {
+d72 1
+a72 1
+    public static void scheduleNow(Activity a) {
+d82 1
+a82 1
+    public static void scheduleAt(Activity a, long startTime) {
+d100 1
+a100 1
+    public static void scheduleAfter(Activity before, Activity after) {
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d21 2
+a22 1
+ * @@see edu.berkeley.guir.prefuse.activity.Activity, edu.berkeley.guir.prefuse.activity.ActionPipeline
+@
+

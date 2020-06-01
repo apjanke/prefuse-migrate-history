@@ -1,0 +1,140 @@
+head	1.4;
+access;
+symbols
+	alpha:1.3.0.2
+	Root_alpha:1.3
+	prefuse-alpha-20051229:1.3
+	P20050401_Alpha_PreCHI:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2006.02.12.18.23.41;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.23.19.34.05;	author jheer;	state Exp;
+branches
+	1.3.4.1;
+next	1.2;
+
+1.2
+date	2004.03.11.19.11.12;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.10.11;	author jheer;	state Exp;
+branches;
+next	;
+
+1.3.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.graph;
+
+import java.util.Map;
+
+/**
+ * Interface from which all graph nodes and edges descend.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public interface Entity {
+	
+	/**
+	 * Get an attribute associated with this entity.
+	 * @@param name the name of the attribute
+	 * @@return the attribute value (possibly null)
+	 */	
+	public String getAttribute(String name);
+	
+	/**
+	 * Get all attributes associated with this entity.
+	 * @@return a Map of all this entity's attributes.
+	 */
+	public Map getAttributes();
+	
+	/**
+	 * Get an attribute associated with this entity.
+	 * @@param name the name of the attribute
+	 * @@param value the value of the attribute
+	 */
+	public void setAttribute(String name, String value);
+	
+	/**
+	 * Sets the attribute map for this Entity. The map
+	 * should contain only <code>String</code> values,
+	 * otherwise an exception will be thrown.
+	 * @@param attrMap the attribute map
+	 * @@throws IllegalArgumentException is the input map
+	 * contains non-<code>String</code> values.
+	 */
+	public void setAttributes(Map attrMap);
+	
+	/**
+	 * Remove all attributes associated with this entity.
+	 */
+	public void clearAttributes();
+
+} // end of interface Entity
+@
+
+
+1.3
+log
+@More Javadoc updates
+@
+text
+@@
+
+
+1.3.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.2
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@a7 2
+ * Apr 24, 2003 - jheer - Created class
+ * 
+d9 1
+a9 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@a2 1
+import java.util.HashMap;
+a14 2
+	public static final Class MAP_TYPE = HashMap.class;
+	
+@
+

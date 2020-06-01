@@ -1,0 +1,730 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.24.02.32.36;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action.distortion;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+/**
+ * <p>
+ * Computes a bifocal distortion of space, magnifying a focus region of space
+ * and uniformly demagnifying the rest of the space. The affect is akin to
+ * passing a magnifying glass over the data.
+ * </p>
+ * 
+ * <p>
+ * For more details on this form of transformation, see Y. K. Leung and 
+ * M. D. Apperley, "A Review and Taxonomy of Distortion-Oriented Presentation
+ * Techniques", in Transactions of Computer-Human Interaction (TOCHI),
+ * 1(2): 126-160 (1994). Available online at
+ * <a href="portal.acm.org/citation.cfm?id=180173&dl=ACM">
+ * portal.acm.org/citation.cfm?id=180173&dl=ACM</a>.
+ * </p>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class BifocalDistortion extends Distortion {
+    
+    private double rx, ry; // magnification ranges
+    private double mx, my; // magnification factor
+    
+    /**
+     * Create a new BifocalDistortion with default range and magnification.
+     */
+    public BifocalDistortion() {
+        this(0.1,3);
+    }
+    
+    /**
+     * <p>Create a new BifocalDistortion with the specified range and
+     * magnification. The same range and magnification is used for both
+     * axes.</p>
+     * 
+     * <p><strong>NOTE:</strong>if the range value times the magnification
+     * value is greater than 1, the resulting distortion can exceed the
+     * display bounds.</p>
+     * 
+     * @@param range the range around the focus that should be magnified. This
+     *  specifies the size of the magnified focus region, and should be in the
+     *  range of 0 to 1, 0 being no magnification range and 1 being the whole
+     *  display.
+     * @@param mag how much magnification should be used in the focal area
+     */
+    public BifocalDistortion(double range, double mag) {
+        this(range,mag,range,mag);
+    } //
+    
+    /**
+     * <p>Create a new BifocalDistortion with the specified range and 
+     * magnification along both axes.</p>
+     * 
+     * <p><strong>NOTE:</strong>if the range value times the magnification
+     * value is greater than 1, the resulting distortion can exceed the
+     * display bounds.</p>
+     * 
+     * @@param xrange the range around the focus that should be magnified along
+     *  the x direction. This specifies the horizontal size of the magnified 
+     *  focus region, and should be a value between 0 and 1, 0 indicating no
+     *  focus region and 1 indicating the whole display.
+     * @@param xmag how much magnification along the x direction should be used
+     *  in the focal area
+     * @@param yrange the range around the focus that should be magnified along
+     *  the y direction. This specifies the vertical size of the magnified 
+     *  focus region, and should be a value between 0 and 1, 0 indicating no
+     *  focus region and 1 indicating the whole display.
+     * @@param ymag how much magnification along the y direction should be used
+     *  in the focal area
+     */
+    public BifocalDistortion(double xrange, double xmag, 
+                             double yrange, double ymag)
+    {
+        rx = xrange;
+        mx = xmag;
+        ry = yrange;
+        my = ymag;
+        m_distortX = !(rx == 0 || mx == 1.0);
+        m_distortY = !(ry == 0 || my == 1.0);
+    }
+    
+    /**
+     * @@see prefuse.action.distortion.Distortion#distortX(double, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+     */
+    protected double distortX(double x, Point2D a, Rectangle2D b) {
+        return bifocal(x, a.getX(), rx, mx, b.getMinX(), b.getMaxX());
+    }
+    
+    /**
+     * @@see prefuse.action.distortion.Distortion#distortY(double, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+     */
+    protected double distortY(double y, Point2D a, Rectangle2D b) {
+        return bifocal(y, a.getY(), ry, my, b.getMinY(), b.getMaxY());
+    }
+    
+    /**
+     * @@see prefuse.action.distortion.Distortion#distortSize(java.awt.geom.Rectangle2D, double, double, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+     */
+    protected double distortSize(Rectangle2D bbox, double x, double y, 
+            Point2D anchor, Rectangle2D bounds)
+    {
+        boolean xmag = false, ymag = false;
+        double m;
+        
+        if ( m_distortX ) {
+            double cx = bbox.getCenterX(), ax = anchor.getX();
+            double minX = bounds.getMinX(), maxX = bounds.getMaxX();
+            m = (cx<ax ? ax-minX : maxX-ax);
+            if ( m == 0 ) m = maxX-minX;
+            if ( Math.abs(cx-ax) <= rx*m )
+                xmag = true;
+        }
+        
+        if ( m_distortY ) {
+            double cy = bbox.getCenterY(), ay = anchor.getY();
+            double minY = bounds.getMinY(), maxY = bounds.getMaxY();
+            m = (cy<ay ? ay-minY : maxY-ay);
+            if ( m == 0 ) m = maxY-minY;
+            if ( Math.abs(cy-ay) <= ry*m )
+                ymag = true;
+        }
+        
+        if ( xmag && !m_distortY ) {
+            return mx;
+        } else if ( ymag && !m_distortX ) {
+            return my;
+        } else if ( xmag && ymag ) {
+            return Math.min(mx,my);
+        } else {
+            return Math.min((1-rx*mx)/(1-rx), (1-ry*my)/(1-ry));
+        }
+    }
+    
+    private double bifocal(double x, double a, double r, 
+                           double mag, double min, double max)
+    {
+        double m = (x<a ? a-min : max-a);
+        if ( m == 0 ) m = max-min;
+        double v = x - a, s = m*r;
+        if ( Math.abs(v) <= s ) {  // in focus
+            return x = v*mag + a;
+        } else {                   // out of focus
+            double bx = r*mag;
+            x = ((Math.abs(v)-s) / m) * ((1-bx)/(1-r));
+            return (v<0?-1:1)*m*(x + bx) + a;
+        }
+    }
+
+    /**
+     * Returns the magnification factor for the x-axis.
+     * @@return Returns the magnification factor for the x-axis.
+     */
+    public double getXMagnification() {
+        return mx;
+    }
+
+    /**
+     * Sets the magnification factor for the x-axis.
+     * @@param mx The magnification factor for the x-axis.
+     */
+    public void setXMagnification(double mx) {
+        this.mx = mx;
+    }
+
+    /**
+     * Returns the magnification factor for the y-axis.
+     * @@return Returns the magnification factor for the y-axis.
+     */
+    public double getYMagnification() {
+        return my;
+    }
+
+    /**
+     * Sets the magnification factor for the y-axis.
+     * @@param my The magnification factor for the y-axis.
+     */
+    public void setYMagnification(double my) {
+        this.my = my;
+    }
+
+    /**
+     * Returns the range of the focal area along the x-axis.
+     * @@return Returns the range of the focal area along the x-axis.
+     */
+    public double getXRange() {
+        return rx;
+    }
+
+    /**
+     * Sets the range of the focal area along the x-axis.
+     * @@param rx The focal range for the x-axis, a value between 0 and 1.
+     */
+    public void setXRange(double rx) {
+        this.rx = rx;
+    }
+
+    /**
+     * Returns the range of the focal area along the y-axis.
+     * @@return Returns the range of the focal area along the y-axis.
+     */
+    public double getYRange() {
+        return ry;
+    }
+
+    /**
+     * Sets the range of the focal area along the y-axis.
+     * @@param ry The focal range for the y-axis, a value between 0 and 1.
+     */
+    public void setYRange(double ry) {
+        this.ry = ry;
+    }
+
+} // end of class BifocalDistortion
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d12 1
+a12 1
+ *
+d14 1
+a14 1
+ * For more details on this form of transformation, see Y. K. Leung and
+d21 1
+a21 1
+ *
+d25 1
+a25 1
+
+d28 1
+a28 1
+
+d35 1
+a35 1
+
+d40 1
+a40 1
+     *
+d44 1
+a44 1
+     *
+d54 1
+a54 1
+
+d56 1
+a56 1
+     * <p>Create a new BifocalDistortion with the specified range and
+d58 1
+a58 1
+     *
+d62 1
+a62 1
+     *
+d64 1
+a64 1
+     *  the x direction. This specifies the horizontal size of the magnified
+d70 1
+a70 1
+     *  the y direction. This specifies the vertical size of the magnified
+d76 1
+a76 1
+    public BifocalDistortion(double xrange, double xmag,
+d86 1
+a86 1
+
+d90 1
+a90 2
+    @@Override
+	protected double distortX(double x, Point2D a, Rectangle2D b) {
+d93 1
+a93 1
+
+d97 1
+a97 2
+    @@Override
+	protected double distortY(double y, Point2D a, Rectangle2D b) {
+d100 1
+a100 1
+
+d104 1
+a104 2
+    @@Override
+	protected double distortSize(Rectangle2D bbox, double x, double y,
+d109 1
+a109 1
+
+d113 4
+a116 7
+            m = cx<ax ? ax-minX : maxX-ax;
+            if ( m == 0 ) {
+				m = maxX-minX;
+			}
+            if ( Math.abs(cx-ax) <= rx*m ) {
+				xmag = true;
+			}
+d118 1
+a118 1
+
+d122 4
+a125 7
+            m = cy<ay ? ay-minY : maxY-ay;
+            if ( m == 0 ) {
+				m = maxY-minY;
+			}
+            if ( Math.abs(cy-ay) <= ry*m ) {
+				ymag = true;
+			}
+d127 1
+a127 1
+
+d138 2
+a139 2
+
+    private double bifocal(double x, double a, double r,
+d142 2
+a143 4
+        double m = x<a ? a-min : max-a;
+        if ( m == 0 ) {
+			m = max-min;
+		}
+d149 1
+a149 1
+            x = (Math.abs(v)-s) / m * (1-bx)/(1-r);
+@
+
+
+1.1
+log
+@file BifocalDistortion.java was initially added on branch beta.
+@
+text
+@d1 218
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 217
+package prefuse.action.distortion;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+/**
+ * <p>
+ * Creates a bifocal distortion of space, magnifying focal space and
+ * uniformly demagnifying non-focal space, where focal space is defined
+ * relative to the layout anchor.
+ * </p>
+ * 
+ * <p>
+ * For more details on this form of transformation, see Y. K. Leung and 
+ * M. D. Apperley, "A Review and Taxonomy of Distortion-Oriented Presentation
+ * Techniques", in Transactions of Computer-Human Interaction (TOCHI),
+ * 1(2): 126-160 (1994). Available online at
+ * <a href="portal.acm.org/citation.cfm?id=180173&dl=ACM">
+ * portal.acm.org/citation.cfm?id=180173&dl=ACM</a>.
+ * </p>
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class BifocalDistortion extends Distortion {
+    
+    private double rx, ry; // magnification ranges
+    private double mx, my; // magnification factor
+    
+    /**
+     * Create a new BifocalDistortion with default range and magnification.
+     */
+    public BifocalDistortion() {
+        this(0.1,3);
+    } //
+    
+    /**
+     * Create a new BifocalDistortion with the specified range and
+     * magnification. The same range and magnification is used for both
+     * axes.
+     * <br/><br/>
+     * <strong>NOTE:</strong>if the range value times the magnification
+     * value is greater than 1, the resulting distortion can exceed the
+     * display bounds.
+     * @@param range the range around the focus that should be magnified. This
+     *  specifies the size of the magnified focus region, and should be in the
+     *  range of 0 to 1, 0 being no magnification range and 1 being the whole
+     *  display.
+     * @@param mag how much magnification should be used in the focal area
+     */
+    public BifocalDistortion(double range, double mag) {
+        this(range,mag,range,mag);
+    } //
+    
+    /**
+     * Create a new BifocalDistortion with the specified range and 
+     * magnification along both axes.
+     * <br/><br/>
+     * <strong>NOTE:</strong>if the range value times the magnification
+     * value is greater than 1, the resulting distortion can exceed the
+     * display bounds.
+     * @@param xrange the range around the focus that should be magnified along
+     *  the x direction. This specifies the horizontal size of the magnified 
+     *  focus region, and should be a value between 0 and 1, 0 indicating no
+     *  focus region and 1 indicating the whole display.
+     * @@param xmag how much magnification along the x direction should be used
+     *  in the focal area
+     * @@param yrange the range around the focus that should be magnified along
+     *  the y direction. This specifies the vertical size of the magnified 
+     *  focus region, and should be a value between 0 and 1, 0 indicating no
+     *  focus region and 1 indicating the whole display.
+     * @@param ymag how much magnification along the y direction should be used
+     *  in the focal area
+     */
+    public BifocalDistortion(double xrange, double xmag, 
+                             double yrange, double ymag)
+    {
+        rx = xrange;
+        mx = xmag;
+        ry = yrange;
+        my = ymag;
+        m_distortX = !(rx == 0 || mx == 1.0);
+        m_distortY = !(ry == 0 || my == 1.0);
+    }
+    
+    /**
+     * Calculates a bifocal display distortion.
+     */
+    protected double distortX(double x, Point2D a, Rectangle2D b) {
+        return bifocal(x, a.getX(), rx, mx, b.getMinX(), b.getMaxX());
+    }
+    
+    /**
+     * Calculates a bifocal display distortion.
+     */
+    protected double distortY(double y, Point2D a, Rectangle2D b) {
+        return bifocal(y, a.getY(), ry, my, b.getMinY(), b.getMaxY());
+    }
+    
+    /**
+     * @@see prefuse.action.distortion.Distortion#transformSize(java.awt.geom.Rectangle2D, java.awt.geom.Point2D, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+     */
+    protected double distortSize(Rectangle2D bbox, double x, double y, 
+            Point2D anchor, Rectangle2D bounds)
+    {
+        boolean xmag = false, ymag = false;
+        double m;
+        
+        if ( m_distortX ) {
+            double cx = bbox.getCenterX(), ax = anchor.getX();
+            double minX = bounds.getMinX(), maxX = bounds.getMaxX();
+            m = (cx<ax ? ax-minX : maxX-ax);
+            if ( m == 0 ) m = maxX-minX;
+            if ( Math.abs(cx-ax) <= rx*m )
+                xmag = true;
+        }
+        
+        if ( m_distortY ) {
+            double cy = bbox.getCenterY(), ay = anchor.getY();
+            double minY = bounds.getMinY(), maxY = bounds.getMaxY();
+            m = (cy<ay ? ay-minY : maxY-ay);
+            if ( m == 0 ) m = maxY-minY;
+            if ( Math.abs(cy-ay) <= ry*m )
+                ymag = true;
+        }
+        
+        if ( xmag && !m_distortY ) {
+            return mx;
+        } else if ( ymag && !m_distortX ) {
+            return my;
+        } else if ( xmag && ymag ) {
+            return Math.min(mx,my);
+        } else {
+            return Math.min((1-rx*mx)/(1-rx), (1-ry*my)/(1-ry));
+        }
+    } //
+    
+    private double bifocal(double x, double a, double r, 
+                           double mag, double min, double max)
+    {
+        double m = (x<a ? a-min : max-a);
+        if ( m == 0 ) m = max-min;
+        double v = x - a, s = m*r;
+        if ( Math.abs(v) <= s ) {  // in focus
+            return x = v*mag + a;
+        } else {                   // out of focus
+            double bx = r*mag;
+            x = ((Math.abs(v)-s) / m) * ((1-bx)/(1-r));
+            return (v<0?-1:1)*m*(x + bx) + a;
+        }
+    } //
+
+    /**
+     * Returns the magnification factor for the x-axis.
+     * @@return Returns the magnification factor for the x-axis.
+     */
+    public double getXMagnification() {
+        return mx;
+    } //
+
+    /**
+     * Sets the magnification factor for the x-axis.
+     * @@param mx The magnification factor for the x-axis.
+     */
+    public void setXMagnification(double mx) {
+        this.mx = mx;
+    } //
+
+    /**
+     * Returns the magnification factor for the y-axis.
+     * @@return Returns the magnification factor for the y-axis.
+     */
+    public double getYMagnification() {
+        return my;
+    } //
+
+    /**
+     * Sets the magnification factor for the y-axis.
+     * @@param my The magnification factor for the y-axis.
+     */
+    public void setYMagnification(double my) {
+        this.my = my;
+    } //
+
+    /**
+     * Returns the range of the focal area along the x-axis.
+     * @@return Returns the range of the focal area along the x-axis.
+     */
+    public double getXRange() {
+        return rx;
+    } //
+
+    /**
+     * Sets the range of the focal area along the x-axis.
+     * @@param rx The focal range for the x-axis, a value between 0 and 1.
+     */
+    public void setXRange(double rx) {
+        this.rx = rx;
+    } //
+
+    /**
+     * Returns the range of the focal area along the y-axis.
+     * @@return Returns the range of the focal area along the y-axis.
+     */
+    public double getYRange() {
+        return ry;
+    } //
+
+    /**
+     * Sets the range of the focal area along the y-axis.
+     * @@param ry The focal range for the y-axis, a value between 0 and 1.
+     */
+    public void setYRange(double ry) {
+        this.ry = ry;
+    } //
+
+} // end of class BifocalDistortion@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d217 1
+a217 1
+} // end of class BifocalDistortion
+@
+
+
+1.1.2.3
+log
+@Updated distortion mechanisms
+@
+text
+@d136 1
+a136 1
+    }
+d151 1
+a151 1
+    }
+d159 1
+a159 1
+    }
+d167 1
+a167 1
+    }
+d175 1
+a175 1
+    }
+d183 1
+a183 1
+    }
+d191 1
+a191 1
+    }
+d199 1
+a199 1
+    }
+d207 1
+a207 1
+    }
+d215 1
+a215 1
+    }
+@
+
+
+1.1.2.4
+log
+@Lots of javadoc
+@
+text
+@d8 3
+a10 3
+ * Computes a bifocal distortion of space, magnifying a focus region of space
+ * and uniformly demagnifying the rest of the space. The affect is akin to
+ * passing a magnifying glass over the data.
+d22 2
+a23 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d35 1
+a35 1
+    }
+d38 1
+a38 1
+     * <p>Create a new BifocalDistortion with the specified range and
+d40 3
+a42 3
+     * axes.</p>
+     * 
+     * <p><strong>NOTE:</strong>if the range value times the magnification
+d44 1
+a44 2
+     * display bounds.</p>
+     * 
+d56 4
+a59 4
+     * <p>Create a new BifocalDistortion with the specified range and 
+     * magnification along both axes.</p>
+     * 
+     * <p><strong>NOTE:</strong>if the range value times the magnification
+d61 1
+a61 2
+     * display bounds.</p>
+     * 
+d87 1
+a87 1
+     * @@see prefuse.action.distortion.Distortion#distortX(double, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+d94 1
+a94 1
+     * @@see prefuse.action.distortion.Distortion#distortY(double, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+d101 1
+a101 1
+     * @@see prefuse.action.distortion.Distortion#distortSize(java.awt.geom.Rectangle2D, double, double, java.awt.geom.Point2D, java.awt.geom.Rectangle2D)
+@
+
+

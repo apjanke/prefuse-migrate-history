@@ -1,0 +1,150 @@
+head	1.5;
+access;
+symbols
+	P20050924_InfoVis:1.5
+	Preliminary_Design:1.4
+	P200501_Prototype:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2005.09.24.18.40.28;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.11.10.01.53.05;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.04.20.03.54.13;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.04.19.03.34.06;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.16.06.01.40;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Update to new version!!
+@
+text
+@package vizster.util;
+
+import java.awt.event.ActionEvent;
+
+import javax.swing.AbstractAction;
+
+import vizster.Vizster;
+import vizster.VizsterDBLoader;
+import vizster.ui.LoginDialog;
+
+/**
+ * Attempts a connection to a database
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> vizster(AT)jheer.org
+ */
+public class DBConnectAction extends AbstractAction {
+
+    private static final String DRIVER = "com.mysql.jdbc.Driver";
+    private static final String PROTOCOL = "jdbc:mysql:";
+    private LoginDialog loginD;
+    
+    public DBConnectAction(LoginDialog login) {
+        loginD = login;
+    } //
+    
+    public void actionPerformed(ActionEvent e) {
+        try {
+            loginD.setError(" ");
+            String[] auth = loginD.getLoginInfo();
+            if ( auth == null ) return;
+            Vizster vizster = (Vizster)loginD.getOwner();
+            VizsterDBLoader loader = vizster.getLoader();
+            loader.connect(DRIVER,
+                    // first use the host and database name
+                    PROTOCOL + "//" + auth[2] + "/" + auth[3],
+                    auth[0],    // now use the login
+                    auth[1]);   // and finally the password
+            loginD.setLoggedIn(true);
+            loginD.saveLoginProperies(auth);
+            loginD.setVisible(false);
+        } catch (Exception ex) {
+            loginD.setLoggedIn(false);
+            String msg = ex.getMessage();
+            String error = "";
+            if ( msg.indexOf("java.net.") != -1 ) {
+                error = "Invalid database URL";
+            } else if ( msg.indexOf("Unknown database") != -1 ) {
+                error = "Unknown database";
+            } else {
+                error = "Incorrect login or password";
+            }
+            loginD.setError(error);
+        }
+    } //
+
+} // end of class DBConnectAction
+@
+
+
+1.4
+log
+@Major updates for static layout and xml input files
+@
+text
+@d9 1
+@
+
+
+1.3
+log
+@Vizster 1.0
+@
+text
+@d40 1
+a40 1
+            loginD.hide();
+@
+
+
+1.2
+log
+@New DB loader
+@
+text
+@d11 1
+a11 2
+ * 
+ * Apr 15, 2004 - jheer - Created class
+@
+
+
+1.1
+log
+@Smooth image zooming, updated login dialog
+@
+text
+@d8 1
+a8 1
+import vizster.VizsterDatabaseLoader;
+d33 1
+a33 1
+            VizsterDatabaseLoader loader = vizster.getLoader();
+@
+

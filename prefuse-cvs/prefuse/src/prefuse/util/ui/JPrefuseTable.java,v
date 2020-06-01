@@ -1,0 +1,608 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2007.10.21.21.53.37;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.07.15.18.54.36;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Made minor adjustments to ObjectColumn and ExpressionParserTokenManager to remove compiler warnings
+Moved PrefuseTableModel to a top-level class
+@
+text
+@package prefuse.util.ui;
+
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+
+import prefuse.data.Table;
+import prefuse.visual.VisualTable;
+
+/**
+ * Swing component that displays a prefuse Table instance in a Swing
+ * JTable component.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class JPrefuseTable extends JTable {
+
+    private Table m_table;
+    private TableCellRenderer m_tcr = new DefaultTableCellRenderer();
+    
+    /**
+     * Create a new JPrefuseTable.
+     * @@param t the Table to display.
+     */
+    public JPrefuseTable(Table t) {
+        super();
+        m_table = t;
+        
+        PrefuseTableModel model = new PrefuseTableModel(m_table);
+        super.setModel(model);
+        m_table.addTableListener(model);
+    }
+    
+    /**
+     * Get the table backing this component.
+     * @@return a prefuse Table instance
+     */
+    public Table getTable() {
+        return m_table;
+    }
+    
+    /**
+     * Get the cell renderer to use for drawing table cells.
+     * @@see javax.swing.JTable#getCellRenderer(int, int)
+     */
+    public TableCellRenderer getCellRenderer(int r, int c) {
+        return m_tcr;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Create a new window displaying the contents of the input Table as
+     * a Swing JTable.
+     * @@param t the Table instance to display
+     * @@return a reference to the JFrame holding the table view
+     */
+    public static JFrame showTableWindow(Table t) {
+        JPrefuseTable table = new JPrefuseTable(t);
+        String title = t.toString();
+        if ( t instanceof VisualTable ) {
+            title = ((VisualTable)t).getGroup() + " " + title;
+        }
+        JFrame frame = new JFrame(title);
+        frame.getContentPane().add(new JScrollPane(table));
+        frame.pack();
+        frame.setVisible(true);
+        return frame;
+    }
+    
+} // end of class JPrefuseTable
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d15 1
+a15 1
+ *
+d20 1
+a20 1
+    private Table<?> m_table;
+d22 1
+a22 1
+
+d27 1
+a27 1
+    public JPrefuseTable(Table<?> t) {
+d30 1
+a30 1
+
+d35 1
+a35 1
+
+d40 1
+a40 1
+    public Table<?> getTable() {
+d43 1
+a43 1
+
+d51 1
+a51 1
+
+d53 1
+a53 1
+
+d60 1
+a60 1
+    public static JFrame showTableWindow(Table<?> t) {
+d64 1
+a64 1
+            title = ((VisualTable<?,?>)t).getGroup() + " " + title;
+d72 1
+a72 1
+
+@
+
+
+2.1
+log
+@Added support for accessing tuple data fields by numeric index, avoiding field name lookups.
+@
+text
+@a5 2
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+a7 1
+import javax.swing.table.TableModel;
+a9 5
+import prefuse.data.event.EventConstants;
+import prefuse.data.event.TableListener;
+import prefuse.util.StringLib;
+import prefuse.util.collections.CopyOnWriteArrayList;
+import prefuse.util.collections.IntIterator;
+d31 1
+a31 1
+        PrefuseTableModel model = new PrefuseTableModel();
+a54 119
+     * TableModel implementation that serves as an adapter between a prefuse
+     * Table instance and a JTable component.
+     */
+    public class PrefuseTableModel implements TableModel, TableListener {
+        
+        private CopyOnWriteArrayList m_listeners = new CopyOnWriteArrayList();
+        private int[] m_rowmap;
+        
+        /**
+         * Initialize mapping between prefuse table rows and the rows reported
+         * by this model.
+         */
+        private void initRowMap() {
+            m_rowmap = new int[m_table.getRowCount()];
+            IntIterator rows = m_table.rows();
+            for ( int i=0; rows.hasNext(); ++i ) {
+                m_rowmap[i] = rows.nextInt();
+            }
+        }
+        
+        /**
+         * Get the prefuse table row for a row index into this table model.
+         * @@param rowIndex the row index in this table model
+         * @@return the corresponding prefuse table row
+         */
+        private int getRow(int rowIndex) {
+            if ( m_rowmap == null )
+                initRowMap();
+            return m_rowmap[rowIndex];
+        }
+        
+        // --------------------------------------------------------------------
+        
+        /**
+         * @@see javax.swing.table.TableModel#getColumnCount()
+         */
+        public int getColumnCount() {
+            return m_table.getColumnCount();
+        }
+        /**
+         * @@see javax.swing.table.TableModel#getRowCount()
+         */
+        public int getRowCount() {
+            return m_table.getRowCount();
+        }
+        /**
+         * @@see javax.swing.table.TableModel#isCellEditable(int, int)
+         */
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return m_table.isCellEditable(rowIndex, columnIndex);
+        }
+        /**
+         * @@see javax.swing.table.TableModel#getColumnClass(int)
+         */
+        public Class getColumnClass(int columnIndex) {
+            return m_table.getColumnType(columnIndex);
+        }
+        /**
+         * @@see javax.swing.table.TableModel#getValueAt(int, int)
+         */
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Object o = m_table.get(getRow(rowIndex), columnIndex);
+            if ( o != null && o.getClass().isArray() ) {
+                return StringLib.getArrayString(o);
+            } else {
+                return o;
+            }
+        }
+        /**
+         * @@see javax.swing.table.TableModel#setValueAt(java.lang.Object, int, int)
+         */
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            m_table.set(getRow(rowIndex), columnIndex, aValue);
+        }
+        /**
+         * @@see javax.swing.table.TableModel#getColumnName(int)
+         */
+        public String getColumnName(int columnIndex) {
+            return m_table.getColumnName(columnIndex);
+        }
+        
+        // --------------------------------------------------------------------
+        
+        /**
+         * @@see javax.swing.table.TableModel#addTableModelListener(javax.swing.event.TableModelListener)
+         */
+        public void addTableModelListener(TableModelListener l) {
+            m_listeners.add(l);
+        }
+        /**
+         * @@see javax.swing.table.TableModel#removeTableModelListener(javax.swing.event.TableModelListener)
+         */
+        public void removeTableModelListener(TableModelListener l) {
+            m_listeners.remove(l);
+        }
+
+        /**
+         * @@see prefuse.data.event.TableListener#tableChanged(prefuse.data.Table, int, int, int, int)
+         */
+        public void tableChanged(Table t, int start, int end, int col, int type) {
+            if ( type == EventConstants.INSERT || type == EventConstants.DELETE )
+                m_rowmap = null; // invalidate row map
+            
+            Object[] lstnrs = m_listeners.getArray();
+            if ( lstnrs.length == 0 )
+                return;
+            
+            TableModelEvent evt 
+                = new TableModelEvent(this, start, end, col, type);
+            for ( int i=0; i<lstnrs.length; ++i ) {
+                ((TableModelListener)lstnrs[i]).tableChanged(evt);
+            }
+        }
+        
+    } // end of inner class PrefuseTableModel
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d124 1
+a124 1
+            Object o = m_table.getValueAt(getRow(rowIndex), columnIndex);
+d135 1
+a135 1
+            m_table.setValueAt(getRow(rowIndex), columnIndex, aValue);
+@
+
+
+1.1
+log
+@file JPrefuseTable.java was initially added on branch beta.
+@
+text
+@d1 200
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 142
+package prefuse.util.ui;
+
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
+
+import prefuse.data.Table;
+import prefuse.data.event.EventConstants;
+import prefuse.data.event.TableListener;
+import prefuse.util.StringLib;
+import prefuse.util.collections.CopyOnWriteArrayList;
+import prefuse.util.collections.IntIterator;
+import prefuse.visual.VisualTable;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class JPrefuseTable extends JTable {
+
+    private Table m_table;
+    private TableCellRenderer m_tcr = new DefaultTableCellRenderer();
+    
+    public JPrefuseTable(Table t) {
+        super();
+        m_table = t;
+        
+        PrefuseTableModel model = new PrefuseTableModel();
+        super.setModel(model);
+        m_table.addTableListener(model);
+    }
+    
+    public Table getTable() {
+        return m_table;
+    }
+    
+    public TableCellRenderer getCellRenderer(int r, int c) {
+        return m_tcr;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public class PrefuseTableModel implements TableModel, TableListener {
+        
+        private CopyOnWriteArrayList m_listeners = new CopyOnWriteArrayList();
+        private int[] m_rowmap;
+        
+        private void initRowMap() {
+            m_rowmap = new int[m_table.getRowCount()];
+            IntIterator rows = m_table.rows();
+            for ( int i=0; rows.hasNext(); ++i ) {
+                m_rowmap[i] = rows.nextInt();
+            }
+        }
+        
+        private int getRow(int rowIndex) {
+            if ( m_rowmap == null )
+                initRowMap();
+            return m_rowmap[rowIndex];
+        }
+        
+        // --------------------------------------------------------------------
+        
+        public int getColumnCount() {
+            return m_table.getColumnCount();
+        }
+        public int getRowCount() {
+            return m_table.getRowCount();
+        }
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return m_table.isCellEditable(rowIndex, columnIndex);
+        }
+        public Class getColumnClass(int columnIndex) {
+            return m_table.getColumnClass(columnIndex);
+        }
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Object o = m_table.getValueAt(getRow(rowIndex), columnIndex);
+            if ( o.getClass().isArray() ) {
+                return StringLib.getArrayString(o);
+            } else {
+                return o;
+            }
+        }
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            m_table.setValueAt(aValue, getRow(rowIndex), columnIndex);
+        }
+        public String getColumnName(int columnIndex) {
+            return m_table.getColumnName(columnIndex);
+        }
+        
+        // --------------------------------------------------------------------
+        
+        public void addTableModelListener(TableModelListener l) {
+            m_listeners.add(l);
+        }
+        public void removeTableModelListener(TableModelListener l) {
+            m_listeners.remove(l);
+        }
+
+        public void tableChanged(Table t, int start, int end, int col, int type) {
+            if ( type == EventConstants.INSERT || type == EventConstants.DELETE )
+                m_rowmap = null; // invalidate row map
+            
+            Object[] lstnrs = m_listeners.getArray();
+            if ( lstnrs.length == 0 )
+                return;
+            
+            TableModelEvent evt 
+                = new TableModelEvent(this, start, end, col, type);
+            for ( int i=0; i<lstnrs.length; ++i ) {
+                ((TableModelListener)lstnrs[i]).tableChanged(evt);
+            }
+        }
+        
+    } // end of inner class PrefuseTableModel
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Create a new window displaying the contents of the input Table as
+     * a Swing JTable.
+     * @@param t the Table instance to display
+     * @@return a reference to the JFrame holding the table view
+     */
+    public static JFrame showTableWindow(Table t) {
+        JPrefuseTable table = new JPrefuseTable(t);
+        String title = t.toString();
+        if ( t instanceof VisualTable ) {
+            title = ((VisualTable)t).getGroup() + " " + title;
+        }
+        JFrame frame = new JFrame(title);
+        frame.getContentPane().add(new JScrollPane(table));
+        frame.pack();
+        frame.setVisible(true);
+        return frame;
+    }
+    
+} // end of class JPrefuseTable
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d82 1
+a82 1
+            if ( o != null && o.getClass().isArray() ) {
+d89 1
+a89 1
+            m_table.setValueAt(getRow(rowIndex), columnIndex, aValue);
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@d21 1
+a21 4
+ * Swing component that displays a prefuse Table instance in a Swing
+ * JTable component.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a27 4
+    /**
+     * Create a new JPrefuseTable.
+     * @@param t the Table to display.
+     */
+a36 4
+    /**
+     * Get the table backing this component.
+     * @@return a prefuse Table instance
+     */
+a40 4
+    /**
+     * Get the cell renderer to use for drawing table cells.
+     * @@see javax.swing.JTable#getCellRenderer(int, int)
+     */
+a46 4
+    /**
+     * TableModel implementation that serves as an adapter between a prefuse
+     * Table instance and a JTable component.
+     */
+a51 4
+        /**
+         * Initialize mapping between prefuse table rows and the rows reported
+         * by this model.
+         */
+a59 5
+        /**
+         * Get the prefuse table row for a row index into this table model.
+         * @@param rowIndex the row index in this table model
+         * @@return the corresponding prefuse table row
+         */
+a67 3
+        /**
+         * @@see javax.swing.table.TableModel#getColumnCount()
+         */
+a70 3
+        /**
+         * @@see javax.swing.table.TableModel#getRowCount()
+         */
+a73 3
+        /**
+         * @@see javax.swing.table.TableModel#isCellEditable(int, int)
+         */
+a76 3
+        /**
+         * @@see javax.swing.table.TableModel#getColumnClass(int)
+         */
+d78 1
+a78 1
+            return m_table.getColumnType(columnIndex);
+a79 3
+        /**
+         * @@see javax.swing.table.TableModel#getValueAt(int, int)
+         */
+a87 3
+        /**
+         * @@see javax.swing.table.TableModel#setValueAt(java.lang.Object, int, int)
+         */
+a90 3
+        /**
+         * @@see javax.swing.table.TableModel#getColumnName(int)
+         */
+a96 3
+        /**
+         * @@see javax.swing.table.TableModel#addTableModelListener(javax.swing.event.TableModelListener)
+         */
+a99 3
+        /**
+         * @@see javax.swing.table.TableModel#removeTableModelListener(javax.swing.event.TableModelListener)
+         */
+a103 3
+        /**
+         * @@see prefuse.data.event.TableListener#tableChanged(prefuse.data.Table, int, int, int, int)
+         */
+@
+
+

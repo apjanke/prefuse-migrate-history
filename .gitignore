@@ -1,0 +1,8 @@
+# This is our migration target
+git-repos
+
+# Working data directory
+data
+
+# This is a copy of the cvs2svn repo that we run the tool from
+cvs2svn

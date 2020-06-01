@@ -1,0 +1,281 @@
+head	1.7;
+access;
+symbols
+	alpha:1.6.0.2
+	Root_alpha:1.6
+	prefuse-alpha-20051229:1.6
+	P20050401_Alpha_PreCHI:1.6;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2006.02.11.06.38.44;	author jheer;	state dead;
+branches;
+next	1.6;
+
+1.6
+date	2005.01.11.06.56.57;	author jheer;	state Exp;
+branches
+	1.6.4.1;
+next	1.5;
+
+1.5
+date	2005.01.05.02.35.38;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.23.03.54.56;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.15.03.33.29;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.03.08.11.05;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+1.6.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse;
+
+import java.util.HashMap;
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.focus.DefaultFocusSet;
+import edu.berkeley.guir.prefuse.focus.FocusSet;
+import edu.berkeley.guir.prefuse.graph.Entity;
+
+/**
+ * This class helps manage focus and/or selected items in a visualization.
+ * It assumes there is at most a single user-selected focus, corresponding
+ * to the user's current locus of attention (e.g. a moused-over, or previously
+ * clicked item). However, there can also be any number of other 
+ * {@@link edu.berkeley.guir.prefuse.focus.FocusSet FocusSets},
+ * including search results, or multiple user selections. This class supports 
+ * the storage, retrieval, and monitoring of such focus items and sets. Because
+ * potential focus items may not yet be visualized, focus sets store
+ * {@@link edu.berkeley.guir.prefuse.graph.Entity Entity}
+ * instances rather than {@@link VisualItem VisualItem} instances.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class FocusManager {
+
+    /**
+     * Object key used for the default focus set.
+     */
+    public static final String DEFAULT_KEY    = "default";
+    
+    /**
+     * Object key that can be used for a focus set of selected items.
+     */
+    public static final String SELECTION_KEY  = "selection";
+    
+    /**
+     * Object key that can be used for a focus set of search results.
+     */
+    public static final String SEARCH_KEY     = "search";
+    
+    /**
+     * Object key that can be used for a focus set of items hovered over.
+     */
+    public static final String HOVER_KEY      = "hover";
+    
+    private HashMap m_focusSets;
+
+    /**
+     * Creates a new FocusManager instance.
+     */
+    public FocusManager() {
+        m_focusSets = new HashMap();
+        setDefaultFocusSet(new DefaultFocusSet());
+    } //
+    
+    /**
+     * Retrieves the focus set associated with the given key, if any.
+     * @@param key the key mapping to the desired focus set
+     * @@return the corresponding focus set, or null if none
+     */
+    public FocusSet getFocusSet(Object key) {
+        return (FocusSet)m_focusSets.get(key);
+    } //
+    
+    /**
+     * Adds a focus set to this manager.
+     * @@param key the key for the focus set to add
+     * @@param set the focus set to add
+     */
+    public void putFocusSet(Object key, FocusSet set) {
+        m_focusSets.put(key, set);
+    } //
+    
+    /**
+     * Returns the default focus set.
+     * @@return the default focus set
+     */
+    public FocusSet getDefaultFocusSet() {
+        return (FocusSet)m_focusSets.get(DEFAULT_KEY);
+    } //
+    
+    /**
+     * Sets the default focus set.
+     * @@param set the focus set to make the new default
+     */
+    public void setDefaultFocusSet(FocusSet set) {
+        m_focusSets.put(DEFAULT_KEY, set);
+    } //
+    
+    /**
+     * Returns an iterator over the various focus sets in this manager.
+     * @@return an iterator over the focus sets registered with this manager
+     */
+    public Iterator getFocusSetIterator() {
+        return m_focusSets.values().iterator();
+    } //
+    
+    /**
+     * Tests if the given entity is in the focus set corresponding to the
+     * given key.
+     * @@param key the key for the focus set to test
+     * @@param entity the entity to test for focus set membership
+     * @@return true if the entity is in the focus set, false otherwise
+     */
+    public boolean isFocus(Object key, Entity entity) {
+        FocusSet set = getFocusSet(key);
+        return ( set==null ? false : set.contains(entity) );
+    } //
+    
+    /**
+     * Tests if the given entity is in any of this manager's focus sets.
+     * @@param entity the entity to test for focus set membership
+     * @@return true if the entity is in a focus set registered with this
+     *  membership, false otherwise.
+     */
+    public boolean isFocus(Entity entity) {
+        Iterator iter = m_focusSets.keySet().iterator();
+        while ( iter.hasNext() ) {
+            FocusSet set = (FocusSet)m_focusSets.get(iter.next());
+            if ( set.contains(entity) )
+                return true;
+        }
+        return false;
+    } //
+    
+} // end of class FocusManager
+@
+
+
+1.6
+log
+@Added hover key
+@
+text
+@@
+
+
+1.6.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.5
+log
+@Created new package for FocusSet implementations
+@
+text
+@d42 5
+@
+
+
+1.4
+log
+@Major refactor
+@
+text
+@d6 2
+a8 2
+import edu.berkeley.guir.prefuse.util.DefaultFocusSet;
+import edu.berkeley.guir.prefuse.util.FocusSet;
+d15 1
+a15 1
+ * {@@link edu.berkeley.guir.prefuse.util.FocusSet FocusSets},
+@
+
+
+1.3
+log
+@Updated Javadoc
+@
+text
+@d20 1
+a20 1
+ * instances rather than {@@link GraphItem GraphItem} instances.
+@
+
+
+1.2
+log
+@Added javadoc documentation
+@
+text
+@d14 2
+a15 1
+ * clicked item). However, there can also be any number of other focus sets,
+d18 3
+a20 2
+ * potential focus items may not yet be visualized, focus sets store Entity
+ * instances rather than GraphItem instances.
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d16 3
+a18 3
+ * the storage, retrieval, and monitoring of such focus items and sets. 
+ * 
+ * Feb 9, 2004 - jheer - Created class
+d25 3
+d29 4
+d34 4
+d42 3
+d50 5
+d59 5
+d68 4
+d76 4
+d84 4
+d92 7
+d104 6
+@
+

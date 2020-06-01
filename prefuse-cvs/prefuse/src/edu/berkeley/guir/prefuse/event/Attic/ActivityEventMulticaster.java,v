@@ -1,0 +1,149 @@
+head	1.3;
+access;
+symbols
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.11.06.38.46;	author jheer;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2004.11.08.02.53.30;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.17;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.event;
+
+import java.util.EventListener;
+
+import edu.berkeley.guir.prefuse.activity.Activity;
+
+/**
+ * Multicaster for ActivityListener calls.
+ * 
+ * Feb 16, 2004 - jheer - Created class
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ActivityEventMulticaster extends EventMulticaster
+    implements ActivityListener
+{
+    public static ActivityListener add(ActivityListener a, ActivityListener b) {
+        return (ActivityListener) addInternal(a, b);
+    } //
+
+    public static ActivityListener remove(
+            ActivityListener l,
+            ActivityListener oldl) {
+        return (ActivityListener) removeInternal(l, oldl);
+    } //
+    
+    public void activityScheduled(Activity ac) {
+        ((ActivityListener) a).activityScheduled(ac);
+        ((ActivityListener) b).activityScheduled(ac);
+    } //
+
+    public void activityStarted(Activity ac) {
+        ((ActivityListener) a).activityStarted(ac);
+        ((ActivityListener) b).activityStarted(ac);
+    } //
+
+    public void activityStepped(Activity ac) {
+        ((ActivityListener) a).activityStepped(ac);
+        ((ActivityListener) b).activityStepped(ac);
+    } //
+
+    public void activityFinished(Activity ac) {
+        ((ActivityListener) a).activityFinished(ac);
+        ((ActivityListener) b).activityFinished(ac);
+    } //
+
+    public void activityCancelled(Activity ac) {
+        ((ActivityListener) a).activityCancelled(ac);
+        ((ActivityListener) b).activityCancelled(ac);
+    } //
+
+    protected static EventListener addInternal(
+            EventListener a, EventListener b)
+    {
+        if (a == null)
+            return b;
+        if (b == null)
+            return a;
+        return new ActivityEventMulticaster(a, b);
+    } //
+    
+	protected EventListener remove(EventListener oldl) {
+		if (oldl == a)
+			return b;
+		if (oldl == b)
+			return a;
+		EventListener a2 = removeInternal(a, oldl);
+		EventListener b2 = removeInternal(b, oldl);
+		if (a2 == a && b2 == b) {
+			return this; // it's not here
+		}
+		return addInternal(a2, b2);
+	} //
+    
+    protected ActivityEventMulticaster(EventListener a, EventListener b) {
+        super(a,b);
+    } //
+
+} // end of class ActivityEventMulticaster
+@
+
+
+1.2
+log
+@Fixed multicaster bug, other small updates
+@
+text
+@@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d63 13
+@
+

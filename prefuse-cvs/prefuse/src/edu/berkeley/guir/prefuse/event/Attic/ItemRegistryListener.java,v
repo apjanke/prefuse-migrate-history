@@ -1,0 +1,114 @@
+head	1.3;
+access;
+symbols
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.11.06.38.46;	author jheer;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.01.08.21.09.59;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.event;
+
+import java.util.EventListener;
+
+import edu.berkeley.guir.prefuse.VisualItem;
+
+/**
+ * A listener interface through which components can be notified
+ * of changes in registry bindings. 
+ * 
+ * Apr 25, 2003 - alann - Created class
+ * 
+ * @@author alann
+ */
+public interface ItemRegistryListener extends EventListener {
+  
+  /**
+   * Indicates a binding to a new VisualItem has been established.
+   * @@param item the new VisualItem
+   */
+  public void registryItemAdded(VisualItem item);
+  
+  /**
+   * Indicates a binding to a VisualItem has been removed.
+   * @@param item the removed VisualItem
+   */
+  public void registryItemRemoved(VisualItem item);
+  
+} // end of class ItemRegistryListener
+@
+
+
+1.2
+log
+@Major refactor
+@
+text
+@@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.1
+log
+@Initial import
+@
+text
+@d5 1
+a5 1
+import edu.berkeley.guir.prefuse.GraphItem;
+d18 2
+a19 2
+   * Indicates a binding to a new GraphItem has been established.
+   * @@param item the new GraphItem
+d21 1
+a21 1
+  public void registryItemAdded(GraphItem item);
+d24 2
+a25 2
+   * Indicates a binding to a GraphItem has been removed.
+   * @@param item the removed GraphItem
+d27 1
+a27 1
+  public void registryItemRemoved(GraphItem item);
+@
+

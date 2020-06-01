@@ -1,0 +1,196 @@
+head	1.5;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2004.03.24.01.57.26;	author jheer;	state dead;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.16.03.05.16;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.08.20.05.52;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@New filters added plus more
+@
+text
+@package edu.berkeley.guir.prefuse.action;
+
+import java.awt.Color;
+import java.awt.Paint;
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.util.ColorLib;
+
+/**
+ * Linearly interpolates between starting and ending colors for VisualItems
+ * during an animation. Custom color interpolators can be written by 
+ * subclassing this class and overriding the 
+ * <code>getInterpolatedColor()</code> method.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ColorInterpolator extends AbstractAction {
+
+	/**
+	 * @@see edu.berkeley.guir.prefuse.action.Action#run(edu.berkeley.guir.prefuse.ItemRegistry, double)
+	 */
+	public void run(ItemRegistry registry, double frac) {
+		Iterator iter = registry.getItems();
+		while ( iter.hasNext() ) {
+			VisualItem item = (VisualItem)iter.next();
+			
+            Paint p1 = item.getStartColor(), p2 = item.getEndColor();
+            if ( p1 instanceof Color && p2 instanceof Color ) {
+                Color c1 = (Color)p1, c2 = (Color)p2;
+                item.setColor(ColorLib.getIntermediateColor(c1,c2,frac));
+            } else {
+                throw new IllegalStateException("Can't interpolate Paint"
+                        + " instances that are not of type Color");
+            }
+			
+			Paint f1 = item.getStartFillColor(), f2 = item.getEndFillColor();
+            if ( f1 instanceof Color && f2 instanceof Color ) {
+                Color c1 = (Color)f1, c2 = (Color)f2;
+                item.setFillColor(ColorLib.getIntermediateColor(c1,c2,frac));
+            }
+		}
+	} //
+
+} // end of class ColorInterpolator
+@
+
+
+1.4
+log
+@Major refactor
+@
+text
+@@
+
+
+1.3
+log
+@More Javadoc updates
+@
+text
+@a4 1
+import java.util.HashMap;
+a6 1
+import edu.berkeley.guir.prefuse.GraphItem;
+d8 2
+d12 1
+a12 1
+ * Linearly interpolates between starting and ending colors for GraphItems
+a20 6
+    
+	private HashMap m_colorCache;
+	
+	public ColorInterpolator() {
+		m_colorCache = new HashMap();		
+	} //
+d28 1
+a28 1
+			GraphItem item = (GraphItem)iter.next();
+d30 8
+a37 2
+            Paint c1 = item.getStartColor(), c2 = item.getEndColor();
+			item.setColor(getInterpolatedColor((Color)c1,(Color)c2,frac));
+d40 4
+a43 16
+			item.setFillColor(getInterpolatedColor((Color)f1,(Color)f2,frac));
+		}
+		m_colorCache.clear();
+	} //
+	
+	protected Color getInterpolatedColor(Color c1, Color c2, double frac) {
+		String key = c1.toString() + c2.toString();
+		Color ic;
+		if ( c1.equals(c2) ) {
+			ic = c1;
+		} else {			
+			ic = (Color)m_colorCache.get(key);
+			if ( ic == null ) {				
+				ic = getIntermediateColor(c1,c2,frac);
+				m_colorCache.put(key, ic);
+			}
+a44 8
+		return ic;
+	} //
+	
+	protected Color getIntermediateColor(Color c1, Color c2, double frac) {
+		return new Color((int)Math.round(frac*c2.getRed()   + (1-frac)*c1.getRed()),
+					     (int)Math.round(frac*c2.getGreen() + (1-frac)*c1.getGreen()),
+					     (int)Math.round(frac*c2.getBlue()  + (1-frac)*c1.getBlue()),
+					     (int)Math.round(frac*c2.getAlpha() + (1-frac)*c1.getAlpha()));
+@
+
+
+1.2
+log
+@Javadoc update and fixes
+@
+text
+@d12 4
+a16 2
+ * Mar 8, 2004 - jheer - Created class
+ *
+a19 10
+/**
+ * Linearly interpolates between starting and ending colors for GraphItems.
+ * Custom color interpolators can be written by subclassing this class and
+ * overriding the getInterpolatedColor() method.
+ * 
+ * Apr 30, 2003 - jheer - Created class
+ * 
+ * @@version 1.0
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+ */
+d27 1
+a27 2
+	
+	
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d12 7
+d36 1
+d38 1
+a38 1
+	 * @@see edu.berkeley.guir.prefuse.filter.AbstractPipelineComponent#process()
+@
+

@@ -1,0 +1,719 @@
+head	2.4;
+access;
+symbols
+	java_1_5:2.3.0.4
+	Root_java_1_5:2.3
+	beta:2.3.0.2
+	beta-20080113:2.3
+	beta-20071021:2.3
+	beta-20060220:2.1
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2009.03.30.01.57.22;	author chrisnf;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2006.03.24.17.35.13;	author jheer;	state Exp;
+branches
+	2.3.4.1;
+next	2.2;
+
+2.2
+date	2006.02.27.03.40.54;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.18.23.42.24;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.30.09.08.06;	author jheer;	state Exp;
+branches;
+next	;
+
+2.3.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	2.3.4.2;
+
+2.3.4.2
+date	2008.03.03.06.17.47;	author amarsden;	state Exp;
+branches;
+next	2.3.4.3;
+
+2.3.4.3
+date	2008.03.10.09.20.31;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Corrected error in Javadoc for interp methods.  Val is a value between min and max, not 0.0 and 1.0.
+@
+text
+@package prefuse.util;
+
+import java.util.Arrays;
+
+import prefuse.Constants;
+
+/**
+ * Library of mathematical constants and methods not included in the
+ * {@@link java.lang.Math} class.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class MathLib {
+
+    /** The value 2 * PI */
+    public static final double TWO_PI = 2*Math.PI;
+    /** The natural logarithm of 10 */
+    public static final double LOG10 = Math.log(10);
+    /** The natural logarithm of 2 */
+    public static final double LOG2 = Math.log(2);
+    
+    private MathLib() {
+        // prevent instantiation
+    }
+    
+    /**
+     * The base 2 logarithm of the input value
+     * @@param x the input value
+     * @@return the base 2 logarithm
+     */
+    public static double log2(double x) {
+        return Math.log(x)/LOG2;
+    }
+
+    /**
+     * The base 10 logarithm of the input value
+     * @@param x the input value
+     * @@return the base 10 logarithm
+     */
+    public static double log10(double x) {
+        return Math.log(x)/LOG10;
+    }
+    
+    /**
+     * The "safe" base 10 logarithm of the input value, handling
+     * negative values by simply making them positive and then
+     * negating the return value.
+     * @@param x the input value
+     * @@return the "negative-safe" base 10 logarithm
+     */
+    public static double safeLog10(double x) {
+        boolean neg = (x < 0.0);
+        if ( neg ) { x = -x; }
+        if ( x < 10.0 ) { x += (10.0-x) / 10; }
+        x = Math.log(x) / LOG10;
+        
+        return neg ? -x : x;
+    }
+    
+    /**
+     * The "safe" square root of the input value, handling
+     * negative values by simply making them positive and then
+     * negating the return value.
+     * @@param x the input value
+     * @@return the "negative-safe" square root
+     */
+    public static double safeSqrt(double x) {
+        return ( x<0 ? -Math.sqrt(-x) : Math.sqrt(x) );
+    }
+    
+    /**
+     * Interpolates a value within a range using a specified scale,
+     * returning the fractional position of the value within that scale.
+     * @@param scale The scale on which to perform the interpolation, one of
+     * {@@link prefuse.Constants#LINEAR_SCALE},
+     * {@@link prefuse.Constants#LOG_SCALE},
+     * {@@link prefuse.Constants#SQRT_SCALE}, or
+     * {@@link prefuse.Constants#QUANTILE_SCALE}.
+     * @@param val a value within the distribution
+     * @@param dist a double array describing the distribution of the data.
+     * For the {@@link prefuse.Constants#QUANTILE_SCALE} option, this should
+     * be a collection of quantile boundaries, as determined by the
+     * {@@link #quantiles(int, double[])} method. For any other scale type,
+     * the first value of the array must contain the minimum value of the
+     * distribution and the last value of the array must contain the
+     * maximum value of the distribution; all values in between will be
+     * ignored.
+     * @@return the fractional position of the value within the scale,
+     * a double between 0 and 1.
+     */
+    public static double interp(int scale, double val, double dist[]) {
+        switch ( scale ) {
+        case Constants.LINEAR_SCALE:
+            return linearInterp(val, dist[0], dist[dist.length-1]);
+        case Constants.LOG_SCALE:
+            return logInterp(val, dist[0], dist[dist.length-1]);
+        case Constants.SQRT_SCALE:
+            return sqrtInterp(val, dist[0], dist[dist.length-1]);
+        case Constants.QUANTILE_SCALE:
+            return quantile(val, dist);
+        }
+        throw new IllegalArgumentException("Unrecognized scale value: "+scale);
+    }
+    
+    /**
+     * Interpolates a value between a given minimum and maximum value using
+     * a linear scale.
+     * @@param val a value between the minimum and maximum
+     * @@param min the minimum value of the interpolation range
+     * @@param max the maximum value of the interpolation range
+     * @@return the fractional position of the value within the scale,
+     * a double between 0 and 1.
+     */
+    public static double linearInterp(double val, double min, double max) {
+        double denominator = (max-min);
+        if ( denominator == 0 )
+            return 0;
+        return (val-min)/denominator;
+    }
+    
+    /**
+     * Interpolates a value between a given minimum and maximum value using
+     * a base-10 logarithmic scale.
+     * @@param val a value between the minimum and maximum
+     * @@param min the minimum value of the interpolation range
+     * @@param max the maximum value of the interpolation range
+     * @@return the fractional position of the value within the scale,
+     * a double between 0 and 1.
+     */
+    public static double logInterp(double val, double min, double max) {
+        double logMin = safeLog10(min);
+        double denominator = (safeLog10(max)-logMin);
+        if ( denominator == 0 )
+            return 0;
+        return (safeLog10(val)-logMin) / denominator; 
+    }
+    
+    /**
+     * Interpolates a value between a given minimum and maximum value using
+     * a square root scale.
+     * @@param val a value between the minimum and maximum
+     * @@param min the minimum value of the interpolation range
+     * @@param max the maximum value of the interpolation range
+     * @@return the fractional position of the value within the scale,
+     * a double between 0 and 1.
+     */
+    public static double sqrtInterp(double val, double min, double max) {
+        double sqrtMin = safeSqrt(min);
+        double denominator = (safeSqrt(max)-sqrtMin);
+        if ( denominator == 0 )
+            return 0;
+        return (safeSqrt(val)-sqrtMin) / denominator;
+    }
+    
+    /**
+     * Compute the n-quantile boundaries for a set of values. The result is
+     * an n+1 size array holding the minimum value in the first entry and
+     * then n quantile boundaries in the subsequent entries.
+     * @@param n the number of quantile boundaries. For example, a value of 4
+     * will break up the values into quartiles, while a value of 100 will break
+     * up the values into percentiles.
+     * @@param values the array of double values to divide into quantiles
+     * @@return an n+1 array of doubles containing the minimum value and
+     * the quantile boundary values, in that order
+     */
+    public static double[] quantiles(int n, double[] values) {
+        values = (double[])values.clone();
+        Arrays.sort(values);
+        double[] qtls = new double[n+1];
+        for ( int i=0; i<=n; ++i ) {
+            qtls[i] = values[((values.length-1)*i)/n];
+        }
+        return qtls;
+    }
+    
+    /**
+     * Get the quantile measure, as a value between 0 and 1, for a given
+     * value and set of quantile boundaries. For example, if the input value
+     * is the median of the distribution described by the quantile boundaries,
+     * this method will return 0.5. As another example, if the quantile
+     * boundaries represent percentiles, this value will return the percentile
+     * ranking of the input value according to the given boundaries.
+     * @@param val the value for which to return the quantile ranking
+     * @@param quantiles an array of quantile boundaries of a distribution
+     * @@return the quantile ranking, a value between 0 and 1
+     * @@see #quantiles(int, double[])
+     */
+    public static double quantile(double val, double[] quantiles) {
+        int x1 = 1;
+        int x2 = quantiles.length;
+        int i = x2 / 2;
+        while (x1 < x2) {
+            if (quantiles[i] == val) {
+                break;
+            } else if (quantiles[i] < val) {
+                x1 = i + 1;
+            } else {
+                x2 = i;
+            }
+            i = x1 + (x2 - x1) / 2;
+        }
+        return ((double)i)/(quantiles.length-1);
+    }
+    
+} // end of class MathLib
+@
+
+
+2.3
+log
+@Uncommented code in safeLog10
+@
+text
+@d79 1
+a79 1
+     * @@param val the interpolation value, a fraction between 0 and 1.0.
+d108 1
+a108 1
+     * @@param val the interpolation value, a fraction between 0 and 1.0.
+d111 2
+a112 1
+     * @@return the resulting interpolated value
+d124 1
+a124 1
+     * @@param val the interpolation value, a fraction between 0 and 1.0.
+d127 2
+a128 1
+     * @@return the resulting interpolated value
+d141 1
+a141 1
+     * @@param val the interpolation value, a fraction between 0 and 1.0.
+d144 2
+a145 1
+     * @@return the resulting interpolated value
+@
+
+
+2.3.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d5 2
+d10 1
+a10 1
+ *
+d21 1
+a21 1
+
+d25 1
+a25 1
+
+d43 1
+a43 1
+
+d52 1
+a52 1
+        boolean neg = x < 0.0;
+d56 1
+a56 1
+
+d59 1
+a59 1
+
+d68 1
+a68 1
+        return x<0 ? -Math.sqrt(-x) : Math.sqrt(x);
+d70 1
+a70 1
+
+d74 5
+a78 1
+     * @@param scale The scale on which to perform the interpolation
+d81 1
+a81 1
+     * For the {@@link Scale#QUANTILE} option, this should
+d91 1
+a91 1
+    public static double interp(Scale scale, double val, double dist[]) {
+d93 1
+a93 1
+        case LINEAR:
+d95 1
+a95 1
+        case LOG:
+d97 1
+a97 1
+        case SQRT:
+d99 1
+a99 1
+        case QUANTILE:
+d104 1
+a104 1
+
+d114 3
+a116 4
+        double denominator = max-min;
+        if ( denominator == 0 ) {
+			return 0;
+		}
+d119 1
+a119 1
+
+d130 4
+a133 5
+        double denominator = safeLog10(max)-logMin;
+        if ( denominator == 0 ) {
+			return 0;
+		}
+        return (safeLog10(val)-logMin) / denominator;
+d135 1
+a135 1
+
+d146 3
+a148 4
+        double denominator = safeSqrt(max)-sqrtMin;
+        if ( denominator == 0 ) {
+			return 0;
+		}
+d151 1
+a151 1
+
+d164 1
+a164 1
+        values = values.clone();
+d168 1
+a168 1
+            qtls[i] = values[(values.length-1)*i/n];
+d172 1
+a172 1
+
+d199 1
+a199 1
+        return (double)i/(quantiles.length-1);
+d201 1
+a201 1
+
+@
+
+
+2.3.4.2
+log
+@Removed MathLib.log10()
+@
+text
+@d15 2
+d34 9
+d53 1
+a53 1
+        x = Math.log10(x);
+@
+
+
+2.3.4.3
+log
+@Minor tweaks to edge layouts
+@
+text
+@a14 4
+
+    /** The value PI / 2 */
+    public static final double PI_DIV_2 = Math.PI / 2.0d;
+    
+@
+
+
+2.2
+log
+@Interpolation methods now safe against divide-by-zero.
+@
+text
+@d54 1
+a54 1
+        //if ( x < 10.0 ) { x += (10.0-x) / 10; }
+@
+
+
+2.1
+log
+@Added quantile scale for statistics-driven binning of data values
+@
+text
+@d114 4
+a117 1
+        return (val-min)/(max-min);
+d130 4
+a133 1
+        return (safeLog10(val)-logMin) / (safeLog10(max)-logMin); 
+d146 4
+a149 1
+        return (safeSqrt(val)-sqrtMin) / (safeSqrt(max)-sqrtMin);
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d3 2
+d72 2
+a73 2
+     * Interpolates a value between a given minimum and maximum value using
+     * a specified scale.
+d76 3
+a78 2
+     * {@@link prefuse.Constants#LOG_SCALE}, or
+     * {@@link prefuse.Constants#SQRT_SCALE}.
+d80 10
+a89 3
+     * @@param min the minimum value of the interpolation range
+     * @@param max the maximum value of the interpolation range
+     * @@return the resulting interpolated value
+d91 1
+a91 1
+    public static double interp(int scale, double val, double min, double max) {
+d94 1
+a94 1
+            return linearInterp(val, min, max);
+d96 1
+a96 1
+            return logInterp(val, min, max);
+d98 3
+a100 1
+            return sqrtInterp(val, min, max);
+d143 50
+@
+
+
+1.1
+log
+@file MathLib.java was initially added on branch beta.
+@
+text
+@d1 131
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 61
+package prefuse.util;
+
+import prefuse.Constants;
+
+public class MathLib {
+
+    public static final double LOG10 = Math.log(10);
+    public static final double LOG2 = Math.log(2);
+    
+    private MathLib() {
+        // prevent instantiation
+    }
+    
+    public static double log2(double x) {
+        return Math.log(x)/LOG2;
+    }
+    
+    public static double log10(double x) {
+        return Math.log(x)/LOG10;
+    }
+    
+    public static double safeLog10(double x) {
+        boolean neg = (x < 0.0);
+        if ( neg ) { x = -x; }
+        //if ( x < 10.0 ) { x += (10.0-x) / 10; }
+        x = Math.log(x) / LOG10;
+        
+        return neg ? -x : x;
+    }
+    
+    public static double safeSqrt(double x) {
+        return ( x<0 ? -Math.sqrt(-x) : Math.sqrt(x) );
+    }
+    
+    public static double interp(int scale, double val, double min, double max) {
+        switch ( scale ) {
+        case Constants.LINEAR_SCALE:
+            return linearInterp(val, min, max);
+        case Constants.LOG_SCALE:
+            return logInterp(val, min, max);
+        case Constants.SQRT_SCALE:
+            return sqrtInterp(val, min, max);
+        }
+        throw new IllegalArgumentException("Unrecognized scale value: "+scale);
+    }
+    
+    public static double linearInterp(double val, double min, double max) {
+        return (val-min)/(max-min);
+    }
+    
+    public static double logInterp(double val, double min, double max) {
+        double logMin = safeLog10(min);
+        return (safeLog10(val)-logMin) / (safeLog10(max)-logMin); 
+    }
+    
+    public static double sqrtInterp(double val, double min, double max) {
+        double sqrtMin = safeSqrt(min);
+        return (safeSqrt(val)-sqrtMin) / (safeSqrt(max)-sqrtMin);
+    }
+    
+} // end of class MathLib
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a6 1
+	public static final double TWO_PI = 2*Math.PI;
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d7 1
+a7 1
+    public static final double TWO_PI = 2*Math.PI;
+@
+
+
+1.1.2.4
+log
+@Much more javadoc
+@
+text
+@a4 6
+/**
+ * Library of mathematical constants and methods not included in the
+ * {@@link java.lang.Math} class.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+a6 1
+    /** The value 2 * PI */
+a7 1
+    /** The natural logarithm of 10 */
+a8 1
+    /** The natural logarithm of 2 */
+a14 5
+    /**
+     * The base 2 logarithm of the input value
+     * @@param x the input value
+     * @@return the base 2 logarithm
+     */
+d18 1
+a18 6
+
+    /**
+     * The base 10 logarithm of the input value
+     * @@param x the input value
+     * @@return the base 10 logarithm
+     */
+a22 7
+    /**
+     * The "safe" base 10 logarithm of the input value, handling
+     * negative values by simply making them positive and then
+     * negating the return value.
+     * @@param x the input value
+     * @@return the "negative-safe" base 10 logarithm
+     */
+a31 7
+    /**
+     * The "safe" square root of the input value, handling
+     * negative values by simply making them positive and then
+     * negating the return value.
+     * @@param x the input value
+     * @@return the "negative-safe" square root
+     */
+a35 12
+    /**
+     * Interpolates a value between a given minimum and maximum value using
+     * a specified scale.
+     * @@param scale The scale on which to perform the interpolation, one of
+     * {@@link prefuse.Constants#LINEAR_SCALE},
+     * {@@link prefuse.Constants#LOG_SCALE}, or
+     * {@@link prefuse.Constants#SQRT_SCALE}.
+     * @@param val the interpolation value, a fraction between 0 and 1.0.
+     * @@param min the minimum value of the interpolation range
+     * @@param max the maximum value of the interpolation range
+     * @@return the resulting interpolated value
+     */
+a47 8
+    /**
+     * Interpolates a value between a given minimum and maximum value using
+     * a linear scale.
+     * @@param val the interpolation value, a fraction between 0 and 1.0.
+     * @@param min the minimum value of the interpolation range
+     * @@param max the maximum value of the interpolation range
+     * @@return the resulting interpolated value
+     */
+a51 8
+    /**
+     * Interpolates a value between a given minimum and maximum value using
+     * a base-10 logarithmic scale.
+     * @@param val the interpolation value, a fraction between 0 and 1.0.
+     * @@param min the minimum value of the interpolation range
+     * @@param max the maximum value of the interpolation range
+     * @@return the resulting interpolated value
+     */
+a56 8
+    /**
+     * Interpolates a value between a given minimum and maximum value using
+     * a square root scale.
+     * @@param val the interpolation value, a fraction between 0 and 1.0.
+     * @@param min the minimum value of the interpolation range
+     * @@param max the maximum value of the interpolation range
+     * @@return the resulting interpolated value
+     */
+@
+
+

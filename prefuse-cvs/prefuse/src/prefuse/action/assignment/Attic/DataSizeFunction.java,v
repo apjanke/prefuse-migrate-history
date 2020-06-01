@@ -1,0 +1,524 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.24.02.51.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.24.09.05.06;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.01.19.22.44;	author jheer;	state Exp;
+branches;
+next	1.1.2.7;
+
+1.1.2.7
+date	2006.02.07.00.42.53;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file DataSizeFunction.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 100
+package prefuse.action.assignment;
+
+import prefuse.Constants;
+import prefuse.data.Table;
+import prefuse.data.column.ColumnMetadata;
+import prefuse.data.tuple.TupleSet;
+import prefuse.util.MathLib;
+import prefuse.visual.VisualItem;
+
+/**
+ * TODO: get data on just noticeable differences, use to select size values
+ * more intelligently?
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class DataSizeFunction extends SizeFunction {
+    
+    protected String m_field;
+    
+    protected double m_minSize = 1;
+    protected double m_maxSize = 20;
+    protected double m_sizeRange = m_maxSize-m_minSize;
+    
+    protected int m_scale = Constants.LINEAR_SCALE;
+    protected int m_bins = Constants.CONTINUOUS;
+    
+    protected boolean inferBounds = true;
+    protected double m_minValue;
+    protected double m_maxValue;
+    
+    public DataSizeFunction(String group, String field) {
+        super(group);
+        m_field = field;
+    }
+    
+    public DataSizeFunction(String group, String field, int scale) {
+        this(group, field, scale, Constants.CONTINUOUS);
+    }
+    
+    public DataSizeFunction(String group, String field, int scale, int bins) {
+        super(group);
+        m_field = field;
+        setScale(scale);
+        setBinCount(bins);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public int getScale() {
+        return m_scale;
+    }
+    
+    public void setScale(int scale) {
+        if ( scale < 0 || scale >= Constants.SCALE_COUNT )
+            throw new IllegalArgumentException(
+                    "Unrecognized scale value: "+scale);
+        m_scale = scale;
+    }
+    
+    public int getBinCount() {
+        return m_bins;
+    }
+    
+    public void setBinCount(int count) {
+        m_bins = count;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public void run(double frac) {
+        TupleSet ts = m_vis.getGroup(m_group);
+        if ( !(ts instanceof Table) )
+            return; // TODO: exception?
+        Table t = (Table)ts;
+        
+        if ( !t.canGetDouble(m_field) ) 
+            return; // TODO: exception ?
+        
+        ColumnMetadata md = t.getMetadata(m_field);
+        if ( inferBounds ) {
+            int minRow = md.getMinimumRow();
+            int maxRow = md.getMaximumRow();
+            m_minValue = t.getDouble(m_field, minRow);
+            m_maxValue = t.getDouble(m_field, maxRow);
+        }
+        
+        super.run(frac);
+    }
+    
+    public double getSize(VisualItem item) {
+        double v = item.getDouble(m_field);
+        double f = MathLib.interp(m_scale, v, m_minValue, m_maxValue);
+        if ( m_bins < 1 ) { // continuous scale
+            return m_minSize + f * m_sizeRange;
+        } else {            // binned sizes
+            int bin = (int)(f*m_bins);
+            return m_minSize + bin*(m_sizeRange/(m_bins-1));
+        }
+    }
+    
+} // end of class DataSizeFunction
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d82 2
+a83 2
+            m_minValue = t.getDouble(minRow, m_field);
+            m_maxValue = t.getDouble(maxRow, m_field);
+@
+
+
+1.1.2.3
+log
+@Updated DataSizeFunction
+@
+text
+@a7 1
+import prefuse.util.PrefuseLib;
+d11 2
+a12 7
+ * <p>Sets the size values for a group of items based upon a data field. This
+ * action can be used to automatically vary item's on screen sizes
+ * proportionally to an underlying data value. Sizes can be assigned along
+ * a continuous scale, or can be binned into discrete size groups. Both 1D 
+ * (length) and 2D (area) encodings are supported by this function.
+ * 2D is assumed by default; use the setIs2DArea method to change this.</p>
+ * 
+a16 3
+    // TODO: get data on just noticeable differences, use to select size values
+    // more intelligently?
+    
+d26 1
+a26 2
+    protected boolean m_inferBounds = true;
+    protected boolean m_is2DArea = true;
+a47 5
+    /**
+     * Returns the scale type used for encoding size values from the data.
+     * @@return the scale type. One of Constants.LINEAR, Constants.SQRT, or
+     * Constants.LOG.
+     */
+a51 6
+    /**
+     * Set the scale (linear, square root, or log) to use for encoding size
+     * values from the data.
+     * @@param scale the scale type to use. This value should be one of
+     * Constants.LINEAR, Constants.SQRT, or Constants.LOG.
+     */
+a58 4
+    /**
+     * Returns the number of "bins" or distinct categories of sizes
+     * @@return the number of bins.
+     */
+d62 1
+a62 6
+
+    /**
+     * Sets the number of "bins" or distinct categories of sizes
+     * @@param count the number of bins to set. The value Cosntants.CONTINUOUS
+     * indicates not to use any binning.
+     */
+d67 1
+a67 65
+    /**
+     * Indicates if the size values set by this function represent 2D areas.
+     * That is, if the size is a 2D area or a 1D length. The size value will
+     * be scaled appropriately to facilitate better perception of size
+     * differences.
+     * @@return true if this instance is configured for area sizes, false for
+     *  length sizes.
+     * @@see prefuse.util.PrefuseLib#getSize2D(double)
+     */
+    public boolean is2DArea() {
+        return m_is2DArea;
+    }
+    
+    /**
+     * Sets if the size values set by this function represent 2D areas.
+     * That is, if the size is a 2D area or a 1D length. The size value will
+     * be scaled appropriately to facilitate better perception of size
+     * differences.
+     * @@param isArea true to configure this instance for area sizes, false for
+     *  length sizes
+     * @@see prefuse.util.PrefuseLib#getSize2D(double)
+     */
+    public void setIs2DArea(boolean isArea) {
+        m_is2DArea = isArea;
+    }
+    
+    /**
+     * Gets the size assigned to the highest-valued data items.
+     * Size values are mapped, from lowest to highest, onto a spectrum of
+     * sizes bounded by the values of getMinSize() and getMaxSize().
+     * @@return the size for the highest-valued data items
+     */
+    public double getMaxSize() {
+        return m_maxSize;
+    }
+
+    /**
+     * Sets the size assigned to the highest-valued data items.
+     * Size values are mapped, from lowest to highest, onto a spectrum of
+     * sizes bounded by the values of getMinSize() and getMaxSize().
+     * @@param size the new size for the highest-valued data items
+     */
+    public void setMaxSize(double size) {
+        m_maxSize = size;
+    }
+
+    /**
+     * Gets the size assigned to the lowest-valued data items.
+     * Size values are mapped, from lowest to highest, onto a spectrum of
+     * sizes bounded by the values of getMinSize() and getMaxSize().
+     * @@return the size for the lowest-valued data items
+     */
+    public double getMinSize() {
+        return m_minSize;
+    }
+
+    /**
+     * Sets the size assigned to the lowest-valued data items.
+     * Size values are mapped, from lowest to highest, onto a spectrum of
+     * sizes bounded by the values of getMinSize() and getMaxSize().
+     * @@param size the new size for the lowest-valued data items
+     */
+    public void setMinSize(double size) {
+        m_minSize = size;
+    }    
+a68 5
+    // ------------------------------------------------------------------------
+
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+d79 1
+a79 1
+        if ( m_inferBounds ) {
+a88 3
+    /**
+     * @@see prefuse.action.assignment.SizeFunction#getSize(prefuse.visual.VisualItem)
+     */
+d93 1
+a93 1
+            v = m_minSize + f * m_sizeRange;
+d96 1
+a96 1
+            v = m_minSize + bin*(m_sizeRange/(m_bins-1));
+a97 4
+        // return the size value. if this action is configured to return
+        // 2-dimensional sizes (ie area rather than length) then the
+        // size value is appropriately scaled first
+        return m_is2DArea ? PrefuseLib.getSize2D(v) : v;
+@
+
+
+1.1.2.4
+log
+@Reworked data size function
+@
+text
+@d23 2
+a24 2
+    // TODO: get data on just noticeable differences, use to select size
+    // values more intelligently?
+d28 3
+a30 2
+    protected double m_baseSize = 1;
+    protected double m_sizeRange;
+a39 5
+    /**
+     * 
+     * @@param group
+     * @@param field
+     */
+d45 2
+a46 2
+    public DataSizeFunction(String group, String field, int bins) {
+        this(group, field, bins, Constants.LINEAR_SCALE);
+d49 1
+a49 1
+    public DataSizeFunction(String group, String field, int bins, int scale) {
+a58 16
+     * Returns the data field used to encode size values.
+     * @@return the data field that is mapped to size values
+     */
+    public String getField() {
+        return m_field;
+    }
+    
+    /**
+     * Set the data field used to encode size values.
+     * @@param field the data field to map to size values
+     */
+    public void setField(String field) {
+        m_field = field;
+    }
+    
+    /**
+d60 2
+a61 2
+     * @@return the scale type. One of Constants.LINEAR_SCALE, 
+     * Constants.SQRT_SCALE, or Constants.LOG_SCALE.
+d71 1
+a71 1
+     * Constants.LINEAR_SCALE, Constants.SQRT_SCALE, or Constants.LOG_SCALE.
+d122 10
+d134 13
+a146 1
+     * Gets the size assigned to the lowest-valued data items, typically 1.0.
+d149 2
+a150 2
+    public double getBaseSize() {
+        return m_baseSize;
+d154 3
+a156 2
+     * Sets the size assigned to the lowest-valued data items. By default,
+     * this value is 1.0.
+d159 2
+a160 2
+    public void setBaseSize(double size) {
+        m_baseSize = size;
+a182 1
+            m_sizeRange = m_maxValue/m_minValue - m_baseSize;
+d184 1
+d194 5
+a198 7
+        if ( m_bins < 1 ) {
+            // continuous scale
+            v = m_baseSize + f * m_sizeRange;
+        } else {
+            // binned sizes
+            int bin = (int)((f-0.0001)*m_bins);
+            v = m_baseSize + bin*(m_sizeRange/(m_bins-1));
+@
+
+
+1.1.2.5
+log
+@Lots of javadoc
+@
+text
+@d12 3
+a14 4
+ * <p>
+ * Assignment Action that assigns size values for a group of items based upon
+ * a data field. This action can be used to automatically vary item's on screen
+ * sizes proportionally to an underlying data value. Sizes can be assigned along
+d19 1
+a19 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d26 1
+a26 1
+    protected String m_dataField;
+d40 3
+a42 3
+     * Create a new DataSizeFunction.
+     * @@param group the data group to process
+     * @@param field the data field to base size assignments on
+d46 1
+a46 1
+        m_dataField = field;
+d48 1
+a48 7
+
+    /**
+     * Create a new DataSizeFunction.
+     * @@param group the data group to process
+     * @@param field the data field to base size assignments on
+     * @@param bins the number of discrete size values to use
+     */
+d52 1
+a52 11
+
+    /**
+     * Create a new DataSizeFunction.
+     * @@param group the data group to process
+     * @@param field the data field to base size assignments on
+     * @@param bins the number of discrete size values to use
+     * @@param scale the scale type to use. One of
+     * {@@link prefuse.Constants#LINEAR_SCALE},
+     * {@@link prefuse.Constants#LOG_SCALE}, or
+     * {@@link prefuse.Constants#SQRT_SCALE}. 
+     */
+d55 1
+a55 1
+        m_dataField = field;
+d66 2
+a67 2
+    public String getDataField() {
+        return m_dataField;
+d74 2
+a75 2
+    public void setDataField(String field) {
+        m_dataField = field;
+d80 2
+a81 4
+     * @@return the scale type. One of
+     * {@@link prefuse.Constants.LINEAR_SCALE}, 
+     * {@@link prefuse.Constants.SQRT_SCALE}, or
+     * {@@link Constants.LOG_SCALE}.
+d91 1
+a91 3
+     * {@@link prefuse.Constants.LINEAR_SCALE}, 
+     * {@@link prefuse.Constants.SQRT_SCALE}, or
+     * {@@link Constants.LOG_SCALE}.
+d171 1
+a171 1
+        if ( !t.canGetDouble(m_dataField) ) 
+d174 1
+a174 1
+        ColumnMetadata md = t.getMetadata(m_dataField);
+d178 2
+a179 2
+            m_minValue = t.getDouble(minRow, m_dataField);
+            m_maxValue = t.getDouble(maxRow, m_dataField);
+d189 1
+a189 1
+        double v = item.getDouble(m_dataField);
+@
+
+
+1.1.2.6
+log
+@Javadoc'd.
+@
+text
+@d98 3
+a100 3
+     * {@@link prefuse.Constants#LINEAR_SCALE}, 
+     * {@@link prefuse.Constants#SQRT_SCALE}, or
+     * {@@link prefuse.Constants#LOG_SCALE}.
+d110 3
+a112 3
+     * {@@link prefuse.Constants#LINEAR_SCALE}, 
+     * {@@link prefuse.Constants#SQRT_SCALE}, or
+     * {@@link prefuse.Constants#LOG_SCALE}.
+@
+
+
+1.1.2.7
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@@
+
+

@@ -1,0 +1,403 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.01.19.22.44;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.07.00.42.53;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file SizeFunction.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 37
+package prefuse.action.assignment;
+
+import prefuse.action.ItemAction;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Simple SizeFunction that blindly returns a size of "1" for all
+ * items. Subclasses should override the getSize() method to provide
+ * custom size assignment for VisualItems.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class SizeFunction extends ItemAction {
+
+    public SizeFunction() {
+        super();
+    }
+    
+    public SizeFunction(String group) {
+        super(group);
+    }
+    
+	public void process(VisualItem item, double frac) {
+		double size = getSize(item);
+        double old = item.getSize();
+		item.setStartSize(old);
+        item.setEndSize(size);
+		item.setSize(size);
+	}
+	
+	public double getSize(VisualItem item) {
+		return 1;
+	}
+
+} // end of class SizeFunction
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@a2 2
+import java.util.logging.Logger;
+
+a3 3
+import prefuse.data.expression.Predicate;
+import prefuse.data.expression.parser.ExpressionParser;
+import prefuse.util.PredicateChain;
+d8 3
+a10 14
+ * SizeFunctions determine and assign size values to VisualItems.
+ * 
+ * By default, a SizeFunction simply assigns a single default size value to
+ * all items (the initial default size is 1.0). Clients can change this 
+ * default value to achieve uniform size assignment, or can add any number 
+ * of additional rules for size assignment. Rules are specified by a Predicate
+ * instance which, if returning true, will trigger that rule, causing either the
+ * provided size value or the result of a delegate SizeFunction to be
+ * applied. Rules are evaluated in the order in which they are added to the
+ * SizeFunction, so earlier rules will have precedence over rules added later.
+ * 
+ * In addition, subclasses can simply override getSize() to achieve
+ * custom color assignment. In some cases, this may be the simplest or
+ * most flexible approach.
+d12 2
+a13 4
+ * To automatically assign size values based on varying values of a
+ * particular data field, consider using the DataSizeFunction.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+a16 6
+	protected PredicateChain m_chain = null;
+	protected double m_defaultSize = 1.0;
+	
+	/**
+	 * Constructor. A default size value of 1.0 will be used.
+	 */
+d20 1
+a20 5
+	
+	/**
+	 * Constructor. A default size value of 1.0 will be used.
+	 * @@param group the data group processed by this Action.
+	 */
+a23 82
+
+	/**
+	 * Constructor which specified a default size value.
+	 * @@param group the data group processed by this Action.
+	 */
+    public SizeFunction(String group, double size) {
+        super(group);
+        setDefaultSize(size);
+    }
+    
+    /**
+     * Returns the default size value assigned to items.
+     * @@return m_defaultSize
+     */
+    public double getDefaultSize() {
+    	return m_defaultSize;
+    }
+    
+    /**
+     * Sets the default size value assigned to items. Items will be assigned
+     * the default size if they do not match any registered rules.
+     * @@param defaultSize the new default size value
+     */
+    public void setDefaultSize(double defaultSize) {
+    	m_defaultSize = defaultSize;
+    }
+    
+    /**
+     * Add a size mapping rule to this SizeFunction. VisualItems that match
+     * the provided predicate will be assigned the given size value (assuming
+     * they do not match an earlier rule).
+     * @@param p the rule Predicate 
+     * @@param size the size value
+     */
+    public void add(Predicate p, double size) {
+    	if ( m_chain == null ) m_chain = new PredicateChain();
+    	m_chain.add(p, new Double(size));
+    }
+
+    /**
+     * Add a size mapping rule to this SizeFunction. VisualItems that match
+     * the provided expression will be assigned the given size value (assuming
+     * they do not match an earlier rule). The provided expression String will
+     * be parsed to generate the needed rule Predicate.
+     * @@param expr the expression String, should parse to a Predicate. 
+     * @@param size the size value
+     * @@throws RuntimeException if the expression does not parse correctly or
+     * does not result in a Predicate instance.
+     */
+    public void add(String expr, double size) {
+    	Predicate p = (Predicate)ExpressionParser.parse(expr);
+    	add(p, size);    	
+    }
+    
+    /**
+     * Add a size mapping rule to this SizeFunction. VisualItems that match
+     * the provided predicate will be assigned the size value returned by
+     * the given SizeFunction's getSize() method.
+     * @@param p the rule Predicate 
+     * @@param f the delegate ColorFunction to use
+     */
+    public void add(Predicate p, SizeFunction f) {
+    	if ( m_chain == null ) m_chain = new PredicateChain();
+    	m_chain.add(p, f);
+    }
+
+    /**
+     * Add a size mapping rule to this SizeFunction. VisualItems that match
+     * the provided expression will be assigned the given size value (assuming
+     * they do not match an earlier rule). The provided expression String will
+     * be parsed to generate the needed rule Predicate.
+     * @@param expr the expression String, should parse to a Predicate. 
+     * @@param size the size value
+     * @@throws RuntimeException if the expression does not parse correctly or
+     * does not result in a Predicate instance.
+     */
+    public void add(String expr, SizeFunction f) {
+    	Predicate p = (Predicate)ExpressionParser.parse(expr);
+    	add(p, f);
+    }
+    
+    // ------------------------------------------------------------------------
+a24 3
+	/**
+	 * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+	 */
+a32 5
+	/**
+	 * Returns a size value for the given item.
+	 * @@param item the item for which to get the size value
+	 * @@return the size value for the item
+	 */
+d34 1
+a34 14
+		if ( m_chain != null ) {
+			Object o = m_chain.get(item);
+			if ( o != null ) {
+				if ( o instanceof SizeFunction ) {
+					return ((SizeFunction)o).getSize(item);
+				} else if ( o instanceof Number ) {
+					return ((Number)o).doubleValue();
+				} else {
+					Logger.getLogger(this.getClass().getName())
+					    .warning("Unrecognized Object from predicate chain.");
+				}
+			}
+		}
+	    return m_defaultSize;   
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d35 6
+a40 6
+    protected PredicateChain m_chain = null;
+    protected double m_defaultSize = 1.0;
+    
+    /**
+     * Constructor. A default size value of 1.0 will be used.
+     */
+d44 5
+a48 5
+    
+    /**
+     * Constructor. A default size value of 1.0 will be used.
+     * @@param group the data group processed by this Action.
+     */
+d53 4
+a56 4
+    /**
+     * Constructor which specified a default size value.
+     * @@param group the data group processed by this Action.
+     */
+d67 1
+a67 1
+        return m_defaultSize;
+d76 1
+a76 1
+        m_defaultSize = defaultSize;
+d87 2
+a88 2
+        if ( m_chain == null ) m_chain = new PredicateChain();
+        m_chain.add(p, new Double(size));
+d102 2
+a103 2
+        Predicate p = (Predicate)ExpressionParser.parse(expr);
+        add(p, size);       
+d114 2
+a115 2
+        if ( m_chain == null ) m_chain = new PredicateChain();
+        m_chain.add(p, f);
+d129 2
+a130 2
+        Predicate p = (Predicate)ExpressionParser.parse(expr);
+        add(p, f);
+d135 5
+a139 5
+    /**
+     * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+     */
+    public void process(VisualItem item, double frac) {
+        double size = getSize(item);
+d141 1
+a141 1
+        item.setStartSize(old);
+d143 24
+a166 24
+        item.setSize(size);
+    }
+    
+    /**
+     * Returns a size value for the given item.
+     * @@param item the item for which to get the size value
+     * @@return the size value for the item
+     */
+    public double getSize(VisualItem item) {
+        if ( m_chain != null ) {
+            Object o = m_chain.get(item);
+            if ( o != null ) {
+                if ( o instanceof SizeFunction ) {
+                    return ((SizeFunction)o).getSize(item);
+                } else if ( o instanceof Number ) {
+                    return ((Number)o).doubleValue();
+                } else {
+                    Logger.getLogger(this.getClass().getName())
+                        .warning("Unrecognized Object from predicate chain.");
+                }
+            }
+        }
+        return m_defaultSize;   
+    }
+@
+
+
+1.1.2.4
+log
+@Lots of javadoc
+@
+text
+@d13 1
+a13 1
+ * <p>Assignment Action that assigns size values to VisualItems.</p>
+a14 1
+ * <p>
+a22 1
+ * </p>
+d24 1
+a24 1
+ * <p>In addition, subclasses can simply override getSize() to achieve
+d26 1
+a26 1
+ * most flexible approach.</p>
+d28 2
+a29 2
+ * <p>To automatically assign size values based on varying values of a
+ * particular data field, consider using the {@@link DataSizeFunction}.</p>
+d31 1
+a31 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.5
+log
+@Javadoc'd.
+@
+text
+@d126 1
+a126 1
+     * @@param f the delegate ColorFunction to use
+@
+
+
+1.1.2.6
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@@
+
+

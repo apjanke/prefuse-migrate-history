@@ -1,0 +1,258 @@
+head	1.6;
+access;
+symbols
+	alpha:1.5.0.2
+	Root_alpha:1.5
+	prefuse-alpha-20051229:1.5
+	P20050401_Alpha_PreCHI:1.5;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2006.02.11.06.38.43;	author jheer;	state dead;
+branches;
+next	1.5;
+
+1.5
+date	2005.01.05.02.35.38;	author jheer;	state Exp;
+branches
+	1.5.4.1;
+next	1.4;
+
+1.4
+date	2004.11.08.02.53.31;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.09.21.23.32.50;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.08.24.18.43.47;	author tha_jackl;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.08.12.05.57.37;	author tha_jackl;	state Exp;
+branches;
+next	;
+
+1.5.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Merge beta branch back onto main trunk
+@
+text
+@/*
+ * Created on Aug 11, 2004
+ */
+package edu.berkeley.guir.prefusex.controls;
+
+import java.awt.event.MouseEvent;
+
+import javax.swing.SwingUtilities;
+
+import edu.berkeley.guir.prefuse.FocusManager;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.NodeItem;
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.event.ControlAdapter;
+import edu.berkeley.guir.prefuse.focus.DefaultFocusSet;
+import edu.berkeley.guir.prefuse.focus.FocusSet;
+import edu.berkeley.guir.prefuse.graph.Entity;
+
+/**
+ * Manages a focus set of selected items, adding or removing items from
+ * the selection set in response to shift-clicks.
+ * 
+ * @@author Jack Li jack(AT)cs_D0Tberkeley_D0Tedu
+ */
+public class MultiSelectFocusControl extends ControlAdapter {
+
+    private static final Object DEFAULT_FOCUS_KEY = FocusManager.SELECTION_KEY;
+	private final ItemRegistry registry; // needed for clearing focusSet on mouseClicked
+    private final Object focusKey;
+	
+	/**
+	 * Constructor. Uses the FocusManager.SELECTION_KEY as the key for the
+	 * selection focus set.
+	 * @@param registry ItemRegistry monitoring the focus set
+	 */
+    public MultiSelectFocusControl(final ItemRegistry registry) {
+        this(registry, DEFAULT_FOCUS_KEY);
+    } //
+    
+    /**
+	 * Constructor. Uses the given focusKey as the key for the
+	 * selection focus set.
+	 * @@param registry ItemRegistry monitoring the focus set
+	 * @@param focusKey the key object to use to access the selection FocusSet
+	 */
+    public MultiSelectFocusControl(final ItemRegistry registry, Object focusKey) {
+    	this.registry = registry;
+    	this.focusKey = focusKey;
+    	registry.getFocusManager().putFocusSet(focusKey, new DefaultFocusSet());
+    } //
+    
+    /**
+     * Shift click adds the item to the focus set if not added;
+     * else it removes the item
+     */
+    public void itemClicked(VisualItem item, MouseEvent e) {
+        if ( item instanceof NodeItem && 
+             SwingUtilities.isLeftMouseButton(e))
+        {
+        	final FocusManager focusManager = registry.getFocusManager();
+            final FocusSet focusSet = focusManager.getFocusSet(focusKey);
+            final Entity node = item.getEntity();
+            
+            if (e.isShiftDown()) { // mode: adding to/removing from focus set
+				if (focusSet.contains(node)) {
+					focusSet.remove(node);
+				} else {
+					focusSet.add(node);
+				}
+			} else { // mode: doing something cool/resetting focus
+				if (!focusManager.isFocus(focusKey, node)) {
+					focusSet.set(node);
+				}
+			}
+            registry.touch(item.getItemClass());
+        }
+    } //
+
+    /**
+     * Clear the focus
+     */
+	public void mouseClicked(MouseEvent e) {
+		registry.getFocusManager().getFocusSet(focusKey).clear();
+	} //
+	
+} // end of class MultiSelectFocusControl
+@
+
+
+1.5
+log
+@Created new package for FocusSet implementations
+@
+text
+@@
+
+
+1.5.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.4
+log
+@Fixed multicaster bug, other small updates
+@
+text
+@d15 2
+a17 2
+import edu.berkeley.guir.prefuse.util.DefaultFocusSet;
+import edu.berkeley.guir.prefuse.util.FocusSet;
+@
+
+
+1.3
+log
+@Updated MultiSelectFocusControl
+@
+text
+@d71 1
+a71 5
+				if (focusManager.isFocus(focusKey, node)) {
+					System.out.println("a selected item has been clicked"+item);
+					// bring up comparison pane
+					//addComparisonPane(focusSet);
+				} else {
+@
+
+
+1.2
+log
+@All selection, focusing and clear focusing now handled in this class
+@
+text
+@d20 3
+d26 2
+a27 2
+	// (( CONSTANTS )) \\
+    private static final Object FOCUS_KEY = FocusManager.SELECTION_KEY;
+d29 1
+a29 1
+    
+d31 5
+a35 1
+	// (( CONSTRUCTORS )) \\
+d37 10
+d48 3
+a50 2
+    	registry.getFocusManager().putFocusSet(FOCUS_KEY, new DefaultFocusSet());
+    }
+a51 2
+    
+    // (( METHODS )) \\
+d61 1
+a61 1
+            final FocusSet focusSet = focusManager.getFocusSet(FOCUS_KEY);
+d71 1
+a71 1
+				if (focusManager.isFocus(FOCUS_KEY, node)) {
+d87 4
+a90 3
+		registry.getFocusManager().getFocusSet(FOCUS_KEY).clear();
+	}
+}
+@
+
+
+1.1
+log
+@Allows multiple selections to be made by shift-clicking
+@
+text
+@d24 2
+a25 2
+    private final Object focusSetKey = FocusManager.SELECTION_KEY;
+	private final ItemRegistry registry;
+d31 1
+a31 1
+    	registry.getFocusManager().putFocusSet(focusSetKey, new DefaultFocusSet());
+d42 1
+a42 2
+             SwingUtilities.isLeftMouseButton(e) &&
+			 e.isShiftDown())
+d44 2
+a45 1
+            final FocusSet focusSet = registry.getFocusManager().getFocusSet(focusSetKey);
+d47 16
+a62 5
+			if (focusSet.contains(node)) {
+            	focusSet.remove(node);
+            } else {
+            	focusSet.add(node);
+            }
+d71 1
+a71 1
+		registry.getFocusManager().getFocusSet(focusSetKey).clear();
+@
+

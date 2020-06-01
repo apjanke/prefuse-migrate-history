@@ -1,0 +1,100 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.24.09.07.09;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@<body>
+<p>Utility classes for use by both the toolkit and applications, including
+color and font support.</p>
+</body>@
+
+
+1.1
+log
+@file package.html was initially added on branch beta.
+@
+text
+@d1 4
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 4
+<body>
+The util package contains a number of utility classes used by the various
+other prefuse classes.
+</body>@
+
+
+1.1.2.2
+log
+@Added javadoc overview and package text.
+@
+text
+@d2 2
+a3 1
+<p>Utility classes for use throughout the toolkit and 3rd party applications.</p>
+@
+
+
+1.1.2.3
+log
+@Javadoc'd.
+@
+text
+@d2 1
+a2 2
+<p>Utility classes for use by both the toolkit and applications, including
+color and font support.</p>
+@
+
+

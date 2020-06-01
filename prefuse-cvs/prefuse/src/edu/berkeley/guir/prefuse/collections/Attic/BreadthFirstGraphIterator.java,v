@@ -1,0 +1,134 @@
+head	1.3;
+access;
+symbols
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.11.06.38.46;	author jheer;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.11.19.11.13;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.01.08.21.10.12;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.collections;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
+import edu.berkeley.guir.prefuse.graph.Node;
+
+/**
+ * Iterates over graph nodes in a breadth-first manner.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> - prefuse(AT)jheer.org
+ */
+public class BreadthFirstGraphIterator implements Iterator {
+
+	private Set m_visited = new HashSet();
+	private LinkedList m_queue  = new LinkedList();
+
+	public BreadthFirstGraphIterator(Node n) {
+		 m_queue.add(n);
+	} //
+
+	/**
+	 * @@see java.util.Iterator#remove()
+	 */
+	public void remove() {
+		throw new UnsupportedOperationException();
+	} //
+
+	/**
+	 * @@see java.util.Iterator#hasNext()
+	 */
+	public boolean hasNext() {
+		return !m_queue.isEmpty();
+	} //
+
+	/**
+	 * @@see java.util.Iterator#next()
+	 */
+	public Object next() {
+		if ( m_queue.isEmpty() ) {
+			throw new NoSuchElementException();
+		}
+		
+		Node n = (Node)m_queue.removeFirst();
+		m_visited.add(n);
+		Iterator iter = n.getNeighbors();
+		while ( iter.hasNext() ) {
+			Node c = (Node)iter.next();
+			if ( !m_visited.contains(c) ) {
+				m_queue.add(c);
+			}
+		}
+		return n;
+	} //
+
+} // end of class BreadthFirstIterator
+@
+
+
+1.2
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.1
+log
+@Initial import
+@
+text
+@a13 2
+ * May 3, 2003 - jheer - Created class
+ * 
+d15 1
+a15 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+@
+

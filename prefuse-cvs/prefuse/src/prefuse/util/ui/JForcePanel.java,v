@@ -1,0 +1,365 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.02.27.03.41.35;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Added convenience method to open force configuration panel in a new window.
+@
+text
+@package prefuse.util.ui;
+
+import java.awt.Color;
+import java.awt.Dimension;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import prefuse.util.force.Force;
+import prefuse.util.force.ForceSimulator;
+
+/**
+ * Swing component for configuring the parameters of the
+ * Force functions in a given ForceSimulator. Useful for exploring
+ * different parameterizations when crafting a visualization.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class JForcePanel extends JPanel {
+    
+    private ForcePanelChangeListener lstnr = new ForcePanelChangeListener();
+    private ForceSimulator fsim;
+    
+    /**
+     * Create a new JForcePanel
+     * @@param fsim the ForceSimulator to configure
+     */
+    public JForcePanel(ForceSimulator fsim) {
+        this.fsim = fsim;
+        this.setBackground(Color.WHITE);
+        initUI();
+    }
+    
+    /**
+     * Initialize the UI.
+     */
+    private void initUI() {
+        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        Force[] forces = fsim.getForces();
+        for ( int i=0; i<forces.length; i++ ) {
+            Force f = forces[i];
+            Box v = new Box(BoxLayout.Y_AXIS);
+            for ( int j=0; j<f.getParameterCount(); j++ ) {
+                JValueSlider field = createField(f,j);
+                field.addChangeListener(lstnr);
+                v.add(field);
+            }
+            String name = f.getClass().getName();
+            name = name.substring(name.lastIndexOf(".")+1);
+            v.setBorder(BorderFactory.createTitledBorder(name));
+            this.add(v);
+        }
+    }
+    
+    /**
+     * Create an entry for configuring a single parameter.
+     */
+    private static JValueSlider createField(Force f, int param) {
+        double value = f.getParameter(param);
+        double min   = f.getMinValue(param);
+        double max   = f.getMaxValue(param);
+        String name = f.getParameterName(param);
+        
+        JValueSlider s = new JValueSlider(name,min,max,value);
+        s.setBackground(Color.WHITE);
+        s.putClientProperty("force", f);
+        s.putClientProperty("param", new Integer(param));
+        s.setPreferredSize(new Dimension(300,30));
+        s.setMaximumSize(new Dimension(300,30));
+        return s;
+    }
+    
+    /**
+     * Change listener that updates paramters in response to interaction.
+     */
+    private static class ForcePanelChangeListener implements ChangeListener {
+        public void stateChanged(ChangeEvent e) {
+            JValueSlider s = (JValueSlider)e.getSource();
+            float val = s.getValue().floatValue();
+            Force   f = (Force)s.getClientProperty("force");
+            Integer p = (Integer)s.getClientProperty("param");
+            f.setParameter(p.intValue(), val);
+        }
+    } // end of inner class ForcePanelChangeListener
+    
+    /**
+     * Create and displays a new window showing a configuration panel
+     * for the given ForceSimulator.
+     * @@param fsim the force simulator
+     * @@return a JFrame instance containing a configuration interface
+     * for the force simulator
+     */
+    public static JFrame showForcePanel(ForceSimulator fsim) {
+        JFrame frame = new JFrame("prefuse Force Simulator");
+        frame.setContentPane(new JForcePanel(fsim));
+        frame.pack();
+        frame.setVisible(true);
+        return frame;
+    }
+    
+} // end of class JForcePanel
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d25 4
+a28 4
+
+    private final ForcePanelChangeListener lstnr = new ForcePanelChangeListener();
+    private final ForceSimulator fsim;
+
+d38 1
+a38 1
+
+d45 2
+a46 1
+        for (Force f : forces) {
+d59 1
+a59 1
+
+d68 1
+a68 1
+
+d77 1
+a77 1
+
+d90 1
+a90 1
+
+d105 1
+a105 1
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d9 1
+d91 15
+@
+
+
+1.1
+log
+@file JForcePanel.java was initially added on branch beta.
+@
+text
+@d1 90
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 79
+package prefuse.util.ui;
+
+import java.awt.Color;
+import java.awt.Dimension;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import prefuse.util.force.Force;
+import prefuse.util.force.ForceSimulator;
+
+/**
+ * A Swing user interface component for configuring the parametes of the
+ * Force functions in the given ForceSimulator. Useful for exploring
+ * different parameterizations when crafting a visualization.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class JForcePanel extends JPanel {
+    
+    private ForcePanelChangeListener lstnr = new ForcePanelChangeListener();
+    private ForceSimulator fsim;
+    
+    public JForcePanel(ForceSimulator fsim) {
+        this.fsim = fsim;
+        this.setBackground(Color.WHITE);
+        initUI();
+    } //
+    
+    private void initUI() {
+        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        Force[] forces = fsim.getForces();
+        for ( int i=0; i<forces.length; i++ ) {
+            Force f = forces[i];
+            Box v = new Box(BoxLayout.Y_AXIS);
+            for ( int j=0; j<f.getParameterCount(); j++ ) {
+                JValueSlider field = createField(f,j);
+                field.addChangeListener(lstnr);
+                v.add(field);
+            }
+            String name = f.getClass().getName();
+            name = name.substring(name.lastIndexOf(".")+1);
+            v.setBorder(BorderFactory.createTitledBorder(name));
+            this.add(v);
+        }
+        this.add(Box.createVerticalGlue());
+    } //
+    
+    private static JValueSlider createField(Force f, int param) {
+        double value = f.getParameter(param);
+        double min   = f.getMinValue(param);
+        double max   = f.getMaxValue(param);
+        String name = f.getParameterName(param);
+        
+        JValueSlider s = new JValueSlider(name,min,max,value);
+        s.setBackground(Color.WHITE);
+        s.putClientProperty("force", f);
+        s.putClientProperty("param", new Integer(param));
+        s.setPreferredSize(new Dimension(300,30));
+        s.setMaximumSize(new Dimension(300,30));
+        return s;
+    }
+    
+    private static class ForcePanelChangeListener implements ChangeListener {
+        public void stateChanged(ChangeEvent e) {
+            JValueSlider s = (JValueSlider)e.getSource();
+            float val = s.getValue().floatValue();
+            Force   f = (Force)s.getClientProperty("force");
+            Integer p = (Integer)s.getClientProperty("param");
+            f.setParameter(p.intValue(), val);
+        }
+    } // end of inner class ForcePanelChangeListener
+    
+} // end of class JForcePanel
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d17 2
+a18 2
+ * Swing component for configuring the parameters of the
+ * Force functions in a given ForceSimulator. Useful for exploring
+d21 2
+a22 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a28 4
+    /**
+     * Create a new JForcePanel
+     * @@param fsim the ForceSimulator to configure
+     */
+d33 1
+a33 1
+    }
+a34 3
+    /**
+     * Initialize the UI.
+     */
+d52 1
+a52 1
+    }
+a53 3
+    /**
+     * Create an entry for configuring a single parameter.
+     */
+a68 3
+    /**
+     * Change listener that updates paramters in response to interaction.
+     */
+@
+
+
+1.1.2.3
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@d57 1
+@
+
+

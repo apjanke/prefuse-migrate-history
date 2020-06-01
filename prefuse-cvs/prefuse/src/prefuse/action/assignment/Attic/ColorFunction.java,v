@@ -1,0 +1,463 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.01.19.22.44;	author jheer;	state Exp;
+branches;
+next	1.1.2.7;
+
+1.1.2.7
+date	2006.02.07.00.42.53;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file ColorFunction.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 64
+package prefuse.action.assignment;
+
+import java.awt.Color;
+
+import prefuse.action.ItemAction;
+import prefuse.util.ColorLib;
+import prefuse.util.PrefuseLib;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Simple ColorFunction which returns "black" for the draw color and
+ * "gray" for the fill color when a color is requested. Subclasses 
+ * should override the getColor() and getFillColor() methods to provide
+ * custom color selection functions.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ColorFunction extends ItemAction {
+    
+    protected String m_colorField;
+    protected String m_startField;
+    protected String m_endField;
+    
+    protected int m_cidx, m_sidx, m_eidx;
+    
+    protected int m_defaultColor   = ColorLib.color(Color.BLACK);
+    
+    public ColorFunction(String group, String field) {
+        super(group);
+        setField(field);
+    }
+    
+    public ColorFunction(String group, String field, int color) {
+        this(group, field);
+        setDefaultColor(color);
+    }
+    
+    public void setField(String field) {
+        m_colorField = field;
+        m_startField = PrefuseLib.getStartField(field);
+        m_endField = PrefuseLib.getEndField(field);
+    }
+    
+    public void setDefaultColor(int color) {
+        m_defaultColor = color;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+	public void process(VisualItem item, double frac) {
+        int c = getColor(item);
+        int o = item.getInt(m_colorField);
+        item.setInt(o, m_startField);
+        item.setInt(c, m_endField);
+        item.setInt(c, m_colorField);
+	}
+
+	protected int getColor(VisualItem item) {
+	    return m_defaultColor;   
+	}
+    
+} // end of class ColorFunction
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@a0 4
+/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+d3 1
+a3 1
+import java.util.logging.Logger;
+a5 2
+import prefuse.data.expression.Predicate;
+import prefuse.data.expression.parser.ExpressionParser;
+a6 1
+import prefuse.util.PredicateChain;
+d12 4
+a15 23
+ * ColorFunctions determine and assign color values to VisualItems for a
+ * given color field (e.g., the stroke, text, or fill color).
+ * 
+ * By default, a ColorFunction simply assigns a single default color value to
+ * all items (the initial default color is black). Clients can change this 
+ * default value to achieve uniform color assignment, or can add any number 
+ * of additional rules for color assignment. Rules are specified by a Predicate
+ * instance which, if returning true, will trigger that rule, causing either the
+ * provided color value or the result of a delegate ColorFunction to be
+ * applied. Rules are evaluated in the order in which they are added to the
+ * ColorFunction, so earlier rules will have precedence over rules added later.
+ * 
+ * In addition, subclasses can simply override getColor() to achieve
+ * custom color assignment. In some cases, this may be the simplest or
+ * most flexible approach.
+ * 
+ * To automatically assign color values based on varying values of a
+ * particular data field, consider using the DataColorFunction.
+ * 
+ * Color values are represented using integers, into which 8-bit values for
+ * the red, green, blue, and alpha channels are stored. For more information
+ * and utilities for creating and manipulating color values, see the
+ * ColorLib class.
+d17 1
+a18 2
+ * @@see prefuse.util.ColorLib
+ * @@see DataColorFunction
+d22 1
+a22 2
+	protected PredicateChain m_chain = null;
+	protected String m_colorField;
+d28 1
+a28 1
+    protected int m_defaultColor = ColorLib.gray(0); // initial default = black
+a29 6
+    /**
+     * Constructor, sets the data group and color field for color assignment.
+     * Uses an initial default color value of black [RGB value (0,0,0)].
+     * @@param group the data group processed by this Action
+     * @@param field the color field assigned by this Action
+     */
+d34 1
+a34 8
+
+    /**
+     * Constructor, sets the data group, color field, and default color value
+     * for color assignment.
+     * @@param group the data group processed by this Action
+     * @@param field the color field assigned by this Action
+     * @@param color the default color value assigned by this ColorFunction
+     */
+a39 6
+    /**
+     * Set the color field name that this ColorFunction should set. The
+     * ColorFunction will automatically try to update the start and end
+     * values for this field if it is an interpolated field.
+     * @@param field
+     */
+a45 13
+    /**
+     * Returns the default color for this ColorFunction
+     * @@return the default color value
+     */
+    public int getDefaultColor() {
+    	return m_defaultColor;
+    }
+    
+    /**
+     * Sets the default color for this ColorFunction. Items will be assigned
+     * the default color if they do not match any registered rules.
+     * @@param color the new default color
+     */
+a49 54
+    /**
+     * Add a color mapping rule to this ColorFunction. VisualItems that match
+     * the provided predicate will be assigned the given color value (assuming
+     * they do not match an earlier rule).
+     * @@param p the rule Predicate 
+     * @@param color the color value
+     */
+    public void add(Predicate p, int color) {
+    	if ( m_chain == null ) m_chain = new PredicateChain();
+    	m_chain.add(p, new Integer(color));
+    }
+
+    /**
+     * Add a color mapping rule to this ColorFunction. VisualItems that match
+     * the provided expression will be assigned the given color value (assuming
+     * they do not match an earlier rule). The provided expression String will
+     * be parsed to generate the needed rule Predicate.
+     * @@param expr the expression String, should parse to a Predicate. 
+     * @@param color the color value
+     * @@throws RuntimeException if the expression does not parse correctly or
+     * does not result in a Predicate instance.
+     */
+    public void add(String expr, int color) {
+    	Predicate p = (Predicate)ExpressionParser.parse(expr);
+    	add(p, color);    	
+    }
+    
+    /**
+     * Add a color mapping rule to this ColorFunction. VisualItems that match
+     * the provided predicate will be assigned the color value returned by
+     * the given ColorFunction's getColor() method.
+     * @@param p the rule Predicate 
+     * @@param f the delegate ColorFunction to use
+     */
+    public void add(Predicate p, ColorFunction f) {
+    	if ( m_chain == null ) m_chain = new PredicateChain();
+    	m_chain.add(p, f);
+    }
+
+    /**
+     * Add a color mapping rule to this ColorFunction. VisualItems that match
+     * the provided expression will be assigned the given color value (assuming
+     * they do not match an earlier rule). The provided expression String will
+     * be parsed to generate the needed rule Predicate.
+     * @@param expr the expression String, should parse to a Predicate. 
+     * @@param color the color value
+     * @@throws RuntimeException if the expression does not parse correctly or
+     * does not result in a Predicate instance.
+     */
+    public void add(String expr, ColorFunction f) {
+    	Predicate p = (Predicate)ExpressionParser.parse(expr);
+    	add(p, f);
+    }
+    
+a51 3
+	/**
+	 * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+	 */
+d55 3
+a57 3
+        item.setInt(m_startField, o);
+        item.setInt(m_endField, c);
+        item.setInt(m_colorField, c);
+a59 8
+	/**
+	 * Returns a color value for the given item. Colors are represented as
+	 * integers, interpreted as holding values for the red, green, blue, and 
+	 * alpha channels. This is the same color representation returned by
+	 * the Color.getRGB() method.
+	 * @@param item the item for which to get the color value
+	 * @@return the color value for the item
+	 */
+a60 13
+		if ( m_chain != null ) {
+			Object o = m_chain.get(item);
+			if ( o != null ) {
+				if ( o instanceof ColorFunction ) {
+					return ((ColorFunction)o).getColor(item);
+				} else if ( o instanceof Integer ) {
+					return ((Integer)o).intValue();
+				} else {
+					Logger.getLogger(this.getClass().getName())
+					    .warning("Unrecognized Object from predicate chain.");
+				}
+			}
+		}
+@
+
+
+1.1.2.3
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d185 1
+a185 1
+	public int getColor(VisualItem item) {
+@
+
+
+1.1.2.4
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d49 2
+a50 2
+    protected PredicateChain m_chain = null;
+    protected String m_colorField;
+d98 1
+a98 1
+        return m_defaultColor;
+d118 2
+a119 2
+        if ( m_chain == null ) m_chain = new PredicateChain();
+        m_chain.add(p, new Integer(color));
+d133 2
+a134 2
+        Predicate p = (Predicate)ExpressionParser.parse(expr);
+        add(p, color);      
+d145 2
+a146 2
+        if ( m_chain == null ) m_chain = new PredicateChain();
+        m_chain.add(p, f);
+d160 2
+a161 2
+        Predicate p = (Predicate)ExpressionParser.parse(expr);
+        add(p, f);
+d166 4
+a169 4
+    /**
+     * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+     */
+    public void process(VisualItem item, double frac) {
+d175 1
+a175 1
+    }
+d177 24
+a200 24
+    /**
+     * Returns a color value for the given item. Colors are represented as
+     * integers, interpreted as holding values for the red, green, blue, and 
+     * alpha channels. This is the same color representation returned by
+     * the Color.getRGB() method.
+     * @@param item the item for which to get the color value
+     * @@return the color value for the item
+     */
+    public int getColor(VisualItem item) {
+        if ( m_chain != null ) {
+            Object o = m_chain.get(item);
+            if ( o != null ) {
+                if ( o instanceof ColorFunction ) {
+                    return ((ColorFunction)o).getColor(item);
+                } else if ( o instanceof Integer ) {
+                    return ((Integer)o).intValue();
+                } else {
+                    Logger.getLogger(this.getClass().getName())
+                        .warning("Unrecognized Object from predicate chain.");
+                }
+            }
+        }
+        return m_defaultColor;   
+    }
+@
+
+
+1.1.2.5
+log
+@Lots of javadoc
+@
+text
+@d19 2
+a20 2
+ * <p>Assignment Action that assigns color values to VisualItems for a
+ * given color field (e.g., the stroke, text, or fill color).</p>
+d22 2
+a23 2
+ * <p>By default, a ColorFunction simply assigns a single default color value
+ * to all items (the initial default color is black). Clients can change this 
+a29 1
+ * </p>
+d31 1
+a31 1
+ * <p>In addition, subclasses can simply override getColor() to achieve
+d33 1
+a33 1
+ * most flexible approach.</p>
+d35 2
+a36 2
+ * <p>To automatically assign color values based on varying values of a
+ * particular data field, consider using the DataColorFunction.</p>
+d38 1
+a38 1
+ * <p>Color values are represented using integers, into which 8-bit values for
+d41 1
+a41 1
+ * {@@link prefuse.util.ColorLib} class.</p>
+d43 1
+a43 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.6
+log
+@Javadoc'd.
+@
+text
+@d156 1
+a156 1
+     * @@param f the delegate ColorFunction to use
+@
+
+
+1.1.2.7
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@@
+
+

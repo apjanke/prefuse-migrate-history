@@ -1,0 +1,362 @@
+head	1.10;
+access;
+symbols
+	alpha:1.9.0.2
+	Root_alpha:1.9
+	prefuse-alpha-20051229:1.9
+	P20050401_Alpha_PreCHI:1.8;
+locks; strict;
+comment	@# @;
+
+
+1.10
+date	2006.02.11.06.38.46;	author jheer;	state dead;
+branches;
+next	1.9;
+
+1.9
+date	2005.12.15.17.23.54;	author jheer;	state Exp;
+branches
+	1.9.4.1;
+next	1.8;
+
+1.8
+date	2005.04.01.23.47.43;	author jheer;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2005.02.01.04.58.28;	author jheer;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2005.01.19.20.47.20;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2005.01.11.06.56.29;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2005.01.07.02.22.03;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.07.24.19.39.25;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.26.21.52.06;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.24.01.57.25;	author jheer;	state Exp;
+branches;
+next	;
+
+1.9.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.10
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.action.filter;
+
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.EdgeItem;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.NodeItem;
+import edu.berkeley.guir.prefuse.graph.Edge;
+import edu.berkeley.guir.prefuse.graph.Graph;
+import edu.berkeley.guir.prefuse.graph.GraphLib;
+import edu.berkeley.guir.prefuse.graph.Node;
+import edu.berkeley.guir.prefuse.graph.Tree;
+
+/**
+ * Filters a tree in it's entirety. If the backing graph is not a tree,
+ * a tree structure will still be imposed on the filtered graph.
+ * By default, garbage collection on node and edge items is performed.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class TreeFilter extends Filter {
+
+    public static final String[] ITEM_CLASSES = 
+        {ItemRegistry.DEFAULT_NODE_CLASS, ItemRegistry.DEFAULT_EDGE_CLASS};
+    
+    // determines if filtered edges are visible by default
+    private boolean m_edgesVisible;
+    private boolean m_useFocusAsRoot;
+    private Node m_root;
+    
+    // ========================================================================
+    // == CONSTRUCTORS ========================================================
+    
+    public TreeFilter() {
+        this(false, true, true);
+    } //
+    
+    public TreeFilter(boolean useFocusAsRoot) {
+        this(useFocusAsRoot, true, true);
+    } //
+    
+    public TreeFilter(boolean useFocusAsRoot, boolean edgesVisible) {
+        this(useFocusAsRoot, edgesVisible, true);
+    } //
+    
+    public TreeFilter(boolean useFocusAsRoot, boolean edgesVisible, boolean garbageCollect) {
+        super(ITEM_CLASSES, garbageCollect);
+        m_edgesVisible = edgesVisible;
+        m_useFocusAsRoot = useFocusAsRoot;
+    } //
+    
+    // ========================================================================
+    // == FILTER METHODS ======================================================
+    
+    public void setTreeRoot(Node r) {
+        m_root = r;
+    } //
+    
+    public void run(ItemRegistry registry, double frac) {
+        Graph graph = registry.getGraph();
+        boolean isTree = (graph instanceof Tree);
+        NodeItem root = null;
+        
+        // filter the nodes
+        Iterator nodeIter = graph.getNodes();
+        while ( nodeIter.hasNext() ) {
+            NodeItem item = registry.getNodeItem((Node)nodeIter.next(), true, true);
+            if ( root == null ) root = item;
+        }
+        
+        Iterator fiter = registry.getDefaultFocusSet().iterator();
+        NodeItem focus = null;
+        if ( fiter.hasNext() ) {
+            focus = registry.getNodeItem((Node)fiter.next(), true, true);
+        }
+        
+        // update root node as necessary
+        if ( m_root != null ) {
+            Node r = (m_root instanceof NodeItem ? m_root : 
+                        registry.getNodeItem(m_root));
+            root = (NodeItem)r;
+        } else if ( focus != null && m_useFocusAsRoot ) {
+            root = focus;
+        } else if ( isTree ) {
+            root = registry.getNodeItem(((Tree)graph).getRoot());
+        }
+        
+        // process each node's edges
+        nodeIter = registry.getNodeItems();
+        while ( nodeIter.hasNext() ) {
+            NodeItem item = (NodeItem)nodeIter.next();
+            if ( item.getDirty() > 0 )
+                continue;
+            Node     node = (Node)item.getEntity();
+            Iterator edgeIter = node.getEdges();
+            while ( edgeIter.hasNext() ) {
+                Edge edge = (Edge)edgeIter.next();
+                // filter the edge
+                EdgeItem eitem = registry.getEdgeItem(edge, true);
+                eitem.getFirstNode().addEdge(eitem);
+                if ( !eitem.isDirected() )
+                    eitem.getSecondNode().addEdge(eitem);
+                if ( !m_edgesVisible ) eitem.setVisible(false);
+            }
+        }
+        // we need to tree-ify things now
+        Tree ftree = GraphLib.breadthFirstTree(root);
+        
+        // update the registry's filtered graph
+        registry.setFilteredGraph(ftree);
+        
+        // optional garbage collection
+        super.run(registry, frac);
+    } //    
+    
+	public boolean isEdgesVisible() {
+		return m_edgesVisible;
+	} //
+	
+	public void setEdgesVisible(boolean visible) {
+		m_edgesVisible = visible;
+	} //
+	
+	public boolean isUseFocusAsRoot() {
+		return m_useFocusAsRoot;
+	} //
+	
+	public void setUseFocusAsRoot(boolean focusAsRoot) {
+		m_useFocusAsRoot = focusAsRoot;
+	} //
+    
+} // end of class TreeFilter
+@
+
+
+1.9
+log
+@Removed useless line of code.
+@
+text
+@@
+
+
+1.9.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.8
+log
+@Item access refactored to include a "clear" flag, for consistent semantics separate from the "create" flag
+@
+text
+@a98 1
+                Node n = edge.getAdjacentNode(node);
+@
+
+
+1.7
+log
+@Added garbage collecting bug fix
+@
+text
+@d68 1
+a68 1
+            NodeItem item = registry.getNodeItem((Node)nodeIter.next(), true);
+d75 1
+a75 1
+            focus = registry.getNodeItem((Node)fiter.next(), true);
+@
+
+
+1.6
+log
+@Fixed use of useFocusAsRoot with backing Tree
+@
+text
+@d93 2
+d103 2
+a104 1
+                eitem.getSecondNode().addEdge(eitem);
+@
+
+
+1.5
+log
+@Added accessor/mutator methods for member variables
+@
+text
+@a7 1
+import edu.berkeley.guir.prefuse.graph.DefaultTree;
+a12 1
+import edu.berkeley.guir.prefuse.graph.TreeNode;
+a62 10
+        
+        // initialize filtered graph
+        Graph fgraph = registry.getFilteredGraph();
+        Tree  ftree = null;
+        if ( isTree && fgraph instanceof DefaultTree ) {
+            ftree = (DefaultTree)fgraph;
+            ftree.setRoot(null);
+        } else if ( isTree )
+            fgraph = ftree = new DefaultTree();
+        
+a81 2
+            if ( r != root)
+                ftree = null;
+a86 1
+            if ( ftree != null ) ftree.setRoot(root);
+d100 2
+a101 8
+                if ( edge.isTreeEdge() ) {
+                    TreeNode c = (TreeNode)eitem.getAdjacentNode(item);
+                    TreeNode p = ((TreeNode)n).getParent()==node?item:c;
+                    p.addChild(eitem);
+                } else {
+                    eitem.getFirstNode().addEdge(eitem);
+                    eitem.getSecondNode().addEdge(eitem);
+                }
+d105 2
+a106 3
+        // if original graph was not a tree, we need to tree-ify things now
+        if ( ftree == null )
+            ftree = GraphLib.breadthFirstTree(root);
+@
+
+
+1.4
+log
+@Added useFocusAsRoot option
+@
+text
+@d137 17
+a153 1
+}
+@
+
+
+1.3
+log
+@Updated javadoc comment.
+@
+text
+@d31 1
+d38 1
+a38 1
+        this(true,true);
+d41 2
+a42 2
+    public TreeFilter(boolean edgesVisible) {
+        this(edgesVisible, true);
+d45 5
+a49 1
+    public TreeFilter(boolean edgesVisible, boolean garbageCollect) {
+d52 1
+d84 6
+d97 2
+@
+
+
+1.2
+log
+@Fixed ugly little bug for adding tree children
+@
+text
+@d18 1
+a18 1
+ * a tree structured will still be imposed on the filtered graph
+@
+
+
+1.1
+log
+@New filters added plus more
+@
+text
+@d103 1
+a103 1
+                    TreeNode p = (TreeNode)(c.getParent()==item?item:c);
+@
+

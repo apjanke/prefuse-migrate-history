@@ -1,0 +1,104 @@
+head	1.2;
+access;
+symbols
+	alpha:1.1.0.2
+	Root_alpha:1.1
+	prefuse-alpha-20051229:1.1
+	P20050401_Alpha_PreCHI:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2006.02.11.06.38.46;	author jheer;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.11.19.11.13;	author jheer;	state Exp;
+branches
+	1.1.4.1;
+next	;
+
+1.1.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.collections;
+
+import java.util.Comparator;
+
+import edu.berkeley.guir.prefuse.graph.Edge;
+import edu.berkeley.guir.prefuse.graph.Node;
+
+/**
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class EdgeNodeComparator implements Comparator {
+
+    private Comparator nodecmp;
+    private Node       n;
+    
+    public EdgeNodeComparator(Comparator c) {
+        this(c,null);
+    } //
+    
+    public EdgeNodeComparator(Comparator c, Node n) {
+        nodecmp = c;
+        this.n = n;
+    } //
+    
+    public void setIgnoredNode(Node n) {
+        this.n = n;
+    } //
+    
+    public Node getIgnoredNode() {
+        return n;
+    } //
+    
+    /**
+     * @@see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+     */
+    public int compare(Object o1, Object o2) {
+        if ( o1 instanceof Edge && o2 instanceof Edge ) {
+            Node n1 = ((Edge)o1).getAdjacentNode(n);
+            Node n2 = ((Edge)o2).getAdjacentNode(n);
+            return nodecmp.compare(n1,n2);
+        } else {
+            throw new IllegalArgumentException(
+                "Compared objects must be Edge instances");
+        }
+    } //
+
+} // end of class EdgeNodeComparator
+@
+
+
+1.1
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@@
+
+
+1.1.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+

@@ -1,0 +1,229 @@
+head	1.4;
+access;
+symbols
+	alpha:1.3.0.2
+	Root_alpha:1.3
+	prefuse-alpha-20051229:1.3
+	P20050401_Alpha_PreCHI:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2006.02.12.18.23.41;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.11.19.11.12;	author jheer;	state Exp;
+branches
+	1.3.4.1;
+next	1.2;
+
+1.2
+date	2004.03.08.20.05.51;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.10.11;	author jheer;	state Exp;
+branches;
+next	;
+
+1.3.4.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.graph;
+
+import edu.berkeley.guir.prefuse.graph.event.GraphEventListener;
+import edu.berkeley.guir.prefuse.graph.event.GraphEventMulticaster;
+
+/**
+ * Skeletal graph implementation handling graph listener methods. 
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public abstract class AbstractGraph implements Graph {
+
+	protected GraphEventListener m_graphListener = null;
+	
+	/**
+	 * Add a graph event listener.
+	 * @@param gl the listener to add.
+	 */
+	public void addGraphEventListener(GraphEventListener gl) {
+		m_graphListener = GraphEventMulticaster.add(m_graphListener, gl);
+	} //
+  	
+	/**
+	 * Remove a focus listener.
+	 * @@param gl the listener to remove.
+	 */
+	public void removeGraphEventListener(GraphEventListener gl) {
+		m_graphListener = GraphEventMulticaster.remove(m_graphListener, gl);
+	} //
+	
+	protected void fireNodeAdded(Node n) {
+		if ( m_graphListener != null )
+			m_graphListener.nodeAdded(this, n);
+	} //
+
+	protected void fireNodeRemoved(Node n) {
+		if ( m_graphListener != null )
+			m_graphListener.nodeRemoved(this, n);
+	} //
+	
+	protected void fireNodeReplaced(Node o, Node n) {
+		if ( m_graphListener != null )
+			m_graphListener.nodeReplaced(this,o,n);
+	} //
+	
+	protected void fireEdgeAdded(Edge e) {
+		if ( m_graphListener != null )
+			m_graphListener.edgeAdded(this, e);
+	} //
+	
+	protected void fireEdgeRemoved(Edge e) {
+		if ( m_graphListener != null )
+			m_graphListener.edgeRemoved(this, e);
+	} //
+	
+	protected void fireEdgeReplaced(Edge o, Edge n) {
+		if ( m_graphListener != null )
+			m_graphListener.edgeReplaced(this, o,n);
+	} //
+
+} // end of class AbstractGraph
+@
+
+
+1.3
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@@
+
+
+1.3.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.2
+log
+@Javadoc update and fixes
+@
+text
+@a2 2
+import java.util.Iterator;
+
+d7 1
+a7 2
+ * 
+ * Aug 14, 2003 - jheer - Created class
+d10 1
+a10 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+d28 1
+a28 1
+	public void removeFocusListener(GraphEventListener gl) {
+d32 1
+a32 1
+	public void fireNodeAdded(Node n) {
+d34 1
+a34 1
+			m_graphListener.nodeAdded(n);
+d37 1
+a37 1
+	public void fireNodeRemoved(Node n) {
+d39 1
+a39 1
+			m_graphListener.nodeRemoved(n);
+d42 1
+a42 1
+	public void fireNodeReplaced(Node o, Node n) {
+d44 1
+a44 1
+			m_graphListener.nodeReplaced(o,n);
+d47 1
+a47 1
+	public void fireEdgeAdded(Edge e) {
+d49 1
+a49 1
+			m_graphListener.edgeAdded(e);
+d52 1
+a52 1
+	public void fireEdgeRemoved(Edge e) {
+d54 1
+a54 1
+			m_graphListener.edgeRemoved(e);
+d57 1
+a57 1
+	public void fireEdgeReplaced(Edge o, Edge n) {
+d59 1
+a59 1
+			m_graphListener.edgeReplaced(o,n);
+a60 30
+		
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.Graph#getNumNodes()
+	 */
+	public abstract int getNumNodes();
+
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.Graph#getNumEdges()
+	 */
+	public abstract int getNumEdges();
+
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.Graph#getNodes()
+	 */
+	public abstract Iterator getNodes();
+
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.Graph#getEdges()
+	 */
+	public abstract Iterator getEdges();
+
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.Graph#isDirected()
+	 */
+	public abstract boolean isDirected();
+
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.Graph#contains(edu.berkeley.guir.prefuse.graph.Node)
+	 */
+	public abstract boolean contains(Node n);
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@d21 1
+a21 1
+	 * @@param fl the listener to add.
+d29 1
+a29 1
+	 * @@param fl the listener to remove.
+@
+

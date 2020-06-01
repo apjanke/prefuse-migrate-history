@@ -1,0 +1,786 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.41;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file HyperbolicTree.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 733
+package prefuse.demos;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+
+import javax.swing.JFrame;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.ActionList;
+import prefuse.action.ItemAction;
+import prefuse.action.RepaintAction;
+import prefuse.action.assignment.ColorFunction;
+import prefuse.action.layout.graph.TreeLayout;
+import prefuse.activity.SlowInSlowOutPacer;
+import prefuse.controls.ControlAdapter;
+import prefuse.data.Graph;
+import prefuse.data.Schema;
+import prefuse.data.Tree;
+import prefuse.data.io.TreeMLReader;
+import prefuse.render.EdgeRenderer;
+import prefuse.render.NullRenderer;
+import prefuse.render.Renderer;
+import prefuse.render.RendererFactory;
+import prefuse.render.TextItemRenderer;
+import prefuse.util.ColorLib;
+import prefuse.util.PrefuseLib;
+import prefuse.visual.EdgeItem;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTree;
+
+/**
+ * prefuse hyperbolic tree demo
+ * 
+ * @@version 1.0
+ * @@author jeffrey heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+ */
+public class HyperbolicTree extends Display {
+
+	// default data file to load
+	public static final String TREE_CHI = "/chi-ontology.xml.gz";
+    
+     // visibility threshold for periphery of tree
+    private static final double THRESHOLD = 0.95;
+    
+    // prefuse visual data groups
+    public static final String tree = "tree";
+    public static final String treeNodes = "tree.nodes";
+    public static final String treeEdges = "tree.edges";
+    
+    protected HyperbolicTranslation translation;
+    	
+	public HyperbolicTree(Tree t, String label) {
+	    super(new Visualization());
+        VisualTree vt = m_vis.addTree(tree, t);
+        vt.getNodeTable().addColumns(Params.SCHEMA);
+        vt.getEdgeTable().addColumns(Params.SCHEMA);
+			
+		// set the renderer factory
+		m_vis.setRendererFactory(new HyperbolicRendererFactory(label));
+			
+		// initialize the display
+        setSize(500,460);
+        setBackground(Color.WHITE);
+        addControlListener(new AnimateControl());
+        addControlListener(new TranslateControl());
+        
+		// initialize filter
+        ActionList init = new ActionList();
+        // setup colors for all items first
+        init.add(new ColorFunction(treeNodes,
+                VisualItem.FILLCOLOR, ColorLib.gray(255)));
+        init.add(new DepthColorFunction(tree, VisualItem.STROKECOLOR));
+        init.add(new DepthColorFunction(treeNodes, VisualItem.TEXTCOLOR));
+        // now perform initial layout of tree
+        init.add(new HyperbolicTreeLayout(tree, THRESHOLD));
+        init.add(new RepaintAction());
+        m_vis.putAction("init", init);
+   
+        // intialize hyperbolic translation
+        translation = new HyperbolicTranslation(tree, THRESHOLD);
+        
+        ActionList translate = new ActionList();
+        translate.add(translation);
+        translate.add(new RepaintAction());
+        m_vis.putAction("translate", translate);
+            
+        // intialize animated hyperbolic translation
+        ActionList animate = new ActionList(1000, 20);
+        animate.setPacingFunction(new SlowInSlowOutPacer());
+        animate.add(translate);
+        m_vis.putAction("animate", animate);
+        
+        // intialize the end translation list
+        ActionList endTranslate = new ActionList();
+        endTranslate.add(new HyperbolicTranslationEnd(tree));
+        m_vis.putAction("endTranslate", endTranslate);
+        m_vis.alwaysRunAfter("animate", "endTranslate");
+        
+        // set initial focus and set things running
+        m_vis.getFocusGroup(Visualization.FOCUS_ITEMS).setTuple(vt.getRoot());
+        m_vis.run("init");		
+	}
+    
+	// ------------------------------------------------------------------------
+	// Main
+	
+	public static void main(String[] args) {
+	    String datafile = TREE_CHI;
+        String label = "name";
+        if ( args.length > 1 ) {
+            datafile = args[0];
+            label = args[1];
+        }
+        
+        JFrame frame = demo(datafile, label);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+	}
+    
+    public static JFrame demo(String datafile, String label) {
+        Tree t = null;
+        try {
+            t = (Tree)new TreeMLReader().readGraph(datafile);
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        HyperbolicTree ht = new HyperbolicTree(t, label);
+        
+        JFrame frame = new JFrame("p r e f u s e  |  h y p e r b o l i c");
+        frame.getContentPane().add(ht, BorderLayout.CENTER);
+        frame.pack();
+        return frame;
+    }
+	
+    // ------------------------------------------------------------------------
+    // Interactive Controls
+    
+    public class TranslateControl extends ControlAdapter {
+        private boolean drag = false;
+        
+        public void mousePressed(MouseEvent e) {
+            translation.setStartPoint(e.getX(), e.getY());
+        }
+        public void mouseDragged(MouseEvent e) {
+            drag = true;
+            translation.setEndPoint(e.getX(), e.getY());
+            m_vis.run("translate");
+        }
+        public void mouseReleased(MouseEvent e) {
+            if ( drag ) {
+                m_vis.run("endTranslate");
+                drag = false;
+            }
+        }
+        
+        public void itemPressed(VisualItem item, MouseEvent e) {
+            mousePressed(e);
+        }
+        public void itemDragged(VisualItem item, MouseEvent e) {
+            mouseDragged(e);
+        }
+        public void itemReleased(VisualItem item, MouseEvent e) {
+            mouseReleased(e);
+        }
+    } // end of inner class TranslateControl
+    
+	public class AnimateControl extends ControlAdapter {
+        public void itemEntered(VisualItem item, MouseEvent e) {
+            e.getComponent().setCursor(
+                    Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+        public void itemExited(VisualItem item, MouseEvent e) {
+            e.getComponent().setCursor(Cursor.getDefaultCursor());
+        }        
+        public void itemClicked(VisualItem item, MouseEvent e) {
+            // animate a translation when a node is clicked
+            if ( item instanceof NodeItem && e.getClickCount() == 1 ) {
+                translation.setStartPoint(e.getX(), e.getY());
+                translation.setEndPoint(e.getX(), e.getY());
+                m_vis.run("animate");
+			}
+		}
+	} // end of inner class AnimateControl
+	
+	
+	// ------------------------------------------------------------------------
+	// RendererFactory
+	
+    public static class HyperbolicRendererFactory implements RendererFactory {
+        
+        private TextItemRenderer nodeRenderer1;
+        private Renderer nodeRenderer2;
+        private EdgeRenderer edgeRenderer;
+        
+        public HyperbolicRendererFactory(String label) {
+            // create a text renderer with rounded corners and labels
+            // with a maximum length of 75 pixels.
+            nodeRenderer1 = new TextItemRenderer(label);
+            nodeRenderer1.setRoundedCorner(8,8);
+            nodeRenderer1.setMaxTextWidth(75);
+            
+            // create a null renderer for use when no label should be shown
+            nodeRenderer2 = new NullRenderer();
+            
+            // create an edge renderer with custom curved edges
+            edgeRenderer = new EdgeRenderer(Constants.EDGE_TYPE_CURVE) {
+                protected void getCurveControlPoints(EdgeItem eitem, 
+                    Point2D[] cp, double x1, double y1, double x2, double y2) 
+                {
+                    double x = eitem.getX();
+                    double y = eitem.getY();
+                    cp[0].setLocation(x,y);
+                    cp[1].setLocation(x,y);
+                }
+            };
+        }
+        
+        public Renderer getRenderer(VisualItem item) {
+            if ( item instanceof NodeItem ) {
+                NodeItem n = (NodeItem)item;
+                NodeItem p = (NodeItem)n.getParent();
+                double d = Double.MAX_VALUE;
+                
+                if ( p != null) {
+                    d = Math.min(d, PrefuseLib.distance(n,p));
+                    NodeItem b = (NodeItem)n.getPreviousSibling();
+                    if ( b != null )
+                        d = Math.min(d, PrefuseLib.distance(n,b));
+                    b = (NodeItem)n.getNextSibling();
+                    if ( b != null )
+                        d = Math.min(d, PrefuseLib.distance(n,b));
+                }
+                if ( n.getChildCount() > 0 ) {
+                    NodeItem c = (NodeItem)n.getFirstChild();
+                    d = Math.min(d, PrefuseLib.distance(n,c));
+                }
+                
+                return ( d > 15 ? nodeRenderer1 : nodeRenderer2 );
+            } else if ( item instanceof EdgeItem ) {
+                return edgeRenderer;
+            } else {
+                return null;
+            }
+        } //
+    } // end of inner class DemoRendererFactory
+	
+    
+    // ------------------------------------------------------------------------
+    // Prefuse Actions
+    
+    public static class DepthColorFunction extends ColorFunction {
+		private int thresh = 5;
+		private int nodes[];
+		private int edges[];
+
+		public DepthColorFunction(String group, String field) {
+			super(group, field);
+			nodes = new int[thresh];
+			edges = new int[thresh];
+			int red = ColorLib.rgb(255, 0, 0);
+			int lred = ColorLib.rgb(255, 100, 100);
+			int blk = ColorLib.rgb(0, 0, 0);
+			int grey = ColorLib.gray(100);
+			for (int i = 0; i < thresh; i++) {
+				double frac = i / ((double) thresh);
+				nodes[i] = ColorLib.interp(red, blk, frac);
+				edges[i] = ColorLib.interp(lred, grey, frac);
+			}
+		}
+
+		public int getColor(VisualItem item) {
+			if (item instanceof NodeItem) {
+				int d = ((NodeItem) item).getDepth();
+				return nodes[Math.min(d, thresh - 1)];
+			} else if (item instanceof EdgeItem) {
+				EdgeItem e = (EdgeItem) item;
+				int d1, d2;
+				d1 = e.getSourceItem().getDepth();
+				d2 = e.getTargetItem().getDepth();
+				d1 = Math.max(d1, d2);
+				return edges[Math.min(d1, thresh - 1)];
+			} else {
+				return ColorLib.rgb(0, 0, 0);
+			}
+		}
+		
+	} // end of inner class DepthColorFunction
+    
+    
+    // ------------------------------------------------------------------------
+    // Hyperbolic Actions
+    
+    /**
+	 * Class for storing hyperbolic parameters
+	 */
+    public static class Params {
+    	
+        public static final String PARAMS = "_hyperbolicParams";
+        public static final Schema SCHEMA = new Schema();
+        static {
+            SCHEMA.addColumn(PARAMS, Params.class);
+        }
+        public double[] z  = new double[2];
+        public double[] zo = new double[2];
+        public double weight;
+        
+    } // end of inner class HyperbolicParams
+    
+    /**
+     * Compute a re-layout of the tree as a result of a translation.
+     */
+    public static class HyperbolicTranslation extends TreeLayout {
+        
+        private double[] p = new double[2];
+        private double[] o = new double[2];
+        
+        private double[] zo = new double[2];
+        private double[] zs = new double[2];
+        private double[] ze = new double[2];
+        
+        private double[] origin = new double[2];
+        private double[] max    = new double[2];
+        private int[] ps = new int[2];
+        private int[] pe = new int[2];
+        
+        private double[] tmp1 = new double[2];
+        private double[] tmp2 = new double[2];
+        
+        private double m_thresh;
+        
+        private String m_nodes;
+        private String m_edges;
+        
+        public HyperbolicTranslation(String group) {
+            this(group, 0.95);
+        }
+        
+        public HyperbolicTranslation(String group, double threshold) {
+            super(group);
+            m_nodes = PrefuseLib.getGroupName(group, Graph.NODE_TABLE);
+            m_edges = PrefuseLib.getGroupName(group, Graph.EDGE_TABLE);
+            m_thresh = threshold;
+        }
+        
+        public void setStartPoint(int x, int y) {
+            ps[0] = x; ps[1] = y;
+        } //
+        
+        public void setEndPoint(int x, int y) {
+            pe[0] = x; pe[1] = y;
+        } //
+        
+        private void projection(double z[], int[] p) {
+            z[0] =   (p[0] - origin[0]) / max[0];
+            z[1] = -((p[1] - origin[1]) / max[1]);
+            double mag = z[0]*z[0]+z[1]*z[1];
+            double limit = 0.85;
+            if ( mag >= limit ) {
+                // re-normalize to limit value!
+                mag = Math.sqrt(mag)/Math.sqrt(limit);
+                z[0] = z[0]/mag;
+                z[1] = z[1]/mag;
+            }
+        }
+        
+        public void run(double frac) {
+            Rectangle2D b = getLayoutBounds();
+            Point2D anchor = getLayoutAnchor();
+            
+            origin[0] = b.getWidth()/2; origin[1] = b.getHeight()/2;
+            max[0]    = b.getWidth()/2;    max[1] = b.getHeight()/2;
+            
+            projection(zs,ps);
+            projection(ze,pe);
+            ze[0] = ze[0] - frac*ze[0];
+            ze[1] = ze[1] - frac*ze[1];
+            
+            NodeItem r = getLayoutRoot();
+            Params rp = getParams(r);
+            zo[0] = rp.zo[0];
+            zo[1] = rp.zo[1];
+            
+            if ( !computeTransform(zo,zs,ze,p,o,tmp1,tmp2) ) {
+                return;
+            }
+            
+            // process the nodes of the tree
+            Iterator iter = m_vis.items(m_nodes);
+            while ( iter.hasNext() ) {
+                NodeItem n = (NodeItem)iter.next();
+                Params np = getParams(n);
+                
+                np.z[0] = np.zo[0];
+                np.z[1] = np.zo[1];
+                transform(np.z,p,o,tmp1,tmp2);
+                
+                double d = Math.sqrt(np.z[0]*np.z[0] + np.z[1]*np.z[1]);
+                boolean visible = (d<m_thresh);
+                
+                n.setVisible(visible);
+                if ( visible ) {
+                    // set x, y coordinates
+                    projectX(n, np.z[0], anchor.getX(), max[0]);
+                    projectY(n, np.z[1], anchor.getY(), max[1]);
+                }
+            }
+            
+            // process the edges of the tree
+            iter = m_vis.items(m_edges);
+            while ( iter.hasNext() ) {
+                EdgeItem e = (EdgeItem)iter.next();
+                NodeItem p = e.getSourceItem();
+                
+                boolean visible = p.isVisible();
+                e.setVisible(visible);
+                
+                if ( visible ) {
+                    NodeItem n = e.getTargetItem();
+                    Params ep = getParams(e);
+                    Params pp = getParams(p);
+                    Params np = getParams(n);
+                    
+                    // set edge control point
+                    setControlPoint(ep.z, pp.z, np.z);
+                    projectX(e, ep.z[0], anchor.getX(), max[0]);
+                    projectY(e, ep.z[1], anchor.getY(), max[1]);
+                    
+                    // if target node of edge is not visible,
+                    // we need to now update it's x,y coords
+                    if ( !n.isVisible() ) {
+                        projectX(n, np.z[0], anchor.getX(), max[0]);
+                        projectY(n, np.z[1], anchor.getY(), max[1]);
+                    }
+                }
+            }
+        }
+        
+        /**
+         * Translates the hyperbolic tree by the given vector.
+         *
+         * @@param t    the translation vector
+         */
+        private static boolean computeTransform(double[] zo, double[] zs, 
+                double[] ze, double[] p, double[] o,
+                double[] zs2, double[] t)
+        {
+            zo[0] = -zo[0];
+            zo[1] = -zo[1];
+            zs2[0] = zs[0];
+            zs2[1] = zs[1];
+            translate(zs2, zo);
+
+            double de = ze[0]*ze[0] + ze[1]*ze[1];
+            double ds = zs2[0]*zs2[0] + zs2[1]*zs2[1];
+            double dd = 1.0 - de * ds;
+            t[0] = (ze[0]*(1.0-ds) - zs2[0]*(1.0-de)) / dd;
+            t[1] = (ze[1]*(1.0-ds) - zs2[1]*(1.0-de)) / dd;
+            
+            if ( (t[0]*t[0]+t[1]*t[1]) < 1.0 ) {
+                compose(zo,t,p,o,zs2);
+                return true;
+            } else {
+                System.err.println((t[0]*t[0]+t[1]*t[1]) + ": not valid");
+                return false;
+            }
+        } //
+        
+        /**
+         * Compose the 2 given vectors translations 
+         * into one given transformation.
+         */
+        private static void compose(double[] z1, double[] z2, 
+                double[] p, double[] o, double[] d)
+        {
+            p[0] = z1[0] + z2[0];
+            p[1] = z1[1] + z2[1];
+            
+            d[0] = z2[0];
+            d[1] = -z2[1];
+            multiply(d, z1);
+            d[0] += 1;
+            divide(p,d);
+            
+            o[0] = z1[0];
+            o[1] = -z1[1];
+            multiply(o, z2);
+            o[0] += 1;
+            divide(o,d);
+        } //
+        
+        private static void transform(double[] z, double[] p, double[] o,
+                double[] z0, double[] d)
+        {
+            z0[0] = z[0];
+            z0[1] = z[1];
+            multiply(z,o);
+            z[0] += p[0];
+            z[1] += p[1];
+            
+            d[0] = p[0];
+            d[1] = -p[1];
+            multiply(d,z0);
+            multiply(d,o);
+            d[0] += 1;
+            
+            divide(z,d);
+        }
+        
+    } // end of inner class HyperbolicTranslation
+    
+    /**
+     * Update hyperbolic parameters at the end of a translation
+     */
+    public static class HyperbolicTranslationEnd extends ItemAction  {
+        public HyperbolicTranslationEnd(String group) {
+            super(PrefuseLib.getGroupName(group, Graph.NODE_TABLE), null);
+        }
+        public void process(VisualItem item, double frac) {
+            Params p = getParams(item);
+            p.zo[0] = p.z[0];
+            p.zo[1] = p.z[1];
+        }
+    } // end of inner class HyperbolicTranslationEnd
+    
+    /**
+     * Compute an initial tree layout in projected hyperbolic space.
+     */
+    public class HyperbolicTreeLayout extends TreeLayout {
+
+        private double m_length = 0.3;
+        private double m_thresh = 0.95;
+
+        private double[] max = new double[2];
+        private Point2D anchor;
+        
+        public HyperbolicTreeLayout(String group) {
+            super(group);
+        }
+        
+        public HyperbolicTreeLayout(String group, double threshold) {
+            super(group);
+            m_thresh = threshold;
+        }
+        
+        public void run(double frac) {
+            // initialize
+            anchor = getLayoutAnchor();
+            Rectangle2D b = getLayoutBounds();
+            max[0] = b.getWidth() / 2;
+            max[1] = b.getHeight() / 2;
+            
+            // compute layout
+            NodeItem n = getLayoutRoot();
+            calcWeight(n);
+            layout(n, 0.0, Math.PI, m_length);
+        }
+
+        private double calcWeight(NodeItem n) {
+            Params np = getParams(n);
+            double w = 0;
+            if ( n.getChildCount() > 0 && n.isExpanded() ) {
+                Iterator iter = n.getChildren();
+                while ( iter.hasNext() ) {
+                    NodeItem c = (NodeItem)iter.next();
+                    w += calcWeight(c);
+                }
+            }
+            np.weight = w;
+            return Math.max(1,n.getSize()) + (w!=0 ? Math.log(w) : 0);
+        }
+        
+        /**
+         * Layout this node in the hyperbolic space.
+         * First set the point at the right distance,
+         * then translate by father's coordinates.
+         * Then, compute the right angle and the right width.
+         *
+         * @@param angle     the angle from the x axis (bold as love)
+         * @@param width     the angular width to divide, / 2
+         * @@param length    the parent-child length
+         */
+        private void layout(NodeItem n, double angle, double width, double length) {
+            Params np = getParams(n);
+            NodeItem p = (NodeItem)n.getParent();
+            
+            if ( p != null) {
+                Params pp = getParams(p);
+
+                np.z[0] = length * Math.cos(angle);
+                np.z[1] = length * Math.sin(angle);
+
+                // Then translate by parent's coordinates
+                translate(np.z, pp.z);
+                np.zo[0] = np.z[0];
+                np.zo[1] = np.z[1];
+                
+                if ( n.getChildCount() > 0 && n.isExpanded() ) {
+                    // Compute the new starting angle
+                    // e(i a) = T(z)oT(zp) (e(i angle))
+                    double[] a = { Math.cos(angle), Math.sin(angle) };
+                    double[] nz = { -np.z[0], -np.z[1] };
+                    translate(a, pp.z);
+                    translate(a, nz);
+                    angle = angle(a);
+        
+                    // Compute the new width
+                    // e(i w) = T(-length) (e(i width))
+                    // decomposed to do it faster :-)
+                    double c = Math.cos(width);
+                    double A = 1 + length*length;
+                    double B = 2*length;
+                    width = Math.acos((A*c - B) / (A-B * c));
+                }
+            }
+
+            // project x,y coords and compute node visibility
+            double d = Math.sqrt(np.z[0]*np.z[0] + np.z[1]*np.z[1]);
+            boolean visible = (d < m_thresh);
+            n.setVisible(visible);
+            projectX(n, np.z[0], anchor.getX(), max[0]);
+            projectY(n, np.z[1], anchor.getY(), max[1]);
+            
+            int numChildren = n.isExpanded() ? n.getChildCount() : 0;
+            if ( numChildren == 0 )
+                return; // if no kids, we're done
+            
+            double l1 = 0.95 - m_length;
+            double l2 = Math.cos(20.0*Math.PI / (2.0*numChildren + 38.0)); 
+            length = m_length + (l1 * l2);
+            double startAngle = angle - width;
+
+            Iterator childIter = n.getChildren();
+            while ( childIter.hasNext() ) {
+                // layout child node and descendants
+                NodeItem c = (NodeItem)childIter.next();
+                Params cp = getParams(c);
+                
+                double cweight = Math.max(1.0,c.getSize())
+                    + (cp.weight!=0 ? Math.log(cp.weight) : 0);
+                double cwidth = width * (cweight/np.weight);
+                double cangle = startAngle + cwidth;
+                layout(c, cangle, cwidth, length);
+                startAngle += 2.0*cwidth;
+                
+                // compute edge visibility and control point
+                EdgeItem e = (EdgeItem)c.getParentEdge();
+                e.setVisible(visible);
+                Params ep = getParams(e);
+                setControlPoint(ep.z, np.z, cp.z);
+                projectX(e, ep.z[0], anchor.getX(), max[0]);
+                projectY(e, ep.z[1], anchor.getY(), max[1]);
+            }
+        }
+    } // end of inner class HyperbolicTreeLayout
+
+    // ------------------------------------------------------------------------
+    // Hyperbolic Utility Functions
+    
+    private static Params getParams(VisualItem item) {
+	    Params p = (Params)item.get(Params.PARAMS);
+	    if ( p == null ) {
+	        p = new Params();
+	        item.set(p, Params.PARAMS);
+	    }
+	    return p;
+	}
+    
+    private static void multiply(double[] t, double[] z) {
+	    double tx = t[0], ty = t[1];
+	    t[0] = (tx*z[0]) - (ty*z[1]);
+	    t[1] = (tx*z[1]) + (ty*z[0]);
+	}
+
+    private static void divide(double[] t, double[] z) {
+	    double d = z[0]*z[0] + z[1]*z[1];
+	    double tx = t[0], ty = t[1];
+	    t[0] = (tx*z[0] + ty*z[1]) / d;
+	    t[1] = (ty*z[0] - tx*z[1]) / d;
+	}
+
+    private static void projectX(VisualItem vi, double z, double o, double max) {
+	    vi.setX(z*max + o);
+	}
+
+    private static void projectY(VisualItem vi, double z, double o, double max) {
+	    vi.setY(-z*max + o);
+	}
+
+    private static void translate(double[] z, double[] t) {
+	    double dX = z[0]*t[0] + z[1]*t[1] + 1;
+	    double dY = z[1]*t[0] - z[0]*t[1] ;    
+	    double dd = dX*dX + dY*dY;
+	    double nX = z[0] + t[0];
+	    double nY = z[1] + t[1];
+	
+	    z[0] = (nX*dX + nY*dY) / dd;
+	    z[1] = (nY*dX - nX*dY) / dd;
+	}
+
+    private static double angle(double[] z) {
+	    double a = Math.atan(z[1]/z[0]);
+	    return a + (z[0]<0 ? Math.PI : (z[1]<0 ? 2*Math.PI : 0));
+	}
+
+    private static void setControlPoint(double[] e, double[] p, double[] n) {
+	    double da  = 1 + p[0] * p[0] + p[1] * p[1];
+	    double db  = 1 + n[0] * n[0] + n[1] * n[1];
+	    double dd  = 2 * (p[0] * n[1] - n[0] * p[1]);
+	    double cx  = (n[1] * da - p[1] * db) / dd;
+	    double cy  = (p[0] * db - n[0] * da) / dd;
+	    double det = (n[0] - cx) * (p[1] - cy) - (p[0] - cx) * (n[1] - cy);
+	    double fa  = p[1] * (p[1] - cy) - p[0] * (cx - p[0]);
+	    double fb  = n[1] * (n[1] - cy) - n[0] * (cx - n[0]);
+	
+	    e[0] = ((p[1] - cy) * fb - (n[1] - cy) * fa) / det;
+	    e[1] = ((cx - p[0]) * fb - (cx - n[0]) * fa) / det;
+	    
+	    if ( Double.isNaN(e[0]) || Double.isNaN(e[1]) ) {
+	        e[0] = (p[0]+n[0]) / 2.0;
+	        e[1] = (p[1]+n[1]) / 2.0;
+	    }
+	}
+
+} // end of classs HyperbolicTree
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@@
+
+

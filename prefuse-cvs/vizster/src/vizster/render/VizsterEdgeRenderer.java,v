@@ -1,0 +1,85 @@
+head	1.3;
+access;
+symbols
+	P20050924_InfoVis:1.3
+	Preliminary_Design:1.2
+	P200501_Prototype:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2005.09.24.18.40.28;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.04.20.03.54.16;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.15.00.36.40;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Update to new version!!
+@
+text
+@package vizster.render;
+
+import vizster.VizsterLib;
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.render.DefaultEdgeRenderer;
+
+/**
+ * Vizster edge renderer, toggles edge width based on highlighted status
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> vizster(AT)jheer.org
+ */
+public class VizsterEdgeRenderer extends DefaultEdgeRenderer {
+
+    public int getLineWidth(VisualItem item) {
+        if ( item.isHighlighted() ) {
+            int hval = VizsterLib.getHighlightValue(item);
+            if ( hval == 0 || hval == 1 ) {
+                return m_width*2;
+            }
+        }
+        return m_width;
+    } //
+    
+} // end of class VizsterEdgeRenderer
+@
+
+
+1.2
+log
+@Vizster 1.0
+@
+text
+@d3 1
+d16 7
+a22 1
+        return m_width*(item.isHighlighted() ? 2 : 1);
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d7 1
+a7 1
+ * Vizster edge renderer
+@
+

@@ -1,0 +1,269 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.02.19.01.51;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.collections;
+
+import java.util.NoSuchElementException;
+
+/**
+ * IntIterator implementation that combines the results of multiple
+ * int iterators.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class CompositeIntIterator extends IntIterator {
+
+    private IntIterator[] m_iters;
+    private int m_cur;
+    
+    public CompositeIntIterator(IntIterator iter1, IntIterator iter2) {
+        this(new IntIterator[] { iter1, iter2 });
+    }
+    
+    public CompositeIntIterator(IntIterator[] iters) {
+        m_iters = iters;
+        m_cur = 0;
+    }
+    
+    /**
+     * @@see prefuse.util.collections.IntIterator#nextInt()
+     */
+    public int nextInt() {
+        if ( hasNext() ) {
+            return m_iters[m_cur].nextInt();
+        } else {
+            throw new NoSuchElementException();
+        }
+    }
+
+    /**
+     * @@see java.util.Iterator#hasNext()
+     */
+    public boolean hasNext() {
+        if ( m_iters == null )
+            return false;
+        
+        while ( true ) {
+            if ( m_iters[m_cur].hasNext() ) {
+                return true;
+            } else if ( ++m_cur >= m_iters.length ) {
+                m_iters = null;
+                return false;
+            }
+        }
+    }
+    
+    public void remove() {
+        throw new UnsupportedOperationException();
+    }
+
+} // end of class CompositeIntIterator
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d8 1
+a8 1
+ *
+d15 6
+a20 2
+
+    public CompositeIntIterator(IntIterator ... iters) {
+d24 1
+a24 1
+
+d28 1
+a28 2
+    @@Override
+	public int nextInt() {
+d40 3
+a42 4
+        if ( m_iters == null ) {
+			return false;
+		}
+
+d52 1
+a52 1
+
+@
+
+
+1.1
+log
+@file CompositeIntIterator.java was initially added on branch beta.
+@
+text
+@d1 57
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 50
+package prefuse.util.collections;
+
+import java.util.NoSuchElementException;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class CompositeIntIterator extends IntIterator {
+
+    private IntIterator[] m_iters;
+    private int m_cur;
+    
+    public CompositeIntIterator(IntIterator iter1, IntIterator iter2) {
+        this(new IntIterator[] { iter1, iter2 });
+    }
+    
+    public CompositeIntIterator(IntIterator[] iters) {
+        m_iters = iters;
+        m_cur = 0;
+    }
+    
+    /**
+     * @@see prefuse.util.collections.IntIterator#nextInt()
+     */
+    public int nextInt() {
+        if ( hasNext() ) {
+            return m_iters[m_cur].nextInt();
+        } else {
+            throw new NoSuchElementException();
+        }
+    }
+
+    /**
+     * @@see java.util.Iterator#hasNext()
+     */
+    public boolean hasNext() {
+        if ( m_iters == null )
+            return false;
+        
+        while ( true ) {
+            if ( m_iters[m_cur].hasNext() ) {
+                return true;
+            } else if ( ++m_cur >= m_iters.length ) {
+                m_iters = null;
+                return false;
+            }
+        }
+    }
+
+} // end of class CompositeIntIterator
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a48 4
+    
+    public void remove() {
+    	throw new UnsupportedOperationException();
+    }
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d51 1
+a51 1
+        throw new UnsupportedOperationException();
+@
+
+
+1.1.2.4
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d6 1
+a6 4
+ * IntIterator implementation that combines the results of multiple
+ * int iterators.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

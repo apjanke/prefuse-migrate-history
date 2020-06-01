@@ -1,0 +1,445 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.48;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.08;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.01.19.22.44;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state Exp;
+branches;
+next	2.0.4.2;
+
+2.0.4.2
+date	2008.02.23.21.21.02;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.visual.tuple;
+
+import prefuse.data.Graph;
+import prefuse.data.Node;
+import prefuse.data.Table;
+import prefuse.visual.EdgeItem;
+import prefuse.visual.NodeItem;
+
+/**
+ * EdgeItem implementation that used data values from a backing
+ * VisualTable of edges.
+ *  
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class TableEdgeItem extends TableVisualItem implements EdgeItem {
+
+    protected Graph m_graph;
+    
+    /**
+     * Initialize a new TableEdgeItem for the given graph, table, and row.
+     * This method is used by the appropriate TupleManager instance, and
+     * should not be called directly by client code, unless by a
+     * client-supplied custom TupleManager.
+     * @@param table the backing VisualTable
+     * @@param graph the backing VisualGraph
+     * @@param row the row in the node table to which this Edge instance
+     *  corresponds.
+     */
+    protected void init(Table table, Graph graph, int row) {
+        m_table = table;
+        m_graph = graph;
+        m_row = m_table.isValidRow(row) ? row : -1;
+    }
+    
+    /**
+     * @@see prefuse.data.Edge#getGraph()
+     */
+    public Graph getGraph() {
+        return m_graph;
+    }
+    
+    /**
+     * @@see prefuse.data.Edge#isDirected()
+     */
+    public boolean isDirected() {
+        return m_graph.isDirected();
+    }
+
+    /**
+     * @@see prefuse.data.Edge#getSourceNode()
+     */
+    public Node getSourceNode() {
+        return m_graph.getSourceNode(this);
+    }
+
+    /**
+     * @@see prefuse.data.Edge#getTargetNode()
+     */
+    public Node getTargetNode() {
+        return m_graph.getTargetNode(this);
+    }
+
+    /**
+     * @@see prefuse.data.Edge#getAdjacentNode(prefuse.data.Node)
+     */
+    public Node getAdjacentNode(Node n) {
+        return m_graph.getAdjacentNode(this, n);
+    }
+    
+    /**
+     * @@see prefuse.visual.EdgeItem#getSourceItem()
+     */
+    public NodeItem getSourceItem() {
+        return (NodeItem)getSourceNode();
+    }
+
+    /**
+     * @@see prefuse.visual.EdgeItem#getTargetItem()
+     */
+    public NodeItem getTargetItem() {
+        return (NodeItem)getTargetNode();
+    }
+
+    /**
+     * @@see prefuse.visual.EdgeItem#getAdjacentItem(prefuse.visual.NodeItem)
+     */
+    public NodeItem getAdjacentItem(NodeItem n) {
+        return (NodeItem)getAdjacentNode(n);
+    }
+
+} // end of class TableEdgeItem
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d4 1
+d7 1
+d12 1
+a12 1
+ *
+d15 1
+a15 3
+public class TableEdgeItem extends TableVisualItem<TableEdgeItem> implements EdgeItem<TableNodeItem, TableEdgeItem> {
+
+    protected Graph<?,TableNodeItem,TableEdgeItem> m_graph;
+d17 2
+d29 1
+a29 2
+    @@Override
+	public void init(Table table, Graph graph, int row) {
+d34 1
+a34 1
+
+d41 1
+a41 1
+
+d52 1
+a52 1
+    public TableNodeItem getSourceNode() {
+d59 1
+a59 1
+    public TableNodeItem getTargetNode() {
+d66 1
+a66 1
+    public TableNodeItem getAdjacentNode(TableNodeItem n) {
+d69 1
+a69 1
+
+d73 2
+a74 2
+    public TableNodeItem getSourceItem() {
+        return getSourceNode();
+d80 9
+a88 2
+    public TableNodeItem getTargetItem() {
+        return getTargetNode();
+@
+
+
+2.0.4.2
+log
+@Eliminated unnecessary methods from the EdgeItem interface
+@
+text
+@d69 14
+@
+
+
+1.1
+log
+@file TableEdgeItem.java was initially added on branch beta.
+@
+text
+@d1 91
+@
+
+
+1.1.2.1
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a0 86
+package prefuse.visual.tuple;
+
+import prefuse.data.Graph;
+import prefuse.data.Table;
+import prefuse.data.tuple.Node;
+import prefuse.visual.EdgeItem;
+import prefuse.visual.NodeItem;
+
+/**
+ * An EdgeItem (visual representation of an Edge) implementation backed by
+ * an edge Table for edge data. 
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class TableEdgeItem extends TableVisualItem implements EdgeItem {
+
+    protected Graph m_graph;
+    
+    /**
+     * Create a new TableEdgeItem, using the edge table of the VisualGraph
+     * indicated by the provided Visualization instance and group name.
+     * @@param vis the Visualization of which this EdgeItem is a member
+     * @@param group the data group of this edge's VisualGraph
+     * @@param row the row number of this edge in it's edge Table
+     */
+    public TableEdgeItem(Graph graph, Table table, int row) {
+        super(table, row);
+        m_graph = graph;
+    }
+    
+    /**
+     * @@see prefuse.data.tuple.Edge#getGraph()
+     */
+    public Graph getGraph() {
+        return m_graph;
+    }
+    
+    /**
+     * @@see prefuse.data.tuple.Edge#isDirected()
+     */
+    public boolean isDirected() {
+    	return m_graph.isDirected();
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Edge#getSourceNode()
+     */
+    public Node getSourceNode() {
+        return m_graph.getSourceNode(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Edge#getTargetNode()
+     */
+    public Node getTargetNode() {
+        return m_graph.getTargetNode(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Edge#getAdjacentNode(prefuse.data.tuple.Node)
+     */
+    public Node getAdjacentNode(Node n) {
+        return m_graph.getAdjacentNode(this, n);
+    }
+    
+    /**
+     * @@see prefuse.visual.EdgeItem#getSourceItem()
+     */
+    public NodeItem getSourceItem() {
+        return (NodeItem)getSourceNode();
+    }
+
+    /**
+     * @@see prefuse.visual.EdgeItem#getTargetItem()
+     */
+    public NodeItem getTargetItem() {
+        return (NodeItem)getTargetNode();
+    }
+
+    /**
+     * @@see prefuse.visual.EdgeItem#getAdjacentItem(prefuse.visual.NodeItem)
+     */
+    public NodeItem getAdjacentItem(NodeItem n) {
+        return (NodeItem)getAdjacentNode(n);
+    }
+
+} // end of class TableEdgeItem@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d41 1
+a41 1
+        return m_graph.isDirected();
+d86 1
+a86 1
+} // end of class TableEdgeItem
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@d10 3
+a12 4
+ * EdgeItem implementation that used data values from a backing
+ * VisualTable of edges.
+ *  
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d19 5
+a23 7
+     * Create a new TableEdgeItem for the given graph, table, and row.
+     * This method is used by the appropriate TupleManager instance, and
+     * should not be called directly by client code, unless by a
+     * client-supplied custom TupleManager.
+     * @@param the backing VisualGraph
+     * @@param table the backing VisualTable
+     * @@param row the table row index
+@
+
+
+1.1.2.4
+log
+@Javadoc'd.
+@
+text
+@d24 1
+a24 1
+     * @@param graph the backing VisualGraph
+@
+
+
+1.1.2.5
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d20 1
+a20 1
+     * Initialize a new TableEdgeItem for the given graph, table, and row.
+d24 1
+d26 1
+a26 3
+     * @@param graph the backing VisualGraph
+     * @@param row the row in the node table to which this Edge instance
+     *  corresponds.
+d28 2
+a29 2
+    protected void init(Table table, Graph graph, int row) {
+        m_table = table;
+a30 1
+        m_row = m_table.isValidRow(row) ? row : -1;
+@
+
+
+1.1.2.6
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a3 1
+import prefuse.data.Node;
+d5 1
+d36 1
+a36 1
+     * @@see prefuse.data.Edge#getGraph()
+d43 1
+a43 1
+     * @@see prefuse.data.Edge#isDirected()
+d50 1
+a50 1
+     * @@see prefuse.data.Edge#getSourceNode()
+d57 1
+a57 1
+     * @@see prefuse.data.Edge#getTargetNode()
+d64 1
+a64 1
+     * @@see prefuse.data.Edge#getAdjacentNode(prefuse.data.Node)
+@
+
+

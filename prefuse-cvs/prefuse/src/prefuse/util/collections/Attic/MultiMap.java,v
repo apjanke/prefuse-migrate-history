@@ -1,0 +1,177 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.01.23.23.55.38;	author jogiles;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2008.03.14.21.10.06;	author amarsden;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2008.04.07.03.03.27;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file MultiMap.java was initially added on branch java_1_5.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a0 75
+package prefuse.util.collections;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+public class MultiMap<K, V> {
+
+	private final Map<K, Set<V>> m;
+
+	public MultiMap() {
+		this.m = new HashMap<K, Set<V>>();
+	}
+
+	public boolean containsValue(Object key, Object value) {
+		Set<V> values = m.get(key);
+		return values != null && values.contains(value);
+	}
+
+	public Set<V> get(Object key) {
+		return m.get(key);
+	}
+
+	public V put(K key, V value) {
+		Set<V> values = m.get(key);
+		if(values == null) {
+			values = new HashSet<V>();
+			m.put(key,values);
+		}
+		return values.add(value) ? value : null;
+	}
+
+	public Set<V> remove(Object key) {
+		return m.remove(key);
+	}
+
+	@@SuppressWarnings("unchecked")
+	public V remove(Object key, Object item) {
+		Set<V> values = m.get(key);
+		if(values != null) {
+			if(values.remove(item)) {
+				if(values.isEmpty()) {
+					m.remove(key);
+					return (V) item;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @@return the number of keys in the multi-map
+	 */
+	public int size() {
+		return m.size();
+	}
+
+	public Set<K> keySet() {
+		return m.keySet();
+	}
+
+	public Set<Map.Entry<K, Set<V>>> entrySet() {
+		return m.entrySet();
+	}
+	
+	public boolean isEmpty() {
+		return m.isEmpty();
+	}
+	
+	public void clear() {
+		m.clear();
+	}
+
+}
+@
+
+
+1.1.2.2
+log
+@very basic documentation!
+@
+text
+@a7 8
+/**
+ * Maps keys to multiple values.
+ * 
+ * @@param <K>
+ * @@param <V>
+ * 
+ * @@author Anton Marsden
+ */
+@
+
+
+1.1.2.3
+log
+@allow Map/Set implementations to be overridden
+@
+text
+@d10 1
+a10 1
+ *
+d13 1
+a13 1
+ *
+d21 1
+a21 9
+		this.m = createMap();
+	}
+
+	protected Map<K, Set<V>> createMap() {
+		return new HashMap<K, Set<V>>();
+	}
+
+	protected Set<V> createSet() {
+		return new HashSet<V>();
+d36 1
+a36 1
+			values = createSet();
+d74 1
+a74 1
+
+d78 1
+a78 1
+
+@
+
+

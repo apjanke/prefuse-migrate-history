@@ -1,0 +1,217 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.02.19.01.53;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.09.05.12.45;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file DemoLauncher.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 139
+package prefuse.demos.launcher;
+
+import java.awt.Container;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.lang.reflect.Method;
+
+import javax.swing.AbstractAction;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+
+import prefuse.util.ui.UILib;
+
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class DemoLauncher extends JFrame {
+
+    private static final String TREE_CHI = "/chi-ontology.xml.gz";
+    private static final String AMAZON = "/amazon.txt";
+    private static final String BABYNAMES = "/babynames.txt";
+    private static final String TERROR = "/terror.xml";
+    private static final String ZIPCODE = "/zipcode.txt";
+    
+    private Demo[] m_demos;
+    
+    public DemoLauncher(Demo[] demos) {
+        super("p r e f u s e  |  d e m o s");
+        m_demos = demos;
+        initFrame();
+    }
+    
+    public void initFrame() {
+        Container c = this.getContentPane();
+        c.setLayout(new BoxLayout(c, BoxLayout.Y_AXIS));
+        
+        javax.swing.Action launcher = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                JComponent jc = (JComponent)e.getSource();
+                Demo d = (Demo)jc.getClientProperty("demo");
+                d.launch();            
+            }
+        };
+        
+        int numcols = 2;
+        for ( int i=0; i <m_demos.length; i+=numcols ) {
+            c.add(Box.createVerticalStrut(5));
+            c.add(Box.createVerticalGlue());
+            Box b = new Box(BoxLayout.X_AXIS);
+            
+            for ( int j=0; j<numcols && i+j<m_demos.length; j++ ) {
+                b.add(Box.createHorizontalStrut(5));
+                b.add(Box.createHorizontalGlue());
+                JButton but = new JButton("An Application");
+                but.setFont(new Font("Tahoma",Font.BOLD,18));
+                but.putClientProperty("demo", m_demos[i+j]);
+                but.setAction(launcher);
+                but.setText(m_demos[i+j].name);
+                //but.setVerticalTextPosition(SwingUtilities.BOTTOM);
+                //but.setHorizontalTextPosition(SwingUtilities.CENTER);
+                b.add(but);
+            }
+            b.add(Box.createHorizontalStrut(5));
+            b.add(Box.createHorizontalGlue());
+            c.add(b);
+        }
+        c.add(Box.createVerticalStrut(5));
+        c.add(Box.createVerticalGlue());
+        this.validate();
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public static void main(String[] args) {
+        UILib.setPlatformLookAndFeel();
+        
+        JFrame f = new DemoLauncher(getDefaultDemos());
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.pack();
+        f.setVisible(true);
+    }
+    
+    public static Demo[] getDefaultDemos() {
+        Demo[] demos = {
+            new Demo("ZipDecode", "prefuse.demos.ZipDecode", ZIPCODE),
+            new Demo("NameVoyager", "prefuse.demos.NameVoyager", BABYNAMES),
+            new Demo("GraphView", "prefuse.demos.GraphView", TERROR, "name"),
+            new Demo("TreeMap", "prefuse.demos.TreeMap", TREE_CHI, "name"),
+            new Demo("TreeView", "prefuse.demos.TreeView", TREE_CHI, "name"),
+            new Demo("DataMountain", "prefuse.demos.DataMountain", AMAZON),
+            new Demo("HyperbolicTree", "prefuse.demos.hyperbolic.HyperbolicTree", TREE_CHI, "name")
+        };
+        return demos;
+    }
+    
+    public static class Demo {
+        public String name;
+        
+        public String classname;
+        public String datafile;
+        public String arg;
+        
+        public Demo(String name, String classname, String datafile) {
+            this(name, classname, datafile, null);
+        }
+        
+        public Demo(String name, String classname, String datafile, String arg) {
+            this.name = name;
+            this.classname = classname;
+            this.datafile = datafile;
+            this.arg = arg;
+        }
+        
+        public void launch() {
+            try {
+                Object[] args = (arg==null ? new Object[] {datafile}
+                                           : new Object[] {datafile, arg}); 
+                Class[] sig = (arg==null ? new Class[] {String.class}
+                           : new Class[] {String.class, String.class});
+                
+                Method m = Class.forName(classname).getMethod("demo", sig);
+                JFrame frame = (JFrame)m.invoke(null, args);
+                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frame.setVisible(true);
+            } catch ( Exception ex ) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, 
+                        "Sorry, could not load application!", 
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    } // end of inner class Demo
+    
+} // end of class DemoLauncher
+@
+
+
+1.1.2.2
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d20 1
+a20 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.3
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@@
+
+

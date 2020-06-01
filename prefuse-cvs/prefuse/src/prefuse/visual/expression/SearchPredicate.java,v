@@ -1,0 +1,407 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.06;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.visual.expression;
+
+import prefuse.Visualization;
+import prefuse.data.Tuple;
+import prefuse.data.expression.BooleanLiteral;
+import prefuse.data.expression.Expression;
+import prefuse.data.search.SearchTupleSet;
+import prefuse.visual.VisualItem;
+
+/**
+ * Expression that indicates if an item is currently a member of a data group of the type
+ * {@@link prefuse.data.search.SearchTupleSet}, but including a possible special case in
+ * which all items should be pass through the predicate if no search query is specified.
+ * The data group name is provided by a String-valued sub-expression.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class SearchPredicate extends InGroupPredicate {
+
+    private Expression m_incEmpty;
+    private int paramCount = 0;
+    
+    /**
+     * Create a new SearchPredicate. By default, looks into the
+     * {@@link prefuse.Visualization#ALL_ITEMS} data group and assumes all items
+     * should pass the predicate if no search query has been specified.
+     */
+    public SearchPredicate() {
+        this(Visualization.SEARCH_ITEMS, true);
+        paramCount = 0;
+    }
+    
+    /**
+     * Create a new SearchPredicate. By default, looks into the
+     * {@@link prefuse.Visualization#ALL_ITEMS} data group.
+     * @@param includeAllByDefault indicates if all items
+     * should pass the predicate if no search query has been specified.
+     */
+    public SearchPredicate(boolean includeAllByDefault) {
+        this(Visualization.SEARCH_ITEMS, includeAllByDefault);
+    }
+    
+    /**
+     * Create a new SearchPredicate.
+     * @@param group the data group to look up, should resolve to a
+     * {@@link prefuse.data.search.SearchTupleSet} instance.
+     * @@param includeAllByDefault indicates if all items
+     * should pass the predicate if no search query has been specified.
+     */
+    public SearchPredicate(String group, boolean includeAllByDefault) {
+        super(group);
+        m_incEmpty = new BooleanLiteral(includeAllByDefault);
+        paramCount = 2;
+    }
+    
+    /**
+     * @@see prefuse.data.expression.Expression#getBoolean(prefuse.data.Tuple)
+     */
+    public boolean getBoolean(Tuple t) {
+        String group = getGroup(t);
+        if ( group == null ) return false;
+        boolean incEmpty = m_incEmpty.getBoolean(t);
+        
+        VisualItem item = (VisualItem)t;
+        Visualization vis = item.getVisualization();
+        SearchTupleSet search = (SearchTupleSet)vis.getGroup(group);
+        if ( search == null && incEmpty )
+            return true;
+        
+        String query = search.getQuery();
+        return (incEmpty && (query==null || query.length()==0)) 
+                || vis.isInGroup(item, group);
+    }
+
+    /**
+     * @@see prefuse.data.expression.Function#addParameter(prefuse.data.expression.Expression)
+     */
+    public void addParameter(Expression e) {
+        if ( paramCount == 0 )
+            super.addParameter(e);
+        else if ( paramCount == 1 )
+            m_incEmpty = e;
+        else
+            throw new IllegalStateException(
+              "This function takes only 2 parameters.");
+    }
+
+    /**
+     * @@see prefuse.data.expression.Function#getName()
+     */
+    public String getName() {
+        return "MATCH";
+    }
+
+    /**
+     * @@see prefuse.data.expression.Function#getParameterCount()
+     */
+    public int getParameterCount() {
+        return 2;
+    }
+    
+    /**
+     * @@see java.lang.Object#toString()
+     */
+    public String toString() {
+        return getName()+"("+m_group+", "+m_incEmpty+")";
+    }
+    
+} // end of class SearchPredicate
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d15 1
+a15 1
+ *
+d22 1
+a22 1
+
+d32 1
+a32 1
+
+d42 1
+a42 1
+
+d55 1
+a55 1
+
+d59 1
+a59 2
+    @@Override
+	public boolean getBoolean(Tuple<?> t) {
+d61 1
+a61 3
+        if ( group == null ) {
+			return false;
+		}
+d63 2
+a64 2
+
+        VisualItem<?> item = (VisualItem<?>)t;
+d67 3
+a69 4
+        if ( search == null && incEmpty ) {
+			return true;
+		}
+
+d71 1
+a71 1
+        return incEmpty && (query==null || query.length()==0)
+d78 7
+a84 8
+    @@Override
+	public void addParameter(Expression e) {
+        if ( paramCount == 0 ) {
+			super.addParameter(e);
+		} else if ( paramCount == 1 ) {
+			m_incEmpty = e;
+		} else {
+			throw new IllegalStateException(
+a85 1
+		}
+d91 1
+a91 2
+    @@Override
+	public String getName() {
+d98 1
+a98 2
+    @@Override
+	public int getParameterCount() {
+d101 1
+a101 1
+
+d105 1
+a105 2
+    @@Override
+	public String toString() {
+d108 1
+a108 1
+
+@
+
+
+1.1
+log
+@file SearchPredicate.java was initially added on branch beta.
+@
+text
+@d1 109
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 68
+package prefuse.visual.expression;
+
+import prefuse.Visualization;
+import prefuse.data.expression.BooleanLiteral;
+import prefuse.data.expression.Expression;
+import prefuse.data.search.SearchTupleSet;
+import prefuse.data.tuple.Tuple;
+import prefuse.visual.VisualItem;
+
+public class SearchPredicate extends InGroupPredicate {
+
+    private Expression m_incEmpty;
+    private int paramCount = 0;
+    
+    public SearchPredicate() {
+        this(Visualization.SEARCH_ITEMS, true);
+        paramCount = 0;
+    }
+    
+    public SearchPredicate(boolean includeAllByDefault) {
+        this(Visualization.SEARCH_ITEMS, includeAllByDefault);
+    }
+    
+    public SearchPredicate(String group, boolean includeAllByDefault) {
+        super(group);
+        m_incEmpty = new BooleanLiteral(includeAllByDefault);
+        paramCount = 2;
+    }
+    
+    public boolean getBoolean(Tuple t) {
+        String group = getGroup(t);
+        if ( group == null ) return false;
+        boolean incEmpty = m_incEmpty.getBoolean(t);
+        
+        VisualItem item = (VisualItem)t;
+        Visualization vis = item.getVisualization();
+        SearchTupleSet search = (SearchTupleSet)vis.getGroup(group);
+        if ( search == null && incEmpty )
+            return true;
+        
+        String query = search.getQuery();
+        return (incEmpty && (query==null || query.length()==0)) 
+                || vis.isInGroup(item, group);
+    }
+
+    public void addParameter(Expression e) {
+        if ( paramCount == 0 )
+            super.addParameter(e);
+        else if ( paramCount == 1 )
+            m_incEmpty = e;
+        else
+            throw new IllegalStateException(
+              "This function takes only 2 parameters.");
+    }
+
+    public String getName() {
+        return "MATCH";
+    }
+
+    public int getParameterCount() {
+        return 2;
+    }
+    
+    public String toString() {
+        return getName()+"("+m_group+", "+m_incEmpty+")";
+    }
+    
+} // end of class SearchPredicate
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@a9 8
+/**
+ * Expression that indicates if an item is currently a member of a data group of the type
+ * {@@link prefuse.data.search.SearchTupleSet}, but including a possible special case in
+ * which all items should be pass through the predicate if no search query is specified.
+ * The data group name is provided by a String-valued sub-expression.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+a14 5
+    /**
+     * Create a new SearchPredicate. By default, looks into the
+     * {@@link prefuse.Visualization#ALL_ITEMS} data group and assumes all items
+     * should pass the predicate if no search query has been specified.
+     */
+a19 6
+    /**
+     * Create a new SearchPredicate. By default, looks into the
+     * {@@link prefuse.Visualization#ALL_ITEMS} data group.
+     * @@param includeAllByDefault indicates if all items
+     * should pass the predicate if no search query has been specified.
+     */
+a23 7
+    /**
+     * Create a new SearchPredicate.
+     * @@param group the data group to look up, should resolve to a
+     * {@@link prefuse.data.search.SearchTupleSet} instance.
+     * @@param includeAllByDefault indicates if all items
+     * should pass the predicate if no search query has been specified.
+     */
+a29 3
+    /**
+     * @@see prefuse.data.expression.Expression#getBoolean(prefuse.data.tuple.Tuple)
+     */
+a45 3
+    /**
+     * @@see prefuse.data.expression.Function#addParameter(prefuse.data.expression.Expression)
+     */
+a55 3
+    /**
+     * @@see prefuse.data.expression.Function#getName()
+     */
+a59 3
+    /**
+     * @@see prefuse.data.expression.Function#getParameterCount()
+     */
+a63 3
+    /**
+     * @@see java.lang.Object#toString()
+     */
+@
+
+
+1.1.2.3
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a3 1
+import prefuse.data.Tuple;
+d7 1
+d57 1
+a57 1
+     * @@see prefuse.data.expression.Expression#getBoolean(prefuse.data.Tuple)
+@
+
+

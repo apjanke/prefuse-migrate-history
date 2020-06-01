@@ -1,0 +1,109 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.01.23.23.55.43;	author jogiles;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2008.01.23.23.55.43;	author jogiles;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2008.04.14.05.07.17;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file CompositeRenderer.java was initially added on branch java_1_5.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a0 52
+package prefuse.render;
+
+import java.awt.Graphics2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.visual.VisualItem;
+
+/**
+ * @@author Anton Marsden
+ */
+public class CompositeRenderer implements Renderer {
+
+	private final Renderer interactiveRenderer;
+	private final Renderer supportingRenderer;
+
+	public CompositeRenderer(Renderer interactiveRenderer, Renderer supportingRenderer) {
+		this.interactiveRenderer = interactiveRenderer;
+		this.supportingRenderer = supportingRenderer;
+	}
+
+	public boolean locatePoint(Point2D p, VisualItem<?> item) {
+		return interactiveRenderer.locatePoint(p, item);
+	}
+
+	public void render(Graphics2D g, VisualItem<?> item) {
+		supportingRenderer.render(g, item);
+		interactiveRenderer.render(g, item);
+	}
+
+	public void calculateBounds(VisualItem<?> item, Rectangle2D bounds) {
+		// TODO: handle empty bounds - don't use createUnion
+		interactiveRenderer.calculateBounds(item, bounds);
+		Rectangle2D supp = new Rectangle2D.Double();
+		supportingRenderer.calculateBounds(item, supp);
+		Rectangle2D.union(bounds, supp, bounds);
+	}
+
+	public Renderer getInteractiveRenderer() {
+		return interactiveRenderer;
+	}
+
+	public Renderer getSupportingRenderer() {
+		return supportingRenderer;
+	}
+
+	public boolean managesBounds() {
+		return true;
+	}
+
+
+}
+@
+
+
+1.1.2.2
+log
+@updated TODO item
+@
+text
+@d32 1
+a32 1
+		// TODO: handle empty bounds - don't use createUnion???
+@
+
+

@@ -1,0 +1,93 @@
+head	1.2;
+access;
+symbols
+	P20050924_InfoVis:1.2
+	Preliminary_Design:1.1
+	P200501_Prototype:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.09.24.18.40.28;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.11.10.01.53.05;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Update to new version!!
+@
+text
+@package vizster.util;
+
+import java.awt.event.ActionEvent;
+import java.io.File;
+
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
+import javax.swing.JFileChooser;
+
+import vizster.Vizster;
+import vizster.ui.VizsterMenuBar;
+
+/**
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> vizster(AT)jheer.org</a>
+ */
+public class LoadNetworkAction extends AbstractAction {
+
+    private Vizster vizster;
+    private JFileChooser chooser;
+    
+    public LoadNetworkAction(Vizster vizster) {
+        this.vizster = vizster;
+        chooser = new JFileChooser();
+    } //
+
+    /**
+     * @@see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+    public void actionPerformed(ActionEvent arg0) {
+        String datafile = null;
+        String startUID = null;
+        AbstractButton jc = (AbstractButton)arg0.getSource();
+        
+        if ( VizsterMenuBar.LOAD.equals(jc.getActionCommand()) ) {
+	        // choose file to save to
+	        File f = null;
+	        int rval = chooser.showOpenDialog(vizster);
+	        if( rval == JFileChooser.APPROVE_OPTION ) {
+	           f = chooser.getSelectedFile();
+	        } else {
+	            return;
+	        }
+	        datafile = f.toString();
+        } else {
+            startUID = Vizster.DEFAULT_START_UID;
+        }
+        vizster.loadGraph(datafile, startUID);
+    } //
+
+} // end of class SaveVisibleGraphAction
+@
+
+
+1.1
+log
+@Major updates for static layout and xml input files
+@
+text
+@d11 1
+@
+

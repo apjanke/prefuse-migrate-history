@@ -1,0 +1,661 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.06;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.53;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.07.00.42.29;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util;
+
+import java.awt.FontMetrics;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StreamTokenizer;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.lang.reflect.Array;
+import java.util.Hashtable;
+
+/**
+ * Library of utility routines pertaining to Strings.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class StringLib {
+
+    private StringLib() {
+        // prevent instantiation
+    }
+
+    /**
+     * Given an array object, create a String showing the contents
+     * of the array using a "[a[0], a[1], ..., a[a.length-1]]" format.
+     * @@param a the array object
+     * @@return the array string
+     */
+    public static final String getArrayString(Object a) {
+        StringBuffer sbuf = new StringBuffer();
+        sbuf.append('[');
+        int size = Array.getLength(a);
+        for ( int i=0; i<size; ++i ) {
+            if ( i>0 ) sbuf.append(", ");
+            sbuf.append(Array.get(a, i));
+        }
+        sbuf.append(']');
+        return sbuf.toString();
+    }
+    
+    /**
+     * Format the given number as a String, including the given number of
+     * decimal places.
+     * @@param number the number to format
+     * @@param decimalPlaces the number of decimal places to include
+     * @@return the formatted String
+     */
+    public static String formatNumber(double number, int decimalPlaces) {
+        String s = String.valueOf(number);
+        int idx1 = s.indexOf('.');
+        if ( idx1 == -1 ) {
+            return s;
+        } else {
+            int idx2 = s.indexOf('E');        
+            int dp = decimalPlaces + (idx2>=0 ? 0 : 1);
+            String t = s.substring(0, Math.min(idx1+dp, s.length()));
+            if ( idx2 >= 0 )
+                t += s.substring(idx2);
+            return t;
+        }
+    }
+    
+    /**
+     * Capitalize all letters preceded by whitespace, and lower case
+     * all other letters. 
+     * @@param s the String to capitalize
+     * @@return the capitalized string
+     */
+    public static String capitalizeFirstOnly(String s) {
+        if ( s == null )
+            return null;
+        if ( s.length() == 0 )
+            return s;
+        
+        StringBuffer sbuf = new StringBuffer();
+        char c = s.charAt(0);
+        sbuf.append(Character.toUpperCase(c));
+        boolean space = Character.isWhitespace(c);
+        for ( int i=1; i<s.length(); ++i ) {
+            c = s.charAt(i);
+            if ( Character.isWhitespace(c) ) {
+                space = true;
+            } else if ( space ) {
+                c = Character.toUpperCase(c);
+                space = false;
+            } else {
+                c = Character.toLowerCase(c);
+            }
+            sbuf.append(c);
+        }
+        return sbuf.toString();
+    }
+    
+    /**
+     * Get the stack trace of the given Throwable as a String.
+     * @@param t the Throwable
+     * @@return the stack trace of the Throwable
+     */
+    public static String getStackTrace(Throwable t) {
+        StringWriter sw = new StringWriter();
+        PrintWriter  pw = new PrintWriter(sw);
+        t.printStackTrace(pw);
+        pw.close();
+        return sw.toString();
+    }
+    
+    // ------------------------------------------------------------------------
+    // Abbreviation Methods
+    
+    private static final String SUFFIX = "suffix";
+    private static final String PREFIX = "prefix";
+    private static Hashtable prefixSuffixT = new Hashtable();
+    static {
+        prefixSuffixT.put( "mr",    PREFIX );
+        prefixSuffixT.put( "mr.",   PREFIX );
+        prefixSuffixT.put( "dr",    PREFIX );
+        prefixSuffixT.put( "dr.",   PREFIX );
+        prefixSuffixT.put( "lt",    PREFIX );
+        prefixSuffixT.put( "lt.",   PREFIX );
+        prefixSuffixT.put( "gen",   PREFIX );
+        prefixSuffixT.put( "gen.",  PREFIX );
+        prefixSuffixT.put( "sgt",   PREFIX );
+        prefixSuffixT.put( "sgt.",  PREFIX );
+        prefixSuffixT.put( "cmdr",  PREFIX );
+        prefixSuffixT.put( "cmdr.", PREFIX );
+        prefixSuffixT.put( "cpt",   PREFIX );
+        prefixSuffixT.put( "cpt.",  PREFIX );
+        prefixSuffixT.put( "ii",    SUFFIX );
+        prefixSuffixT.put( "iii",   SUFFIX );
+        prefixSuffixT.put( "iv",    SUFFIX );
+        prefixSuffixT.put( "jr",    SUFFIX );
+        prefixSuffixT.put( "jr.",   SUFFIX );
+        prefixSuffixT.put( "sr",    SUFFIX );
+        prefixSuffixT.put( "sr.",   SUFFIX );
+    }
+    
+    /**
+     * Abbreviate a String by simply truncating it.
+     * @@param str the String to abbreviate
+     * @@param fm the FontMetrics for measuring the String length
+     * @@param width the maximum string width, in pixels
+     * @@return an abbreviated String
+     */
+    public static String abbreviate(String str, FontMetrics fm, int width) {
+        int lastblank = 0, nchars = 0, cumx = 0;
+        while ( cumx < width &&  nchars < str.length() ) {
+        if ( Character.isWhitespace(str.charAt(nchars)) ) {
+            lastblank = nchars;
+        }
+        cumx += fm.charWidth(str.charAt(nchars));
+        nchars++;
+        }
+        if ( nchars < str.length() && lastblank > 0 ) { nchars = lastblank; }
+        return ( nchars > 0 ? str.substring(0, nchars) : str );
+    }
+
+    /**
+     * Abbreviate a String as a given name.
+     * @@param str the String to abbreviate
+     * @@param fm the FontMetrics for measuring the String length
+     * @@param width the maximum string width, in pixels
+     * @@return an abbreviated String
+     */
+    public static String abbreviateName(String str, FontMetrics fm, int width)
+    {
+        if (fm.stringWidth(str) > width) str = abbreviateName(str, false);
+        if (fm.stringWidth(str) > width) str = abbreviateName(str, true);
+        return str;
+    }
+    
+    /**
+     * String abbreviation helper method for name strings.
+     * @@param inString the String to abbreviate
+     * @@param lastOnly true to include only the last name, false otherwise
+     * @@return an abbreviated name
+     */
+    private static String abbreviateName(String inString, boolean lastOnly) {
+        StringReader in = new StringReader(inString);
+        StreamTokenizer p = new StreamTokenizer(in);
+        p.wordChars('&', '&');
+        p.wordChars('@@', '@@');
+        p.wordChars(':', ':');
+        p.ordinaryChar(',');
+        p.ordinaryChar('-');
+        int c;
+        String lastNameHold = null;
+        String lastInitialHold = null;
+        StringBuffer outString = new StringBuffer();
+        try {
+        out:
+            while (true) {
+            c = p.nextToken();
+            switch (c) {
+            case StreamTokenizer.TT_EOF:
+                break out;
+            case StreamTokenizer.TT_EOL:
+                System.err.println("warning: unexpected EOL token"); break;
+            case StreamTokenizer.TT_NUMBER:
+                break;
+            case ',':
+                break out;
+            case StreamTokenizer.TT_WORD:
+                if (p.sval.endsWith(":")) outString.append(p.sval + " ");
+                else if (prefixSuffixT.get(p.sval.toLowerCase()) == null) {
+                    if (!lastOnly) {
+                        if (lastInitialHold != null) outString.append(lastInitialHold);
+                        lastInitialHold = p.sval.substring(0,1)+". ";
+                    }
+                    lastNameHold = p.sval;
+                }
+                break;
+            default:
+                break;
+            }
+            }
+            outString.append(lastNameHold);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return outString.toString();
+    }
+    
+} // end of class StringLib
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d10 1
+a10 3
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+d14 1
+a14 1
+ *
+d34 1
+a34 3
+            if ( i>0 ) {
+				sbuf.append(", ");
+			}
+d40 1
+a40 1
+
+d54 1
+a54 1
+            int idx2 = s.indexOf('E');
+d57 2
+a58 3
+            if ( idx2 >= 0 ) {
+				t += s.substring(idx2);
+			}
+d62 1
+a62 1
+
+d65 1
+a65 1
+     * all other letters.
+d70 5
+a74 7
+        if ( s == null ) {
+			return null;
+		}
+        if ( s.length() == 0 ) {
+			return s;
+		}
+
+d93 1
+a93 1
+
+d106 1
+a106 1
+
+d109 1
+a109 1
+
+d112 1
+a112 1
+    private static Map<String, String> prefixSuffixT = Collections.synchronizedMap(new HashMap<String, String>());
+d136 1
+a136 1
+
+d154 1
+a154 1
+        return nchars > 0 ? str.substring(0, nchars) : str;
+d166 2
+a167 6
+        if (fm.stringWidth(str) > width) {
+			str = abbreviateName(str, false);
+		}
+        if (fm.stringWidth(str) > width) {
+			str = abbreviateName(str, true);
+		}
+d170 1
+a170 1
+
+d203 2
+a204 3
+                if (p.sval.endsWith(":")) {
+					outString.append(p.sval + " ");
+				} else if (prefixSuffixT.get(p.sval.toLowerCase()) == null) {
+d206 1
+a206 3
+                        if (lastInitialHold != null) {
+							outString.append(lastInitialHold);
+						}
+d222 1
+a222 1
+
+@
+
+
+1.1
+log
+@file StringLib.java was initially added on branch beta.
+@
+text
+@d1 223
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 78
+package prefuse.util;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Array;
+
+/**
+ * Library of utility routines pertaining to Strings.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class StringLib {
+
+    private StringLib() {
+        // prevent instantiation
+    }
+
+    public static final String getArrayString(Object a) {
+        StringBuffer sbuf = new StringBuffer();
+        sbuf.append('[');
+        int size = Array.getLength(a);
+        for ( int i=0; i<size; ++i ) {
+            if ( i>0 ) sbuf.append(", ");
+            sbuf.append(Array.get(a, i));
+        }
+        sbuf.append(']');
+        return sbuf.toString();
+    }
+    
+    public static String formatNumber(double number, int decimalPlaces) {
+        String s = String.valueOf(number);
+        int idx1 = s.indexOf('.');
+        if ( idx1 == -1 ) {
+            return s;
+        } else {
+            int idx2 = s.indexOf('E');        
+            int dp = decimalPlaces + (idx2>=0 ? 0 : 1);
+            String t = s.substring(0, Math.min(idx1+dp, s.length()));
+            if ( idx2 >= 0 )
+                t += s.substring(idx2);
+            return t;
+        }
+    }
+    
+    public static String capitalizeFirstOnly(String s) {
+        if ( s == null )
+            return null;
+        if ( s.length() == 0 )
+            return s;
+        
+        StringBuffer sbuf = new StringBuffer();
+        char c = s.charAt(0);
+        sbuf.append(Character.toUpperCase(c));
+        boolean space = Character.isWhitespace(c);
+        for ( int i=1; i<s.length(); ++i ) {
+            c = s.charAt(i);
+            if ( Character.isWhitespace(c) ) {
+                space = true;
+            } else if ( space ) {
+                c = Character.toUpperCase(c);
+                space = false;
+            } else {
+                c = Character.toLowerCase(c);
+            }
+            sbuf.append(c);
+        }
+        return sbuf.toString();
+    }
+    
+    public static String getStackTrace(Throwable t) {
+        StringWriter sw = new StringWriter();
+        PrintWriter  pw = new PrintWriter(sw);
+        t.printStackTrace(pw);
+        pw.close();
+        return sw.toString();
+    }
+    
+} // end of class StringLib
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@a17 6
+    /**
+     * Given an array object, create a String showing the contents
+     * of the array using a "[a[0], a[1], ..., a[a.length-1]]" format.
+     * @@param a the array object
+     * @@return the array string
+     */
+a29 7
+    /**
+     * Format the given number as a String, including the given number of
+     * decimal places.
+     * @@param number the number to format
+     * @@param decimalPlaces the number of decimal places to include
+     * @@return the formatted String
+     */
+a44 6
+    /**
+     * Capitalize all letters preceded by whitespace, and lower case
+     * all other letters. 
+     * @@param s the String to capitalize
+     * @@return the capitalized string
+     */
+a69 5
+    /**
+     * Get the stack trace of the given Throwable as a String.
+     * @@param t the Throwable
+     * @@return the stack trace of the Throwable
+     */
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d10 1
+a10 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.4
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a2 2
+import java.awt.FontMetrics;
+import java.io.IOException;
+a3 2
+import java.io.StreamTokenizer;
+import java.io.StringReader;
+a5 1
+import java.util.Hashtable;
+a101 116
+    // ------------------------------------------------------------------------
+    // Abbreviation Methods
+    
+    private static final String SUFFIX = "suffix";
+    private static final String PREFIX = "prefix";
+    private static Hashtable prefixSuffixT = new Hashtable();
+    static {
+        prefixSuffixT.put( "mr",    PREFIX );
+        prefixSuffixT.put( "mr.",   PREFIX );
+        prefixSuffixT.put( "dr",    PREFIX );
+        prefixSuffixT.put( "dr.",   PREFIX );
+        prefixSuffixT.put( "lt",    PREFIX );
+        prefixSuffixT.put( "lt.",   PREFIX );
+        prefixSuffixT.put( "gen",   PREFIX );
+        prefixSuffixT.put( "gen.",  PREFIX );
+        prefixSuffixT.put( "sgt",   PREFIX );
+        prefixSuffixT.put( "sgt.",  PREFIX );
+        prefixSuffixT.put( "cmdr",  PREFIX );
+        prefixSuffixT.put( "cmdr.", PREFIX );
+        prefixSuffixT.put( "cpt",   PREFIX );
+        prefixSuffixT.put( "cpt.",  PREFIX );
+        prefixSuffixT.put( "ii",    SUFFIX );
+        prefixSuffixT.put( "iii",   SUFFIX );
+        prefixSuffixT.put( "iv",    SUFFIX );
+        prefixSuffixT.put( "jr",    SUFFIX );
+        prefixSuffixT.put( "jr.",   SUFFIX );
+        prefixSuffixT.put( "sr",    SUFFIX );
+        prefixSuffixT.put( "sr.",   SUFFIX );
+    }
+    
+    /**
+     * Abbreviate a String by simply truncating it.
+     * @@param str the String to abbreviate
+     * @@param fm the FontMetrics for measuring the String length
+     * @@param width the maximum string width, in pixels
+     * @@return an abbreviated String
+     */
+    public static String abbreviate(String str, FontMetrics fm, int width) {
+        int lastblank = 0, nchars = 0, cumx = 0;
+        while ( cumx < width &&  nchars < str.length() ) {
+        if ( Character.isWhitespace(str.charAt(nchars)) ) {
+            lastblank = nchars;
+        }
+        cumx += fm.charWidth(str.charAt(nchars));
+        nchars++;
+        }
+        if ( nchars < str.length() && lastblank > 0 ) { nchars = lastblank; }
+        return ( nchars > 0 ? str.substring(0, nchars) : str );
+    }
+
+    /**
+     * Abbreviate a String as a given name.
+     * @@param str the String to abbreviate
+     * @@param fm the FontMetrics for measuring the String length
+     * @@param width the maximum string width, in pixels
+     * @@return an abbreviated String
+     */
+    public static String abbreviateName(String str, FontMetrics fm, int width)
+    {
+        if (fm.stringWidth(str) > width) str = abbreviateName(str, false);
+        if (fm.stringWidth(str) > width) str = abbreviateName(str, true);
+        return str;
+    }
+    
+    /**
+     * String abbreviation helper method for name strings.
+     * @@param inString the String to abbreviate
+     * @@param lastOnly true to include only the last name, false otherwise
+     * @@return an abbreviated name
+     */
+    private static String abbreviateName(String inString, boolean lastOnly) {
+        StringReader in = new StringReader(inString);
+        StreamTokenizer p = new StreamTokenizer(in);
+        p.wordChars('&', '&');
+        p.wordChars('@@', '@@');
+        p.wordChars(':', ':');
+        p.ordinaryChar(',');
+        p.ordinaryChar('-');
+        int c;
+        String lastNameHold = null;
+        String lastInitialHold = null;
+        StringBuffer outString = new StringBuffer();
+        try {
+        out:
+            while (true) {
+            c = p.nextToken();
+            switch (c) {
+            case StreamTokenizer.TT_EOF:
+                break out;
+            case StreamTokenizer.TT_EOL:
+                System.err.println("warning: unexpected EOL token"); break;
+            case StreamTokenizer.TT_NUMBER:
+                break;
+            case ',':
+                break out;
+            case StreamTokenizer.TT_WORD:
+                if (p.sval.endsWith(":")) outString.append(p.sval + " ");
+                else if (prefixSuffixT.get(p.sval.toLowerCase()) == null) {
+                    if (!lastOnly) {
+                        if (lastInitialHold != null) outString.append(lastInitialHold);
+                        lastInitialHold = p.sval.substring(0,1)+". ";
+                    }
+                    lastNameHold = p.sval;
+                }
+                break;
+            default:
+                break;
+            }
+            }
+            outString.append(lastNameHold);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return outString.toString();
+    }
+    
+@
+
+

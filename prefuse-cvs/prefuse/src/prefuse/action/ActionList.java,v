@@ -1,0 +1,348 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action;
+
+import java.util.logging.Logger;
+
+import prefuse.Visualization;
+import prefuse.activity.Activity;
+import prefuse.util.StringLib;
+
+
+/**
+ * <p>The ActionList represents a chain of Actions that process VisualItems.
+ * ActionList also implements the Action interface, so ActionLists can be placed
+ * within other ActionList or {@@link ActionSwitch} instances,
+ * allowing recursive composition of different sets of Actions.</p>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ * @@see prefuse.activity.Activity
+ * @@see prefuse.action.Action
+ */
+public class ActionList extends CompositeAction {
+
+    private static final Logger s_logger = 
+        Logger.getLogger(ActionList.class.getName());
+    
+    /**
+     * Creates a new run-once ActionList.
+     */
+    public ActionList() {
+        super(0);
+    }
+    
+    /**
+     * Creates a new run-once ActionList that processes the given
+     * Visualization.
+     * @@param vis the {@@link prefuse.Visualization} to process.
+     */
+    public ActionList(Visualization vis) {
+        super(vis);
+    }
+    
+    /**
+     * Creates a new ActionList of specified duration and default
+     * step time of 20 milliseconds.
+     * @@param duration the duration of this Activity, in milliseconds
+     */
+    public ActionList(long duration) {
+        super(duration, Activity.DEFAULT_STEP_TIME);
+    }
+    
+    /**
+     * Creates a new ActionList which processes the given Visualization
+     * and has the specified duration and a default step time of 20
+     * milliseconds.
+     * @@param vis the {@@link prefuse.Visualization} to process.
+     * @@param duration the duration of this Activity, in milliseconds
+     */
+    public ActionList(Visualization vis, long duration) {
+        super(vis, duration);
+    }
+    
+    /**
+     * Creates a new ActionList of specified duration and step time.
+     * @@param duration the duration of this Activity, in milliseconds
+     * @@param stepTime the time to wait in milliseconds between executions
+     *  of the action list
+     */
+    public ActionList(long duration, long stepTime) {
+        super(duration, stepTime);
+    }
+
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        Object[] actions = m_actions.getArray();
+        for ( int i=0; i<actions.length; ++i ) {
+            Action a = (Action)actions[i];
+            try {
+                if ( a.isEnabled() ) a.run(frac);
+            } catch ( Exception e ) {
+                s_logger.warning(e.getMessage() + '\n'
+                        + StringLib.getStackTrace(e));
+            }
+        }
+    }
+
+} // end of class ActionList
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d15 1
+a15 1
+ *
+d22 1
+a22 1
+    private static final Logger s_logger =
+d24 1
+a24 1
+
+d31 1
+a31 1
+
+d40 1
+a40 1
+
+d49 1
+a49 1
+
+d60 1
+a60 1
+
+d74 4
+a77 3
+    @@Override
+	public void run(double frac) {
+    	for(Action a : m_actions) {
+d79 1
+a79 3
+                if ( a.isEnabled() ) {
+					a.run(frac);
+				}
+@
+
+
+1.1
+log
+@file ActionList.java was initially added on branch beta.
+@
+text
+@d1 87
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 82
+package prefuse.action;
+
+import java.util.logging.Logger;
+
+import prefuse.Visualization;
+import prefuse.activity.Activity;
+import prefuse.util.StringLib;
+
+
+/**
+ * <p>The ActionList represents a chain of Actions that process VisualItems.
+ * These lists can then be submitted to the ActivityManager
+ * to be executed. In addition, ActionList also implements the Action
+ * interface, so ActionLists can be placed within other ActionLists,
+ * allowing recursive composition of different sets of Actions.</p>
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ * @@see prefuse.activity.Activity
+ * @@see prefuse.action.Action
+ */
+public class ActionList extends CompositeAction {
+
+    private static final Logger s_logger = 
+        Logger.getLogger(ActionList.class.getName());
+    
+    /**
+     * Creates a new run-once ActionList.
+     */
+    public ActionList() {
+        super(0);
+    }
+    
+    public ActionList(Visualization vis) {
+        super(vis);
+    }
+    
+    /**
+     * Creates a new ActionList of specified duration and default
+     * step time of 20 milliseconds.
+     * @@param duration the duration of this Activity, in milliseconds
+     */
+    public ActionList(long duration) {
+        super(duration, Activity.DEFAULT_STEP_TIME);
+    }
+    
+    public ActionList(Visualization vis, long duration) {
+        super(vis, duration);
+    }
+    
+    /**
+     * Creates a new ActionList of specified duration and step time.
+     * @@param duration the duration of this Activity, in milliseconds
+     * @@param stepTime the time to wait in milliseconds between executions
+     *  of the action list
+     */
+    public ActionList(long duration, long stepTime) {
+        super(duration, stepTime);
+    }
+        
+    /**
+     * Runs this ActionList.
+     * @@see prefuse.action.Action#run(prefuse.a_old.ItemRegistry, double)
+     */
+    public void run(double frac) {
+        //long timein = System.currentTimeMillis();
+        
+        Object[] actions = m_actions.getArray();
+        for ( int i=0; i<actions.length; ++i ) {
+            Action a = (Action)actions[i];
+            try {
+                if ( a.isEnabled() ) a.run(frac);
+            } catch ( Exception e ) {
+                s_logger.warning(e.getMessage() + '\n'
+                        + StringLib.getStackTrace(e));
+            }
+        }
+        
+        //System.out.println(this + "\t" + (System.currentTimeMillis()-timein));
+    }
+
+} // end of class ActionList
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d66 2
+d78 2
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@d12 3
+a14 2
+ * ActionList also implements the Action interface, so ActionLists can be placed
+ * within other ActionList or {@@link ActionSwitch} instances,
+d17 1
+a33 5
+    /**
+     * Creates a new run-once ActionList that processes the given
+     * Visualization.
+     * @@param vis the {@@link prefuse.Visualization} to process.
+     */
+a46 7
+    /**
+     * Creates a new ActionList which processes the given Visualization
+     * and has the specified duration and a default step time of 20
+     * milliseconds.
+     * @@param vis the {@@link prefuse.Visualization} to process.
+     * @@param duration the duration of this Activity, in milliseconds
+     */
+d60 1
+a60 1
+
+d62 2
+a63 1
+     * @@see prefuse.action.Action#run(double)
+@
+
+
+1.1.2.4
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d16 1
+a16 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

@@ -1,0 +1,638 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2008.01.13.22.39.15;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.39;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Fixed javadoc comments
+@
+text
+@package prefuse.action.layout;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+
+import prefuse.Constants;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.StartVisiblePredicate;
+
+/**
+ * Layout Action that sets the positions for newly collapsed or newly
+ * expanded nodes of a tree. This action updates positions such that
+ * nodes flow out from their parents or collapse back into their parents
+ * upon animated transitions.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class CollapsedSubtreeLayout extends Layout {
+
+    private int m_orientation;
+    private Point2D m_point = new Point2D.Double();
+    
+    /**
+     * Create a new CollapsedSubtreeLayout. By default, nodes will collapse
+     * to the center point of their parents.
+     * @@param group the data group to layout (only newly collapsed or newly
+     * expanded items will be considered, as determined by their current
+     * visibility settings).
+     */
+    public CollapsedSubtreeLayout(String group) {
+        this(group, Constants.ORIENT_CENTER);
+    }
+    
+    /**
+     * Create a new CollapsedSubtreeLayout.
+     * @@param group the data group to layout (only newly collapsed or newly
+     * expanded items will be considered, as determined by their current
+     * visibility settings).
+     * @@param orientation the layout orientation, determining which point
+     * nodes will collapse/expand from. Valid values are
+     * {@@link prefuse.Constants#ORIENT_CENTER},
+     * {@@link prefuse.Constants#ORIENT_LEFT_RIGHT},
+     * {@@link prefuse.Constants#ORIENT_RIGHT_LEFT},
+     * {@@link prefuse.Constants#ORIENT_TOP_BOTTOM}, and
+     * {@@link prefuse.Constants#ORIENT_BOTTOM_TOP}.
+     */
+    public CollapsedSubtreeLayout(String group, int orientation) {
+        super(group);
+        m_orientation = orientation;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the layout orientation, determining which point nodes will collapse
+     * or exapnd from. Valid values are
+     * {@@link prefuse.Constants#ORIENT_CENTER},
+     * {@@link prefuse.Constants#ORIENT_LEFT_RIGHT},
+     * {@@link prefuse.Constants#ORIENT_RIGHT_LEFT},
+     * {@@link prefuse.Constants#ORIENT_TOP_BOTTOM}, and
+     * {@@link prefuse.Constants#ORIENT_BOTTOM_TOP}.
+     * @@return the layout orientation
+     */
+    public int getOrientation() {
+        return m_orientation;
+    }
+    
+    /**
+     * Set the layout orientation, determining which point nodes will collapse
+     * or exapnd from. Valid values are
+     * {@@link prefuse.Constants#ORIENT_CENTER},
+     * {@@link prefuse.Constants#ORIENT_LEFT_RIGHT},
+     * {@@link prefuse.Constants#ORIENT_RIGHT_LEFT},
+     * {@@link prefuse.Constants#ORIENT_TOP_BOTTOM}, and
+     * {@@link prefuse.Constants#ORIENT_BOTTOM_TOP}.
+     * @@param orientation the layout orientation to use
+     */
+    public void setOrientation(int orientation) {
+        if ( orientation < 0 || orientation >= Constants.ORIENTATION_COUNT )
+            throw new IllegalArgumentException(
+                "Unrecognized orientation value: "+orientation);
+        m_orientation = orientation;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        // handle newly expanded subtrees - ensure they emerge from
+        // a visible ancestor node
+        Iterator items = m_vis.visibleItems(m_group);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem) items.next();
+            if ( item instanceof NodeItem && !item.isStartVisible() ) {
+                NodeItem n = (NodeItem)item;
+                Point2D p = getPoint(n, true);
+                n.setStartX(p.getX());
+                n.setStartY(p.getY());
+            }
+        }
+        
+        // handle newly collapsed nodes - ensure they collapse to
+        // the greatest visible ancestor node
+        items = m_vis.items(m_group, StartVisiblePredicate.TRUE);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem) items.next();
+            if ( item instanceof NodeItem && !item.isEndVisible() ) {
+                NodeItem n = (NodeItem)item;
+                Point2D p = getPoint(n, false);
+                n.setStartX(n.getEndX());
+                n.setStartY(n.getEndY());
+                n.setEndX(p.getX());
+                n.setEndY(p.getY());
+            }
+        }
+
+    }
+
+    private Point2D getPoint(NodeItem n, boolean start) {
+        // find the visible ancestor
+        NodeItem p = (NodeItem)n.getParent();
+        if ( start )
+            for (; p!=null && !p.isStartVisible(); p=(NodeItem)p.getParent());
+        else
+            for (; p!=null && !p.isEndVisible(); p=(NodeItem)p.getParent());
+        if ( p == null ) {
+            m_point.setLocation(n.getX(), n.getY());
+            return m_point;
+        }
+        
+        // get the vanishing/appearing point
+        double x = start ? p.getStartX() : p.getEndX();
+        double y = start ? p.getStartY() : p.getEndY();
+        Rectangle2D b = p.getBounds();
+        switch ( m_orientation ) {
+        case Constants.ORIENT_LEFT_RIGHT:
+            m_point.setLocation(x+b.getWidth(), y);
+            break;
+        case Constants.ORIENT_RIGHT_LEFT:
+            m_point.setLocation(x-b.getWidth(), y);
+            break;
+        case Constants.ORIENT_TOP_BOTTOM:
+            m_point.setLocation(x, y+b.getHeight());
+            break;
+        case Constants.ORIENT_BOTTOM_TOP:
+            m_point.setLocation(x, y-b.getHeight());
+            break;
+        case Constants.ORIENT_CENTER:
+            m_point.setLocation(x, y);
+            break;
+        }
+        return m_point;
+    }
+
+} // end of class CollapsedSubtreeLayout
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d5 3
+d17 1
+a17 1
+ *
+d22 3
+a24 3
+    private Orientation m_orientation;
+    private final Point2D m_point = new Point2D.Double();
+
+d33 1
+a33 1
+        this(group, Orientation.CENTER);
+d35 1
+a35 1
+
+d42 6
+a47 1
+     * nodes will collapse/expand from.
+d49 1
+a49 1
+    public CollapsedSubtreeLayout(String group, Orientation orientation) {
+d53 1
+a53 1
+
+d55 1
+a55 1
+
+d58 6
+a63 1
+     * or expand from.
+d66 1
+a66 1
+    public Orientation getOrientation() {
+d69 1
+a69 1
+
+d72 7
+a78 1
+     * or expand from.
+d80 4
+a83 1
+    public void setOrientation(Orientation orientation) {
+d86 1
+a86 1
+
+d88 1
+a88 1
+
+d92 1
+a92 2
+    @@Override
+	public void run(double frac) {
+d95 3
+a97 1
+    	for(VisualItem<?> item : m_vis.visibleItems(m_group)) {
+d99 1
+a99 1
+                NodeItem<?,?> n = (NodeItem<?,?>)item;
+d105 1
+a105 1
+
+d108 3
+a110 1
+    	for(VisualItem<?> item : m_vis.items(m_group, StartVisiblePredicate.TRUE)) {
+d112 1
+a112 1
+                NodeItem<?,?> n = (NodeItem<?,?>)item;
+d123 1
+a123 1
+    private Point2D getPoint(NodeItem<?,?> n, boolean start) {
+d125 5
+a129 10
+        NodeItem<?,?> p = n.getParent();
+        if ( start ) {
+			for (; p!=null && !p.isStartVisible(); p=p.getParent()) {
+				;
+			}
+		} else {
+			for (; p!=null && !p.isEndVisible(); p=p.getParent()) {
+				;
+			}
+		}
+d134 1
+a134 1
+
+d140 1
+a140 1
+        case LEFT_RIGHT:
+d143 1
+a143 1
+        case RIGHT_LEFT:
+d146 1
+a146 1
+        case TOP_BOTTOM:
+d149 1
+a149 1
+        case BOTTOM_TOP:
+d152 1
+a152 1
+        case CENTER:
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d78 1
+a78 1
+     * @@return the layout orientation to use
+@
+
+
+1.1
+log
+@file CollapsedSubtreeLayout.java was initially added on branch beta.
+@
+text
+@d1 159
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 123
+package prefuse.action.layout;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+
+import prefuse.Constants;
+import prefuse.data.Tree;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.StartVisiblePredicate;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class CollapsedSubtreeLayout extends Layout {
+
+    private int m_orientation;
+    private Point2D m_point = new Point2D.Double();
+    
+    public CollapsedSubtreeLayout(String group) {
+        this(group, Constants.LEFT_TO_RIGHT);
+    }
+    
+    public CollapsedSubtreeLayout(String group, int orientation) {
+        super(group);
+        m_orientation = orientation;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public int getOrientation() {
+        return m_orientation;
+    }
+    
+    public void setOrientation(int orientation) {
+        if ( orientation < 0 || orientation >= Constants.ORIENTATION_COUNT )
+            throw new IllegalArgumentException(
+                "Unrecognized orientation value: "+orientation);
+        m_orientation = orientation;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.layout.Layout#run(double)
+     */
+    public void run(double frac) {
+        // handle newly expanded subtrees - ensure they emerge from
+        // a visible ancestor node
+        Iterator items = m_vis.visibleItems(m_group);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem) items.next();
+            if ( item instanceof NodeItem && !item.isStartVisible() ) {
+                NodeItem n = (NodeItem)item;
+                if ( n.getGraph() instanceof Tree ) {
+                    //NodeItem p = getParent(n, true);
+                    Point2D p = getPoint(n, true);
+                    n.setStartX(p.getX());
+                    n.setStartY(p.getY());
+                }
+            }
+        }
+        
+        // handle newly collapsed nodes - ensure they collapse to
+        // the greatest visible ancestor node
+        items = m_vis.items(m_group, StartVisiblePredicate.TRUE);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem) items.next();
+            if ( item instanceof NodeItem && !item.isEndVisible() ) {
+                NodeItem n = (NodeItem)item;
+                if ( n.getGraph() instanceof Tree ) {
+                    //NodeItem p = getParent(n, false);
+                    Point2D p = getPoint(n, false);
+                    n.setStartX(n.getEndX());
+                    n.setStartY(n.getEndY());
+                    n.setEndX(p.getX());
+                    n.setEndY(p.getY());
+                }
+            }
+        }
+
+    }
+
+    private Point2D getPoint(NodeItem n, boolean start) {
+        // find the visible ancestor
+        NodeItem p = (NodeItem)n.getParent();
+        if ( start )
+            for (; p!=null && !p.isStartVisible(); p=(NodeItem)p.getParent());
+        else
+            for (; p!=null && !p.isEndVisible(); p=(NodeItem)p.getParent());
+        
+        // get the vanishing/appearing point
+        double x = start ? p.getStartX() : p.getEndX();
+        double y = start ? p.getStartY() : p.getEndY();
+        Rectangle2D b = p.getBounds();
+        switch ( m_orientation ) {
+        case Constants.LEFT_TO_RIGHT:
+            m_point.setLocation(x+b.getWidth(), y);
+            break;
+        case Constants.RIGHT_TO_LEFT:
+            m_point.setLocation(x-b.getWidth(), y);
+            break;
+        case Constants.TOP_TO_BOTTOM:
+            m_point.setLocation(x, y+b.getHeight());
+            break;
+        case Constants.BOTTOM_TO_TOP:
+            m_point.setLocation(x, y-b.getHeight());
+            break;
+        }
+        return m_point;
+    }
+    
+//    private NodeItem getParent(NodeItem n, boolean start) {
+//        NodeItem p = (NodeItem)n.getParent();
+//        if ( start )
+//            for (; p!=null && !p.isStartVisible(); p=(NodeItem)p.getParent());
+//        else
+//            for (; p!=null && !p.isEndVisible(); p=(NodeItem)p.getParent());
+//        return p;
+//    }
+
+} // end of class CollapsedSubtreeLayout
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d8 1
+d22 1
+a22 1
+        this(group, Constants.ORIENT_CENTER);
+d56 6
+a61 3
+                Point2D p = getPoint(n, true);
+                n.setStartX(p.getX());
+                n.setStartY(p.getY());
+d72 8
+a79 5
+                Point2D p = getPoint(n, false);
+                n.setStartX(n.getEndX());
+                n.setStartY(n.getEndY());
+                n.setEndX(p.getX());
+                n.setEndY(p.getY());
+a91 4
+        if ( p == null ) {
+        	m_point.setLocation(n.getX(), n.getY());
+        	return m_point;
+        }
+d98 1
+a98 1
+        case Constants.ORIENT_LEFT_RIGHT:
+d101 1
+a101 1
+        case Constants.ORIENT_RIGHT_LEFT:
+d104 1
+a104 1
+        case Constants.ORIENT_TOP_BOTTOM:
+d107 1
+a107 1
+        case Constants.ORIENT_BOTTOM_TOP:
+a109 3
+        case Constants.ORIENT_CENTER:
+        	m_point.setLocation(x, y);
+        	break;
+d113 9
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d86 2
+a87 2
+            m_point.setLocation(n.getX(), n.getY());
+            return m_point;
+d108 2
+a109 2
+            m_point.setLocation(x, y);
+            break;
+@
+
+
+1.1.2.4
+log
+@Lots of javadoc
+@
+text
+@a12 5
+ * Layout Action that sets the positions for newly collapsed or newly
+ * expanded nodes of a tree. This action updates positions such that
+ * nodes flow out from their parents or collapse back into their parents
+ * upon animated transitions.
+ * 
+a19 7
+    /**
+     * Create a new CollapsedSubtreeLayout. By default, nodes will collapse
+     * to the center point of their parents.
+     * @@param group the data group to layout (only newly collapsed or newly
+     * expanded items will be considered, as determined by their current
+     * visibility settings).
+     */
+a23 13
+    /**
+     * Create a new CollapsedSubtreeLayout.
+     * @@param group the data group to layout (only newly collapsed or newly
+     * expanded items will be considered, as determined by their current
+     * visibility settings).
+     * @@param orientation the layout orientation, determining which point
+     * nodes will collapse/expand from. Valid values are
+     * {@@link prefuse.Constants#ORIENT_CENTER},
+     * {@@link prefuse.Constants#ORIENT_LEFT_RIGHT},
+     * {@@link prefuse.Constants#ORIENT_RIGHT_LEFT},
+     * {@@link prefuse.Constants#ORIENT_TOP_BOTTOM}, and
+     * {@@link prefuse.Constants#ORIENT_BOTTOM_TOP}.
+     */
+a30 10
+    /**
+     * Get the layout orientation, determining which point nodes will collapse
+     * or exapnd from. Valid values are
+     * {@@link prefuse.Constants#ORIENT_CENTER},
+     * {@@link prefuse.Constants#ORIENT_LEFT_RIGHT},
+     * {@@link prefuse.Constants#ORIENT_RIGHT_LEFT},
+     * {@@link prefuse.Constants#ORIENT_TOP_BOTTOM}, and
+     * {@@link prefuse.Constants#ORIENT_BOTTOM_TOP}.
+     * @@return the layout orientation
+     */
+a34 10
+    /**
+     * Set the layout orientation, determining which point nodes will collapse
+     * or exapnd from. Valid values are
+     * {@@link prefuse.Constants#ORIENT_CENTER},
+     * {@@link prefuse.Constants#ORIENT_LEFT_RIGHT},
+     * {@@link prefuse.Constants#ORIENT_RIGHT_LEFT},
+     * {@@link prefuse.Constants#ORIENT_TOP_BOTTOM}, and
+     * {@@link prefuse.Constants#ORIENT_BOTTOM_TOP}.
+     * @@return the layout orientation to use
+     */
+d45 1
+a45 1
+     * @@see prefuse.action.Action#run(double)
+@
+
+
+1.1.2.5
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d18 1
+a18 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

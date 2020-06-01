@@ -1,0 +1,106 @@
+head	1.3;
+access;
+symbols
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.12.18.23.41;	author jheer;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.11.19.11.11;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.03.09.03.49.10;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.graph.event;
+
+import java.util.EventListener;
+
+import edu.berkeley.guir.prefuse.graph.Entity;
+import edu.berkeley.guir.prefuse.graph.external.GraphLoader;
+
+/**
+ * Listener interface for monitoring the loading and unloading of graph
+ *  data from an external backing store.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public interface GraphLoaderListener extends EventListener {
+
+    /**
+     * Indicates an Entity has been loaded from an external store.
+     * @@param loader the responsible GraphLoader
+     * @@param e the loaded Entity
+     */
+    public void entityLoaded(GraphLoader loader, Entity e);
+    
+    /**
+     * Notifies listener that a loadeded Entity has been unloaded and
+     *  so is no longer available in memory.
+     * @@param loader the responsible GraphLoader
+     * @@param e the unloaded Entity
+     */
+    public void entityUnloaded(GraphLoader loader, Entity e);
+    
+} // end of interface GraphLoaderListener
+@
+
+
+1.2
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.1
+log
+@Initial commit of preliminary external data source classes
+@
+text
+@d6 1
+d9 2
+d17 14
+a30 2
+    public void entityLoaded(Entity e);
+    public void entityUnloaded(Entity e);
+@
+

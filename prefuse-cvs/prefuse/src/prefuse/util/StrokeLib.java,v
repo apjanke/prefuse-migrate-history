@@ -1,0 +1,467 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.1
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.02.24.04.48.32;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.02.17.18.08.28;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.06;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Fixed reported javadoc bug.
+@
+text
+@package prefuse.util;
+
+import java.awt.BasicStroke;
+
+import prefuse.util.collections.IntObjectHashMap;
+
+/**
+ * Library maintaining a cache of drawing strokes and other useful stroke
+ * computation routines.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class StrokeLib {
+
+    private static final IntObjectHashMap strokeMap = new IntObjectHashMap();
+    private static int misses = 0;
+    private static int lookups = 0;
+
+    /** Dash pattern for a dotted line */
+    public static final float[] DOTS = new float[] { 1.0f, 2.0f };
+    /** Dash pattern for regular uniform dashes */
+    public static final float[] DASHES = new float[] { 5.0f, 5.0f };
+    /** Dash pattern for longer uniform dashes */
+    public static final float[] LONG_DASHES = new float[] { 10.0f, 10.0f };
+    
+    /**
+     * Get a square capped, miter joined, non-dashed stroke of the given width.
+     * @@param width the requested stroke width
+     * @@return the stroke
+     */
+    public static BasicStroke getStroke(float width) {
+        return getStroke(width,BasicStroke.CAP_SQUARE,BasicStroke.JOIN_MITER);
+    }
+    
+    /**
+     * Get a square capped, miter joined, dashed stroke with the given width
+     * and dashing attributes.
+     * @@param width the requested stroke width
+     * @@param dashes an array describing the alternation pattern of
+     * a dashed line. For example [5f, 3f] will create dashes of length 5
+     * with spaces of length 3 between them. A null value indicates no
+     * dashing.
+     * @@return the stroke
+     * @@see java.awt.BasicStroke
+     */
+    public static BasicStroke getStroke(float width, float[] dashes) {
+        return getStroke(width, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER,
+                         10.0f, dashes, 0f);
+    }
+    
+    /**
+     * Get a non-dashed stroke of the given width, cap, and join
+     * @@param width the requested stroke width
+     * @@param cap the requested cap type, one of
+     * {@@link java.awt.BasicStroke#CAP_BUTT},
+     * {@@link java.awt.BasicStroke#CAP_ROUND}, or
+     * {@@link java.awt.BasicStroke#CAP_SQUARE}
+     * @@param join the requested join type, one of
+     * {@@link java.awt.BasicStroke#JOIN_BEVEL},
+     * {@@link java.awt.BasicStroke#JOIN_MITER}, or
+     * {@@link java.awt.BasicStroke#JOIN_ROUND} 
+     * @@return the stroke
+     */
+    public static BasicStroke getStroke(float width, int cap, int join) {
+        return getStroke(width, cap, join, 10.0f, null, 0f);
+    }
+    
+    /**
+     * Get a dashed stroke of the given width, cap, join, miter limit,
+     * and dashing attributes.
+     * @@param width the requested stroke width
+     * @@param cap the requested cap type, one of
+     * {@@link java.awt.BasicStroke#CAP_BUTT},
+     * {@@link java.awt.BasicStroke#CAP_ROUND}, or
+     * {@@link java.awt.BasicStroke#CAP_SQUARE}
+     * @@param join the requested join type, one of
+     * {@@link java.awt.BasicStroke#JOIN_BEVEL},
+     * {@@link java.awt.BasicStroke#JOIN_MITER}, or
+     * {@@link java.awt.BasicStroke#JOIN_ROUND} 
+     * @@param miterLimit the miter limit at which to bevel miter joins
+     * @@param dashes an array describing the alternation pattern of
+     * a dashed line. For example [5f, 3f] will create dashes of length 5
+     * with spaces of length 3 between them. A null value indicates no
+     * dashing.
+     * @@param dashPhase the phase or offset from which to begin the
+     * dash pattern
+     * @@return the stroke
+     * @@see java.awt.BasicStroke
+     */
+    public static BasicStroke getStroke(float width, int cap, int join,
+            float miterLimit, float[] dashes, float dashPhase)
+    {
+        int key = getStrokeKey(width,cap,join,miterLimit,dashes,dashPhase);
+        BasicStroke s = null;
+        if ( (s=(BasicStroke)strokeMap.get(key)) == null ) {
+            s = new BasicStroke(width, cap, join, 
+                                miterLimit, dashes, dashPhase);
+            strokeMap.put(key, s);
+            ++misses;
+        }
+        ++lookups;
+        return s;
+    }
+    
+    /**
+     * Compute a hash-key for stroke storage and lookup.
+     */
+    protected static int getStrokeKey(float width, int cap, int join,
+            float miterLimit, float[] dashes, float dashPhase)
+    {
+        int hash = Float.floatToIntBits(width);
+        hash = hash * 31 + join;
+        hash = hash * 31 + cap;
+        hash = hash * 31 + Float.floatToIntBits(miterLimit);
+        if (dashes != null) {
+            hash = hash * 31 + Float.floatToIntBits(dashPhase);
+            for (int i = 0; i < dashes.length; i++) {
+                hash = hash * 31 + Float.floatToIntBits(dashes[i]);
+            }
+        }
+        return hash;
+    }
+    
+    /**
+     * Get a stroke with the same properties as the given stroke, but with
+     * a modified width value.
+     * @@param s the stroke to base the returned stroke on
+     * @@param width the desired width of the derived stroke
+     * @@return the derived Stroke
+     */
+    public static BasicStroke getDerivedStroke(BasicStroke s, float width) {
+        if ( s.getLineWidth() == width ) {
+            return s;
+        } else {
+            return getStroke(width*s.getLineWidth(), s.getEndCap(),
+                    s.getLineJoin(), s.getMiterLimit(),
+                    s.getDashArray(), s.getDashPhase());
+        }
+    }
+    
+    /**
+     * Get the number of cache misses to the Stroke object cache.
+     * @@return the number of cache misses
+     */
+    public static int getCacheMissCount() {
+        return misses;
+    }
+    
+    /**
+     * Get the number of cache lookups to the Stroke object cache.
+     * @@return the number of cache lookups
+     */
+    public static int getCacheLookupCount() {
+        return lookups;
+    }
+    
+    /**
+     * Clear the Stroke object cache.
+     */
+    public static void clearCache() {
+        strokeMap.clear();
+    }    
+    
+} // end of class StrokeLib
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d10 1
+a10 1
+ *
+d25 1
+a25 1
+
+d34 1
+a34 1
+
+d50 1
+a50 1
+
+d61 1
+a61 1
+     * {@@link java.awt.BasicStroke#JOIN_ROUND}
+d67 1
+a67 1
+
+d79 1
+a79 1
+     * {@@link java.awt.BasicStroke#JOIN_ROUND}
+d96 1
+a96 1
+            s = new BasicStroke(width, cap, join,
+d104 1
+a104 1
+
+d117 2
+a118 2
+            for (float element : dashes) {
+                hash = hash * 31 + Float.floatToIntBits(element);
+d123 1
+a123 1
+
+d140 1
+a140 1
+
+d148 1
+a148 1
+
+d156 1
+a156 1
+
+d162 2
+a163 2
+    }
+
+@
+
+
+2.1
+log
+@Added "stroke" visual property for configuring line drawing.
+EdgeRenderer now draws directed edges (more) correctly, and allow parameterization of the arrow head size.
+@
+text
+@a54 4
+     * {@@link java.awt.BasicStroke#JOIN_BEVEL},
+     * {@@link java.awt.BasicStroke#JOIN_MITER}, or
+     * {@@link java.awt.BasicStroke#JOIN_ROUND}
+     * @@param join the requested join type, one of
+d58 4
+a72 4
+     * {@@link java.awt.BasicStroke#JOIN_BEVEL},
+     * {@@link java.awt.BasicStroke#JOIN_MITER}, or
+     * {@@link java.awt.BasicStroke#JOIN_ROUND}
+     * @@param join the requested join type, one of
+d76 4
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d18 7
+d27 1
+a27 1
+     * Get a cap square, join mitred, non-dashed stroke of the given width.
+d31 1
+a31 1
+    public static BasicStroke getStroke(int width) {
+d36 16
+d64 30
+a93 2
+    public static BasicStroke getStroke(int width, int cap, int join) {
+        int key = (width<<4)+(cap<<2)+join;
+d96 2
+a97 1
+            s = new BasicStroke(width, cap, join);
+d106 36
+@
+
+
+1.1
+log
+@file StrokeLib.java was initially added on branch beta.
+@
+text
+@d1 76
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 44
+package prefuse.util;
+
+import java.awt.BasicStroke;
+
+import prefuse.util.collections.IntObjectHashMap;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class StrokeLib {
+
+    private static final IntObjectHashMap strokeMap = new IntObjectHashMap();
+    private static int misses = 0;
+    private static int lookups = 0;
+    
+    public static BasicStroke getStroke(int width) {
+        return getStroke(width,BasicStroke.CAP_SQUARE,BasicStroke.JOIN_MITER);
+    }
+    
+    public static BasicStroke getStroke(int width, int cap, int join) {
+        int key = (width<<4)+(cap<<2)+join;
+        BasicStroke s = null;
+        if ( (s=(BasicStroke)strokeMap.get(key)) == null ) {
+            s = new BasicStroke(width, cap, join);
+            strokeMap.put(key, s);
+            ++misses;
+        }
+        ++lookups;
+        return s;
+    }
+    
+    public static int getCacheMissCount() {
+        return misses;
+    }
+    
+    public static int getCacheLookupCount() {
+        return lookups;
+    }
+    
+    public static void clearCache() {
+        strokeMap.clear();
+    }    
+    
+} // end of class StrokeLib
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d8 1
+a8 4
+ * Library maintaining a cache of drawing strokes and other useful stroke
+ * computation routines.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a15 5
+    /**
+     * Get a cap square, join mitred, non-dashed stroke of the given width.
+     * @@param width the requested stroke width
+     * @@return the stroke
+     */
+a19 13
+    /**
+     * Get a non-dashed stroke of the given width, cap, and join
+     * @@param width the requested stroke width
+     * @@param cap the requested cap type, one of
+     * {@@link java.awt.geom.BasicStroke#JOIN_BEVEL},
+     * {@@link java.awt.geom.BasicStroke#JOIN_MITER}, or
+     * {@@link java.awt.geom.BasicStroke#JOIN_ROUND
+     * @@param join the requested join type, one of
+     * {@@link java.awt.geom.BasicStroke#CAP_BUTT},
+     * {@@link java.awt.geom.BasicStroke#CAP_ROUND}, or
+     * {@@link java.awt.geom.BasicStroke#CAP_SQUARE}
+     * @@return the stroke
+     */
+a31 4
+    /**
+     * Get the number of cache misses to the Stroke object cache.
+     * @@param return the number of cache misses
+     */
+a35 4
+    /**
+     * Get the number of cache lookups to the Stroke object cache.
+     * @@param return the number of cache lookups
+     */
+a39 3
+    /**
+     * Clear the Stroke object cache.
+     */
+@
+
+
+1.1.2.3
+log
+@Javadoc'd.
+@
+text
+@d32 3
+a34 3
+     * {@@link java.awt.BasicStroke#JOIN_BEVEL},
+     * {@@link java.awt.BasicStroke#JOIN_MITER}, or
+     * {@@link java.awt.BasicStroke#JOIN_ROUND}
+d36 3
+a38 3
+     * {@@link java.awt.BasicStroke#CAP_BUTT},
+     * {@@link java.awt.BasicStroke#CAP_ROUND}, or
+     * {@@link java.awt.BasicStroke#CAP_SQUARE}
+d55 1
+a55 1
+     * @@return the number of cache misses
+d63 1
+a63 1
+     * @@return the number of cache lookups
+@
+
+

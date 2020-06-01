@@ -1,0 +1,426 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.07.15.19.45.13;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.39;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Added support for different orientations to StackedAreaChart and CollapsedStackLayout
+@
+text
+@package prefuse.action.layout;
+
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+
+import prefuse.Constants;
+import prefuse.data.Table;
+import prefuse.render.PolygonRenderer;
+import prefuse.visual.VisualItem;
+
+/**
+ * Layout Action that updates the outlines of polygons in a stacked line chart,
+ * properly setting the coordinates of "collapsed" stacks.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class CollapsedStackLayout extends Layout {
+
+    private String    m_polyField;
+    private int       m_orientation = Constants.ORIENT_BOTTOM_TOP;
+    private boolean   m_horiz = false;
+    private boolean   m_top = false;
+    
+    /**
+     * Create a new CollapsedStackLayout. The polygon field is assumed to be
+     * {@@link prefuse.render.PolygonRenderer#POLYGON}.
+     * @@param group the data group to layout
+     */
+    public CollapsedStackLayout(String group) {
+        this(group, PolygonRenderer.POLYGON);
+    }
+    
+    /**
+     * Create a new CollapsedStackLayout.
+     * @@param group the data group to layout
+     * @@param field the data field from which to lookup the polygons
+     */
+    public CollapsedStackLayout(String group, String field) {
+        super(group);
+        m_polyField = field;
+    }
+    
+    /**
+     * Returns the orientation of this layout. One of
+     * {@@link Constants#ORIENT_BOTTOM_TOP} (to grow bottom-up),
+     * {@@link Constants#ORIENT_TOP_BOTTOM} (to grow top-down),
+     * {@@link Constants#ORIENT_LEFT_RIGHT} (to grow left-right), or
+     * {@@link Constants#ORIENT_RIGHT_LEFT} (to grow right-left).
+     * @@return the orientation of this layout
+     */
+    public int getOrientation() {
+        return m_orientation;
+    }
+    
+    /**
+     * Sets the orientation of this layout. Must be one of
+     * {@@link Constants#ORIENT_BOTTOM_TOP} (to grow bottom-up),
+     * {@@link Constants#ORIENT_TOP_BOTTOM} (to grow top-down),
+     * {@@link Constants#ORIENT_LEFT_RIGHT} (to grow left-right), or
+     * {@@link Constants#ORIENT_RIGHT_LEFT} (to grow right-left).
+     * @@param orient the desired orientation of this layout
+     * @@throws IllegalArgumentException if the orientation value
+     * is not a valid value
+     */
+    public void setOrientation(int orient) {
+        if ( orient != Constants.ORIENT_TOP_BOTTOM &&
+             orient != Constants.ORIENT_BOTTOM_TOP &&
+             orient != Constants.ORIENT_LEFT_RIGHT &&
+             orient != Constants.ORIENT_RIGHT_LEFT) {
+            throw new IllegalArgumentException(
+                    "Invalid orientation value: "+orient);
+        }
+        m_orientation = orient;
+        m_horiz = (m_orientation == Constants.ORIENT_LEFT_RIGHT ||
+                   m_orientation == Constants.ORIENT_RIGHT_LEFT);
+        m_top   = (m_orientation == Constants.ORIENT_TOP_BOTTOM ||
+                   m_orientation == Constants.ORIENT_LEFT_RIGHT);
+    }
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        VisualItem lastItem = null;
+        
+        Rectangle2D bounds = getLayoutBounds();
+        float floor = (float)
+            (m_horiz ? (m_top?bounds.getMaxX():bounds.getMinX())
+                     : (m_top?bounds.getMinY():bounds.getMaxY()));
+        int bias = (m_horiz ? 0 : 1);
+        
+        // TODO: generalize this -- we want tuplesReversed available for general sets
+        Iterator iter = ((Table)m_vis.getGroup(m_group)).tuplesReversed();
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            boolean prev = item.isStartVisible();
+            boolean cur = item.isVisible();
+            
+            if ( !prev && cur ) {
+                // newly visible, update contour
+                float[] f = (float[])item.get(m_polyField);
+                if ( f == null ) continue;
+                
+                if ( lastItem == null ) {
+                    // no previous items, smash values to the floor
+                    for ( int i=0; i<f.length; i+=2 )
+                        f[i+bias] = floor;
+                } else {
+                    // previous visible item, smash values to the
+                    // visible item's contour
+                    float[] l = (float[])lastItem.get(m_polyField);
+                    for ( int i=0; i<f.length/2; i+=2 )
+                        f[i+bias] = f[f.length-2-i+bias]
+                                  = l[i+bias];
+                }
+            } else if ( prev && cur ) {
+                // this item was previously visible, remember it
+                lastItem = item;
+            }
+        }
+    }
+    
+} // end of class CollapsedStackAction
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d4 3
+d14 1
+a14 1
+ *
+d19 5
+a23 5
+    private final String    m_polyField;
+    private Orientation      m_orientation = Orientation.BOTTOM_TOP;
+    private final boolean   m_horiz = false;
+    private final boolean   m_top = false;
+
+d32 1
+a32 1
+
+d42 1
+a42 1
+
+d45 4
+a48 4
+     * {@@link Orientation#BOTTOM_TOP} (to grow bottom-up),
+     * {@@link Orientation#TOP_BOTTOM} (to grow top-down),
+     * {@@link Orientation#LEFT_RIGHT} (to grow left-right), or
+     * {@@link Orientation#RIGHT_LEFT} (to grow right-left).
+d51 1
+a51 1
+    public Orientation getOrientation() {
+d54 1
+a54 1
+
+d57 4
+a60 4
+     * {@@link Orientation#BOTTOM_TOP} (to grow bottom-up),
+     * {@@link Orientation#TOP_BOTTOM} (to grow top-down),
+     * {@@link Orientation#LEFT_RIGHT} (to grow left-right), or
+     * {@@link Orientation#RIGHT_LEFT} (to grow right-left).
+d65 8
+a72 5
+    public void setOrientation(Orientation orient) {
+    	if(orient == Orientation.CENTER) {
+    		throw new IllegalArgumentException(
+                "Invalid orientation value: "+orient);
+    	}
+d74 4
+d79 1
+a79 1
+
+d83 3
+a85 4
+    @@Override
+	public void run(double frac) {
+        VisualItem<?> lastItem = null;
+
+d89 3
+a91 3
+                     : m_top?bounds.getMinY():bounds.getMaxY());
+        int bias = m_horiz ? 0 : 1;
+
+d93 3
+a95 1
+        for(VisualItem<?> item : ((Table<? extends VisualItem<?>>)m_vis.getGroup(m_group)).tuplesReversed()) {
+d98 1
+a98 1
+
+d102 2
+a103 4
+                if ( f == null ) {
+					continue;
+				}
+
+d106 2
+a107 3
+                    for ( int i=0; i<f.length; i+=2 ) {
+						f[i+bias] = floor;
+					}
+d112 2
+a113 2
+                    for ( int i=0; i<f.length/2; i+=2 ) {
+						f[i+bias] = f[f.length-2-i+bias]
+a114 1
+					}
+d122 1
+a122 1
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d3 1
+d6 1
+d20 3
+d44 37
+d85 6
+a90 1
+        float maxY = (float)getLayoutBounds().getMaxY();
+d105 3
+a107 3
+                    // no previous items, smash y-values to the floor
+                    for ( int i=1; i<f.length; i+=2 )
+                        f[i] = maxY;
+d109 1
+a109 1
+                    // previous visible item, smash y-values to the
+d112 3
+a114 2
+                    for ( int i=1; i<f.length/2; i+=2 )
+                        f[i] = f[f.length-i] = l[i];
+@
+
+
+1.1
+log
+@file CollapsedStackLayout.java was initially added on branch beta.
+@
+text
+@d1 75
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 62
+package prefuse.action.layout;
+
+import java.util.Iterator;
+
+import prefuse.data.Table;
+import prefuse.render.PolygonRenderer;
+import prefuse.visual.VisualItem;
+
+/**
+ * This class updates the outlines of polygons in a stacked line chart,
+ * properly setting the coordinates of "collapsed" stacks.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class CollapsedStackLayout extends Layout {
+
+    private String    m_polyField;
+    
+    public CollapsedStackLayout(String group) {
+        this(group, PolygonRenderer.POLYGON);
+    }
+    
+    public CollapsedStackLayout(String group, String field) {
+        super(group);
+        m_polyField = field;
+    }
+    
+    public void run(double frac) {
+        VisualItem lastItem = null;
+        float maxY = (float)getLayoutBounds().getMaxY();
+        
+        // TODO: generalize this -- we want tuplesReversed available for general sets
+        Iterator iter = ((Table)m_vis.getGroup(m_group)).tuplesReversed();
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            boolean prev = item.isStartVisible();
+            boolean cur = item.isVisible();
+            
+            if ( !prev && cur ) {
+                // newly visible, update contour
+                float[] f = (float[])item.get(m_polyField);
+                if ( f == null ) continue;
+                
+                if ( lastItem == null ) {
+                    // no previous items, smash y-values to the floor
+                    for ( int i=1; i<f.length; i+=2 )
+                        f[i] = maxY;
+                } else {
+                    // previous visible item, smash y-values to the
+                    // visible item's contour
+                    float[] l = (float[])lastItem.get(m_polyField);
+                    for ( int i=1; i<f.length/2; i+=2 )
+                        f[i] = f[f.length-i] = l[i];
+                }
+            } else if ( prev && cur ) {
+                // this item was previously visible, remember it
+                lastItem = item;
+            }
+        }
+    }
+    
+} // end of class CollapsedStackAction
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d10 1
+a10 1
+ * Layout Action that updates the outlines of polygons in a stacked line chart,
+a18 5
+    /**
+     * Create a new CollapsedStackLayout. The polygon field is assumed to be
+     * {@@link prefuse.render.PolygonRenderer#POLYGON}.
+     * @@param group the data group to layout
+     */
+a22 5
+    /**
+     * Create a new CollapsedStackLayout.
+     * @@param group the data group to layout
+     * @@param field the data field from which to lookup the polygons
+     */
+a27 3
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d13 1
+a13 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

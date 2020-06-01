@@ -1,0 +1,191 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.02.19.01.51;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.collections;
+
+/**
+ * Exception indicating a comparator is incompatible with the data type
+ * to be compared.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class IncompatibleComparatorException extends Exception {
+
+    /**
+     * Create a new IncompatibleComparatorException.
+     */
+    public IncompatibleComparatorException() {
+        super();
+    }
+
+    /**
+     * Create a new IncompatibleComparatorException.
+     * @@param message a descriptive error message
+     */
+    public IncompatibleComparatorException(String message) {
+        super(message);
+    }
+
+    /**
+     * Create a new IncompatibleComparatorException.
+     * @@param cause a Throwable (e.g., error or exception) that was the cause
+     * for this exception being thrown
+     */
+    public IncompatibleComparatorException(Throwable cause) {
+        super(cause);
+    }
+
+    /**
+     * Create a new IncompatibleComparatorException.
+     * @@param message a descriptive error message
+     * @@param cause a Throwable (e.g., error or exception) that was the cause
+     * for this exception being thrown
+     */
+    public IncompatibleComparatorException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+} // end of class IncompatibleComparatorException
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d6 1
+a6 1
+ *
+@
+
+
+1.1
+log
+@file IncompatibleComparatorException.java was initially added on branch beta.
+@
+text
+@d1 45
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 24
+package prefuse.util.collections;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class IncompatibleComparatorException extends Exception {
+
+    public IncompatibleComparatorException() {
+        super();
+    }
+
+    public IncompatibleComparatorException(String message) {
+        super(message);
+    }
+
+    public IncompatibleComparatorException(Throwable cause) {
+        super(cause);
+    }
+
+    public IncompatibleComparatorException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+} // end of class IncompatibleComparatorException
+@
+
+
+1.1.2.2
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d4 1
+a4 4
+ * Exception indicating a comparator is incompatible with the data type
+ * to be compared.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a7 3
+    /**
+     * Create a new IncompatibleComparatorException.
+     */
+a11 4
+    /**
+     * Create a new IncompatibleComparatorException.
+     * @@param message a descriptive error message
+     */
+a15 5
+    /**
+     * Create a new IncompatibleComparatorException.
+     * @@param cause a Throwable (e.g., error or exception) that was the cause
+     * for this exception being thrown
+     */
+a19 6
+    /**
+     * Create a new IncompatibleComparatorException.
+     * @@param message a descriptive error message
+     * @@param cause a Throwable (e.g., error or exception) that was the cause
+     * for this exception being thrown
+     */
+@
+
+

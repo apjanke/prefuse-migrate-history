@@ -1,0 +1,59 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2004.02.27.21.35.17;	author jheer;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.09.59;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Major commit of updated architecture
+@
+text
+@package edu.berkeley.guir.prefuse.pipeline;
+
+import edu.berkeley.guir.prefuse.GraphItem;
+
+/**
+ * Interface for setting the size attribute of GraphItems.
+ * 
+ * Apr 30, 2003 - jheer - Created class
+ * 
+ * @@version 1.0
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+ */
+public interface SizeFunction extends ProcessingComponent {
+
+	/**
+	 * Calculates the size value that should be used for the given GraphItem.
+	 * @@param item the item to set the size for
+	 * @@return the item's calculated size value
+	 */
+	public double getSize(GraphItem item);
+
+} //
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@@
+

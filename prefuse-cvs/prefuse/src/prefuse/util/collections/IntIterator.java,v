@@ -1,0 +1,323 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.51;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	2.0.4.2;
+
+2.0.4.2
+date	2008.03.03.10.45.08;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.collections;
+
+/**
+ * Abstract LiteralIterator implementation that supports an iteration over
+ * int values. Subclasses need only implement the {@@link #nextInt()} method.
+ * The {@@link #nextLong()}, {@@link #nextFloat()}, and {@@link #nextDouble()}
+ * methods all simply cast the output of {@@link #nextInt()}. The
+ * {@@link #next()} method simply wraps the output of {@@link #nextInt()} in
+ * an {@@link java.lang.Integer} object.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public abstract class IntIterator extends AbstractLiteralIterator {
+
+    /**
+     * @@see java.util.Iterator#next()
+     */
+    public Object next() {
+        return new Integer(nextInt());
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isDoubleSupported()
+     */
+    public boolean isDoubleSupported() {
+        return true;
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isFloatSupported()
+     */
+    public boolean isFloatSupported() {
+        return true;
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isIntSupported()
+     */
+    public boolean isIntSupported() {
+        return true;
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isLongSupported()
+     */
+    public boolean isLongSupported() {
+        return true;
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextDouble()
+     */
+    public double nextDouble() {
+        return nextInt();
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextFloat()
+     */
+    public float nextFloat() {
+        return nextInt();
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextLong()
+     */
+    public long nextLong() {
+        return nextInt();
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextInt()
+     */
+    public abstract int nextInt();
+    
+} // end of abstract class IntIterator
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d10 1
+a10 1
+ *
+d25 1
+a25 2
+    @@Override
+	public boolean isDoubleSupported() {
+d32 1
+a32 2
+    @@Override
+	public boolean isFloatSupported() {
+d39 1
+a39 2
+    @@Override
+	public boolean isIntSupported() {
+d46 1
+a46 2
+    @@Override
+	public boolean isLongSupported() {
+d53 1
+a53 2
+    @@Override
+	public double nextDouble() {
+d60 1
+a60 2
+    @@Override
+	public float nextFloat() {
+d67 1
+a67 2
+    @@Override
+	public long nextLong() {
+d74 2
+a75 3
+    @@Override
+	public abstract int nextInt();
+
+@
+
+
+2.0.4.2
+log
+@autoboxing improvement
+@
+text
+@d19 1
+a19 1
+        return (Integer) nextInt();
+@
+
+
+1.1
+log
+@file IntIterator.java was initially added on branch beta.
+@
+text
+@d1 76
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 42
+package prefuse.util.collections;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public abstract class IntIterator extends AbstractLiteralIterator {
+
+    public Object next() {
+        return new Integer(nextInt());
+    }
+
+    public boolean isDoubleSupported() {
+        return true;
+    }
+
+    public boolean isFloatSupported() {
+        return true;
+    }
+
+    public boolean isIntSupported() {
+        return true;
+    }
+
+    public boolean isLongSupported() {
+        return true;
+    }
+
+    public double nextDouble() {
+        return nextInt();
+    }
+
+    public float nextFloat() {
+        return nextInt();
+    }
+
+    public long nextLong() {
+        return nextInt();
+    }
+
+    public abstract int nextInt();
+    
+} // end of abstract class IntIterator@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d42 1
+a42 1
+} // end of abstract class IntIterator
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d4 1
+a4 8
+ * Abstract LiteralIterator implementation that supports an iteration over
+ * int values. Subclasses need only implement the {@@link #nextInt()} method.
+ * The {@@link #nextLong()}, {@@link #nextFloat()}, and {@@link #nextDouble()}
+ * methods all simply cast the output of {@@link #nextInt()}. The
+ * {@@link #next()} method simply wraps the output of {@@link #nextInt()} in
+ * an {@@link java.lang.Integer} object.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a7 3
+    /**
+     * @@see java.util.Iterator#next()
+     */
+a11 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isDoubleSupported()
+     */
+a15 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isFloatSupported()
+     */
+a19 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isIntSupported()
+     */
+a23 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isLongSupported()
+     */
+a27 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextDouble()
+     */
+a31 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextFloat()
+     */
+a35 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextLong()
+     */
+a39 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextInt()
+     */
+@
+
+

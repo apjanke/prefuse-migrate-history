@@ -1,0 +1,58 @@
+head	1.2;
+access;
+symbols
+	alpha:1.1.0.2
+	Root_alpha:1.1
+	prefuse-alpha-20051229:1.1
+	P20050401_Alpha_PreCHI:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2006.02.12.18.23.41;	author jheer;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.03.08.11.06;	author jheer;	state Exp;
+branches
+	1.1.4.1;
+next	;
+
+1.1.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Merge beta branch back onto main trunk
+@
+text
+@<body>
+The graph package contains data structures and algorithms for 
+representing and manipulating graph data.
+</body>@
+
+
+1.1
+log
+@Added javadoc documentation
+@
+text
+@@
+
+
+1.1.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+

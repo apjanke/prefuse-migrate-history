@@ -1,0 +1,157 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.02.27.03.59.11;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.30.09.08.05;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.41;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Fixes and test cases for Visualizations and VisualItems.
+Revisited reset, removeGroup, getSourceData, and getSourceTuple.
+Added getSourceXXX methods to VisualItem
+Added new test cases
+@
+text
+@/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.visual;
+
+import prefuse.Visualization;
+import prefuse.data.tuple.TupleSet;
+
+/**
+ * TupleSet sub-interface for TupleSet instances that contain VisualItems,
+ * Tuple instances that include visual properties.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface VisualTupleSet extends TupleSet {
+
+    /**
+     * Get the Visualization associated with this VisualTupleSet.
+     * @@return the Visualization instance
+     */
+    public Visualization getVisualization();
+    
+    /**
+     * Get the data group name for this VisualTupleSet.
+     * @@return the data group name
+     */
+    public String getGroup();
+    
+} // end of interface VisualTupleSet
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d13 1
+a13 1
+ *
+d16 1
+a16 1
+public interface VisualTupleSet<T extends VisualItem<?>> extends TupleSet<T> {
+d23 1
+a23 1
+
+d29 1
+a29 1
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d24 6
+@
+
+
+1.1
+log
+@file VisualTupleSet.java was initially added on branch beta.
+@
+text
+@d1 24
+@
+
+
+1.1.2.1
+log
+@Much more javadoc
+@
+text
+@a0 24
+/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.visual;
+
+import prefuse.Visualization;
+import prefuse.data.tuple.TupleSet;
+
+/**
+ * TupleSet sub-interface for TupleSet instances that contain VisualItems,
+ * Tuple instances that include visual properties.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface VisualTupleSet extends TupleSet {
+
+    /**
+     * Get the Visualization associated with this VisualTupleSet.
+     * @@return the Visualization instance
+     */
+    public Visualization getVisualization();
+    
+} // end of interface VisualTupleSet
+@
+

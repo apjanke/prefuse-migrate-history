@@ -1,0 +1,95 @@
+head	1.2;
+access;
+symbols
+	alpha:1.1.0.2
+	Root_alpha:1.1
+	prefuse-alpha-20051229:1.1
+	P20050401_Alpha_PreCHI:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2006.02.12.18.23.42;	author jheer;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2005.01.07.02.24.36;	author jheer;	state Exp;
+branches
+	1.1.4.1;
+next	;
+
+1.1.4.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.util.io;
+
+import java.io.File;
+
+/**
+ * Useful library routines for input/ouput tasks
+ *  
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class IOLib {
+
+    private IOLib() {
+        // disallow instantiation
+    } //
+    
+    /**
+     * Returns the extension for a file or null if there is none
+     * @@param f the input file
+     * @@return the file extension, or null if none
+     */
+    public static String getExtension(File f) {
+    	return (f != null ? getExtension(f.getName()) : null);
+    } //
+    
+    /**
+     * Returns the extension for a file or null if there is none
+     * @@param filename the input filename
+     * @@return the file extension, or null if none
+     */
+    public static String getExtension(String filename) {
+	    int i = filename.lastIndexOf('.');
+	    if ( i>0 && i<filename.length()-1 ) {
+	        return filename.substring(i+1).toLowerCase();
+	    } else {
+	        return null;
+	    }
+    } //
+    
+} // end of class IOLib
+@
+
+
+1.1
+log
+@Added util.io package
+@
+text
+@@
+
+
+1.1.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+

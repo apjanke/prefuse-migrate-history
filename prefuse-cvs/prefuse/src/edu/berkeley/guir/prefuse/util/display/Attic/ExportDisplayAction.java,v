@@ -1,0 +1,233 @@
+head	1.4;
+access;
+symbols
+	alpha:1.3.0.2
+	Root_alpha:1.3
+	prefuse-alpha-20051229:1.3
+	P20050401_Alpha_PreCHI:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2006.02.12.18.23.42;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2005.01.11.02.42.20;	author jheer;	state Exp;
+branches
+	1.3.4.1;
+next	1.2;
+
+1.2
+date	2005.01.07.02.25.01;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.01.04.22.37.38;	author jheer;	state Exp;
+branches;
+next	;
+
+1.3.4.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.util.display;
+
+import java.awt.event.ActionEvent;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.HashSet;
+
+import javax.imageio.ImageIO;
+import javax.swing.AbstractAction;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+
+import edu.berkeley.guir.prefuse.Display;
+import edu.berkeley.guir.prefuse.util.io.IOLib;
+import edu.berkeley.guir.prefuse.util.io.SimpleFileFilter;
+
+/**
+ * SaveImageAction
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ExportDisplayAction extends AbstractAction {
+
+    private Display display;
+    private JFileChooser chooser;
+    private ScaleSelector scaler;
+    
+    public ExportDisplayAction(Display display) {
+        this.display = display;
+        scaler  = new ScaleSelector();
+        chooser = new JFileChooser();
+        chooser.setDialogType(JFileChooser.SAVE_DIALOG);
+        chooser.setDialogTitle("Export Prefuse Display...");
+        chooser.setAcceptAllFileFilterUsed(false);
+        
+        HashSet seen = new HashSet();
+        String[] fmts = ImageIO.getWriterFormatNames();
+        for ( int i=0; i<fmts.length; i++ ) {
+            String s = fmts[i].toLowerCase();
+            if ( s.length() == 3 && !seen.contains(s) ) {
+                seen.add(s);
+                chooser.setFileFilter(new SimpleFileFilter(s, 
+                        s.toUpperCase()+" Image (*."+s+")"));
+            }
+        }
+        seen.clear(); seen = null;
+        chooser.setAccessory(scaler);
+    } //
+    
+    /* (non-Javadoc)
+     * @@see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+    public void actionPerformed(ActionEvent evt) {
+        // open image save dialog
+        File f = null;
+        scaler.setImage(display.getOffscreenBuffer());
+        int returnVal = chooser.showSaveDialog(display);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+           f = chooser.getSelectedFile();
+        } else {
+            return;
+        }
+        String format = ((SimpleFileFilter)chooser.getFileFilter()).getExtension();
+        String ext = IOLib.getExtension(f);        
+        if ( !format.equals(ext) ) {
+            f = new File(f.toString()+"."+format);
+        }
+        
+        double scale = scaler.getScale();
+        
+        // save image
+        boolean success = false;
+        try {
+            OutputStream out = new BufferedOutputStream(new FileOutputStream(f));
+            System.out.print("Saving image "+f.getName()+", "+format+" format...");
+            success = display.saveImage(out, format, scale);
+            out.flush();
+            out.close();
+            System.out.println("\tDONE");
+        } catch ( Exception e ) {
+            success = false;
+        }
+        // show result dialog on failure
+        if ( !success ) {
+            JOptionPane.showMessageDialog(display,
+                    "Error Saving Image!",
+                    "Image Save Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    } //
+    
+} // end of class SaveImageAction
+@
+
+
+1.3
+log
+@Added scale selector to export display file dialog
+@
+text
+@@
+
+
+1.3.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.2
+log
+@Added ExportDisplayAction for saving display to image
+@
+text
+@d8 1
+d10 1
+d29 1
+d33 1
+d38 13
+a50 2
+        chooser.setFileFilter(new SimpleFileFilter("jpg", "JPG Image (*.jpg)"));
+        chooser.setFileFilter(new SimpleFileFilter("png", "PNG Image (*.png)"));
+d59 1
+d69 1
+a69 1
+            f = new File(f.getName()+"."+format);
+d72 1
+a72 1
+        double scale = 1.0;
+d80 2
+@
+
+
+1.1
+log
+@Added image export for the Display
+@
+text
+@a11 1
+import javax.swing.filechooser.FileFilter;
+d14 2
+d51 1
+a51 1
+        String ext = getExtension(f);        
+a76 34
+    public static String getExtension(File f) {
+    	if (f != null) {
+    	    String filename = f.getName();
+    	    int i = filename.lastIndexOf('.');
+    	    if(i>0 && i<filename.length()-1) {
+    	        return filename.substring(i+1).toLowerCase();
+    	    }
+    	}
+    	return null;
+    } //
+    
+    public class SimpleFileFilter extends FileFilter {
+        private String ext, desc;
+        
+        public SimpleFileFilter(String ext, String desc) {
+            this.ext = ext;
+            this.desc = desc;
+        } //
+        public boolean accept(File f) {
+            if ( f == null )
+                return false;
+            if ( f.isDirectory() )
+                return true;
+            String extension = ExportDisplayAction.getExtension(f);
+            return ( extension != null && extension.equals(ext) );
+        } //
+        public String getDescription() {
+            return desc;
+        } //
+        public String getExtension() {
+            return ext;
+        } //
+    } // end of class SimpleFileFilter
+    
+@
+

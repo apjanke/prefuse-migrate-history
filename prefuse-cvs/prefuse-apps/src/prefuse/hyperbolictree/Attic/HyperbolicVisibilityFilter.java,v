@@ -1,0 +1,80 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.01.22.18.04.28;	author jheer;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2005.01.15.01.26.02;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Initial commit
+@
+text
+@package prefuse.hyperbolictree;
+
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.EdgeItem;
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.NodeItem;
+import edu.berkeley.guir.prefuse.action.AbstractAction;
+
+/**
+ * 
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefusex(AT)jheer.org
+ */
+public class HyperbolicVisibilityFilter extends AbstractAction {
+
+    private double m_thresh = 0.96;
+    
+    public void run(ItemRegistry registry, double frac) {
+        Iterator iter = registry.getNodeItems(false);
+        while ( iter.hasNext() ) {
+            NodeItem item = (NodeItem)iter.next();
+            HyperbolicParams np = getParams(item);
+            double d = Math.sqrt(np.z[0]*np.z[0] + np.z[1]*np.z[1]);
+            item.setVisible(d<m_thresh);
+        }
+        iter = registry.getEdgeItems(false);
+        while ( iter.hasNext() ) {
+            EdgeItem item = (EdgeItem)iter.next();
+            NodeItem n = (NodeItem)item.getFirstNode();
+            HyperbolicParams np = getParams(n);
+            double d = Math.sqrt(np.z[0]*np.z[0] + np.z[1]*np.z[1]);
+            item.setVisible(d<m_thresh);
+        }
+    } //
+    
+    public HyperbolicParams getParams(VisualItem item) {
+        return (HyperbolicParams)item.getVizAttribute("hyperbolicParams");
+    } //
+
+} // end of class HyperbolicVisibilityFilter
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@@
+

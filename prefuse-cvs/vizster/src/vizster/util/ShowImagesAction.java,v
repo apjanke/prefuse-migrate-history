@@ -1,0 +1,56 @@
+head	1.1;
+access;
+symbols
+	P20050924_InfoVis:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.09.24.18.40.28;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Update to new version!!
+@
+text
+@package vizster.util;
+
+import java.awt.event.ActionEvent;
+
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
+
+import vizster.Vizster;
+
+/**
+ * ShowImagesAction
+ *  
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ShowImagesAction extends AbstractAction {
+
+    private Vizster vizster;
+    
+    public ShowImagesAction(Vizster vizster) {
+        this.vizster = vizster;
+    } //
+    
+    /**
+     * @@see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+    public void actionPerformed(ActionEvent ae) {
+        AbstractButton b = (AbstractButton)ae.getSource();
+        vizster.setShowImages(b.isSelected());
+    } //
+
+} // end of class ShowImagesAction
+@

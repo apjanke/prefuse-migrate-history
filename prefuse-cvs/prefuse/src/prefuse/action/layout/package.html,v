@@ -1,0 +1,131 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.24.09.07.08;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.24.18.46.05;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.01.19.22.02;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@<body>
+<p>Action modules providing layout algorithms for use by prefuse visualizations.
+All provided layouts descend from the abstract
+{@@link prefuse.action.layout.Layout} class, allowing 
+the layout bounds and anchor point to be customized on a per-Action basis. 
+Layouts specifically for graph or tree structured data are available in the 
+{@@link prefuse.action.layout.graph} package.</p>
+</body>@
+
+
+1.1
+log
+@file package.html was initially added on branch beta.
+@
+text
+@d1 8
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 8
+<body>
+The layout package contains a library of useful layout algorithms for use by
+prefuse visualizations. All provided layouts descend from either the Layout
+or TreeLayout classes, allowing the layout bounds, anchor point, and root node
+to be set, overriding any default behaviors. This facilitates the use of multiple
+layouts within a single visualization (e.g., applying a different layout
+algorithm to a specific subtree in a tree visualization).
+</body>@
+
+
+1.1.2.2
+log
+@Added javadoc overview and package text.
+@
+text
+@d2 6
+a7 5
+<p>Action modules providing layout algorithms for use by prefuse visualizations.
+All provided layouts descend from the abstract Layout class, allowing the layout bounds
+and anchor point to be customized on a per-Action basis. Layouts specifically for
+graph or tree structured data are available in the {@@link prefuse.action.layout.graph}
+package.</p>
+@
+
+
+1.1.2.3
+log
+@Javadoc fixes, other clean-up
+@
+text
+@d3 4
+a6 4
+All provided layouts descend from the abstract {@@link Layout} class, allowing 
+the layout bounds and anchor point to be customized on a per-Action basis. 
+Layouts specifically for graph or tree structured data are available in the 
+{@@link prefuse.action.layout.graph} package.</p>
+@
+
+
+1.1.2.4
+log
+@Javadoc'd.
+@
+text
+@d3 1
+a3 2
+All provided layouts descend from the abstract
+{@@link prefuse.action.layout.Layout} class, allowing 
+@
+
+

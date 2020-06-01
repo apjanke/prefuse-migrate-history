@@ -1,0 +1,271 @@
+head	1.6;
+access;
+symbols
+	alpha:1.5.0.2
+	Root_alpha:1.5
+	prefuse-alpha-20051229:1.5
+	P20050401_Alpha_PreCHI:1.5;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2006.02.12.18.23.41;	author jheer;	state dead;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.13.02.17.52;	author jheer;	state Exp;
+branches
+	1.5.4.1;
+next	1.4;
+
+1.4
+date	2004.03.12.01.53.44;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.11.19.11.13;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.10.16.56.28;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.09.03.49.10;	author jheer;	state Exp;
+branches;
+next	;
+
+1.5.4.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.graph.external;
+
+import java.io.File;
+import java.io.IOException;
+
+import edu.berkeley.guir.prefuse.ItemRegistry;
+
+/**
+ * Loads graph data as needed from a local filesystem. Created nodes are given
+ * four attributes:
+ * <ul>
+ *  <li>"label" - The filename, not including the full path
+ *  <li>"filename" - The absolute filename, including the full path
+ *  <li>"size" - The size of the file, in bytes
+ *  <li>"modified" - The file's last modification date, in milliseconds since the epoch.
+ * </ul>
+ * The "filname" attribute is used as the key for indexing data in the
+ * <tt>GraphLoader</tt>'s cache. The "modified" attribute is a
+ * <tt>String</tt> instance representing a <tt>long</tt> value. Use the
+ * <tt>java.util.Date</tt> class to create corresponding <tt>Date</tt> instances.
+ *
+ * @@see GraphLoader
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class FileSystemLoader extends GraphLoader {
+
+    public FileSystemLoader(ItemRegistry registry) {
+        super(registry, "filename");
+    } //
+    
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.external.GraphLoader#getNeighbors(edu.berkeley.guir.prefuse.graph.external.ExternalNode)
+     */
+    protected void getNeighbors(ExternalNode n) {
+        String filename = n.getAttribute("filename");
+        File f = new File(filename);
+        
+        File p = f.getParentFile();
+        if ( p != null )
+            loadNode(GraphLoader.LOAD_NEIGHBORS, n, p);
+        
+        File[] fl = f.listFiles();
+        if ( fl == null ) return;
+        for ( int i=0; i<fl.length; i++ ) {
+            loadNode(GraphLoader.LOAD_NEIGHBORS, n, fl[i]);
+        }
+    } //
+
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.external.GraphLoader#getChildren(edu.berkeley.guir.prefuse.graph.external.ExternalTreeNode)
+     */
+    protected void getChildren(ExternalTreeNode n) {
+        String filename = n.getAttribute("filename");
+        File f = new File(filename);
+        
+        File[] fl = f.listFiles();
+        if ( fl == null ) return;
+        for ( int i=0; i<fl.length; i++ ) {
+            loadNode(GraphLoader.LOAD_CHILDREN, n, fl[i]);
+        }
+    } //
+    
+    protected void getParent(ExternalTreeNode n) {
+        String filename = n.getAttribute("filename");
+        File f = new File(filename);
+        
+        File p = f.getParentFile();
+        if ( p != null )
+            loadNode(GraphLoader.LOAD_PARENT, n, p);
+    } //
+    
+    public ExternalEntity loadNode(int type, ExternalEntity o, File f) {
+        ExternalEntity n = null;
+        try {
+            f = f.getCanonicalFile();
+            String filename = f.getName();
+            
+            if ( m_cache.containsKey(filename) ) {
+                // node already loaded
+                n = (ExternalEntity)m_cache.get(filename);
+            } else {
+                // need to load the node
+                if ( type == GraphLoader.LOAD_NEIGHBORS )
+                    n = new ExternalNode();
+                else
+                    n = new ExternalTreeNode();
+                String name = f.getName();
+                n.setAttribute("label",(name.equals("") ? f.getPath() : name));
+                n.setAttribute("filename", f.getPath());
+                n.setAttribute("size", String.valueOf(f.length()));
+                n.setAttribute("modified", String.valueOf(f.lastModified()));
+            }
+            foundNode(type, o, n, null);
+        } catch ( IOException ie ) {
+            ie.printStackTrace();
+        }
+        return n;
+    } //
+
+} // end of class FileSystemLoader
+@
+
+
+1.5
+log
+@Added database connectivity
+@
+text
+@@
+
+
+1.5.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.4
+log
+@More work on external nodes
+@
+text
+@d9 12
+a20 2
+ * 
+ * Mar 8, 2004 - jheer - Created class
+d22 1
+d92 1
+@
+
+
+1.3
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@a24 1
+        ExternalNode nn;
+d30 1
+a30 1
+            loadNode(n, p);
+d35 1
+a35 1
+            loadNode(n, fl[i]);
+d43 2
+d46 5
+d54 2
+d57 3
+d62 2
+a63 2
+    public ExternalNode loadNode(ExternalNode o, File f) {
+        ExternalNode n = null;
+d70 1
+a70 1
+                n = (ExternalNode)m_cache.get(filename);
+d73 4
+a76 1
+                n = new ExternalNode();
+d82 1
+a82 1
+            foundNode(LOAD_NEIGHBORS, o, n, null);
+@
+
+
+1.2
+log
+@Continued work on graph data structures
+@
+text
+@d47 4
+@
+
+
+1.1
+log
+@Initial commit of preliminary external data source classes
+@
+text
+@d18 1
+a18 1
+        super(registry);
+d30 2
+a31 4
+        if ( p != null ) {
+            nn = buildNode(p);
+            this.foundNode(LOAD_NEIGHBORS, n, nn);
+        }
+d36 1
+a36 2
+            nn = buildNode(fl[i]);
+            foundNode(LOAD_NEIGHBORS, n, nn);
+a37 1
+        
+d47 2
+a48 1
+    public ExternalNode buildNode(File f) {
+a49 1
+            ExternalNode n = new ExternalNode();
+d51 16
+a66 6
+            n.setAttribute("label", f.getName());
+            n.setAttribute("filename", f.getPath());
+            n.setAttribute("size", String.valueOf(f.length()));
+            return n;
+        } catch ( IOException e ) {
+            e.printStackTrace();
+d68 1
+a68 1
+        return null;
+@
+

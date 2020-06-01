@@ -1,0 +1,176 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.1
+	beta-20060209:2.0
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2007.10.21.22.07.52;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.13.03.44.09;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.11.06.38.40;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.01.21.02.31.34;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.04.01.08.21.55;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.2.4.2;
+
+1.2.4.2
+date	2006.02.09.10.49.17;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Updated license and readme files
+@
+text
+@
+  Copyright (c) 2004-2007 Regents of the University of California.
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+
+  3.  Neither the name of the University nor the names of its contributors
+  may be used to endorse or promote products derived from this software
+  without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+  SUCH DAMAGE.
+@
+
+
+2.1
+log
+@Fixed license to current BSD standard.
+@
+text
+@d2 1
+a2 1
+  Copyright (c) 2004-2006 Regents of the University of California.
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d16 3
+a18 2
+  3. The name of the University may not be used to endorse or promote products 
+  derived from this software without specific prior written permission.
+@
+
+
+1.2
+log
+@Updated license
+@
+text
+@d2 1
+a2 1
+  Copyright (c) 2004, 2005 Regents of the University of California.
+d16 1
+a16 7
+  3. All advertising materials mentioning features or use of this software
+  must display the following acknowledgement:
+
+  This product includes software developed by the Group for User 
+  Interface Research at the University of California at Berkeley.
+
+  4. The name of the University may not be used to endorse or promote products 
+@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@d2 1
+a2 1
+  Copyright (c) 2004-2006 Regents of the University of California.
+d19 2
+a20 2
+  This product includes software developed by the Berkeley Institute of
+  Design at the University of California at Berkeley.
+@
+
+
+1.2.4.2
+log
+@Removed advertising clause from the license
+@
+text
+@d16 7
+a22 1
+  3. The name of the University may not be used to endorse or promote products 
+@
+
+
+1.1
+log
+@Added licenses and readme
+@
+text
+@d2 1
+a2 1
+  Copyright (c) 2004 Regents of the University of California.
+@
+

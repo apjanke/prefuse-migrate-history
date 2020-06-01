@@ -1,0 +1,211 @@
+head	1.6;
+access;
+symbols
+	alpha:1.5.0.2
+	Root_alpha:1.5
+	prefuse-alpha-20051229:1.5
+	P20050401_Alpha_PreCHI:1.5;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2006.02.12.18.23.42;	author jheer;	state dead;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.25.04.35.38;	author jheer;	state Exp;
+branches
+	1.5.4.1;
+next	1.4;
+
+1.4
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.16.03.05.17;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.09.59;	author jheer;	state Exp;
+branches;
+next	;
+
+1.5.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.render;
+
+import java.awt.Graphics2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+
+import edu.berkeley.guir.prefuse.VisualItem;
+
+/**
+ * Interface for rendering VisualItems. Supports drawing as well as location
+ * and bounding box routines.
+ * 
+ * @@author newbergr
+ * @@author jheer
+ */
+public interface Renderer {
+
+    /**
+     * Provides a default graphics context for renderers to do useful
+     * things like compute string widths when an external graphics context
+     * has not yet been provided.
+     */
+    public static final Graphics2D DEFAULT_GRAPHICS = (Graphics2D)
+        new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).getGraphics();
+
+    /**
+     * Render item into a Graphics2D context.
+     * @@param g the Graphics2D context
+     * @@param item the item to draw
+     */
+    public void render(Graphics2D g, VisualItem item);
+
+    /**
+     * Returns true if the Point is located inside coordinates of the item.
+     * @@param p the point to test for containment
+     * @@param item the item to test containment against
+     * @@return true if the point is contained within the the item, else false
+     */
+    public boolean locatePoint(Point2D p, VisualItem item);
+
+    /**
+     * Returns a reference to the bounding rectangle for the item.
+     * @@param item the item to compute the bounding box for
+     * @@return the item's bounding box as a Rectangle
+     */
+    public Rectangle2D getBoundsRef(VisualItem item);
+
+} // end of interface Renderer
+@
+
+
+1.5
+log
+@A whole lot of update
+@
+text
+@@
+
+
+1.5.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.4
+log
+@Major refactor
+@
+text
+@a3 1
+import java.awt.Rectangle;
+d5 2
+d18 32
+a49 24
+ 
+  /**
+   * Render item into a Graphics2D context.
+   * @@param g the Graphics2D context
+   * @@param item the item to draw
+   */
+  public void render(Graphics2D g, VisualItem item);
+
+  /**
+   * Returns true if the Point is located inside coordinates of the item.
+   * @@param p the point to test for containment
+   * @@param item the item to test containment against
+   * @@return true if the point is contained within the the item, else false
+   */
+  public boolean locatePoint(Point2D p, VisualItem item);
+  
+  /**
+   * Returns a reference to the bounding rectangle for the item.
+   * @@param item the item to compute the bounding box for
+   * @@return the item's bounding box as a Rectangle
+   */
+  public Rectangle getBoundsRef(VisualItem item);  
+  
+} // end of interface Renderer@
+
+
+1.3
+log
+@More Javadoc updates
+@
+text
+@d7 1
+a7 1
+import edu.berkeley.guir.prefuse.GraphItem;
+d10 1
+a10 1
+ * Interface for rendering GraphItems. Supports drawing as well as location
+d23 1
+a23 1
+  public void render(Graphics2D g, GraphItem item);
+d31 1
+a31 1
+  public boolean locatePoint(Point2D p, GraphItem item);
+d38 1
+a38 1
+  public Rectangle getBoundsRef(GraphItem item);  
+@
+
+
+1.2
+log
+@Major commit of updated architecture
+@
+text
+@a12 2
+ * Created on May 2, 2003
+ * 
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@d21 1
+a21 1
+   * Render item into Graphics2D context.
+d36 1
+a36 1
+   * Returns a bounding rectangle for the item.
+d40 1
+a40 1
+  public Rectangle getBounds(GraphItem item);  
+@
+

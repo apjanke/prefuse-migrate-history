@@ -1,0 +1,192 @@
+head	1.5;
+access;
+symbols
+	alpha:1.4.0.2
+	Root_alpha:1.4
+	prefuse-alpha-20051229:1.4
+	P20050401_Alpha_PreCHI:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2006.02.12.18.23.41;	author jheer;	state dead;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.15.03.33.30;	author jheer;	state Exp;
+branches
+	1.4.4.1;
+next	1.3;
+
+1.3
+date	2004.03.11.19.11.11;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.08.20.05.52;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.10.12;	author jheer;	state Exp;
+branches;
+next	;
+
+1.4.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.graph.event;
+
+import edu.berkeley.guir.prefuse.graph.Edge;
+import edu.berkeley.guir.prefuse.graph.Graph;
+import edu.berkeley.guir.prefuse.graph.Node;
+
+/**
+ * Adapter class to simplify creating GraphEventListener instances
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class GraphEventAdapter implements GraphEventListener {
+
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#nodeAdded(edu.berkeley.guir.prefuse.graph.Graph, edu.berkeley.guir.prefuse.graph.Node)
+	 */
+	public void nodeAdded(Graph g, Node n) {} //
+
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#nodeRemoved(edu.berkeley.guir.prefuse.graph.Graph, edu.berkeley.guir.prefuse.graph.Node)
+	 */
+	public void nodeRemoved(Graph g, Node n) {} //
+
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#nodeReplaced(edu.berkeley.guir.prefuse.graph.Graph, edu.berkeley.guir.prefuse.graph.Node, edu.berkeley.guir.prefuse.graph.Node)
+	 */
+	public void nodeReplaced(Graph g, Node o, Node n) {} //
+
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#edgeAdded(edu.berkeley.guir.prefuse.graph.Graph, edu.berkeley.guir.prefuse.graph.Edge)
+	 */
+	public void edgeAdded(Graph g, Edge e) {} //
+
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#edgeRemoved(edu.berkeley.guir.prefuse.graph.Graph, edu.berkeley.guir.prefuse.graph.Edge)
+	 */
+	public void edgeRemoved(Graph g, Edge e) {} //
+    
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#edgeReplaced(edu.berkeley.guir.prefuse.graph.Graph, edu.berkeley.guir.prefuse.graph.Edge, edu.berkeley.guir.prefuse.graph.Edge)
+	 */
+	public void edgeReplaced(Graph g, Edge o, Edge n) {} //
+
+} // end of class GraphEventAdapter
+@
+
+
+1.4
+log
+@Updated Javadoc
+@
+text
+@@
+
+
+1.4.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.3
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@d16 1
+a16 1
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#nodeAdded(edu.berkeley.guir.prefuse.graph.Node)
+d21 1
+a21 1
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#nodeRemoved(edu.berkeley.guir.prefuse.graph.Node)
+d26 1
+a26 1
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#nodeReplaced(edu.berkeley.guir.prefuse.graph.Node, edu.berkeley.guir.prefuse.graph.Node)
+d31 1
+a31 1
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#edgeAdded(edu.berkeley.guir.prefuse.graph.Edge)
+d36 1
+a36 1
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#edgeRemoved(edu.berkeley.guir.prefuse.graph.Edge)
+d41 1
+a41 1
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#edgeReplaced(edu.berkeley.guir.prefuse.graph.Edge, edu.berkeley.guir.prefuse.graph.Edge)
+@
+
+
+1.2
+log
+@Javadoc update and fixes
+@
+text
+@d4 1
+d8 1
+a8 2
+ * 
+ * Aug 14, 2003 - jheer - Created class
+d11 1
+a11 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+d18 1
+a18 1
+	public void nodeAdded(Node n) {} //
+d23 1
+a23 1
+	public void nodeRemoved(Node n) {} //
+d28 1
+a28 1
+	public void nodeReplaced(Node o, Node n) {} //
+d33 1
+a33 1
+	public void edgeAdded(Edge e) {} //
+d38 1
+a38 1
+	public void edgeRemoved(Edge e) {} //
+d43 1
+a43 1
+	public void edgeReplaced(Edge o, Edge n) {} //
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@d26 1
+a26 1
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#nodeSwapped(edu.berkeley.guir.prefuse.graph.Node, edu.berkeley.guir.prefuse.graph.Node)
+d39 1
+a39 1
+
+d41 1
+a41 1
+	 * @@see edu.berkeley.guir.prefuse.graph.event.GraphEventListener#edgeSwapped(edu.berkeley.guir.prefuse.graph.Edge)
+@
+

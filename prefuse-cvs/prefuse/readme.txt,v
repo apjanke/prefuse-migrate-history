@@ -1,0 +1,351 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2007.10.21.22.07.52;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.07.15.19.55.28;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.11.06.38.40;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.04.02.00.27.54;	author jheer;	state Exp;
+branches
+	1.2.2.1
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.04.01.08.21.55;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.2.1
+date	2006.05.26.20.15.08;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches;
+next	1.2.4.2;
+
+1.2.4.2
+date	2006.02.09.10.33.59;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.03.03.20.55.09;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Updated license and readme files
+@
+text
+@prefuse README
+beta release - initial release february 2006, current release 2007.10.20
+
+--INTRO--
+
+prefuse is a Java-based toolkit for building interactive information
+visualization applications. Prefuse supports a rich set of features for data
+modeling, visualization, and interaction. It provides optimized data
+structures for tables, graphs, and trees, a host of layout and visual encoding
+techniques, and support for animation, dynamic queries, integrated search, and
+database connectivity. Prefuse is written in Java, using the Java 2D graphics
+library, and is easily integrated into Java Swing applications or web applets.
+Prefuse is licensed under the terms of a BSD license, and can be freely used
+for both commercial and non-commercial purposes.
+
+--STRUCTURE--
+
+The toolkit distribution uses the following organization:
+
++ prefuse
+|-- build  Directory where compiled classes and jar files are placed
+|-- data   Various example data files used by the demo applications
+|-- demos  Demo applications and applets showing the toolkit in use
+|-- doc    Documentation. The Javadoc API files reside here once generated
+|-- lib    Third-party libraries useful with prefuse and their licenses
+|-- src    The source code for the prefuse toolkit
+|-- test   JUnit tests for the toolkit (still a bit sparse at the moment)
+
+--REQUIREMENTS--
+
+prefuse is written in Java 1.4, using the Java2D graphics library. To compile
+the prefuse code, and to build and run prefuse applications, you'll need a
+copy of the Java Development Kit (JDK) for version 1.4.2 or greater. You can
+download the most recent version of the JDK from
+http://java.sun.com/j2se/1.5.0/download.html.
+
+We also recommended (though by no means is it required) that you use an
+Integrated Development Environment such as Eclipse (http://eclipse.org).
+Especially if you are a Java novice, it will likely make your life much easier.
+
+--BUILDING--
+
+prefuse uses the Ant system from the Apache Group to compile the files. Ant is
+bundled with this distribution, and can be run using the "build.bat" script
+(in Windows) or the "build.sh" script (in UNIX). For example, running
+"build.bat usage" will provide a list of available commands, "build.bat all"
+will compile the toolkit and demos into jar files, running "build.bat api"
+will generate the html API documentation for the toolkit in the doc directory.
+
+Alternatively, you can use the Eclipse integrated development environment
+(available for free at http://ww.eclipse.org) to load the source files, then
+Eclipse will compile the software for you. Within Eclipse, right-click the
+background of the "Package Explorer" panel and choose "Import". Then select
+"Existing Projects into Workspace". In resulting dialog, click the radio
+button for "Select archive file" and browse for the prefuse distribution
+zip file. The "prefuse" project should then appear in the area below.
+Now just click the "Finish" button to import the project and build it.
+Once prefuse has been loaded as a project within Eclipse, you
+can then run various demos directly from within Eclipse by right-clicking the
+class file for a demo (e.g., demos/prefuse.demos.GraphView.java) and
+selecting "Run >> Java Application" from the menu.
+
+--MORE--
+
+Additional information and documentation, a help forum, a gallery of featured
+prefuse applications, and more, are available online. Point your web browser at
+ -- http://prefuse.org --
+@
+
+
+2.2.4.1
+log
+@documentation update
+@
+text
+@d2 1
+a2 1
+beta release - initial release february 2006, current release 2008.03.04
+d31 1
+a31 1
+prefuse is written in Java 1.5, using the Java2D graphics library. To compile
+d33 1
+a33 1
+copy of the Java Development Kit (JDK) for version 1.5.0 or greater. You can
+@
+
+
+2.1
+log
+@Updated readme dates
+@
+text
+@d2 1
+a2 1
+beta release - initial release february 2006, current release 2006.07.15
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d2 1
+a2 1
+beta release - february 2006
+@
+
+
+1.2
+log
+@Updated readme
+@
+text
+@d2 1
+d6 22
+a27 11
+prefuse is a user interface toolkit for building highly interactive visualizations
+of structured and unstructured data. This includes any form of data that can be
+represented as a set of entities (or nodes) possibly connected by any number of
+relations (or edges). Examples of data supported by prefuse include hierarchies
+(organization charts, taxonomies, file systems), networks (computer networks,
+social networks, web site linkage) and even non-connected collections of data
+(timelines, scatterplots). Using this toolkit, developers can create responsive,
+animated graphical interfaces for visualizing, exploring, and manipulating these
+various forms of data. prefuse is written in the Java programming language using the
+Java2D graphics library and is designed to integrate with any application written
+using the Java Swing user interface library.
+d31 9
+a39 3
+prefuse is written in Java 1.4, using the Java2D graphics library. To compile the
+prefuse code, and to build and run prefuse applications, you'll need this version
+of Java or later. You can download it from http://java.sun.com/j2se/1.4.2/download.html
+d43 19
+a61 14
+prefuse uses the Ant system from the Apache Group to compile the files. Ant is bundled
+with this distribution, and can be run using the "build.bat" script (in Windows) or
+the "build.sh" script (in UNIX). For example, running "build.bat usage" will provide
+a list of available commands and running "build.bat api" will generate the html
+API documentation for the toolkit.
+
+Alternatively, you can use the Eclipse integrated development environment (available
+for free at http://ww.eclipse.org) to load the source files, then Eclipse will compile
+the software for you. Within Eclipse, right-click the background of the "Package
+Explorer" panel and choose "Import". Then select "Existing Project into Workspace" and
+browse for the prefuse distribution on your hard drive. Once prefuse has been loaded as
+a project within Eclipse, you can then run various demos directly from within Eclipse 
+by right-clicking a class file for a demo and selecting "Run >> Java Application" from
+the menu.
+d65 3
+a67 6
+Documentation is a bit sparse right now, as this is only the alpha release. Included
+with this distribution is a short prefuse tutorial, in powerpoint format, and a
+research paper describing prefuse, in pdf format. You can also generate the prefuse
+API documentation using the ANY build scripts. We apologize for the lack of a
+comprehensive user's manual at this time, but check http://prefuse.sourceforge.net
+for more info as it becomes available.@
+
+
+1.2.2.1
+log
+@Updated readme.txt
+@
+text
+@d1 1
+a1 3
+prefuse alpha README
+
+NOTE: This is the now deprecated alpha version of the prefuse toolkit, provided for backward compatibility with older applications. If you are new to prefuse, please use the beta version instead, which you can download from http://prefuse.org.
+@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.2.4.2
+log
+@Changed interaction mechanism of RotationControl
+Added documentation of expression language to ExpressionParser javadoc
+Added inclusion of edge arrows in bounds computation for EdgeRenderer
+Added integer dimensions check to LabelRenderer
+Added new readme file
+@
+text
+@a1 1
+beta release - february 2006
+d5 11
+a15 22
+prefuse is a Java-based toolkit for building interactive information
+visualization applications. Prefuse supports a rich set of features for data
+modeling, visualization, and interaction. It provides optimized data
+structures for tables, graphs, and trees, a host of layout and visual encoding
+techniques, and support for animation, dynamic queries, integrated search, and
+database connectivity. Prefuse is written in Java, using the Java 2D graphics
+library, and is easily integrated into Java Swing applications or web applets.
+Prefuse is licensed under the terms of a BSD license, and can be freely used
+for both commercial and non-commercial purposes.
+
+--STRUCTURE--
+
+The toolkit distribution uses the following organization:
+
++ prefuse
+|-- build  Directory where compiled classes and jar files are placed
+|-- data   Various example data files used by the demo applications
+|-- demos  Demo applications and applets showing the toolkit in use
+|-- doc    Documentation. The Javadoc API files reside here once generated
+|-- lib    Third-party libraries useful with prefuse and their licenses
+|-- src    The source code for the prefuse toolkit
+|-- test   JUnit tests for the toolkit (still a bit sparse at the moment)
+d19 3
+a21 9
+prefuse is written in Java 1.4, using the Java2D graphics library. To compile
+the prefuse code, and to build and run prefuse applications, you'll need a
+copy of the Java Development Kit (JDK) for version 1.4.2 or greater. You can
+download the most recent version of the JDK from
+http://java.sun.com/j2se/1.5.0/download.html.
+
+We also recommended (though by no means is it required) that you use an
+Integrated Development Environment such as Eclipse (http://eclipse.org).
+Especially if you are a Java novice, it will likely make your life much easier.
+d25 14
+a38 19
+prefuse uses the Ant system from the Apache Group to compile the files. Ant is
+bundled with this distribution, and can be run using the "build.bat" script
+(in Windows) or the "build.sh" script (in UNIX). For example, running
+"build.bat usage" will provide a list of available commands, "build.bat all"
+will compile the toolkit and demos into jar files, running "build.bat api"
+will generate the html API documentation for the toolkit in the doc directory.
+
+Alternatively, you can use the Eclipse integrated development environment
+(available for free at http://ww.eclipse.org) to load the source files, then
+Eclipse will compile the software for you. Within Eclipse, right-click the
+background of the "Package Explorer" panel and choose "Import". Then select
+"Existing Projects into Workspace". In resulting dialog, click the radio
+button for "Select archive file" and browse for the prefuse distribution
+zip file. The "prefuse" project should then appear in the area below.
+Now just click the "Finish" button to import the project and build it.
+Once prefuse has been loaded as a project within Eclipse, you
+can then run various demos directly from within Eclipse by right-clicking the
+class file for a demo (e.g., demos/prefuse.demos.GraphView.java) and
+selecting "Run >> Java Application" from the menu.
+d42 6
+a47 3
+Additional information and documentation, a help forum, a gallery of featured
+prefuse applications, and more, are available online. Point your web browser at
+ -- http://prefuse.org --
+@
+
+
+1.1
+log
+@Added licenses and readme
+@
+text
+@d5 11
+a15 6
+prefuse is a toolkit for creating highly-interactive visualizations of data
+sets. Examples of data supported by prefuse include hierarchies (organization
+charts, taxonomies, file systems), networks (computer networks, social networks,
+web site linkage) and unstructured collections of data (timelines, scatterplots).
+Using this toolkit, developers can create responsive, animated graphical 
+interfaces for visualizing, exploring, and manipulating these various forms of data.
+d31 9
+d42 6
+a47 3
+Documentation is a bit sparse right now, as this is only the alpha release. We
+apologize for this, but check http://prefuse.sourceforge.net for more info as
+it becomes available.@
+

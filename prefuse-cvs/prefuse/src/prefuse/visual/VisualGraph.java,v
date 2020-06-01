@@ -1,0 +1,528 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2008.01.13.22.39.14;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.09.23.33.25;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.41;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Fixed javadoc comments
+@
+text
+@package prefuse.visual;
+
+import prefuse.Visualization;
+import prefuse.data.Graph;
+import prefuse.data.Table;
+import prefuse.data.event.EventConstants;
+import prefuse.util.collections.IntIterator;
+
+/**
+ * A visual abstraction of a graph data structure. NodeItem and EdgeItem tuples
+ * provide the visual representations for the nodes and edges of the graph.
+ * VisualGraphs should not be created directly, they are created automatically
+ * by adding data to a Visualization, for example by using the
+ * {@@link Visualization#addGraph(String, Graph)} method.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class VisualGraph extends Graph implements VisualTupleSet {
+
+    private Visualization m_vis;
+    private String m_group;
+   
+    /**
+     * Create a new VisualGraph
+     * @@param nodes the visual node table
+     * @@param edges the visual edge table
+     * @@param directed indicates if graph edges are directed or undirected
+     * @@param nodeKey the node table field by which to index the nodes.
+     * This value can be null, indicating that just the row indices should be
+     * used.
+     * @@param sourceKey the edge table field storing source node keys
+     * @@param targetKey the edge table field storing target node keys
+     */
+    public VisualGraph(VisualTable nodes, VisualTable edges, boolean directed,
+            String nodeKey, String sourceKey, String targetKey)
+    {
+        super(nodes, edges, directed, nodeKey, sourceKey, targetKey);
+    }
+    
+    /**
+     * Fire a graph event. Makes sure to invalidate all edges connected
+     * to a node that has been updated.
+     * @@see prefuse.data.Graph#fireGraphEvent(prefuse.data.Table, int, int, int, int)
+     */
+    protected void fireGraphEvent(Table t, 
+            int first, int last, int col, int type)
+    {
+        // if a node is invalidated, invalidate the edges, too
+        if ( type==EventConstants.UPDATE && 
+             col==VisualItem.IDX_VALIDATED && t==getNodeTable() )
+        {
+            VisualTable nodes = (VisualTable)t;
+            VisualTable edges = (VisualTable)getEdgeTable();
+            
+            for ( int i=first; i<=last; ++i ) {
+                if ( nodes.isValidated(i) )
+                    continue; // look only for invalidations
+                
+                if ( i < 0 ) {
+                    System.err.println("catch me - VisualGraph fireGraphEvent");
+                }
+//                try {
+                IntIterator erows = edgeRows(i);
+                while ( erows.hasNext() ) {
+                    int erow = erows.nextInt();
+                    edges.setValidated(erow, false);
+                }
+//                } catch ( Exception ex ) {
+//                  ex.printStackTrace();
+//                }
+            }
+        }
+        // fire the event off to listeners
+        super.fireGraphEvent(t, first, last, col, type);
+    }
+    
+    /**
+     * Get the node row index value for the given key.
+     * TODO: test this more thoroughly?
+     */
+    public int getNodeIndex(int key) {
+        if ( m_nkey == null ) {
+            return ((VisualTable)getNodeTable()).getChildRow(key);
+        } else {
+            return super.getNodeIndex(key);
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // VisualGraph Methods
+    
+    /**
+     * @@see prefuse.visual.VisualTupleSet#getVisualization()
+     */
+    public Visualization getVisualization() {
+        return m_vis;
+    }
+    
+    /**
+     * Set the visualization associated with this VisualGraph
+     * @@param vis the visualization to set
+     */
+    public void setVisualization(Visualization vis) {
+        m_vis = vis;
+    }
+    
+    /**
+     * Get the visualization data group name for this graph
+     * @@return the data group name
+     */
+    public String getGroup() {
+        return m_group;
+    }
+    
+    /**
+     * Set the visualization data group name for this graph
+     * @@param group the data group name to use
+     */
+    public void setGroup(String group) {
+        m_group = group;
+    }
+    
+} // end of class VisualGraph
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a2 2
+import java.util.List;
+
+a3 1
+import prefuse.data.Edge;
+a4 1
+import prefuse.data.Node;
+d7 1
+d15 1
+a15 1
+ *
+d18 1
+a18 1
+public class VisualGraph <T extends VisualItem<?>, N extends NodeItem<N,E>, E extends EdgeItem<N,E>> extends Graph<T,N,E> implements VisualTupleSet<T> {
+d22 1
+a22 1
+
+d34 1
+a34 1
+    public VisualGraph(VisualTable<? extends Node<?,?>, N> nodes, VisualTable<? extends Edge<?,?>, E> edges, boolean directed,
+d39 1
+a39 1
+
+d45 1
+a45 2
+    @@Override
+	protected void fireGraphEvent(Table<?> t,
+d49 1
+a49 1
+        if ( type==EventConstants.UPDATE &&
+d52 3
+a54 3
+            VisualTable<?,?> nodes = (VisualTable<?,?>)t;
+            VisualTable<?,?> edges = (VisualTable<?,?>)getEdgeTable();
+
+d56 3
+a58 4
+                if ( nodes.isValidated(i) ) {
+					continue; // look only for invalidations
+				}
+
+d63 3
+a65 2
+                List<Integer> erows = edgeRows(i);
+                for ( int erow : erows ) {
+d76 1
+a76 1
+
+d83 1
+a83 1
+            return ((VisualTable<?,?>)getNodeTable()).getChildRow(key);
+d88 1
+a88 1
+
+d91 1
+a91 1
+
+d98 1
+a98 1
+
+d106 1
+a106 1
+
+d114 1
+a114 1
+
+d117 1
+d122 1
+a122 1
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d117 1
+a117 1
+     * @@return the data group name to use
+@
+
+
+1.1
+log
+@file VisualGraph.java was initially added on branch beta.
+@
+text
+@d1 123
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 75
+package prefuse.visual;
+
+import prefuse.Visualization;
+import prefuse.data.Graph;
+import prefuse.data.Table;
+import prefuse.data.event.EventConstants;
+import prefuse.util.collections.IntIterator;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class VisualGraph extends Graph {
+
+    private Visualization m_vis;
+    private String m_group;
+    
+    public VisualGraph(VisualTable nodes, VisualTable edges,
+            String nodeKey, String sourceKey, String targetKey)
+    {
+        super(nodes, edges, nodeKey, sourceKey, targetKey);
+    }
+    
+    protected void fireGraphEvent(Table t, 
+            int first, int last, int col, int type)
+    {
+        // if a node is invalidated, invalidate the edges, too
+        if ( type==EventConstants.UPDATE && 
+             col==VisualItem.IDX_VALIDATED && t==m_nodes )
+        {
+            VisualTable nodes = (VisualTable)m_nodes;
+            VisualTable edges = (VisualTable)m_edges;
+            
+            for ( int i=first; i<=last; ++i ) {
+                if ( nodes.isValidated(i) )
+                    continue; // look only for invalidations
+                
+                IntIterator erows = edgeRows(i);
+                while ( erows.hasNext() ) {
+                    int erow = erows.nextInt();
+                    edges.setValidated(false, erow);
+                }
+            }
+        }
+        // fire the event off to listeners
+        super.fireGraphEvent(t, first, last, col, type);
+    }
+    
+    protected int getNodeIndex(int key) {
+        if ( m_nkey == null ) {
+            return ((VisualTable)m_nodes).getChildRow(key);
+        } else {
+            return super.getNodeIndex(key);
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // VisualGraph Methods
+    
+    public Visualization getVisualization() {
+        return m_vis;
+    }
+    
+    public void setVisualization(Visualization vis) {
+        m_vis = vis;
+    }
+    
+    public String getGroup() {
+        return m_group;
+    }
+    
+    public void setGroup(String group) {
+        m_group = group;
+    }
+    
+} // end of class VisualGraph
+@
+
+
+1.1.2.2
+log
+@Updated Graph classes to subclass CompositeTupleSet
+@
+text
+@d28 1
+a28 1
+             col==VisualItem.IDX_VALIDATED && t==getNodeTable() )
+d30 2
+a31 2
+            VisualTable nodes = (VisualTable)t;
+            VisualTable edges = (VisualTable)getEdgeTable();
+a47 3
+    /**
+     * TODO: test this
+     */
+d50 1
+a50 1
+            return ((VisualTable)getNodeTable()).getChildRow(key);
+@
+
+
+1.1.2.3
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d17 1
+a17 1
+    public VisualGraph(VisualTable nodes, VisualTable edges, boolean directed,
+d20 1
+a20 1
+        super(nodes, edges, directed, nodeKey, sourceKey, targetKey);
+d51 1
+a51 1
+    public int getNodeIndex(int key) {
+@
+
+
+1.1.2.4
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a36 4
+                if ( i < 0 ) {
+                	System.err.println("catch me - VisualGraph fireGraphEvent");
+                }
+//                try {
+a41 3
+//                } catch ( Exception ex ) {
+//                	ex.printStackTrace();
+//                }
+@
+
+
+1.1.2.5
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d38 1
+a38 1
+                    System.err.println("catch me - VisualGraph fireGraphEvent");
+d47 1
+a47 1
+//                  ex.printStackTrace();
+@
+
+
+1.1.2.6
+log
+@Much more javadoc
+@
+text
+@d10 1
+a10 7
+ * A visual abstraction of a graph data structure. NodeItem and EdgeItem tuples
+ * provide the visual representations for the nodes and edges of the graph.
+ * VisualGraphs should not be created directly, they are created automatically
+ * by adding data to a Visualization, for example by using the
+ * {@@link Visualization#addGraph(String, Graph)} method.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d12 1
+a12 1
+public class VisualGraph extends Graph implements VisualTupleSet {
+d16 1
+a16 12
+   
+    /**
+     * Create a new VisualGraph
+     * @@param nodes the visual node table
+     * @@param edges the visual edge table
+     * @@param directed indicates if graph edges are directed or undirected
+     * @@param nodeKey the node table field by which to index the nodes.
+     * This value can be null, indicating that just the row indices should be
+     * used.
+     * @@param sourceKey the edge table field storing source node keys
+     * @@param targetKey the edge table field storing target node keys
+     */
+a22 5
+    /**
+     * Fire a graph event. Makes sure to invalidate all edges connected
+     * to a node that has been updated.
+     * @@see prefuse.data.Graph#fireGraphEvent(prefuse.data.Table, int, int, int, int)
+     */
+d44 1
+a44 1
+                    edges.setValidated(erow, false);
+d56 1
+a56 2
+     * Get the node row index value for the given key.
+     * TODO: test this more thoroughly?
+a68 3
+    /**
+     * @@see prefuse.visual.VisualTupleSet#getVisualization()
+     */
+a72 4
+    /**
+     * Set the visualization associated with this VisualGraph
+     * @@param vis the visualization to set
+     */
+a76 4
+    /**
+     * Get the visualization data group name for this graph
+     * @@return the data group name
+     */
+a80 4
+    /**
+     * Set the visualization data group name for this graph
+     * @@return the data group name to use
+     */
+@
+
+

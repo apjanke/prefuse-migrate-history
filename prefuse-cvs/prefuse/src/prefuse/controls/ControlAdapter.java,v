@@ -1,0 +1,676 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.32;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.32;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.40;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.controls;
+
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Adapter class for processing prefuse interface events. Subclasses can
+ * override the desired methods to perform user interface event handling.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ControlAdapter implements Control {
+
+    private boolean m_enabled = true;
+    
+    /**
+     * @@see prefuse.controls.Control#isEnabled()
+     */
+    public boolean isEnabled() {
+        return m_enabled;
+    }
+    
+    /**
+     * @@see prefuse.controls.Control#setEnabled(boolean)
+     */
+    public void setEnabled(boolean enabled) {
+        m_enabled = enabled;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.controls.Control#itemDragged(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemDragged(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemMoved(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemMoved(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemWheelMoved(prefuse.visual.VisualItem, java.awt.event.MouseWheelEvent)
+     */
+    public void itemWheelMoved(VisualItem item, MouseWheelEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemClicked(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemClicked(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemPressed(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemPressed(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemReleased(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemReleased(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemEntered(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemEntered(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemExited(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemExited(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemKeyPressed(prefuse.visual.VisualItem, java.awt.event.KeyEvent)
+     */
+    public void itemKeyPressed(VisualItem item, KeyEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemKeyReleased(prefuse.visual.VisualItem, java.awt.event.KeyEvent)
+     */
+    public void itemKeyReleased(VisualItem item, KeyEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemKeyTyped(prefuse.visual.VisualItem, java.awt.event.KeyEvent)
+     */
+    public void itemKeyTyped(VisualItem item, KeyEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseEntered(java.awt.event.MouseEvent)
+     */
+    public void mouseEntered(MouseEvent e) {    
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseExited(java.awt.event.MouseEvent)
+     */
+    public void mouseExited(MouseEvent e) {     
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mousePressed(java.awt.event.MouseEvent)
+     */
+    public void mousePressed(MouseEvent e) {    
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseReleased(java.awt.event.MouseEvent)
+     */
+    public void mouseReleased(MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseClicked(java.awt.event.MouseEvent)
+     */
+    public void mouseClicked(MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseDragged(java.awt.event.MouseEvent)
+     */
+    public void mouseDragged(MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseMoved(java.awt.event.MouseEvent)
+     */
+    public void mouseMoved(MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+     */
+    public void mouseWheelMoved(MouseWheelEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#keyPressed(java.awt.event.KeyEvent)
+     */
+    public void keyPressed(KeyEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#keyReleased(java.awt.event.KeyEvent)
+     */
+    public void keyReleased(KeyEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#keyTyped(java.awt.event.KeyEvent)
+     */
+    public void keyTyped(KeyEvent e) {
+    } 
+
+} // end of class ControlAdapter
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d13 1
+a13 1
+ *
+d19 1
+a19 1
+
+d26 1
+a26 1
+
+d33 1
+a33 1
+
+d35 1
+a35 1
+
+d39 2
+a40 2
+    public void itemDragged(VisualItem<?> item, MouseEvent e) {
+    }
+d45 2
+a46 2
+    public void itemMoved(VisualItem<?> item, MouseEvent e) {
+    }
+d51 2
+a52 2
+    public void itemWheelMoved(VisualItem<?> item, MouseWheelEvent e) {
+    }
+d57 2
+a58 2
+    public void itemClicked(VisualItem<?> item, MouseEvent e) {
+    }
+d63 2
+a64 2
+    public void itemPressed(VisualItem<?> item, MouseEvent e) {
+    }
+d69 2
+a70 2
+    public void itemReleased(VisualItem<?> item, MouseEvent e) {
+    }
+d75 2
+a76 2
+    public void itemEntered(VisualItem<?> item, MouseEvent e) {
+    }
+d81 2
+a82 2
+    public void itemExited(VisualItem<?> item, MouseEvent e) {
+    }
+d87 2
+a88 2
+    public void itemKeyPressed(VisualItem<?> item, KeyEvent e) {
+    }
+d93 2
+a94 2
+    public void itemKeyReleased(VisualItem<?> item, KeyEvent e) {
+    }
+d99 2
+a100 2
+    public void itemKeyTyped(VisualItem<?> item, KeyEvent e) {
+    }
+d105 2
+a106 2
+    public void mouseEntered(MouseEvent e) {
+    }
+d111 2
+a112 2
+    public void mouseExited(MouseEvent e) {
+    }
+d117 2
+a118 2
+    public void mousePressed(MouseEvent e) {
+    }
+d124 1
+a124 1
+    }
+d130 1
+a130 1
+    }
+d136 1
+a136 1
+    }
+d142 1
+a142 1
+    }
+d148 1
+a148 1
+    }
+d154 1
+a154 1
+    }
+d160 1
+a160 1
+    }
+d166 1
+a166 1
+    }
+@
+
+
+1.1
+log
+@file ControlAdapter.java was initially added on branch beta.
+@
+text
+@d1 168
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 163
+package prefuse.controls;
+
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Adapter class for prefuse interface events. Subclasses can override the
+ * desired methods to perform user interface event handling.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class ControlAdapter implements Control {
+
+    private boolean m_enabled = true;
+    
+    public boolean isEnabled() {
+        return m_enabled;
+    }
+    
+    public void setEnabled(boolean enabled) {
+        m_enabled = enabled;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+	/**
+	 * @@see prefuse.controls.Control#itemDragged(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+	 */
+	public void itemDragged(VisualItem item, MouseEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#itemMoved(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+	 */
+	public void itemMoved(VisualItem item, MouseEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#itemWheelMoved(prefuse.visual.VisualItem, java.awt.event.MouseWheelEvent)
+	 */
+	public void itemWheelMoved(VisualItem item, MouseWheelEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#itemClicked(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+	 */
+	public void itemClicked(VisualItem item, MouseEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#itemPressed(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+	 */
+	public void itemPressed(VisualItem item, MouseEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#itemReleased(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+	 */
+	public void itemReleased(VisualItem item, MouseEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#itemEntered(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+	 */
+	public void itemEntered(VisualItem item, MouseEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#itemExited(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+	 */
+	public void itemExited(VisualItem item, MouseEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#itemKeyPressed(prefuse.visual.VisualItem, java.awt.event.KeyEvent)
+	 */
+	public void itemKeyPressed(VisualItem item, KeyEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#itemKeyReleased(prefuse.visual.VisualItem, java.awt.event.KeyEvent)
+	 */
+	public void itemKeyReleased(VisualItem item, KeyEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#itemKeyTyped(prefuse.visual.VisualItem, java.awt.event.KeyEvent)
+	 */
+	public void itemKeyTyped(VisualItem item, KeyEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#mouseEntered(java.awt.event.MouseEvent)
+	 */
+	public void mouseEntered(MouseEvent e) {	
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#mouseExited(java.awt.event.MouseEvent)
+	 */
+	public void mouseExited(MouseEvent e) {		
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#mousePressed(java.awt.event.MouseEvent)
+	 */
+	public void mousePressed(MouseEvent e) {	
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#mouseReleased(java.awt.event.MouseEvent)
+	 */
+	public void mouseReleased(MouseEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#mouseClicked(java.awt.event.MouseEvent)
+	 */
+	public void mouseClicked(MouseEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#mouseDragged(java.awt.event.MouseEvent)
+	 */
+	public void mouseDragged(MouseEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#mouseMoved(java.awt.event.MouseEvent)
+	 */
+	public void mouseMoved(MouseEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	public void mouseWheelMoved(MouseWheelEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#keyPressed(java.awt.event.KeyEvent)
+	 */
+	public void keyPressed(KeyEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#keyReleased(java.awt.event.KeyEvent)
+	 */
+	public void keyReleased(KeyEvent e) {
+	} 
+
+	/**
+	 * @@see prefuse.controls.Control#keyTyped(java.awt.event.KeyEvent)
+	 */
+	public void keyTyped(KeyEvent e) {
+	} 
+
+} // end of class ControlAdapter
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d31 131
+a161 131
+    /**
+     * @@see prefuse.controls.Control#itemDragged(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemDragged(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemMoved(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemMoved(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemWheelMoved(prefuse.visual.VisualItem, java.awt.event.MouseWheelEvent)
+     */
+    public void itemWheelMoved(VisualItem item, MouseWheelEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemClicked(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemClicked(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemPressed(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemPressed(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemReleased(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemReleased(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemEntered(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemEntered(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemExited(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemExited(VisualItem item, MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemKeyPressed(prefuse.visual.VisualItem, java.awt.event.KeyEvent)
+     */
+    public void itemKeyPressed(VisualItem item, KeyEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemKeyReleased(prefuse.visual.VisualItem, java.awt.event.KeyEvent)
+     */
+    public void itemKeyReleased(VisualItem item, KeyEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#itemKeyTyped(prefuse.visual.VisualItem, java.awt.event.KeyEvent)
+     */
+    public void itemKeyTyped(VisualItem item, KeyEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseEntered(java.awt.event.MouseEvent)
+     */
+    public void mouseEntered(MouseEvent e) {    
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseExited(java.awt.event.MouseEvent)
+     */
+    public void mouseExited(MouseEvent e) {     
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mousePressed(java.awt.event.MouseEvent)
+     */
+    public void mousePressed(MouseEvent e) {    
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseReleased(java.awt.event.MouseEvent)
+     */
+    public void mouseReleased(MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseClicked(java.awt.event.MouseEvent)
+     */
+    public void mouseClicked(MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseDragged(java.awt.event.MouseEvent)
+     */
+    public void mouseDragged(MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseMoved(java.awt.event.MouseEvent)
+     */
+    public void mouseMoved(MouseEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+     */
+    public void mouseWheelMoved(MouseWheelEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#keyPressed(java.awt.event.KeyEvent)
+     */
+    public void keyPressed(KeyEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#keyReleased(java.awt.event.KeyEvent)
+     */
+    public void keyReleased(KeyEvent e) {
+    } 
+
+    /**
+     * @@see prefuse.controls.Control#keyTyped(java.awt.event.KeyEvent)
+     */
+    public void keyTyped(KeyEvent e) {
+    } 
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@d11 2
+a12 2
+ * Adapter class for processing prefuse interface events. Subclasses can
+ * override the desired methods to perform user interface event handling.
+d14 2
+a15 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a20 3
+    /**
+     * @@see prefuse.controls.Control#isEnabled()
+     */
+a24 3
+    /**
+     * @@see prefuse.controls.Control#setEnabled(boolean)
+     */
+@
+
+

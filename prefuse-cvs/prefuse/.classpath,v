@@ -1,0 +1,118 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0
+	alpha:1.3.0.2
+	Root_alpha:1.3
+	prefuse-alpha-20051229:1.3
+	P20050401_Alpha_PreCHI:1.3;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.11.06.38.40;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.01.20.02.23;	author jheer;	state Exp;
+branches
+	1.3.4.1;
+next	1.2;
+
+1.2
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.11.03;	author jheer;	state Exp;
+branches;
+next	;
+
+1.3.4.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="demos"/>
+	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="src" path="data"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/lucene-1.4.3.jar"/>
+	<classpathentry kind="var" path="JUNIT_HOME/junit.jar"/>
+	<classpathentry kind="output" path="build"/>
+</classpath>
+@
+
+
+1.3
+log
+@Minor updates
+@
+text
+@d5 2
+d8 3
+a10 2
+	<classpathentry kind="src" path="extensions"/>
+	<classpathentry kind="output" path="classes"/>
+@
+
+
+1.3.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a4 2
+	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="src" path="data"/>
+d6 2
+a7 3
+	<classpathentry kind="lib" path="lib/lucene-1.4.3.jar"/>
+	<classpathentry kind="var" path="JUNIT_HOME/junit.jar"/>
+	<classpathentry kind="output" path="build"/>
+@
+
+
+1.2
+log
+@Major commit of updated architecture
+@
+text
+@a5 1
+	<classpathentry kind="var" path="JUNIT_HOME/junit.jar"/>
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@d4 1
+a4 1
+	<classpathentry kind="src" path="test"/>
+d7 1
+@
+

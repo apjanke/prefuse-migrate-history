@@ -1,0 +1,491 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2008.01.13.22.39.16;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Fixed javadoc comments
+@
+text
+@package prefuse.action;
+
+import java.util.logging.Logger;
+
+import prefuse.Visualization;
+import prefuse.activity.Activity;
+
+/**
+ * <p>Actions are building blocks that perform any number of operations on a
+ * Visualization, typically processing VisualItems to set various visual
+ * attributes. This class is a base implementation for Action instances.
+ * Developers can subclass this class and implement the <code>run</code> method
+ * to create their own custom Actions.</p>
+ * 
+ * <p>After instantiating an Action, you should register it with a particular
+ * Visualization before running it. Use the
+ * {@@link prefuse.Visualization#putAction(String, Action)} to do this. This
+ * will ensure that the Action is configured to use that Visualization. If
+ * an Action is part of an {@@link ActionList} or {@@link ActionSwitch}, it is
+ * sufficient to only register that CompositeAction with the Visualization
+ * -- all contained Action instances will be configured appropriately. You
+ * can then run the Actions using the {@@link prefuse.Visualization#run(String)}
+ * method and other similar methods of the {@@link prefuse.Visualization} class.
+ * </p>
+ * 
+ * <p>As a subclass of Activity, Actions can be of two kinds. 
+ * <i>Run-once</i> action lists have
+ * a duration value of zero, and simply run once when scheduled. Actions
+ * with a duration greater than zero can be executed multiple times, waiting
+ * a specified step time between each execution until the activity has run for
+ * its full duration. A duration of Activity.INFINITE will result in a
+ * continually re-running Action.</p>
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public abstract class Action extends Activity {
+    
+    private final static Logger s_logger 
+        = Logger.getLogger(Action.class.getName());
+    
+    /** A reference to the visualization processed by this Action. */
+    protected Visualization m_vis;
+    
+    /**
+     * Creates an action instance with zero duration. This Action will only
+     * run once if invoked.
+     */
+    public Action() {
+        this(null);
+    }
+    
+    /**
+     * Create a new Action with a specified duration.
+     * @@param duration the Action duration in milliseconds
+     */
+    public Action(long duration) {
+        super(duration, Activity.DEFAULT_STEP_TIME);
+    }
+    
+    /**
+     * Create a new Action with a specified duration and step time.
+     * @@param duration the Action duration in milliseconds
+     * @@param stepTime the time to wait between invocation of the Action
+     */
+    public Action(long duration, long stepTime) {
+        super(duration, stepTime);
+    }
+    
+    /**
+     * Create a new Action with a specified Visualization and zero duration.
+     * @@param vis the Visualization this Action should process. If this
+     * Action is registered with another Visualization, this value will
+     * be overwritten.
+     */
+    public Action(Visualization vis) {
+        this(vis, 0);
+    }
+    
+    /**
+     * Create a new Action with a specified Visualization and duration.
+     * @@param vis the Visualization this Action should process. If this
+     * Action is registered with another Visualization, this value will
+     * be overwritten.
+     * @@param duration the Action duration in milliseconds
+     */
+    public Action(Visualization vis, long duration) {
+        super(duration, Activity.DEFAULT_STEP_TIME);
+        m_vis = vis;
+    }
+    
+    /**
+     * Create a new Action with a specified Visualization, duration and
+     * step time.
+     * @@param vis the Visualization this Action should process. If this
+     * Action is registered with another Visualization, this value will
+     * be overwritten.
+     * @@param duration the Action duration in milliseconds
+     * @@param stepTime the time to wait between invocation of the Action
+     */
+    public Action(Visualization vis, long duration, long stepTime) {
+        super(duration, stepTime);
+        m_vis = vis;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Runs this Action, triggering whatever processing this Action performs.
+     * Subclass this method to create custom Actions.
+     * @@param frac the fraction of this Action's duration that has elapsed.
+     */
+    public abstract void run(double frac);
+
+    /**
+     * Runs this Action (as an Activity). Called by the Activity super-class.
+     * @@see prefuse.activity.Activity#run(long)
+     */
+    protected void run(long elapsedTime) {
+        Visualization vis = getVisualization();
+        if ( vis != null ) {
+            synchronized (vis) {
+                run(getPace(elapsedTime));
+            }
+        } else {
+            s_logger.info("Running unsynchronized Action");
+            run(getPace(elapsedTime));
+        }
+    }
+    
+    /**
+     * Return the Visualization processed by this Action.
+     * @@return the {@@link prefuse.Visualization} instance.
+     */
+    public Visualization getVisualization() {
+        return m_vis;
+    }
+    
+    /**
+     * Set the Visualization processed by this Action.
+     * @@param vis the {@@link prefuse.Visualization} to process.
+     */
+    public void setVisualization(Visualization vis) {
+        m_vis = vis;
+    }
+
+} // end of class Action
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d14 1
+a14 1
+ *
+d25 2
+a26 2
+ *
+ * <p>As a subclass of Activity, Actions can be of two kinds.
+d37 2
+a38 2
+
+    private final static Logger s_logger
+d40 1
+a40 1
+
+d43 1
+a43 1
+
+d51 1
+a51 1
+
+d59 1
+a59 1
+
+d68 1
+a68 1
+
+d78 1
+a78 1
+
+d90 1
+a90 1
+
+d104 1
+a104 1
+
+d106 1
+a106 1
+
+d118 1
+a118 2
+    @@Override
+	protected void run(long elapsedTime) {
+d129 1
+a129 1
+
+d137 1
+a137 1
+
+d140 1
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d140 1
+a140 1
+     * @@return the {@@link prefuse.Visualization} to process.
+@
+
+
+1.1
+log
+@file Action.java was initially added on branch beta.
+@
+text
+@d1 146
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 98
+package prefuse.action;
+
+import java.util.logging.Logger;
+
+import prefuse.Visualization;
+import prefuse.activity.Activity;
+
+/**
+ * Actions are building blocks that perform computations on a Visualization,
+ * typically processing VisualItems to set various visual attributes. This class
+ * is a base implementation for Action instances. Developers can subclass
+ * this class and implement the <code>run</code> method to create their
+ * own custom Actions.
+
+ * <p>As a subclass of Activity, Actions can be of two kinds. 
+ * <i>Run-once</i> action lists have
+ * a duration value of zero, and simply run once when scheduled. Actions
+ * with a duration greater than zero can be executed multiple times, waiting
+ * a specified step time between each execution until the activity has run for
+ * its full duration. A duration of Activity.INFINITE will result in a
+ * continually re-running Action.</p>
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public abstract class Action extends Activity {
+    
+    private final static Logger s_logger 
+        = Logger.getLogger(Action.class.getName());
+    
+    protected Visualization m_vis;
+    
+    /**
+     * Default constructor. Creates an action instance that is not associated
+     * with a specific Visualization. Use this constructor only when an
+     * Action has no need of a Visualization reference to carry out it's run
+     * method.
+     */
+    public Action() {
+        this(null);
+    }
+    
+    public Action(long duration) {
+        super(duration, Activity.DEFAULT_STEP_TIME);
+    }
+    
+    public Action(long duration, long stepTime) {
+        super(duration, stepTime);
+    }
+    
+    public Action(Visualization vis) {
+        this(vis, 0);
+    }
+    
+    public Action(Visualization vis, long duration) {
+        super(duration, Activity.DEFAULT_STEP_TIME);
+        m_vis = vis;
+    }
+    
+    public Action(Visualization vis, long duration, long stepTime) {
+        super(duration, stepTime);
+        m_vis = vis;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Runs this Action, triggering whatever processing this Action performs.
+     * Subclass this method to create custom Actions.
+     * @@param frac the fraction of this Action's duration that has elapsed.
+     */
+    public abstract void run(double frac);
+
+    /**
+     * Runs this Action (as an Activity)
+     * @@see prefuse.activity.Activity#run(long)
+     */
+    protected void run(long elapsedTime) {
+        Visualization vis = getVisualization();
+        if ( vis != null ) {
+            synchronized (vis) {
+                run(getPace(elapsedTime));
+            }
+        } else {
+            s_logger.info("Running unsynchronized Action");
+            run(getPace(elapsedTime));
+        }
+    }
+    
+    public Visualization getVisualization() {
+        return m_vis;
+    }
+    
+    public void setVisualization(Visualization vis) {
+        m_vis = vis;
+    }
+
+} // end of class Action
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d9 6
+a14 17
+ * <p>Actions are building blocks that perform any number of operations on a
+ * Visualization, typically processing VisualItems to set various visual
+ * attributes. This class is a base implementation for Action instances.
+ * Developers can subclass this class and implement the <code>run</code> method
+ * to create their own custom Actions.</p>
+ * 
+ * <p>After instantiating an Action, you should register it with a particular
+ * Visualization before running it. Use the
+ * {@@link prefuse.Visualization#putAction(String, Action)} to do this. This
+ * will ensure that the Action is configured to use that Visualization. If
+ * an Action is part of an {@@link ActionList} or {@@link ActionSwitch}, it is
+ * sufficient to only register that CompositeAction with the Visualization
+ * -- all contained Action instances will be configured appropriately. You
+ * can then run the Actions using the {@@link prefuse.Visualization#run(String)}
+ * method and other similar methods of the {@@link prefuse.Visualization} class.
+ * </p>
+ * 
+d23 1
+a30 1
+    /** A reference to the visualization processed by this Action. */
+d34 4
+a37 2
+     * Creates an action instance with zero duration. This Action will only
+     * run once if invoked.
+a42 4
+    /**
+     * Create a new Action with a specified duration.
+     * @@param duration the Action duration in milliseconds
+     */
+a46 5
+    /**
+     * Create a new Action with a specified duration and step time.
+     * @@param duration the Action duration in milliseconds
+     * @@param stepTime the time to wait between invocation of the Action
+     */
+a50 6
+    /**
+     * Create a new Action with a specified Visualization and zero duration.
+     * @@param vis the Visualization this Action should process. If this
+     * Action is registered with another Visualization, this value will
+     * be overwritten.
+     */
+a54 7
+    /**
+     * Create a new Action with a specified Visualization and duration.
+     * @@param vis the Visualization this Action should process. If this
+     * Action is registered with another Visualization, this value will
+     * be overwritten.
+     * @@param duration the Action duration in milliseconds
+     */
+a59 9
+    /**
+     * Create a new Action with a specified Visualization, duration and
+     * step time.
+     * @@param vis the Visualization this Action should process. If this
+     * Action is registered with another Visualization, this value will
+     * be overwritten.
+     * @@param duration the Action duration in milliseconds
+     * @@param stepTime the time to wait between invocation of the Action
+     */
+d75 1
+a75 1
+     * Runs this Action (as an Activity). Called by the Activity super-class.
+a89 4
+    /**
+     * Return the Visualization processed by this Action.
+     * @@return the {@@link prefuse.Visualization} instance.
+     */
+a93 4
+    /**
+     * Set the Visualization processed by this Action.
+     * @@return the {@@link prefuse.Visualization} to process.
+     */
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d34 1
+a34 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

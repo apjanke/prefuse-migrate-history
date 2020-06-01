@@ -1,0 +1,347 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.02.19.01.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action.layout.graph;
+
+import prefuse.action.layout.Layout;
+import prefuse.data.Graph;
+import prefuse.data.Tree;
+import prefuse.data.tuple.TupleSet;
+import prefuse.visual.NodeItem;
+
+/**
+ * Abstract base class providing convenience methods for tree layout algorithms.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public abstract class TreeLayout extends Layout {
+
+    protected NodeItem m_root;
+
+    /**
+     * Create a new TreeLayout.
+     */
+    public TreeLayout() {
+        super();
+    }
+
+    /**
+     * Create a new TreeLayout.
+     * @@param group the data group to layout. This must resolve to a graph
+     * instance, otherwise an exception will result when subclasses attempt
+     * to retrieve the layout root.
+     */
+    public TreeLayout(String group) {
+        super(group);
+    }
+    
+    // ------------------------------------------------------------------------
+
+    /**
+     * Explicitly set the node to use as the layout root.
+     * @@param root the node to use as the root.  A null value is legal, and
+     * indicates that the root of the spanning tree of the backing graph will
+     * be used as the layout root. If the node is not a member of this layout's
+     * data group, an exception will be thrown.
+     * @@throws IllegalArgumentException if the provided root is not a member of
+     * this layout's data group.
+     */
+    public void setLayoutRoot(NodeItem root) {
+        if ( !root.isInGroup(m_group) )
+            throw new IllegalArgumentException("Input node is not a member "
+                    + "of this layout's data group");
+        m_root = root;
+    }
+    
+    /**
+     * Return the NodeItem to use as the root for this tree layout.
+     * @@return the root node to use for this tree layout.
+     * @@throws IllegalStateException if the action's data group does not
+     * resolve to a {@@link prefuse.data.Graph} instance.
+     */
+    public NodeItem getLayoutRoot() {
+        if ( m_root != null )
+            return m_root;
+        
+        TupleSet ts = m_vis.getGroup(m_group);
+        if ( ts instanceof Graph ) {
+            Tree tree = ((Graph)ts).getSpanningTree();
+            return (NodeItem)tree.getRoot();
+        } else {
+            throw new IllegalStateException("This action's data group does" +
+                    "not resolve to a Graph instance.");
+        }
+    }
+
+} // end of abstract class TreeLayout
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d5 1
+a5 1
+import prefuse.data.tree.DeclarativeTree;
+a7 1
+import prefuse.visual.VisualItem;
+d17 1
+a17 1
+    protected NodeItem<?,?> m_root;
+d35 1
+a35 1
+
+d47 3
+a49 3
+    public void setLayoutRoot(NodeItem<?,?> root) {
+        if ( !root.isInGroup(m_group) ) {
+			throw new IllegalArgumentException("Input node is not a member "
+a50 1
+		}
+d53 1
+a53 1
+
+d60 5
+a64 6
+    public NodeItem<?,?> getLayoutRoot() {
+        if ( m_root != null ) {
+			return m_root;
+		}
+
+        TupleSet<? extends VisualItem<?>> ts = m_vis.getGroup(m_group);
+d66 2
+a67 2
+            DeclarativeTree<?,?> tree = ((Graph<?, ?, ?>)ts).getSpanningTree();
+            return (NodeItem<?,?>) (Object) tree.getRoot();
+d69 1
+a69 1
+            throw new IllegalStateException("This action's data group does " +
+@
+
+
+1.1
+log
+@file TreeLayout.java was initially added on branch beta.
+@
+text
+@d1 74
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 44
+package prefuse.action.layout.graph;
+
+import prefuse.action.layout.Layout;
+import prefuse.data.Tree;
+import prefuse.data.tuple.TupleSet;
+import prefuse.visual.NodeItem;
+
+/**
+ * Abstract class providing convenience methods for tree layout algorithms.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public abstract class TreeLayout extends Layout {
+
+    protected NodeItem m_root;
+
+    public TreeLayout() {
+        super();
+    }
+
+    public TreeLayout(String group) {
+        super(group);
+    }
+    
+    // ------------------------------------------------------------------------
+
+    public void setLayoutRoot(NodeItem root) {
+        m_root = root;
+    }
+    
+    public NodeItem getLayoutRoot() {
+        if ( m_root != null )
+            return m_root;
+        
+        TupleSet ts = m_vis.getGroup(m_group);
+        if ( ts instanceof Tree )
+            return (NodeItem)((Tree)ts).getRoot();
+        else
+            // TODO write error message
+            throw new IllegalStateException();
+    }
+
+} // end of abstract class TreeLayout
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a3 1
+import prefuse.data.Graph;
+d37 3
+a39 4
+        if ( ts instanceof Graph ) {
+        	Tree tree = ((Graph)ts).getSpanningTree();
+            return (NodeItem)tree.getRoot();
+        } else {
+a41 1
+        }
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d39 1
+a39 1
+            Tree tree = ((Graph)ts).getSpanningTree();
+@
+
+
+1.1.2.4
+log
+@Lots of javadoc
+@
+text
+@d10 1
+a10 1
+ * Abstract base class providing convenience methods for tree layout algorithms.
+a18 3
+    /**
+     * Create a new TreeLayout.
+     */
+a22 6
+    /**
+     * Create a new TreeLayout.
+     * @@param group the data group to layout. This must resolve to a graph
+     * instance, otherwise an exception will result when subclasses attempt
+     * to retrieve the layout root.
+     */
+a28 9
+    /**
+     * Explicitly set the node to use as the layout root.
+     * @@param root the node to use as the root.  A null value is legal, and
+     * indicates that the root of the spanning tree of the backing graph will
+     * be used as the layout root. If the node is not a member of this layout's
+     * data group, an exception will be thrown.
+     * @@throws IllegalArgumentException if the provided root is not a member of
+     * this layout's data group.
+     */
+a29 3
+        if ( !root.isInGroup(m_group) )
+            throw new IllegalArgumentException("Input node is not a member "
+                    + "of this layout's data group");
+a32 6
+    /**
+     * Return the NodeItem to use as the root for this tree layout.
+     * @@return the root node to use for this tree layout.
+     * @@throws IllegalStateException if the action's data group does not
+     * resolve to a {@@link prefuse.data.Graph} instance.
+     */
+d42 2
+a43 2
+            throw new IllegalStateException("This action's data group does" +
+                    "not resolve to a Graph instance.");
+@
+
+
+1.1.2.5
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d13 1
+a13 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

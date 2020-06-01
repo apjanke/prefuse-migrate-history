@@ -1,0 +1,293 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.51;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.collections;
+
+/**
+ * Abstract base class for a LiteralIterator implementations.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public abstract class AbstractLiteralIterator implements LiteralIterator {
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextInt()
+     */
+    public int nextInt() {
+        throw new UnsupportedOperationException("int type unsupported");
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextLong()
+     */
+    public long nextLong() {
+        throw new UnsupportedOperationException("long type unsupported");
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextFloat()
+     */
+    public float nextFloat() {
+        throw new UnsupportedOperationException("float type unsupported");
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextDouble()
+     */
+    public double nextDouble() {
+        throw new UnsupportedOperationException("double type unsupported");
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextBoolean()
+     */
+    public boolean nextBoolean() {
+        throw new UnsupportedOperationException("boolean type unsupported");
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isBooleanSupported()
+     */
+    public boolean isBooleanSupported() {
+        return false;
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isDoubleSupported()
+     */
+    public boolean isDoubleSupported() {
+        return false;
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isFloatSupported()
+     */
+    public boolean isFloatSupported() {
+        return false;
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isIntSupported()
+     */
+    public boolean isIntSupported() {
+        return false;
+    }
+
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isLongSupported()
+     */
+    public boolean isLongSupported() {
+        return false;
+    }
+    
+} // end of class AbstractLiteralIterator
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d5 1
+a5 1
+ *
+d79 1
+a79 1
+
+@
+
+
+1.1
+log
+@file AbstractLiteralIterator.java was initially added on branch beta.
+@
+text
+@d1 80
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 49
+package prefuse.util.collections;
+
+public abstract class AbstractLiteralIterator implements LiteralIterator {
+
+    public int nextInt() {
+        throw new UnsupportedOperationException("int type unsupported");
+    }
+
+    public long nextLong() {
+        throw new UnsupportedOperationException("long type unsupported");
+    }
+
+    public float nextFloat() {
+        throw new UnsupportedOperationException("float type unsupported");
+    }
+
+    public double nextDouble() {
+        throw new UnsupportedOperationException("double type unsupported");
+    }
+
+    public boolean nextBoolean() {
+        throw new UnsupportedOperationException("boolean type unsupported");
+    }
+
+    public boolean isBooleanSupported() {
+        return false;
+    }
+
+    public boolean isDoubleSupported() {
+        return false;
+    }
+
+    public boolean isFloatSupported() {
+        return false;
+    }
+
+    public boolean isIntSupported() {
+        return false;
+    }
+
+    public boolean isLongSupported() {
+        return false;
+    }
+
+    public void remove() {
+        throw new UnsupportedOperationException("remove operation unsupported");
+    }
+    
+} // end of class AbstractLiteralIterator
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d44 4
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@a2 5
+/**
+ * Abstract base class for a LiteralIterator implementations.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+a4 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextInt()
+     */
+a8 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextLong()
+     */
+a12 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextFloat()
+     */
+a16 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextDouble()
+     */
+a20 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#nextBoolean()
+     */
+a24 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isBooleanSupported()
+     */
+a28 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isDoubleSupported()
+     */
+a32 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isFloatSupported()
+     */
+a36 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isIntSupported()
+     */
+a40 3
+    /**
+     * @@see prefuse.util.collections.LiteralIterator#isLongSupported()
+     */
+@
+
+

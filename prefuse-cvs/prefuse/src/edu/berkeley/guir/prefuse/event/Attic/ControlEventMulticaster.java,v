@@ -1,0 +1,300 @@
+head	1.5;
+access;
+symbols
+	alpha:1.4.0.2
+	Root_alpha:1.4
+	prefuse-alpha-20051229:1.4
+	P20050401_Alpha_PreCHI:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2006.02.11.06.38.46;	author jheer;	state dead;
+branches;
+next	1.4;
+
+1.4
+date	2004.11.08.02.53.30;	author jheer;	state Exp;
+branches
+	1.4.4.1;
+next	1.3;
+
+1.3
+date	2004.03.23.19.34.05;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.17;	author jheer;	state Exp;
+branches;
+next	;
+
+1.4.4.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.event;
+
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.util.EventListener;
+
+import edu.berkeley.guir.prefuse.VisualItem;
+
+/**
+ * Manages a list of listeners for prefuse control events.
+ * 
+ * @@author newbergr
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ControlEventMulticaster extends EventMulticaster
+    implements ControlListener
+{
+	public static ControlListener add(ControlListener a, ControlListener b) {
+		return (ControlListener) addInternal(a, b);
+	} //
+
+	public static ControlListener remove(
+		ControlListener l,
+		ControlListener oldl) {
+		return (ControlListener) removeInternal(l, oldl);
+	} //
+
+	public void itemDragged(VisualItem item, MouseEvent e) {
+		((ControlListener) a).itemDragged(item, e);
+		((ControlListener) b).itemDragged(item, e);
+	} //
+
+	public void itemMoved(VisualItem item, MouseEvent e) {
+		((ControlListener) a).itemMoved(item, e);
+		((ControlListener) b).itemMoved(item, e);
+	} //
+
+	public void itemWheelMoved(VisualItem item, MouseWheelEvent e) {
+		((ControlListener) a).itemWheelMoved(item, e);
+		((ControlListener) b).itemWheelMoved(item, e);
+	} //
+
+	public void itemClicked(VisualItem item, MouseEvent e) {
+		((ControlListener) a).itemClicked(item, e);
+		((ControlListener) b).itemClicked(item, e);
+	} //
+
+	public void itemPressed(VisualItem item, MouseEvent e) {
+		((ControlListener) a).itemPressed(item, e);
+		((ControlListener) b).itemPressed(item, e);
+	} //
+
+	public void itemReleased(VisualItem item, MouseEvent e) {
+		((ControlListener) a).itemReleased(item, e);
+		((ControlListener) b).itemReleased(item, e);
+	} //
+
+	public void itemEntered(VisualItem item, MouseEvent e) {
+		((ControlListener) a).itemEntered(item, e);
+		((ControlListener) b).itemEntered(item, e);
+	} //
+
+	public void itemExited(VisualItem item, MouseEvent e) {
+		((ControlListener) a).itemExited(item, e);
+		((ControlListener) b).itemExited(item, e);
+	} //
+
+	public void itemKeyPressed(VisualItem item, KeyEvent e) {
+		((ControlListener) a).itemKeyPressed(item, e);
+		((ControlListener) b).itemKeyPressed(item, e);
+	} //
+
+	public void itemKeyReleased(VisualItem item, KeyEvent e) {
+		((ControlListener) a).itemKeyReleased(item, e);
+		((ControlListener) b).itemKeyReleased(item, e);
+	} //
+
+	public void itemKeyTyped(VisualItem item, KeyEvent e) {
+		((ControlListener) a).itemKeyTyped(item, e);
+		((ControlListener) b).itemKeyTyped(item, e);
+	} //
+
+	public void mouseEntered(MouseEvent e) {
+		((ControlListener) a).mouseEntered(e);
+		((ControlListener) b).mouseEntered(e);
+	} //
+	
+	public void mouseExited(MouseEvent e) {
+		((ControlListener) a).mouseExited(e);
+		((ControlListener) b).mouseExited(e);
+	} //
+	
+	public void mousePressed(MouseEvent e) {
+		((ControlListener) a).mousePressed(e);
+		((ControlListener) b).mousePressed(e);
+	} //
+	
+	public void mouseReleased(MouseEvent e) {
+		((ControlListener) a).mouseReleased(e);
+		((ControlListener) b).mouseReleased(e);
+	} //
+	
+	public void mouseClicked(MouseEvent e) {
+		((ControlListener) a).mouseClicked(e);
+		((ControlListener) b).mouseClicked(e);
+	} //
+	
+	public void mouseDragged(MouseEvent e) {
+		((ControlListener) a).mouseDragged(e);
+		((ControlListener) b).mouseDragged(e);
+	} //
+	
+	public void mouseMoved(MouseEvent e) {
+		((ControlListener) a).mouseMoved(e);
+		((ControlListener) b).mouseMoved(e);
+	} //
+	
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		((ControlListener) a).mouseWheelMoved(e);
+		((ControlListener) b).mouseWheelMoved(e);
+	} //
+	
+	public void keyPressed(KeyEvent e) {
+		((ControlListener) a).keyPressed(e);
+		((ControlListener) b).keyPressed(e);
+	} //
+	
+	public void keyReleased(KeyEvent e) {
+		((ControlListener) a).keyReleased(e);
+		((ControlListener) b).keyReleased(e);
+	} //
+	
+	public void keyTyped(KeyEvent e) {
+		((ControlListener) a).keyTyped(e);
+		((ControlListener) b).keyTyped(e);
+	} //
+
+    protected static EventListener addInternal(
+            EventListener a, EventListener b)
+    {
+        if (a == null)
+            return b;
+        if (b == null)
+            return a;
+        return new ControlEventMulticaster(a, b);
+    } //
+    
+	protected EventListener remove(EventListener oldl) {
+		if (oldl == a)
+			return b;
+		if (oldl == b)
+			return a;
+		EventListener a2 = removeInternal(a, oldl);
+		EventListener b2 = removeInternal(b, oldl);
+		if (a2 == a && b2 == b) {
+			return this; // it's not here
+		}
+		return addInternal(a2, b2);
+	} //
+    
+	protected ControlEventMulticaster(EventListener a, EventListener b) {
+		super(a,b);
+	} //
+    
+} // end of class ControlEventMulticaster
+@
+
+
+1.4
+log
+@Fixed multicaster bug, other small updates
+@
+text
+@@
+
+
+1.4.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.3
+log
+@More Javadoc updates
+@
+text
+@d149 13
+@
+
+
+1.2
+log
+@Major refactor
+@
+text
+@d14 1
+a14 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d8 1
+a8 1
+import edu.berkeley.guir.prefuse.GraphItem;
+d29 1
+a29 1
+	public void itemDragged(GraphItem item, MouseEvent e) {
+d34 1
+a34 1
+	public void itemMoved(GraphItem item, MouseEvent e) {
+d39 1
+a39 1
+	public void itemWheelMoved(GraphItem item, MouseWheelEvent e) {
+d44 1
+a44 1
+	public void itemClicked(GraphItem item, MouseEvent e) {
+d49 1
+a49 1
+	public void itemPressed(GraphItem item, MouseEvent e) {
+d54 1
+a54 1
+	public void itemReleased(GraphItem item, MouseEvent e) {
+d59 1
+a59 1
+	public void itemEntered(GraphItem item, MouseEvent e) {
+d64 1
+a64 1
+	public void itemExited(GraphItem item, MouseEvent e) {
+d69 1
+a69 1
+	public void itemKeyPressed(GraphItem item, KeyEvent e) {
+d74 1
+a74 1
+	public void itemKeyReleased(GraphItem item, KeyEvent e) {
+d79 1
+a79 1
+	public void itemKeyTyped(GraphItem item, KeyEvent e) {
+@
+

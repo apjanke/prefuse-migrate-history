@@ -1,0 +1,133 @@
+head	1.2;
+access;
+symbols
+	alpha:1.1.0.2
+	Root_alpha:1.1
+	prefuse-alpha-20051229:1.1
+	P20050401_Alpha_PreCHI:1.1;
+locks; strict;
+comment	@# @;
+expand	@b@;
+
+
+1.2
+date	2006.02.11.06.38.42;	author jheer;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.13.19.34.03;	author jheer;	state Exp;
+branches
+	1.1.4.1;
+next	;
+
+1.1.4.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Merge beta branch back onto main trunk
+@
+text
+@BODY
+{
+    BACKGROUND-COLOR: #FFFFFF;
+    COLOR: #000000;
+    FONT-FAMILY: Verdana,Arial,Helvetica,Sans-Serif;
+    FONT-SIZE: 100%
+}
+A
+{
+    COLOR: #333333;
+}
+A:active
+{
+    COLOR: #333333
+}
+A:visited
+{
+    COLOR: #333333
+}
+A:link
+{
+    COLOR: #333333
+}
+A:hover
+{
+    COLOR: #888888
+}
+
+SPAN.hide
+{
+    COLOR: #FFFFFF
+}
+
+SPAN.prefuse
+{
+    FONT-WEIGHT: NORMAL
+}
+
+TABLE.nav-table
+{
+    BACKGROUND-COLOR: #E0E0E0
+}
+
+TD.nav-title
+{
+    BACKGROUND-COLOR: #000000;
+    COLOR: #FFFFFF;
+    FONT-SIZE: SMALL;
+}
+
+A.nav
+{
+    COLOR: #000000;
+    FONT-SIZE: SMALL;
+    TEXT-DECORATION: UNDERLINE
+}
+A.nav:active
+{
+    COLOR: #000000
+}
+A.nav:visited
+{
+    COLOR: #000000
+}
+A.nav:link
+{
+    COLOR: #000000
+}
+A.nav:hover
+{
+    COLOR: #888888;
+    TEXT-DECORATION: UNDERLINE
+}
+.hidden
+{
+    DISPLAY: none;
+    VISIBILITY: hidden;
+}@
+
+
+1.1
+log
+@Started writing tutorial
+@
+text
+@@
+
+
+1.1.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+

@@ -1,0 +1,527 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.07.12.03.50.45;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.04.05.17.10.46;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.32;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.32;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.40;	author jogiles;	state Exp;
+branches;
+next	2.2.4.2;
+
+2.2.4.2
+date	2008.02.28.00.40.29;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Fixed ZoomToFit bug that allowed zoom-to-fit to be initiated multiple times.
+Thanks to thinkpositiv and joperry!
+@
+text
+@package prefuse.controls;
+
+import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.util.GraphicsLib;
+import prefuse.util.display.DisplayLib;
+import prefuse.util.ui.UILib;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Zooms a display such that all items within a given group will fit within
+ * the display bounds. By default, this achieved by clicking the right
+ * mouse button once, with no dragging.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ZoomToFitControl extends ControlAdapter {
+
+    private long m_duration = 2000;
+    private int m_margin = 50;
+    private int m_button = RIGHT_MOUSE_BUTTON;
+    private boolean m_zoomOverItem = true;
+    private String m_group = Visualization.ALL_ITEMS;
+    
+    /**
+     * Create a new ZoomToFitControl.
+     */
+    public ZoomToFitControl() {
+    }
+    
+    /**
+     * Create a new ZoomToFitControl.
+     * @@param group the data group that should fit the Display
+     */
+    public ZoomToFitControl(String group) {
+        this.m_group = group;
+    }
+    
+    /**
+     * Create a new ZoomToFitControl.
+     * @@param button the mouse button used to initiate the zoom-to-fit. One of
+     * {@@link Control#LEFT_MOUSE_BUTTON}, {@@link Control#MIDDLE_MOUSE_BUTTON},
+     * or {@@link Control#RIGHT_MOUSE_BUTTON}.
+     */
+    public ZoomToFitControl(int button) {
+        this.m_button = button;
+    }
+
+    /**
+     * Create a new ZoomToFitControl.
+     * @@param group the data group that should fit the Display
+     * @@param button the mouse button used to initiate the zoom-to-fit. One of
+     * {@@link Control#LEFT_MOUSE_BUTTON}, {@@link Control#MIDDLE_MOUSE_BUTTON},
+     * or {@@link Control#RIGHT_MOUSE_BUTTON}.
+     */
+    public ZoomToFitControl(String group, int button) {
+        this.m_group = group;
+        this.m_button = button;
+    }
+    
+    /**
+     * Create a new ZoomToFitControl.
+     * @@param group the data group that should fit the Display
+     * @@param margin the margin, in pixels, desired between the group 
+     * and the edge of the display
+     * @@param duration the duration of the animated zoom
+     * @@param button the mouse button used to initiate the zoom-to-fit. One of
+     * {@@link Control#LEFT_MOUSE_BUTTON}, {@@link Control#MIDDLE_MOUSE_BUTTON},
+     * or {@@link Control#RIGHT_MOUSE_BUTTON}.
+     */
+    public ZoomToFitControl(String group, int margin, 
+                            long duration, int button)
+    {
+        this.m_group = group;
+        this.m_margin = margin;
+        this.m_duration = duration;
+        this.m_button = button;
+    }
+    
+    /**
+     * @@see prefuse.controls.Control#itemClicked(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemClicked(VisualItem item, MouseEvent e) {
+        if ( m_zoomOverItem )
+            mouseClicked(e);
+    }
+    
+    /**
+     * @@see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
+     */
+    public void mouseClicked(MouseEvent e) {
+    	Display display = (Display)e.getComponent();
+    	if ( !display.isTranformInProgress() && 
+        	  UILib.isButtonPressed(e, m_button) )
+        {
+            Visualization vis = display.getVisualization();
+            Rectangle2D bounds = vis.getBounds(m_group);
+            GraphicsLib.expand(bounds, m_margin + (int)(1/display.getScale()));
+            DisplayLib.fitViewToBounds(display, bounds, m_duration);
+        }
+    }
+    
+    /**
+     * Indicates if the zoom control will work while the mouse is
+     * over a VisualItem.
+     * @@return true if the control still operates over a VisualItem
+     */
+    public boolean isZoomOverItem() {
+        return m_zoomOverItem;
+    }
+
+    /**
+     * Determines if the zoom control will work while the mouse is
+     * over a VisualItem
+     * @@param zoomOverItem true to indicate the control operates
+     * over VisualItems, false otherwise
+     */
+    public void setZoomOverItem(boolean zoomOverItem) {
+        this.m_zoomOverItem = zoomOverItem;
+    }
+    
+    /**
+     * Get the display margin to include within the "zoomed-to-fit" bounds.
+     * @@return Display margin currently in use
+     */
+    public int getMargin() {
+        return m_margin;
+    }
+    
+    /**
+     * Set the display margin to include within the "zoomed-to-fit" bounds.
+     * @@param margin Display margin to use
+     */
+    public void setMargin(int margin) {
+        this.m_margin = margin;
+    }
+    
+} // end of class ZoomToFitControl
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d18 1
+a18 1
+ *
+d28 1
+a28 1
+
+d34 1
+a34 1
+
+d42 1
+a42 1
+
+d64 1
+a64 1
+
+d68 1
+a68 1
+     * @@param margin the margin, in pixels, desired between the group
+d75 1
+a75 1
+    public ZoomToFitControl(String group, int margin,
+d83 1
+a83 1
+
+d87 3
+a89 5
+    @@Override
+	public void itemClicked(VisualItem<?> item, MouseEvent e) {
+        if ( m_zoomOverItem ) {
+			mouseClicked(e);
+		}
+d91 1
+a91 1
+
+d95 1
+a95 2
+    @@Override
+	public void mouseClicked(MouseEvent e) {
+d97 1
+a97 1
+    	if ( !display.isTranformInProgress() &&
+d106 1
+a106 1
+
+d125 1
+a125 1
+
+d133 1
+a133 1
+
+d141 1
+a141 1
+
+@
+
+
+2.2.4.2
+log
+@Allow the display to be zoomed in x/y dimensions separately (animation support too)
+@
+text
+@d105 1
+a105 1
+            GraphicsLib.expand(bounds, m_margin + (int)(1/display.getScaleX()));
+@
+
+
+2.1
+log
+@Zoom-to-fit is now idempotent. Added getter/setter for margin.
+@
+text
+@d96 4
+a99 2
+        if ( UILib.isButtonPressed(e, m_button) ) {
+            Display display = (Display)e.getComponent();
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d100 1
+a100 1
+            GraphicsLib.expand(bounds, m_margin/display.getScale());
+d124 16
+@
+
+
+1.1
+log
+@file ZoomToFitControl.java was initially added on branch beta.
+@
+text
+@d1 124
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 96
+package prefuse.controls;
+
+import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.util.GeometryLib;
+import prefuse.util.display.DisplayLib;
+import prefuse.util.ui.UILib;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Zooms a display such that all items within a given group will fit within
+ * the display bounds.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ZoomToFitControl extends ControlAdapter {
+
+    private long m_duration = 2000;
+    private int m_margin = 50;
+    private int m_button = RIGHT_MOUSE_BUTTON;
+    private boolean m_zoomOverItem = true;
+    private String m_group = Visualization.ALL_ITEMS;
+    
+    public ZoomToFitControl() {
+    }
+    
+    public ZoomToFitControl(String group) {
+        this.m_group = group;
+    }
+    
+    public ZoomToFitControl(int button) {
+        this.m_button = button;
+    }
+    
+    public ZoomToFitControl(String group, int button) {
+        this.m_group = group;
+        this.m_button = button;
+    }
+    
+    /**
+     * Constructor.
+     * @@param group the group to which to fit the display
+     * @@param margin the margin, in pixels, desired between the group 
+     * and the edge of the display
+     * @@param duration the duration of the animated zoom
+     * @@param button the mouse button to trigger the action
+     */
+    public ZoomToFitControl(String group, int margin, 
+                            long duration, int button)
+    {
+        this.m_group = group;
+        this.m_margin = margin;
+        this.m_duration = duration;
+        this.m_button = button;
+    }
+    
+    public void itemClicked(VisualItem item, MouseEvent e) {
+        if ( m_zoomOverItem )
+            mouseClicked(e);
+    }
+    
+    public void mouseClicked(MouseEvent e) {
+        if ( UILib.isButtonPressed(e, m_button) ) {
+            Display display = (Display)e.getComponent();
+	        Visualization vis = display.getVisualization();
+	        Rectangle2D bounds = vis.getBounds(m_group);
+            GeometryLib.expand(bounds, m_margin/display.getScale());
+	        DisplayLib.fitViewToBounds(display, bounds, m_duration);
+        }
+    }
+    
+    /**
+     * Indicates if the zoom control will work while the mouse is
+     * over a VisualItem.
+     * @@return true if the control still operates over a VisualItem
+     */
+    public boolean isZoomOverItem() {
+        return m_zoomOverItem;
+    }
+
+    /**
+     * Determines if the zoom control will work while the mouse is
+     * over a VisualItem
+     * @@param zoomOverItem true to indicate the control operates
+     * over VisualItems, false otherwise
+     */
+    public void setZoomOverItem(boolean zoomOverItem) {
+        this.m_zoomOverItem = zoomOverItem;
+    }
+    
+} // end of class ZoomToFitControl
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d8 1
+a8 1
+import prefuse.util.GraphicsLib;
+d72 1
+a72 1
+            GraphicsLib.expand(bounds, m_margin/display.getScale());
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d70 2
+a71 2
+            Visualization vis = display.getVisualization();
+            Rectangle2D bounds = vis.getBounds(m_group);
+d73 1
+a73 1
+            DisplayLib.fitViewToBounds(display, bounds, m_duration);
+@
+
+
+1.1.2.4
+log
+@Lots of javadoc
+@
+text
+@d16 1
+a16 2
+ * the display bounds. By default, this achieved by clicking the right
+ * mouse button once, with no dragging.
+d18 2
+a19 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a28 3
+    /**
+     * Create a new ZoomToFitControl.
+     */
+a31 4
+    /**
+     * Create a new ZoomToFitControl.
+     * @@param group the data group that should fit the Display
+     */
+a35 6
+    /**
+     * Create a new ZoomToFitControl.
+     * @@param button the mouse button used to initiate the zoom-to-fit. One of
+     * {@@link Control#LEFT_MOUSE_BUTTON}, {@@link Control#MIDDLE_MOUSE_BUTTON},
+     * or {@@link Control#RIGHT_MOUSE_BUTTON}.
+     */
+d39 1
+a39 8
+
+    /**
+     * Create a new ZoomToFitControl.
+     * @@param group the data group that should fit the Display
+     * @@param button the mouse button used to initiate the zoom-to-fit. One of
+     * {@@link Control#LEFT_MOUSE_BUTTON}, {@@link Control#MIDDLE_MOUSE_BUTTON},
+     * or {@@link Control#RIGHT_MOUSE_BUTTON}.
+     */
+d46 2
+a47 2
+     * Create a new ZoomToFitControl.
+     * @@param group the data group that should fit the Display
+d51 1
+a51 3
+     * @@param button the mouse button used to initiate the zoom-to-fit. One of
+     * {@@link Control#LEFT_MOUSE_BUTTON}, {@@link Control#MIDDLE_MOUSE_BUTTON},
+     * or {@@link Control#RIGHT_MOUSE_BUTTON}.
+a61 3
+    /**
+     * @@see prefuse.controls.Control#itemClicked(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+a66 3
+    /**
+     * @@see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
+     */
+@
+
+

@@ -1,0 +1,270 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file StackedLineChart.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 181
+package prefuse.action.layout;
+
+import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
+import java.util.Iterator;
+
+import prefuse.data.Table;
+import prefuse.data.query.NumberRangeModel;
+import prefuse.util.ArrayLib;
+import prefuse.util.MathLib;
+import prefuse.util.PrefuseLib;
+import prefuse.util.ui.ValuedRangeModel;
+import prefuse.visual.VisualItem;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class StackedLineChart extends Layout {
+
+    private String m_field;
+    private String m_start;
+    private String m_end;
+    
+    private String[] columns;
+    private double[] baseline;
+    private float[] poly;
+    private double m_padding = 0.05;
+    private float m_threshold;
+    private Rectangle2D bounds;
+    
+    private NumberRangeModel m_model;
+    
+    public StackedLineChart(String group, String field, String[] columns) {
+        this(group, field, columns, 1.0);
+    }
+    
+    public StackedLineChart(String group, String field, String[] columns,
+                            double threshold)
+    {
+        super(group);
+        this.columns = columns;
+        baseline = new double[columns.length];
+        poly = new float[4*columns.length];
+        
+        m_field = field;
+        m_start = PrefuseLib.getStartField(field);
+        m_end = PrefuseLib.getEndField(field);
+        setThreshold(threshold);
+        
+        m_model = new NumberRangeModel(0,1,0,1);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public double getPaddingPercentage() {
+        return m_padding;
+    }
+    
+    public void setPaddingPercentage(double p) {
+        if ( p < 0 || p > 1 )
+            throw new IllegalArgumentException(
+                    "Illegal padding percentage: " + p);
+        m_padding = p;
+    }
+    
+    public double getThreshold() {
+        return m_threshold;
+    }
+    
+    public void setThreshold(double threshold) {
+        m_threshold = (float)threshold;
+    }
+    
+    public ValuedRangeModel getRangeModel() {
+        return m_model;
+    }
+    
+// TODO: support externally driven range specification (i.e. stack zooming)
+//    public void setRangeModel(NumberRangeModel model) {
+//        m_model = model;
+//    }
+    
+    // ------------------------------------------------------------------------
+    
+    public void run(double frac) {
+        Arrays.fill(baseline, 0);
+        
+        bounds = getLayoutBounds();
+        float inc = (float) (bounds.getMaxX()-bounds.getMinX())
+                        / (columns.length-1);
+        int len = columns.length;
+        
+        // first walk
+        Iterator iter = m_vis.visibleItems(m_group);
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            for ( int i=0; i<columns.length; ++i ) {
+                baseline[i] += item.getDouble(columns[i]);
+            }
+        }
+        double maxValue = ArrayLib.max(baseline);
+        maxValue += m_padding*maxValue;
+        Arrays.fill(baseline, bounds.getMaxY());
+        
+        m_model.setValueRange(0, maxValue, 0, maxValue);
+        
+        // second walk
+        VisualItem prev = null;
+        Table t = (Table)m_vis.getGroup(m_group);
+        iter = t.tuplesReversed();
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            if ( !item.isVisible() ) continue;
+            
+            float height = 0;
+            
+            for ( int i=len; --i >= 0; ) {
+                poly[2*(len-1-i)] = (float)bounds.getMinX() + i*inc;
+                poly[2*(len-1-i)+1] = (float)baseline[i];
+            }
+            for ( int i=0; i<columns.length; ++i ) {
+                int base = 2*(len+i);
+                double value = item.getDouble(columns[i]);
+                baseline[i] -= (float)bounds.getHeight() * 
+                                 MathLib.linearInterp(value,0,maxValue);
+                poly[base] = (float)bounds.getMinX() + i*inc;
+                poly[base+1] = (float)baseline[i];
+                height = Math.max(height, poly[2*(len-1-i)+1]-poly[base+1]);
+            }
+            if ( height < m_threshold ) {
+                item.setVisible(false);
+                // update previous item to prevent empty space
+                if ( prev != null )
+                    updateBaseline(prev, poly);
+            } else {
+                prev = item;
+            }
+
+            setX(item, null, 0);
+            setY(item, null, 0);
+            setPolygon(item, poly);
+        }
+    }
+    
+    private void updateBaseline(VisualItem item, float[] poly) {
+        float[] a = getPolygon(item, m_field);
+        float[] e = getPolygon(item, m_end);
+        int len = poly.length/2;
+        System.arraycopy(poly, len, a, len, len);
+        System.arraycopy(poly, len, e, len, len);
+    }
+    
+    private void setPolygon(VisualItem item, float[] poly) {
+        float[] a = getPolygon(item, m_field);
+        float[] s = getPolygon(item, m_start);
+        float[] e = getPolygon(item, m_end);
+        System.arraycopy(a, 0, s, 0, a.length);
+        System.arraycopy(poly, 0, a, 0, poly.length);
+        System.arraycopy(poly, 0, e, 0, poly.length);
+        item.setValidated(false);
+    }
+    
+    private float[] getPolygon(VisualItem item, String field) {
+        float[] poly = (float[])item.get(field);
+        if ( poly == null || poly.length < 4*columns.length ) {
+            int len = columns.length;
+            float inc = (float)(bounds.getMaxX()-bounds.getMinX())/(len-1);
+            
+            poly = new float[4*len];
+            Arrays.fill(poly, (float)bounds.getMaxY());
+            for ( int i=0; i<len; ++i ) {
+                float x = i*inc + (float)bounds.getMinX();
+                poly[2*(len+i)] = x;
+                poly[2*(len-1-i)] = x;
+            }
+            item.set(poly, field);
+        }
+        return poly;
+    }
+    
+} // end of class StackedLineChart
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d108 1
+a108 1
+        //VisualItem prev = null;
+d133 4
+a136 2
+                //if ( prev != null )
+                //    updateBaseline(prev, poly);
+a137 3
+//            } else {
+//                prev = item;
+//            }
+d145 7
+a151 7
+//    private void updateBaseline(VisualItem item, float[] poly) {
+//        float[] a = getPolygon(item, m_field);
+//        float[] e = getPolygon(item, m_end);
+//        int len = poly.length/2;
+//        System.arraycopy(poly, len, a, len, len);
+//        System.arraycopy(poly, len, e, len, len);
+//    }
+d176 1
+a176 1
+            item.set(field, poly);
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@@
+
+

@@ -1,0 +1,79 @@
+head	1.3;
+access;
+symbols
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.11.06.38.43;	author jheer;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.03.08.11.06;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.46;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Merge beta branch back onto main trunk
+@
+text
+@<body>
+The controls package contains a series of ControlListeners that can be used to
+add different interactive behaviors to a prefuse visualization. Examples
+include clicking a node to make it the new focus, dragging nodes to
+change their position, and performing pan and zoom operations. To add
+one of these controls to a visualization, create a new instance of
+the desired control and add it as a ControlListener to a prefuse Display 
+instance.
+</body>@
+
+
+1.2
+log
+@Added javadoc documentation
+@
+text
+@@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d2 1
+a2 1
+This package contains a series of ControlListeners that can be used to
+@
+

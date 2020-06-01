@@ -1,0 +1,143 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.01.23.23.55.38;	author jogiles;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2008.03.03.10.46.02;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file CompositeList.java was initially added on branch java_1_5.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a0 56
+package prefuse.util.collections;
+
+import java.util.AbstractList;
+import java.util.List;
+
+/**
+ * IntIterator implementation that combines the results of multiple
+ * int iterators.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class CompositeList <E> extends AbstractList<E> {
+
+    private final List<E>[] iters;
+    private final int len;
+
+    public CompositeList(List<E> ... iters) {
+        this.iters = iters;
+        int tmp = 0;
+        for (List<E> element : iters) {
+        	tmp += element.size();
+        }
+        this.len = tmp;
+    }
+
+	@@Override
+	public E get(int index) {
+		if(index >= len) {
+			throw new IndexOutOfBoundsException();
+		}
+		int i = 0;
+		int pos = 0;
+		while(index - pos >= iters[i].size()) {
+			pos += iters[i++].size();
+		}
+		return iters[i].get(index - pos);
+	}
+
+	@@Override
+	public int size() {
+		return len;
+	}
+
+	public int indexOf(Object o) {
+		int base = 0;
+		for (List<E> element : iters) {
+			int idx = element.indexOf(o);
+			if(idx >= 0) {
+				return base + idx;
+			}
+			base += element.size();
+		}
+		return -1;
+	}
+
+}
+@
+
+
+1.1.2.2
+log
+@Fixed documentaton and field names
+@
+text
+@d7 2
+a8 1
+ * List implementation that combines multiple Lists (which are assumed to be immutable).
+d14 2
+a15 2
+    private final List<E>[] lists;
+    private final int size;
+d17 2
+a18 2
+    public CompositeList(List<E> ... lists) {
+        this.lists = lists;
+d20 1
+a20 1
+        for (List<E> element : lists) {
+d23 1
+a23 1
+        this.size = tmp;
+d28 1
+a28 1
+		if(index >= size) {
+d33 2
+a34 2
+		while(index - pos >= lists[i].size()) {
+			pos += lists[i++].size();
+d36 1
+a36 1
+		return lists[i].get(index - pos);
+d41 1
+a41 1
+		return size;
+d46 1
+a46 1
+		for (List<E> element : lists) {
+@
+
+

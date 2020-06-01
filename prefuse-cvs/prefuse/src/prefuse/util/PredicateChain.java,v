@@ -1,0 +1,396 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.05.08.06.19.44;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.03.08.19.13.03;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.16.20.07.41;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.06;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.07.00.42.29;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Fixed infinite loop bug in PredicateChain.remove(...)
+@
+text
+@/**
+ * 
+ */
+package prefuse.util;
+
+import prefuse.data.Tuple;
+import prefuse.data.expression.Expression;
+import prefuse.data.expression.IfExpression;
+import prefuse.data.expression.ObjectLiteral;
+import prefuse.data.expression.Predicate;
+
+/**
+ * A chain of Predicates and associated values, maintain a large
+ * if-statement structure for looking up values based on a Predicate
+ * condition. 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class PredicateChain {
+    
+    private Expression m_head = new ObjectLiteral(null);
+    private IfExpression m_tail = null;
+    
+    /**
+     * Return the backing predicate chain as an Expression instance.
+     * @@return the predicate chain, either an IfExpression or
+     * the single terminal default Expression instance.
+     */
+    public Expression getExpression() {
+        return m_head;
+    }
+    
+    /**
+     * Evaluate the predicate chain for the given Tuple.
+     * @@param t the Tuple
+     * @@return the object associated with the first Predicate
+     * that successfully matches the Tuple.
+     */
+    public Object get(Tuple t) {
+        return m_head.get(t);
+    }
+    
+    /**
+     * Add a new rule to the end of the chain, associating a Predicate
+     * condition with an Object value.
+     * @@param p the Predicate condition
+     * @@param val the associated Object value
+     */
+    public void add(Predicate p, Object val) {
+        if ( m_tail == null ) {
+            m_tail = new IfExpression(p, new ObjectLiteral(val), m_head);
+            m_head = m_tail;
+        } else {
+            IfExpression ie = new IfExpression(p, new ObjectLiteral(val),
+                                               m_tail.getElseExpression());
+            m_tail.setElseExpression(ie);
+            m_tail = ie;
+        }
+    }
+    
+    /**
+     * Remove rules using the given predicate from this predicate chain.
+     * This method will not remove rules in which this predicate is used
+     * within a composite of clauses, such as an AND or OR. It only removes
+     * rules using this predicate as the top-level trigger.
+     * @@param p the predicate to remove from the chain
+     * @@return true if a rule was successfully removed, false otherwise
+     */
+    public boolean remove(Predicate p) {
+        if ( p == null ) return false;
+        
+        IfExpression prev = null;
+        Expression expr = m_head;
+        while ( expr instanceof IfExpression ) {
+            IfExpression ifex = (IfExpression)expr;
+            Predicate test = (Predicate)ifex.getTestPredicate();
+            if ( p.equals(test) ) {
+                Expression elseex = ifex.getElseExpression();
+                ifex.setElseExpression(new ObjectLiteral(null));
+                if ( prev != null ) {
+                    prev.setElseExpression(elseex);
+                    if ( ifex == m_tail )
+                        m_tail = prev;
+                } else {
+                    m_head = elseex;
+                    if ( ifex == m_tail )
+                        m_tail = null;
+                }
+                return true;
+            } else {
+                prev = ifex;
+                expr = ifex.getElseExpression();
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Remove all rules from the predicate chain.
+     */
+    public void clear() {
+        m_head = new ObjectLiteral(null);
+        m_tail = null;
+    }
+    
+} // end of class PredicateChain
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d2 1
+a2 1
+ *
+d15 1
+a15 1
+ * condition.
+d19 1
+a19 1
+
+d22 1
+a22 1
+
+d31 1
+a31 1
+
+d38 1
+a38 1
+    public Object get(Tuple<?> t) {
+d41 1
+a41 1
+
+d59 1
+a59 1
+
+d69 2
+a70 4
+        if ( p == null ) {
+			return false;
+		}
+
+d75 1
+a75 1
+            Predicate test = ifex.getTestPredicate();
+d81 2
+a82 3
+                    if ( ifex == m_tail ) {
+						m_tail = prev;
+					}
+d85 2
+a86 3
+                    if ( ifex == m_tail ) {
+						m_tail = null;
+					}
+d96 1
+a96 1
+
+d104 1
+a104 1
+
+@
+
+
+2.1
+log
+@Added remove and clear methods to PredicateChain
+@
+text
+@d75 2
+a76 2
+            Predicate text = (Predicate)ifex.getTestPredicate();
+            if ( p.equals(text) ) {
+d89 3
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d60 42
+@
+
+
+1.1
+log
+@file PredicateChain.java was initially added on branch beta.
+@
+text
+@d1 60
+@
+
+
+1.1.2.1
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@a0 40
+/**
+ * 
+ */
+package prefuse.util;
+
+import prefuse.data.expression.Expression;
+import prefuse.data.expression.IfExpression;
+import prefuse.data.expression.ObjectLiteral;
+import prefuse.data.expression.Predicate;
+import prefuse.data.tuple.Tuple;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class PredicateChain {
+    
+    private Expression m_head = new ObjectLiteral(null);
+    private IfExpression m_tail = null;
+	
+    public Expression getExpression() {
+    	return m_head;
+    }
+    
+    public Object get(Tuple t) {
+    	return m_head.get(t);
+    }
+    
+    public void add(Predicate p, Object val) {
+    	if ( m_tail == null ) {
+    		m_tail = new IfExpression(p, new ObjectLiteral(val), m_head);
+    		m_head = m_tail;
+    	} else {
+    		IfExpression ie = new IfExpression(p, new ObjectLiteral(val),
+    										   m_tail.getElseExpression());
+    		m_tail.setElseExpression(ie);
+    		m_tail = ie;
+    	}
+    }
+    
+} // end of class PredicateChain
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d19 1
+a19 1
+    
+d21 1
+a21 1
+        return m_head;
+d25 1
+a25 1
+        return m_head.get(t);
+d29 9
+a37 9
+        if ( m_tail == null ) {
+            m_tail = new IfExpression(p, new ObjectLiteral(val), m_head);
+            m_head = m_tail;
+        } else {
+            IfExpression ie = new IfExpression(p, new ObjectLiteral(val),
+                                               m_tail.getElseExpression());
+            m_tail.setElseExpression(ie);
+            m_tail = ie;
+        }
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@d13 1
+a13 4
+ * A chain of Predicates and associated values, maintain a large
+ * if-statement structure for looking up values based on a Predicate
+ * condition. 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a19 5
+    /**
+     * Return the backing predicate chain as an Expression instance.
+     * @@return the predicate chain, either an IfExpression or
+     * the single terminal default Expression instance.
+     */
+a23 6
+    /**
+     * Evaluate the predicate chain for the given Tuple.
+     * @@param t the Tuple
+     * @@return the object associated with the first Predicate
+     * that successfully matches the Tuple.
+     */
+a27 6
+    /**
+     * Add a new rule to the end of the chain, associating a Predicate
+     * condition with an Object value.
+     * @@param p the Predicate condition
+     * @@param val the associated Object value
+     */
+@
+
+
+1.1.2.4
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a5 1
+import prefuse.data.Tuple;
+d10 1
+@
+
+

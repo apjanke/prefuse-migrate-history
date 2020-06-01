@@ -1,0 +1,96 @@
+head	1.3;
+access;
+symbols
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.11.06.38.46;	author jheer;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.24.01.57.26;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.46;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.activity;
+
+/**
+ * A Pacer, or pacing function, simply maps one double value to another. They
+ * are used to parameterize animation rates, where the input value f moves
+ * from 0 to 1 linearly, but the returned output can vary quite differently
+ * in response to the input.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ * @@see edu.berkeley.guir.prefuse.activity.ActionList
+ * @@see edu.berkeley.guir.prefuse.activity.SlowInSlowOutPacer
+ * @@see edu.berkeley.guir.prefuse.activity.ThereAndBackPacer
+ */
+public interface Pacer {
+
+    /**
+     * Maps one double value to another to determine animation pacing. Both
+     * the input and output values should be in the range 0-1, inclusive.
+     * @@param f the input value, should be between 0-1
+     * @@return the output value, should be between 0-1
+     */
+    public double pace(double f);
+    
+} // end of interface Pacer
+@
+
+
+1.2
+log
+@New filters added plus more
+@
+text
+@@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d11 1
+a11 1
+ * @@see edu.berkeley.guir.prefuse.activity.ActionPipeline
+@
+

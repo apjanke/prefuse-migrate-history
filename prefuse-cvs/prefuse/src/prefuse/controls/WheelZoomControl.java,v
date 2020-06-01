@@ -1,0 +1,232 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.32;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.32;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.40;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.controls;
+
+import java.awt.Point;
+import java.awt.event.MouseWheelEvent;
+
+import prefuse.Display;
+import prefuse.visual.VisualItem;
+
+/**
+ * Zooms the display using the mouse scroll wheel, changing the scale of the
+ * viewable region.
+ *
+ * @@author bobruney
+ * @@author mathis ahrens
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class WheelZoomControl extends AbstractZoomControl {
+    
+    private Point m_point = new Point();
+    
+    /**
+     * @@see prefuse.controls.Control#itemWheelMoved(prefuse.visual.VisualItem, java.awt.event.MouseWheelEvent)
+     */
+    public void itemWheelMoved(VisualItem item, MouseWheelEvent e) {
+        if ( m_zoomOverItem )
+            mouseWheelMoved(e);
+    }
+    
+    /**
+     * @@see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+     */
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        Display display = (Display)e.getComponent();
+        m_point.x = display.getWidth()/2;
+        m_point.y = display.getHeight()/2;
+        zoom(display, m_point,
+             1 + 0.1f * e.getWheelRotation(), false);
+    }
+    
+} // end of class WheelZoomControl
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d18 3
+a20 3
+
+    private final Point m_point = new Point();
+
+d24 3
+a26 5
+    @@Override
+	public void itemWheelMoved(VisualItem<?> item, MouseWheelEvent e) {
+        if ( m_zoomOverItem ) {
+			mouseWheelMoved(e);
+		}
+d28 1
+a28 1
+
+d32 1
+a32 2
+    @@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+d39 1
+a39 1
+
+@
+
+
+1.1
+log
+@file WheelZoomControl.java was initially added on branch beta.
+@
+text
+@d1 40
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 35
+package prefuse.controls;
+
+import java.awt.Point;
+import java.awt.event.MouseWheelEvent;
+
+import prefuse.Display;
+import prefuse.visual.VisualItem;
+
+/**
+ * Zooms the display using the mouse scroll wheel, changing the scale of the
+ * viewable region.
+ *  
+ * @@version 1.0
+ * @@author bobruney
+ * @@author mathis ahrens
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class WheelZoomControl extends AbstractZoomControl {
+	
+    private Point m_point = new Point();
+    
+	public void itemWheelMoved(VisualItem item, MouseWheelEvent e) {
+		if ( m_zoomOverItem )
+			mouseWheelMoved(e);
+	}
+	
+	public void mouseWheelMoved(MouseWheelEvent e) {
+        Display display = (Display)e.getComponent();
+        m_point.x = display.getWidth()/2;
+        m_point.y = display.getHeight()/2;
+		zoom(display, m_point,
+             1 + 0.1f * e.getWheelRotation(), false);
+	}
+    
+} // end of class WheelZoomControl@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d19 1
+a19 1
+    
+d22 6
+a27 6
+    public void itemWheelMoved(VisualItem item, MouseWheelEvent e) {
+        if ( m_zoomOverItem )
+            mouseWheelMoved(e);
+    }
+    
+    public void mouseWheelMoved(MouseWheelEvent e) {
+d31 1
+a31 1
+        zoom(display, m_point,
+d33 1
+a33 1
+    }
+d35 1
+a35 1
+} // end of class WheelZoomControl
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@d12 2
+a13 1
+ *
+d16 1
+a16 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a21 3
+    /**
+     * @@see prefuse.controls.Control#itemWheelMoved(prefuse.visual.VisualItem, java.awt.event.MouseWheelEvent)
+     */
+a26 3
+    /**
+     * @@see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+     */
+@
+
+

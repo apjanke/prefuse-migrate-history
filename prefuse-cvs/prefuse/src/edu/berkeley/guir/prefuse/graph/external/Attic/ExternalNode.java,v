@@ -1,0 +1,510 @@
+head	1.6;
+access;
+symbols
+	alpha:1.5.0.2
+	Root_alpha:1.5
+	prefuse-alpha-20051229:1.5
+	P20050401_Alpha_PreCHI:1.5;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2006.02.12.18.23.41;	author jheer;	state dead;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.13.02.17.52;	author jheer;	state Exp;
+branches
+	1.5.4.1;
+next	1.4;
+
+1.4
+date	2004.03.12.17.40.59;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.12.01.53.44;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.11.19.11.13;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.09.03.49.10;	author jheer;	state Exp;
+branches;
+next	;
+
+1.5.4.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.graph.external;
+
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.graph.DefaultNode;
+import edu.berkeley.guir.prefuse.graph.Edge;
+import edu.berkeley.guir.prefuse.graph.Node;
+
+/**
+ * Represents a node in a graph that pulls data from an external source,
+ * such as a database or file system.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ExternalNode extends DefaultNode implements ExternalEntity {
+    
+    protected GraphLoader  m_loader;
+
+    protected boolean m_loaded = false;
+    protected boolean m_loadStarted = false;
+    
+    protected void checkLoadedStatus() {
+        touch();
+        if ( !m_loadStarted ) {
+            m_loadStarted = true;
+            m_loader.loadNeighbors(this);
+        }
+    } //
+    
+    public void setLoader(GraphLoader gl) {
+        m_loader = gl;
+    } //
+    
+    void setNeighborsLoaded(boolean s) {
+        m_loaded = s;
+        m_loadStarted = s;
+    } //
+
+    public boolean isNeighborsLoaded() {
+        return m_loaded;
+    } //
+    
+    public void touch() {
+        m_loader.touch(this);
+    } //
+    
+    public void unload() {
+        Iterator iter = m_edges.iterator();
+        while ( iter.hasNext() ) {
+            Edge e = (Edge)iter.next();
+            Node n = e.getAdjacentNode(this);
+            n.removeEdge(e);
+            if ( n instanceof ExternalNode ) {
+                ((ExternalNode)n).setNeighborsLoaded(false);
+            } else if ( n instanceof ExternalTreeNode ) {
+                ((ExternalTreeNode)n).setParentLoaded(false);
+                ((ExternalTreeNode)n).setChildrenLoaded(false);
+            }
+        }
+        m_edges.clear();
+    } //
+    
+    // ========================================================================
+    // == PROXIED NODE METHODS ================================================
+
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#addEdge(edu.berkeley.guir.prefuse.graph.Edge)
+     */
+    public boolean addEdge(Edge e) {
+        touch();
+        return super.addEdge(e);
+    } //
+    
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#addEdge(int, edu.berkeley.guir.prefuse.graph.Edge)
+     */
+    public boolean addEdge(int i, Edge e) {
+        touch();
+        return super.addEdge(i,e);
+    } //
+    
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#getEdge(int)
+     */
+    public Edge getEdge(int i) {
+        checkLoadedStatus();
+        return super.getEdge(i);
+    } //
+    
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#getEdge(edu.berkeley.guir.prefuse.graph.Node)
+     */
+    public Edge getEdge(Node n) {
+        checkLoadedStatus();
+        return super.getEdge(n);
+    } //
+
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#getEdgeCount()
+     */
+    public int getEdgeCount() {
+        touch();
+        return super.getEdgeCount();
+    } //
+    
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#getEdges()
+     */
+    public Iterator getEdges() {
+        checkLoadedStatus();
+        return super.getEdges();
+    } //
+    
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#getIndex(edu.berkeley.guir.prefuse.graph.Edge)
+     */
+    public int getIndex(Edge e) {
+        touch();
+        return super.getIndex(e);
+    } //
+
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#getIndex(edu.berkeley.guir.prefuse.graph.Node)
+     */
+    public int getIndex(Node n) {
+        touch();
+        return super.getIndex(n);
+    } //
+    
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#getNeighbor(int)
+     */
+    public Node getNeighbor(int i) {
+        checkLoadedStatus();
+        return super.getNeighbor(i);
+    } //
+
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#getNeighbors()
+     */
+    public Iterator getNeighbors() {
+        checkLoadedStatus();
+        return super.getNeighbors();
+    } //
+    
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#isIncidentEdge(edu.berkeley.guir.prefuse.graph.Edge)
+     */
+    public boolean isIncidentEdge(Edge e) {
+        touch();
+        return super.isIncidentEdge(e);
+    } //
+
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#isNeighbor(edu.berkeley.guir.prefuse.graph.Node)
+     */
+    public boolean isNeighbor(Node n) {
+        touch();
+        return super.isNeighbor(n);
+    } //
+    
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#removeEdge(edu.berkeley.guir.prefuse.graph.Edge)
+     */
+    public boolean removeEdge(Edge e) {
+        touch();
+        return super.removeEdge(e);
+    } //
+    
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#removeEdge(int)
+     */
+    public Edge removeEdge(int i) {
+        touch();
+        return super.removeEdge(i);
+    } //
+
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#removeNeighbor(int)
+     */
+    public Node removeNeighbor(int i) {
+        touch();
+        return super.removeNeighbor(i);
+    } //
+
+    /**
+     * @@see edu.berkeley.guir.prefuse.graph.Node#removeNeighbor(edu.berkeley.guir.prefuse.graph.Node)
+     */
+    public boolean removeNeighbor(Node n) {
+        touch();
+        return super.removeNeighbor(n);
+    } //
+    
+} // end of class ExternalNode
+@
+
+
+1.5
+log
+@Added database connectivity
+@
+text
+@@
+
+
+1.5.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.4
+log
+@More work on external entities
+@
+text
+@d56 3
+d61 2
+a62 1
+    }
+@
+
+
+1.3
+log
+@More work on external nodes
+@
+text
+@a19 1
+    protected long    m_access;
+d45 1
+a45 1
+        m_access = System.currentTimeMillis();
+d48 12
+d155 1
+a155 1
+        //checkLoadedStatus();
+@
+
+
+1.2
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@d16 1
+a16 1
+public class ExternalNode extends DefaultNode {
+d45 1
+a45 1
+    protected void touch() {
+@
+
+
+1.1
+log
+@Initial commit of preliminary external data source classes
+@
+text
+@d5 1
+a8 1
+
+d16 3
+a18 1
+public class ExternalNode extends Node {
+d20 2
+a21 1
+    protected GraphLoader  m_loader;
+a22 11
+    protected boolean m_loaded = false;
+    protected long    m_access;
+    
+    public boolean isNeighborsLoaded() {
+        return m_loaded;
+    } //
+    
+    void setNeighborsLoaded(boolean s) {
+        m_loaded = s;
+        m_loadStarted = s;
+    } //
+d32 2
+a33 2
+    protected void touch() {
+        m_access = System.currentTimeMillis();
+d36 7
+a42 2
+    public void setLoader(GraphLoader gl) {
+        m_loader = gl;
+d45 2
+a46 7
+    /**
+     * Returns an iterator over all neighbor nodes of this node.
+     * @@return an iterator over this node's neighbors.
+     */
+    public Iterator getNeighbors() {
+        checkLoadedStatus();
+        return super.getNeighbors();
+d49 3
+d53 1
+a53 4
+     * Returns the i'th neighbor of this node.
+     * @@param i the index of the neighbor in the neighbor list.
+     * @@return Node the Node at the specified position in the list of
+     *  neighbors
+d55 3
+a57 3
+    public Node getNeighbor(int i) {
+        checkLoadedStatus();
+        return super.getNeighbor(i);
+d59 1
+a59 1
+
+d61 1
+a61 3
+     * Indicates if a given node is a neighbor of this one.
+     * @@param n the node to check as a neighbor
+     * @@return true if the node is a neighbor, false otherwise
+d63 3
+a65 3
+    public boolean isNeighbor(Node n) {
+        //checkLoadedStatus();
+        return super.isNeighbor(n);
+d67 1
+a67 1
+
+d69 1
+a69 4
+     * Returns the index, or position, of a neighbor node. Returns -1 if the
+     * input node is not a neighbor of this node.
+     * @@param n the node to find the index of
+     * @@return the node index, or -1 if this node is not a neighbor
+d71 3
+a73 3
+    public int getNeighborIndex(Node n) {
+        //checkLoadedStatus();
+        return super.getNeighborIndex(n);
+d75 1
+a75 1
+
+d77 1
+a77 2
+     * Return the total number of neighbors of this node.
+     * @@return the number of neighbors
+d79 3
+a81 3
+    public int getNumNeighbors() {
+        //checkLoadedStatus();
+        return super.getNumNeighbors();
+d85 1
+a85 2
+     * Add a new neighbor to this node.
+     * @@param n the node to add
+d87 1
+a87 1
+    public void addNeighbor(Node n) {
+d89 1
+a89 1
+        super.addNeighbor(n);
+d93 1
+a93 3
+     * Add a new neighbor at the specified position.
+     * @@param i the index at which to insert the new neighbor
+     * @@param n the node to add as a neighbor
+d95 3
+a97 3
+    public void addNeighbor(int i, Node n) {
+        touch();
+        super.addNeighbor(i,n);
+d101 1
+a101 2
+     * Remove the given node as a child of this node.
+     * @@param n the node to remove
+d103 1
+a103 1
+    public boolean removeNeighbor(Node n) {
+d105 1
+a105 1
+        return super.removeNeighbor(n);
+d109 1
+a109 2
+     * Remove the neighbor node at the specified index.
+     * @@param i the index at which to remove a node
+d111 1
+a111 1
+    public Node removeNeighbor(int i) {
+d113 1
+a113 1
+        return super.removeNeighbor(i);
+d116 4
+a119 1
+    public Iterator getEdges() {
+d121 1
+a121 1
+        return super.getEdges();
+d123 5
+a127 2
+    
+    public Edge getEdge(Node n) {
+d129 1
+a129 6
+        return super.getEdge(n);
+    } //
+    
+    public Edge getEdge(int i) {
+        checkLoadedStatus();
+        return super.getEdge(i);
+d132 3
+d136 1
+a136 1
+        //checkLoadedStatus();
+d139 5
+a143 2
+    
+    public int getEdgeIndex(Edge e) {
+d145 1
+a145 1
+        return super.getEdgeIndex(e);
+d148 4
+a151 6
+    public int getNumEdges() {
+        checkLoadedStatus();
+        return super.getNumEdges();
+    } //
+    
+    public void addEdge(Edge e) {
+d153 1
+a153 1
+        super.addEdge(e);
+d156 4
+a159 1
+    public void addEdge(int i, Edge e) {
+d161 1
+a161 1
+        super.addEdge(i,e);
+d163 5
+a167 2
+    
+    public boolean removeEdge(Edge e) {
+d169 1
+a169 1
+        return super.removeEdge(e);
+d171 5
+a175 2
+    
+    public Edge removeEdge(int i) {
+d177 1
+a177 1
+        return super.removeEdge(i);
+@
+

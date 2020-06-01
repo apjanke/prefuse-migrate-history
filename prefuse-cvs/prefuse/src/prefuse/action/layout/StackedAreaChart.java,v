@@ -1,0 +1,983 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.07.15.23.00.04;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.07.15.19.45.13;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.27.09.05.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.39;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Minor javadoc fixes
+@
+text
+@package prefuse.action.layout;
+
+import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
+import java.util.Iterator;
+
+import prefuse.Constants;
+import prefuse.data.Table;
+import prefuse.data.query.NumberRangeModel;
+import prefuse.util.ArrayLib;
+import prefuse.util.MathLib;
+import prefuse.util.PrefuseLib;
+import prefuse.util.ui.ValuedRangeModel;
+import prefuse.visual.VisualItem;
+
+/**
+ * Layout Action that computes a stacked area chart, in which a series of
+ * data values are consecutively stacked on top of each other.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class StackedAreaChart extends Layout {
+
+    private String m_field;
+    private String m_start;
+    private String m_end;
+    
+    private String[] columns;
+    private double[] baseline;
+    private double[] peaks;
+    private float[] poly;
+    private double m_padding = 0.05;
+    private float m_threshold;
+    private Rectangle2D bounds;
+    
+    private int m_orientation = Constants.ORIENT_BOTTOM_TOP;
+    private boolean m_horiz = false;
+    private boolean m_top = false;
+    
+    private boolean m_norm = false;
+    private NumberRangeModel m_model;
+    
+    /**
+     * Create a new StackedAreaChart.
+     * @@param group the data group to layout
+     * @@param field the data field in which to store computed polygons
+     * @@param columns the various data fields, in sorted order, that
+     * should be referenced for each consecutive point of a stack layer
+     */
+    public StackedAreaChart(String group, String field, String[] columns) {
+        this(group, field, columns, 1.0);
+    }
+    
+    /**
+     * Create a new StackedAreaChart.
+     * @@param group the data group to layout
+     * @@param field the data field in which to store computed polygons
+     * @@param columns the various data fields, in sorted order, that
+     * should be referenced for each consecutive point of a stack layer
+     * @@param threshold height threshold under which stacks should not
+     * be made visible.
+     */
+    public StackedAreaChart(String group, String field, String[] columns,
+                            double threshold)
+    {
+        super(group);
+        this.columns = columns;
+        baseline = new double[columns.length];
+        peaks = new double[columns.length];
+        poly = new float[4*columns.length];
+        
+        m_field = field;
+        m_start = PrefuseLib.getStartField(field);
+        m_end = PrefuseLib.getEndField(field);
+        setThreshold(threshold);
+        
+        m_model = new NumberRangeModel(0,1,0,1);
+    }
+    
+    // ------------------------------------------------------------------------
+
+    /**
+     * Set the data columns used to compute the stacked layout
+     * @@param cols the various data fields, in sorted order, that
+     * should be referenced for each consecutive point of a stack layer
+     */
+    public void setColumns(String[] cols) {
+        columns = cols;
+    }
+    
+    /**
+     * Sets if the stacks are normalized, such that each
+     * column is independently scaled.
+     * @@param b true to normalize, false otherwise
+     */
+    public void setNormalized(boolean b) {
+        m_norm = b;
+    }
+    
+    /**
+     * Indicates if the stacks are normalized, such that each
+     * column is independently scaled.
+     * @@return true if normalized, false otherwise
+     */
+    public boolean isNormalized() {
+        return m_norm;
+    }
+    
+    /**
+     * Gets the percentage of the layout bounds that should be reserved for
+     * empty space at the top of the stack.
+     * @@return the padding percentage
+     */
+    public double getPaddingPercentage() {
+        return m_padding;
+    }
+    
+    /**
+     * Sets the percentage of the layout bounds that should be reserved for
+     * empty space at the top of the stack.
+     * @@param p the padding percentage to use
+     */
+    public void setPaddingPercentage(double p) {
+        if ( p < 0 || p > 1 )
+            throw new IllegalArgumentException(
+                    "Illegal padding percentage: " + p);
+        m_padding = p;
+    }
+    
+    /**
+     * Get the minimum height threshold under which stacks should not be
+     * made visible.
+     * @@return the minimum height threshold for visibility
+     */
+    public double getThreshold() {
+        return m_threshold;
+    }
+    
+    /**
+     * Set the minimum height threshold under which stacks should not be
+     * made visible.
+     * @@param threshold the minimum height threshold for visibility to use
+     */
+    public void setThreshold(double threshold) {
+        m_threshold = (float)threshold;
+    }
+    
+    /**
+     * Get the range model describing the range occupied by the value
+     * stack.
+     * @@return the stack range model
+     */
+    public ValuedRangeModel getRangeModel() {
+        return m_model;
+    }
+    
+    /**
+     * Returns the orientation of this layout. One of
+     * {@@link Constants#ORIENT_BOTTOM_TOP} (to grow bottom-up),
+     * {@@link Constants#ORIENT_TOP_BOTTOM} (to grow top-down),
+     * {@@link Constants#ORIENT_LEFT_RIGHT} (to grow left-right), or
+     * {@@link Constants#ORIENT_RIGHT_LEFT} (to grow right-left).
+     * @@return the orientation of this layout
+     */
+    public int getOrientation() {
+        return m_orientation;
+    }
+    
+    /**
+     * Sets the orientation of this layout. Must be one of
+     * {@@link Constants#ORIENT_BOTTOM_TOP} (to grow bottom-up),
+     * {@@link Constants#ORIENT_TOP_BOTTOM} (to grow top-down),
+     * {@@link Constants#ORIENT_LEFT_RIGHT} (to grow left-right), or
+     * {@@link Constants#ORIENT_RIGHT_LEFT} (to grow right-left).
+     * @@param orient the desired orientation of this layout
+     * @@throws IllegalArgumentException if the orientation value
+     * is not a valid value
+     */
+    public void setOrientation(int orient) {
+        if ( orient != Constants.ORIENT_TOP_BOTTOM &&
+             orient != Constants.ORIENT_BOTTOM_TOP &&
+             orient != Constants.ORIENT_LEFT_RIGHT &&
+             orient != Constants.ORIENT_RIGHT_LEFT) {
+            throw new IllegalArgumentException(
+                    "Invalid orientation value: "+orient);
+        }
+        m_orientation = orient;
+        m_horiz = (m_orientation == Constants.ORIENT_LEFT_RIGHT ||
+                   m_orientation == Constants.ORIENT_RIGHT_LEFT);
+        m_top   = (m_orientation == Constants.ORIENT_TOP_BOTTOM ||
+                   m_orientation == Constants.ORIENT_LEFT_RIGHT);
+    }
+    
+// TODO: support externally driven range specification (i.e. stack zooming)
+//    public void setRangeModel(NumberRangeModel model) {
+//        m_model = model;
+//    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        bounds = getLayoutBounds();
+        Arrays.fill(baseline, 0);
+        
+        // get the orientation specifics sorted out
+        float min = (float)(m_horiz?bounds.getMaxY() :bounds.getMinX());
+        float hgt = (float)(m_horiz?bounds.getWidth():bounds.getHeight());
+        int xbias = (m_horiz ? 1 : 0);
+        int ybias = (m_horiz ? 0 : 1);
+        int mult = m_top ? 1 : -1;
+        float inc = (float) (m_horiz ? (bounds.getMinY()-bounds.getMaxY())
+                                     : (bounds.getMaxX()-bounds.getMinX()));
+        inc /= columns.length-1;
+        int len = columns.length;
+        
+        // perform first walk to compute max values
+        double maxValue = getPeaks();
+        float b = (float)(m_horiz ? (m_top?bounds.getMinX():bounds.getMaxX())
+                                  : (m_top?bounds.getMinY():bounds.getMaxY()));
+        Arrays.fill(baseline, b);
+        
+        m_model.setValueRange(0, maxValue, 0, maxValue);
+        
+        // perform second walk to compute polygon layout
+        Table t = (Table)m_vis.getGroup(m_group);
+        Iterator iter = t.tuplesReversed();
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            if ( !item.isVisible() ) continue;
+            
+            float height = 0;
+            
+            for ( int i=len; --i >= 0; ) {
+                poly[2*(len-1-i)+xbias] = min + i*inc;
+                poly[2*(len-1-i)+ybias] = (float)baseline[i];
+            }
+            for ( int i=0; i<columns.length; ++i ) {
+                int base = 2*(len+i);
+                double value = item.getDouble(columns[i]);
+                baseline[i] += mult * hgt * 
+                                 MathLib.linearInterp(value,0,peaks[i]);
+                poly[base+xbias] = min + i*inc;
+                poly[base+ybias] = (float)baseline[i];
+                height = Math.max(height,
+                        Math.abs(poly[2*(len-1-i)+ybias]-poly[base+ybias]));
+            }
+            if ( height < m_threshold ) {
+                item.setVisible(false);
+            }
+
+            setX(item, null, 0);
+            setY(item, null, 0);
+            setPolygon(item, poly);
+        }
+    }
+    
+    private double getPeaks() {
+        double sum = 0;
+        
+        // first, compute max value of the current data
+        Arrays.fill(peaks, 0);
+        Iterator iter = m_vis.visibleItems(m_group);
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            for ( int i=0; i<columns.length; ++i ) {
+                double val = item.getDouble(columns[i]); 
+                peaks[i] += val;
+                sum += val;
+            }
+        }
+        double max = ArrayLib.max(peaks);
+        
+        // update peaks array as needed
+        if ( !m_norm ) {
+            Arrays.fill(peaks, max); 
+        }
+        
+        // adjust peaks to include padding space
+        if ( !m_norm ) {
+            for ( int i=0; i<peaks.length; ++i ) {
+                peaks[i] += m_padding * peaks[i];
+            }
+            max += m_padding*max;
+        }
+        
+        // return max range value
+        if ( m_norm ) {
+            max = 1.0;
+        }
+        if ( Double.isNaN(max) )
+            max = 0;
+        return max;
+    }
+    
+    /**
+     * Sets the polygon values for a visual item.
+     */
+    private void setPolygon(VisualItem item, float[] poly) {
+        float[] a = getPolygon(item, m_field);
+        float[] s = getPolygon(item, m_start);
+        float[] e = getPolygon(item, m_end);
+        System.arraycopy(a, 0, s, 0, a.length);
+        System.arraycopy(poly, 0, a, 0, poly.length);
+        System.arraycopy(poly, 0, e, 0, poly.length);
+        item.setValidated(false);
+    }
+    
+    /**
+     * Get the polygon values for a visual item.
+     */
+    private float[] getPolygon(VisualItem item, String field) {
+        float[] poly = (float[])item.get(field);
+        if ( poly == null || poly.length < 4*columns.length ) {
+            // get oriented
+            int len = columns.length;
+            float inc = (float) (m_horiz?(bounds.getMinY()-bounds.getMaxY())
+                                        :(bounds.getMaxX()-bounds.getMinX()));
+            inc /= len-1;
+            float max = (float)
+                (m_horiz ? (m_top?bounds.getMaxX():bounds.getMinX())
+                         : (m_top?bounds.getMinY():bounds.getMaxY()));
+            float min = (float)(m_horiz?bounds.getMaxY():bounds.getMinX());
+            int  bias = (m_horiz ? 1 : 0);
+            
+            // create polygon, populate default values
+            poly = new float[4*len];
+            Arrays.fill(poly, max);
+            for ( int i=0; i<len; ++i ) {
+                float x = i*inc + min;
+                poly[2*(len+i)  +bias] = x;
+                poly[2*(len-1-i)+bias] = x;
+            }
+            item.set(field, poly);
+        }
+        return poly;
+    }
+    
+} // end of class StackedAreaChart
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d5 3
+d19 1
+a19 1
+ *
+d24 4
+a27 4
+    private final String m_field;
+    private final String m_start;
+    private final String m_end;
+
+d29 3
+a31 3
+    private final double[] baseline;
+    private final double[] peaks;
+    private final float[] poly;
+d35 2
+a36 2
+
+    private Orientation m_orientation = Orientation.BOTTOM_TOP;
+d39 1
+a39 1
+
+d41 2
+a42 2
+    private final NumberRangeModel m_model;
+
+d53 1
+a53 1
+
+d71 1
+a71 1
+
+d76 1
+a76 1
+
+d79 1
+a79 1
+
+d90 1
+a90 1
+
+d99 1
+a99 1
+
+d108 1
+a108 1
+
+d117 1
+a117 1
+
+d124 2
+a125 2
+        if ( p < 0 || p > 1 ) {
+			throw new IllegalArgumentException(
+a126 1
+		}
+d129 1
+a129 1
+
+d138 1
+a138 1
+
+d147 1
+a147 1
+
+d156 1
+a156 1
+
+d159 4
+a162 4
+     * {@@link Orientation#BOTTOM_TOP} (to grow bottom-up),
+     * {@@link Orientation#TOP_BOTTOM} (to grow top-down),
+     * {@@link Orientation#LEFT_RIGHT} (to grow left-right), or
+     * {@@link Orientation#RIGHT_LEFT} (to grow right-left).
+d165 1
+a165 1
+    public Orientation getOrientation() {
+d168 1
+a168 1
+
+d171 4
+a174 4
+     * {@@link Orientation#BOTTOM_TOP} (to grow bottom-up),
+     * {@@link Orientation#TOP_BOTTOM} (to grow top-down),
+     * {@@link Orientation#LEFT_RIGHT} (to grow left-right), or
+     * {@@link Orientation#RIGHT_LEFT} (to grow right-left).
+d179 8
+a186 5
+    public void setOrientation(Orientation orient) {
+    	if(orient == Orientation.CENTER) {
+    		throw new IllegalArgumentException(
+                "Invalid orientation value: "+orient);
+    	}
+d188 4
+a191 4
+        m_horiz = m_orientation == Orientation.LEFT_RIGHT ||
+                   m_orientation == Orientation.RIGHT_LEFT;
+        m_top   = m_orientation == Orientation.TOP_BOTTOM ||
+                   m_orientation == Orientation.LEFT_RIGHT;
+d193 1
+a193 1
+
+d198 1
+a198 1
+
+d200 1
+a200 1
+
+d204 1
+a204 2
+    @@Override
+	public void run(double frac) {
+d207 1
+a207 1
+
+d211 2
+a212 2
+        int xbias = m_horiz ? 1 : 0;
+        int ybias = m_horiz ? 0 : 1;
+d214 2
+a215 2
+        float inc = (float) (m_horiz ? bounds.getMinY()-bounds.getMaxY()
+                                     : bounds.getMaxX()-bounds.getMinX());
+d218 1
+a218 1
+
+d222 1
+a222 1
+                                  : m_top?bounds.getMinY():bounds.getMaxY());
+d224 1
+a224 1
+
+d226 1
+a226 1
+
+d228 6
+a233 6
+        Table<? extends VisualItem<?>> t = (Table<? extends VisualItem<?>>)m_vis.getGroup(m_group);
+        for(VisualItem<?> item : t.tuplesReversed()) {
+            if ( !item.isVisible() ) {
+				continue;
+			}
+
+d235 1
+a235 1
+
+d243 1
+a243 1
+                baseline[i] += mult * hgt *
+d259 1
+a259 1
+
+d262 1
+a262 1
+
+d265 3
+a267 2
+
+        for(VisualItem<?> item : m_vis.visibleItems(m_group)) {
+d269 1
+a269 1
+                double val = item.getDouble(columns[i]);
+a273 1
+
+d275 1
+a275 1
+
+d278 1
+a278 1
+            Arrays.fill(peaks, max);
+d280 1
+a280 1
+
+d288 1
+a288 1
+
+d293 2
+a294 3
+        if ( Double.isNaN(max) ) {
+			max = 0;
+		}
+d297 1
+a297 1
+
+d301 1
+a301 1
+    private void setPolygon(VisualItem<?> item, float[] poly) {
+d310 1
+a310 1
+
+d314 1
+a314 1
+    private float[] getPolygon(VisualItem<?> item, String field) {
+d319 2
+a320 2
+            float inc = (float) (m_horiz?bounds.getMinY()-bounds.getMaxY()
+                                        :bounds.getMaxX()-bounds.getMinX());
+d324 1
+a324 1
+                         : m_top?bounds.getMinY():bounds.getMaxY());
+d326 2
+a327 2
+            int  bias = m_horiz ? 1 : 0;
+
+d340 1
+a340 1
+
+@
+
+
+2.1
+log
+@Added support for different orientations to StackedAreaChart and CollapsedStackLayout
+@
+text
+@d84 1
+a84 1
+     * @@param columns the various data fields, in sorted order, that
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d7 1
+d30 1
+d36 5
+d69 1
+d81 27
+d157 37
+d205 1
+d208 9
+a216 3
+        bounds = getLayoutBounds();
+        float inc = (float) (bounds.getMaxX()-bounds.getMinX())
+                        / (columns.length-1);
+d219 5
+a223 11
+        // first walk
+        Iterator iter = m_vis.visibleItems(m_group);
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            for ( int i=0; i<columns.length; ++i ) {
+                baseline[i] += item.getDouble(columns[i]);
+            }
+        }
+        double maxValue = ArrayLib.max(baseline);
+        maxValue += m_padding*maxValue;
+        Arrays.fill(baseline, bounds.getMaxY());
+d227 1
+a227 2
+        // second walk
+        //VisualItem prev = null;
+d229 1
+a229 1
+        iter = t.tuplesReversed();
+d237 2
+a238 2
+                poly[2*(len-1-i)] = (float)bounds.getMinX() + i*inc;
+                poly[2*(len-1-i)+1] = (float)baseline[i];
+d243 6
+a248 5
+                baseline[i] -= (float)bounds.getHeight() * 
+                                 MathLib.linearInterp(value,0,maxValue);
+                poly[base] = (float)bounds.getMinX() + i*inc;
+                poly[base+1] = (float)baseline[i];
+                height = Math.max(height, poly[2*(len-1-i)+1]-poly[base+1]);
+d252 1
+a252 7
+                // update previous item to prevent empty space
+                //if ( prev != null )
+                //    updateBaseline(prev, poly);
+            }
+//            } else {
+//                prev = item;
+//            }
+d260 37
+a296 7
+//    private void updateBaseline(VisualItem item, float[] poly) {
+//        float[] a = getPolygon(item, m_field);
+//        float[] e = getPolygon(item, m_end);
+//        int len = poly.length/2;
+//        System.arraycopy(poly, len, a, len, len);
+//        System.arraycopy(poly, len, e, len, len);
+//    }
+d317 1
+d319 8
+a326 1
+            float inc = (float)(bounds.getMaxX()-bounds.getMinX())/(len-1);
+d328 1
+d330 1
+a330 1
+            Arrays.fill(poly, (float)bounds.getMaxY());
+d332 3
+a334 3
+                float x = i*inc + (float)bounds.getMinX();
+                poly[2*(len+i)] = x;
+                poly[2*(len-1-i)] = x;
+d341 1
+a341 1
+} // end of class StackedLineChart
+@
+
+
+1.1
+log
+@file StackedAreaChart.java was initially added on branch beta.
+@
+text
+@d1 235
+@
+
+
+1.1.2.1
+log
+@Lots of javadoc
+@
+text
+@a0 235
+package prefuse.action.layout;
+
+import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
+import java.util.Iterator;
+
+import prefuse.data.Table;
+import prefuse.data.query.NumberRangeModel;
+import prefuse.util.ArrayLib;
+import prefuse.util.MathLib;
+import prefuse.util.PrefuseLib;
+import prefuse.util.ui.ValuedRangeModel;
+import prefuse.visual.VisualItem;
+
+/**
+ * Layout Action that computes a stacked area chart, in which a series of
+ * data values are consecutively stacked on top of each other.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class StackedAreaChart extends Layout {
+
+    private String m_field;
+    private String m_start;
+    private String m_end;
+    
+    private String[] columns;
+    private double[] baseline;
+    private float[] poly;
+    private double m_padding = 0.05;
+    private float m_threshold;
+    private Rectangle2D bounds;
+    
+    private NumberRangeModel m_model;
+    
+    /**
+     * Create a new StackedAreaChart.
+     * @@param group the data group to layout
+     * @@param field the data field in which to store computed polygons
+     * @@param columns the various data fields, in sorted order, that
+     * should be referenced for each consecutive point of a stack layer
+     */
+    public StackedAreaChart(String group, String field, String[] columns) {
+        this(group, field, columns, 1.0);
+    }
+    
+    /**
+     * Create a new StackedAreaChart.
+     * @@param group the data group to layout
+     * @@param field the data field in which to store computed polygons
+     * @@param columns the various data fields, in sorted order, that
+     * should be referenced for each consecutive point of a stack layer
+     * @@param threshold height threshold under which stacks should not
+     * be made visible.
+     */
+    public StackedAreaChart(String group, String field, String[] columns,
+                            double threshold)
+    {
+        super(group);
+        this.columns = columns;
+        baseline = new double[columns.length];
+        poly = new float[4*columns.length];
+        
+        m_field = field;
+        m_start = PrefuseLib.getStartField(field);
+        m_end = PrefuseLib.getEndField(field);
+        setThreshold(threshold);
+        
+        m_model = new NumberRangeModel(0,1,0,1);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Gets the percentage of the layout bounds that should be reserved for
+     * empty space at the top of the stack.
+     * @@return the padding percentage
+     */
+    public double getPaddingPercentage() {
+        return m_padding;
+    }
+    
+    /**
+     * Sets the percentage of the layout bounds that should be reserved for
+     * empty space at the top of the stack.
+     * @@param p the padding percentage to use
+     */
+    public void setPaddingPercentage(double p) {
+        if ( p < 0 || p > 1 )
+            throw new IllegalArgumentException(
+                    "Illegal padding percentage: " + p);
+        m_padding = p;
+    }
+    
+    /**
+     * Get the minimum height threshold under which stacks should not be
+     * made visible.
+     * @@return the minimum height threshold for visibility
+     */
+    public double getThreshold() {
+        return m_threshold;
+    }
+    
+    /**
+     * Set the minimum height threshold under which stacks should not be
+     * made visible.
+     * @@param threshold the minimum height threshold for visibility to use
+     */
+    public void setThreshold(double threshold) {
+        m_threshold = (float)threshold;
+    }
+    
+    /**
+     * Get the range model describing the range occupied by the value
+     * stack.
+     * @@return the stack range model
+     */
+    public ValuedRangeModel getRangeModel() {
+        return m_model;
+    }
+    
+// TODO: support externally driven range specification (i.e. stack zooming)
+//    public void setRangeModel(NumberRangeModel model) {
+//        m_model = model;
+//    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        Arrays.fill(baseline, 0);
+        
+        bounds = getLayoutBounds();
+        float inc = (float) (bounds.getMaxX()-bounds.getMinX())
+                        / (columns.length-1);
+        int len = columns.length;
+        
+        // first walk
+        Iterator iter = m_vis.visibleItems(m_group);
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            for ( int i=0; i<columns.length; ++i ) {
+                baseline[i] += item.getDouble(columns[i]);
+            }
+        }
+        double maxValue = ArrayLib.max(baseline);
+        maxValue += m_padding*maxValue;
+        Arrays.fill(baseline, bounds.getMaxY());
+        
+        m_model.setValueRange(0, maxValue, 0, maxValue);
+        
+        // second walk
+        //VisualItem prev = null;
+        Table t = (Table)m_vis.getGroup(m_group);
+        iter = t.tuplesReversed();
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            if ( !item.isVisible() ) continue;
+            
+            float height = 0;
+            
+            for ( int i=len; --i >= 0; ) {
+                poly[2*(len-1-i)] = (float)bounds.getMinX() + i*inc;
+                poly[2*(len-1-i)+1] = (float)baseline[i];
+            }
+            for ( int i=0; i<columns.length; ++i ) {
+                int base = 2*(len+i);
+                double value = item.getDouble(columns[i]);
+                baseline[i] -= (float)bounds.getHeight() * 
+                                 MathLib.linearInterp(value,0,maxValue);
+                poly[base] = (float)bounds.getMinX() + i*inc;
+                poly[base+1] = (float)baseline[i];
+                height = Math.max(height, poly[2*(len-1-i)+1]-poly[base+1]);
+            }
+            if ( height < m_threshold ) {
+                item.setVisible(false);
+                // update previous item to prevent empty space
+                //if ( prev != null )
+                //    updateBaseline(prev, poly);
+            }
+//            } else {
+//                prev = item;
+//            }
+
+            setX(item, null, 0);
+            setY(item, null, 0);
+            setPolygon(item, poly);
+        }
+    }
+    
+//    private void updateBaseline(VisualItem item, float[] poly) {
+//        float[] a = getPolygon(item, m_field);
+//        float[] e = getPolygon(item, m_end);
+//        int len = poly.length/2;
+//        System.arraycopy(poly, len, a, len, len);
+//        System.arraycopy(poly, len, e, len, len);
+//    }
+    
+    /**
+     * Sets the polygon values for a visual item.
+     */
+    private void setPolygon(VisualItem item, float[] poly) {
+        float[] a = getPolygon(item, m_field);
+        float[] s = getPolygon(item, m_start);
+        float[] e = getPolygon(item, m_end);
+        System.arraycopy(a, 0, s, 0, a.length);
+        System.arraycopy(poly, 0, a, 0, poly.length);
+        System.arraycopy(poly, 0, e, 0, poly.length);
+        item.setValidated(false);
+    }
+    
+    /**
+     * Get the polygon values for a visual item.
+     */
+    private float[] getPolygon(VisualItem item, String field) {
+        float[] poly = (float[])item.get(field);
+        if ( poly == null || poly.length < 4*columns.length ) {
+            int len = columns.length;
+            float inc = (float)(bounds.getMaxX()-bounds.getMinX())/(len-1);
+            
+            poly = new float[4*len];
+            Arrays.fill(poly, (float)bounds.getMaxY());
+            for ( int i=0; i<len; ++i ) {
+                float x = i*inc + (float)bounds.getMinX();
+                poly[2*(len+i)] = x;
+                poly[2*(len-1-i)] = x;
+            }
+            item.set(field, poly);
+        }
+        return poly;
+    }
+    
+} // end of class StackedLineChart
+@
+
+
+1.1.2.2
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d19 1
+a19 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

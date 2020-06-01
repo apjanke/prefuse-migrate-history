@@ -1,0 +1,68 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.24.09.07.09;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.24.09.07.09;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@<body>
+<p>Utility classes facilitating the generation and composition of user
+interface components. This package contains both custom user interface
+widgets and convenience wrappers for existing Swing widgets.</p>
+</body>@
+
+
+1.1
+log
+@file package.html was initially added on branch beta.
+@
+text
+@d1 5
+@
+
+
+1.1.2.1
+log
+@Added javadoc overview and package text.
+@
+text
+@a0 5
+<body>
+<p>Utility classes facilitating the generation and composition of user
+interface components. This package contains both custom user interface
+widgets and convenience wrappers for existing Swing widgets.</p>
+</body>@
+

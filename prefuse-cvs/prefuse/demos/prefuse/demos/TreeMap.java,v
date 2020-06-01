@@ -1,0 +1,1263 @@
+head	2.4;
+access;
+symbols
+	java_1_5:2.4.0.4
+	Root_java_1_5:2.4
+	beta:2.4.0.2
+	beta-20080113:2.4
+	beta-20071021:2.4
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2006.04.11.17.10.41;	author jheer;	state Exp;
+branches
+	2.4.4.1;
+next	2.3;
+
+2.3
+date	2006.03.24.17.40.14;	author jheer;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.03.08.19.14.25;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.27.03.59.39;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.11.06.38.42;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.07.00.42.28;	author jheer;	state Exp;
+branches;
+next	1.1.2.7;
+
+1.1.2.7
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.4.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Fixed irregularities arising when performing keyword search.
+@
+text
+@package prefuse.demos;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Shape;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.ActionList;
+import prefuse.action.RepaintAction;
+import prefuse.action.animate.ColorAnimator;
+import prefuse.action.assignment.ColorAction;
+import prefuse.action.layout.Layout;
+import prefuse.action.layout.graph.SquarifiedTreeMapLayout;
+import prefuse.controls.ControlAdapter;
+import prefuse.data.Schema;
+import prefuse.data.Tree;
+import prefuse.data.expression.Predicate;
+import prefuse.data.expression.parser.ExpressionParser;
+import prefuse.data.io.TreeMLReader;
+import prefuse.data.query.SearchQueryBinding;
+import prefuse.render.AbstractShapeRenderer;
+import prefuse.render.DefaultRendererFactory;
+import prefuse.render.LabelRenderer;
+import prefuse.util.ColorLib;
+import prefuse.util.ColorMap;
+import prefuse.util.FontLib;
+import prefuse.util.PrefuseLib;
+import prefuse.util.UpdateListener;
+import prefuse.util.ui.JFastLabel;
+import prefuse.util.ui.JSearchPanel;
+import prefuse.util.ui.UILib;
+import prefuse.visual.DecoratorItem;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTree;
+import prefuse.visual.expression.InGroupPredicate;
+import prefuse.visual.sort.TreeDepthItemSorter;
+
+
+/**
+ * Demonstration showcasing a TreeMap layout of a hierarchical data
+ * set and the use of dynamic query binding for text search. Animation
+ * is used to highlight changing search results.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class TreeMap extends Display {
+
+    public static final String TREE_CHI = "/chi-ontology.xml.gz";
+    
+    // create data description of labels, setting colors, fonts ahead of time
+    private static final Schema LABEL_SCHEMA = PrefuseLib.getVisualItemSchema();
+    static {
+        LABEL_SCHEMA.setDefault(VisualItem.INTERACTIVE, false);
+        LABEL_SCHEMA.setDefault(VisualItem.TEXTCOLOR, ColorLib.gray(200));
+        LABEL_SCHEMA.setDefault(VisualItem.FONT, FontLib.getFont("Tahoma",16));
+    }
+    
+    private static final String tree = "tree";
+    private static final String treeNodes = "tree.nodes";
+    private static final String treeEdges = "tree.edges";
+    private static final String labels = "labels";
+
+    private SearchQueryBinding searchQ;
+    
+    public TreeMap(Tree t, String label) {
+        super(new Visualization());
+        
+        // add the tree to the visualization
+        VisualTree vt = m_vis.addTree(tree, t);
+        m_vis.setVisible(treeEdges, null, false);
+        
+        // ensure that only leaf nodes are interactive
+        Predicate noLeaf = (Predicate)ExpressionParser.parse("childcount()>0");
+        m_vis.setInteractive(treeNodes, noLeaf, false);
+
+        // add labels to the visualization
+        // first create a filter to show labels only at top-level nodes
+        Predicate labelP = (Predicate)ExpressionParser.parse("treedepth()=1");
+        // now create the labels as decorators of the nodes
+        m_vis.addDecorators(labels, treeNodes, labelP, LABEL_SCHEMA);
+        
+        // set up the renderers - one for nodes and one for labels
+        DefaultRendererFactory rf = new DefaultRendererFactory();
+        rf.add(new InGroupPredicate(treeNodes), new NodeRenderer());
+        rf.add(new InGroupPredicate(labels), new LabelRenderer(label));
+        m_vis.setRendererFactory(rf);
+                       
+        // border colors
+        final ColorAction borderColor = new BorderColorAction(treeNodes);
+        final ColorAction fillColor = new FillColorAction(treeNodes);
+        
+        // color settings
+        ActionList colors = new ActionList();
+        colors.add(fillColor);
+        colors.add(borderColor);
+        m_vis.putAction("colors", colors);
+        
+        // animate paint change
+        ActionList animatePaint = new ActionList(400);
+        animatePaint.add(new ColorAnimator(treeNodes));
+        animatePaint.add(new RepaintAction());
+        m_vis.putAction("animatePaint", animatePaint);
+        
+        // create the single filtering and layout action list
+        ActionList layout = new ActionList();
+        layout.add(new SquarifiedTreeMapLayout(tree));
+        layout.add(new LabelLayout(labels));
+        layout.add(colors);
+        layout.add(new RepaintAction());
+        m_vis.putAction("layout", layout);
+        
+        // initialize our display
+        setSize(700,600);
+        setItemSorter(new TreeDepthItemSorter());
+        addControlListener(new ControlAdapter() {
+            public void itemEntered(VisualItem item, MouseEvent e) {
+                item.setStrokeColor(borderColor.getColor(item));
+                item.getVisualization().repaint();
+            }
+            public void itemExited(VisualItem item, MouseEvent e) {
+                item.setStrokeColor(item.getEndStrokeColor());
+                item.getVisualization().repaint();
+            }           
+        });
+        
+        searchQ = new SearchQueryBinding(vt.getNodeTable(), label);
+        m_vis.addFocusGroup(Visualization.SEARCH_ITEMS, searchQ.getSearchSet());
+        searchQ.getPredicate().addExpressionListener(new UpdateListener() {
+            public void update(Object src) {
+                m_vis.cancel("animatePaint");
+                m_vis.run("colors");
+                m_vis.run("animatePaint");
+            }
+        });
+        
+        // perform layout
+        m_vis.run("layout");
+    }
+    
+    public SearchQueryBinding getSearchQuery() {
+        return searchQ;
+    }
+    
+    public static void main(String argv[]) {
+        UILib.setPlatformLookAndFeel();
+        
+        
+        String infile = TREE_CHI;
+        String label = "name";
+        if ( argv.length > 1 ) {
+            infile = argv[0];
+            label = argv[1];
+        }
+        JComponent treemap = demo(infile, label);
+        
+        JFrame frame = new JFrame("p r e f u s e  |  t r e e m a p");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setContentPane(treemap);
+        frame.pack();
+        frame.setVisible(true);
+    }
+    
+    public static JComponent demo() {
+        return demo(TREE_CHI, "name");
+    }
+    
+    public static JComponent demo(String datafile, final String label) {
+        Tree t = null;
+        try {
+            t = (Tree)new TreeMLReader().readGraph(datafile);
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        
+        // create a new treemap
+        final TreeMap treemap = new TreeMap(t, label);
+        
+        // create a search panel for the tree map
+        JSearchPanel search = treemap.getSearchQuery().createSearchPanel();
+        search.setShowResultCount(true);
+        search.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
+        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+        
+        final JFastLabel title = new JFastLabel("                 ");
+        title.setPreferredSize(new Dimension(350, 20));
+        title.setVerticalAlignment(SwingConstants.BOTTOM);
+        title.setBorder(BorderFactory.createEmptyBorder(3,0,0,0));
+        title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
+        
+        treemap.addControlListener(new ControlAdapter() {
+            public void itemEntered(VisualItem item, MouseEvent e) {
+                title.setText(item.getString(label));
+            }
+            public void itemExited(VisualItem item, MouseEvent e) {
+                title.setText(null);
+            }
+        });
+        
+        Box box = UILib.getBox(new Component[]{title,search}, true, 10, 3, 0);
+
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(treemap, BorderLayout.CENTER);
+        panel.add(box, BorderLayout.SOUTH);
+        UILib.setColor(panel, Color.BLACK, Color.GRAY);
+        return panel;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Set the stroke color for drawing treemap node outlines. A graded
+     * grayscale ramp is used, with higer nodes in the tree drawn in
+     * lighter shades of gray.
+     */
+    public static class BorderColorAction extends ColorAction {
+        
+        public BorderColorAction(String group) {
+            super(group, VisualItem.STROKECOLOR);
+        }
+        
+        public int getColor(VisualItem item) {
+            NodeItem nitem = (NodeItem)item;
+            if ( nitem.isHover() )
+                return ColorLib.rgb(99,130,191);
+            
+            int depth = nitem.getDepth();
+            if ( depth < 2 ) {
+                return ColorLib.gray(100);
+            } else if ( depth < 4 ) {
+                return ColorLib.gray(75);
+            } else {
+                return ColorLib.gray(50);
+            }
+        }
+    }
+    
+    /**
+     * Set fill colors for treemap nodes. Search items are colored
+     * in pink, while normal nodes are shaded according to their
+     * depth in the tree.
+     */
+    public static class FillColorAction extends ColorAction {
+        private ColorMap cmap = new ColorMap(
+            ColorLib.getInterpolatedPalette(10,
+                ColorLib.rgb(85,85,85), ColorLib.rgb(0,0,0)), 0, 9);
+
+        public FillColorAction(String group) {
+            super(group, VisualItem.FILLCOLOR);
+        }
+        
+        public int getColor(VisualItem item) {
+            if ( item instanceof NodeItem ) {
+                NodeItem nitem = (NodeItem)item;
+                if ( nitem.getChildCount() > 0 ) {
+                    return 0; // no fill for parent nodes
+                } else {
+                    if ( m_vis.isInGroup(item, Visualization.SEARCH_ITEMS) )
+                        return ColorLib.rgb(191,99,130);
+                    else
+                        return cmap.getColor(nitem.getDepth());
+                }
+            } else {
+                return cmap.getColor(0);
+            }
+        }
+        
+    } // end of inner class TreeMapColorAction
+    
+    /**
+     * Set label positions. Labels are assumed to be DecoratorItem instances,
+     * decorating their respective nodes. The layout simply gets the bounds
+     * of the decorated node and assigns the label coordinates to the center
+     * of those bounds.
+     */
+    public static class LabelLayout extends Layout {
+        public LabelLayout(String group) {
+            super(group);
+        }
+        public void run(double frac) {
+            Iterator iter = m_vis.items(m_group);
+            while ( iter.hasNext() ) {
+                DecoratorItem item = (DecoratorItem)iter.next();
+                VisualItem node = item.getDecoratedItem();
+                Rectangle2D bounds = node.getBounds();
+                setX(item, null, bounds.getCenterX());
+                setY(item, null, bounds.getCenterY());
+            }
+        }
+    } // end of inner class LabelLayout
+    
+    /**
+     * A renderer for treemap nodes. Draws simple rectangles, but defers
+     * the bounds management to the layout.
+     */
+    public static class NodeRenderer extends AbstractShapeRenderer {
+        private Rectangle2D m_bounds = new Rectangle2D.Double();
+        
+        public NodeRenderer() {
+            m_manageBounds = false;
+        }
+        protected Shape getRawShape(VisualItem item) {
+            m_bounds.setRect(item.getBounds());
+            return m_bounds;
+        }
+    } // end of inner class NodeRenderer
+    
+} // end of class TreeMap
+@
+
+
+2.4.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d64 1
+a64 1
+
+d72 1
+a72 1
+
+d78 3
+a80 3
+    private final SearchQueryBinding<NodeItem<?,?>> searchQ;
+
+    public TreeMap(Tree<?,?,?> t, String label) {
+d82 1
+a82 1
+
+d84 1
+a84 1
+        VisualTree<?,? extends NodeItem<?,?>,?> vt = m_vis.addTree(tree, t);
+d86 1
+a86 1
+
+d96 1
+a96 1
+
+d102 1
+a102 1
+
+d106 1
+a106 1
+
+d112 1
+a112 1
+
+d118 1
+a118 1
+
+d126 1
+a126 1
+
+d131 1
+a131 2
+            @@Override
+			public void itemEntered(VisualItem<?> item, MouseEvent e) {
+d135 1
+a135 2
+            @@Override
+			public void itemExited(VisualItem<?> item, MouseEvent e) {
+d138 1
+a138 1
+            }
+d140 2
+a141 2
+
+        searchQ = new SearchQueryBinding<NodeItem<?,?>>(vt.getNodeTable(), label);
+d144 1
+a144 2
+            @@Override
+			public void update(Object src) {
+d150 1
+a150 1
+
+d154 2
+a155 2
+
+    public SearchQueryBinding<NodeItem<?,?>> getSearchQuery() {
+d158 1
+a158 1
+
+d161 2
+a162 2
+
+
+d170 1
+a170 1
+
+d177 1
+a177 1
+
+d181 1
+a181 1
+
+d183 1
+a183 1
+        Tree<?,?,?> t = null;
+d185 1
+a185 1
+            t = (Tree<?,?,?>)new TreeMLReader().readGraph(datafile);
+d190 1
+a190 1
+
+d193 1
+a193 1
+
+d199 1
+a199 1
+
+d205 1
+a205 1
+
+d207 1
+a207 2
+            @@Override
+			public void itemEntered(VisualItem<?> item, MouseEvent e) {
+d210 1
+a210 2
+            @@Override
+			public void itemExited(VisualItem<?> item, MouseEvent e) {
+d214 1
+a214 1
+
+d223 1
+a223 1
+
+d225 1
+a225 1
+
+d232 1
+a232 1
+
+d236 6
+a241 8
+
+        @@Override
+		public int getColor(VisualItem<?> item) {
+            NodeItem<?,?> nitem = (NodeItem<?,?>)item;
+            if ( nitem.isHover() ) {
+				return ColorLib.rgb(99,130,191);
+			}
+
+d252 1
+a252 1
+
+d259 1
+a259 1
+        private final ColorMap cmap = new ColorMap(
+d266 2
+a267 3
+
+        @@Override
+		public int getColor(VisualItem<?> item) {
+d269 2
+a270 2
+                NodeItem<?,?> nitem = (NodeItem<?,?>)item;
+                if ( !nitem.children().isEmpty()) {
+d273 4
+a276 5
+                    if ( m_vis.isInGroup(item, Visualization.SEARCH_ITEMS) ) {
+						return ColorLib.rgb(191,99,130);
+					} else {
+						return cmap.getColor(nitem.getDepth());
+					}
+d282 1
+a282 1
+
+d284 1
+a284 1
+
+d295 2
+a296 3
+        @@Override
+		public void run(double frac) {
+            Iterator<? extends VisualItem<?>> iter = m_vis.items(m_group).iterator();
+d298 2
+a299 2
+                DecoratorItem<?> item = (DecoratorItem<?>)iter.next();
+                VisualItem<?> node = item.getDecoratedItem();
+d306 1
+a306 1
+
+d312 2
+a313 2
+        private final Rectangle2D m_bounds = new Rectangle2D.Double();
+
+d317 1
+a317 2
+        @@Override
+		protected Shape getRawShape(VisualItem<?> item) {
+d322 1
+a322 1
+
+@
+
+
+2.3
+log
+@Refactored to use DecoratorItems for labels
+@
+text
+@d115 1
+a115 1
+        animatePaint.add(new ColorAnimator());
+a267 3
+            if ( m_vis.isInGroup(item, Visualization.SEARCH_ITEMS) )
+                return ColorLib.rgb(191,99,130);
+            
+d273 4
+a276 1
+                    return cmap.getColor(nitem.getDepth());
+@
+
+
+2.2
+log
+@TreeMap demo now manually sets non-leaf nodes to be non-interactive
+@
+text
+@a7 2
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+d11 1
+d26 1
+d29 1
+d37 1
+d41 1
+d46 1
+d50 1
+d65 8
+d76 1
+d83 1
+d90 12
+a101 3
+            
+        m_vis.setRendererFactory(
+            new DefaultRendererFactory(new TreeMapRenderer(label)));
+d107 5
+a111 5
+        // full paint
+        ActionList fullPaint = new ActionList();
+        fullPaint.add(fillColor);
+        fullPaint.add(borderColor);
+        m_vis.putAction("fullPaint", fullPaint);
+d122 2
+a123 2
+        layout.add(fillColor);
+        layout.add(borderColor);
+d144 1
+a144 1
+            protected void update(Object src) {
+d146 1
+a146 1
+                m_vis.run("fullPaint");
+d271 10
+a280 2
+            double v = (item instanceof NodeItem ? ((NodeItem)item).getDepth():0);
+            return cmap.getColor(v);
+d286 22
+d309 1
+a309 3
+     * the bounds management to the layout. Leaf nodes are drawn fully,
+     * higher level nodes only have their outlines drawn. Labels are
+     * rendered for top-level (i.e., depth 1) subtrees.
+d311 1
+a311 1
+    public static class TreeMapRenderer extends AbstractShapeRenderer {
+a312 1
+        private String m_label;
+d314 1
+a314 1
+        public TreeMapRenderer(String label) {
+a315 10
+            m_label = label;
+        }
+        public int getRenderType(VisualItem item) {
+            if ( ((NodeItem)item).getChildCount() == 0 ) {
+                // if a leaf node, both draw and fill the node
+                return RENDER_TYPE_DRAW_AND_FILL;
+            } else {
+                // if not a leaf, only draw the node outline
+                return RENDER_TYPE_DRAW;
+            }
+a320 17
+        
+        public void render(Graphics2D g, VisualItem item) {
+            super.render(g, item);
+            // if a top-level node, draw the category name
+            if ( ((NodeItem)item).getDepth() == 1 ) {
+                Rectangle2D b = item.getBounds();
+                String s = item.getString(m_label);
+                Font f = item.getFont();
+                FontMetrics fm = g.getFontMetrics(f);
+                int w = fm.stringWidth(s);
+                int h = fm.getAscent();
+                g.setColor(Color.LIGHT_GRAY);
+                g.drawString(s, (float)(b.getCenterX()-w/2.0),
+                                (float)(b.getCenterY()+h/2));
+            }
+        }
+        
+@
+
+
+2.1
+log
+@Updated demos to simplify external creation of demos from client code.
+@
+text
+@d30 2
+d34 1
+a35 1
+import prefuse.render.AbstractShapeRenderer;
+d71 4
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d148 4
+@
+
+
+1.1
+log
+@file TreeMap.java was initially added on branch beta.
+@
+text
+@d1 289
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 285
+package prefuse.demos;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Shape;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JFrame;
+import javax.swing.SwingConstants;
+
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.ActionList;
+import prefuse.action.ItemAction;
+import prefuse.action.RepaintAction;
+import prefuse.action.animate.ColorAnimator;
+import prefuse.action.assignment.ColorFunction;
+import prefuse.action.filter.VisibilityFilter;
+import prefuse.action.layout.graph.SquarifiedTreeMapLayout;
+import prefuse.controls.ControlAdapter;
+import prefuse.controls.HoverActionControl;
+import prefuse.data.Table;
+import prefuse.data.Tree;
+import prefuse.data.expression.BooleanLiteral;
+import prefuse.data.io.TreeMLReader;
+import prefuse.data.query.SearchQueryBinding;
+import prefuse.render.DefaultRendererFactory;
+import prefuse.render.ShapeRenderer;
+import prefuse.util.ColorLib;
+import prefuse.util.ColorMap;
+import prefuse.util.FontLib;
+import prefuse.util.UpdateListener;
+import prefuse.util.ui.JFastLabel;
+import prefuse.util.ui.JSearchPanel;
+import prefuse.util.ui.UILib;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTree;
+import prefuse.visual.sort.TreeDepthItemSorter;
+
+
+/**
+ * Demonstration showcasing a TreeMap layout of a hierarchical data
+ * set and the use of dynamic query binding for text search. Animation
+ * is used to highlight changing search results.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class TreeMap extends Display {
+
+    public static final String TREE_CHI = "/chi-ontology.xml.gz";
+    
+    private static final String tree = "tree";
+    private static final String treeNodes = "tree.nodes";
+    private static final String treeEdges = "tree.edges";
+
+    private SearchQueryBinding searchQ;
+    
+    public TreeMap(Tree t, String label) {
+        super(new Visualization());
+        
+        VisualTree vt = m_vis.addTree(tree, t);
+        Table nodes = vt.getNodeTable();
+        nodes.addColumn("_area", double.class);
+            
+        m_vis.setRendererFactory(
+            new DefaultRendererFactory(new TreeMapRenderer()));
+        
+        // initialize our display
+        setSize(700,600);
+        setItemSorter(new TreeDepthItemSorter());
+        addControlListener(new HoverActionControl("repaint"));
+               
+        // border colors
+        ItemAction borderColor = new BorderColorFunction(treeNodes);
+        ItemAction fillColor = new FillColorFunction(treeNodes);
+        
+        // quick repaint
+        ActionList repaint = new ActionList();
+        repaint.add(borderColor);
+        repaint.add(new RepaintAction());
+        m_vis.putAction("repaint", repaint);
+        
+        // full paint
+        ActionList fullPaint = new ActionList();
+        fullPaint.add(fillColor);
+        fullPaint.add(borderColor);
+        m_vis.putAction("fullPaint", fullPaint);
+        
+        // animate paint change
+        ActionList animatePaint = new ActionList(400);
+        animatePaint.add(new ColorAnimator());
+        animatePaint.add(new RepaintAction());
+        m_vis.putAction("animatePaint", animatePaint);
+        
+        // create the single filtering and layout action list
+        ActionList layout = new ActionList();
+        layout.add(new SquarifiedTreeMapLayout(tree));
+        layout.add(new VisibilityFilter(treeEdges,
+                    new BooleanLiteral(false)));
+        layout.add(fillColor);
+        layout.add(repaint);
+        m_vis.putAction("layout", layout);
+        
+        // filter graph and perform layout
+        m_vis.run("layout");
+        
+        searchQ = new SearchQueryBinding(nodes, label);
+        m_vis.addFocusGroup(Visualization.SEARCH_ITEMS, searchQ.getSearchSet());
+        searchQ.getPredicate().addExpressionListener(new UpdateListener() {
+            protected void update(Object src) {
+                m_vis.cancel("animatePaint");
+                m_vis.run("fullPaint");
+                m_vis.run("animatePaint");
+            }
+        });
+    }
+    
+    public SearchQueryBinding getSearchQuery() {
+    	return searchQ;
+    }
+    
+    public static void main(String argv[]) {
+        UILib.setPlatformLookAndFeel();
+        
+        JFrame frame = null;
+        if ( argv.length > 1 ) {
+            frame = demo(argv[0], argv[1]);
+        } else {
+            frame = demo(TREE_CHI, "name");
+        }
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+    
+    public static JFrame demo(String datafile, final String label) {
+        Tree t = null;
+        try {
+            t = (Tree)new TreeMLReader().readGraph(datafile);
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        
+        // create a new treemap
+        final TreeMap treemap = new TreeMap(t, label);
+        
+        // create a search panel for the tree map
+        JSearchPanel search = treemap.getSearchQuery().getSearchPanel();
+        search.setShowResultCount(true);
+        search.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
+        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+        
+        final JFastLabel title = new JFastLabel("                 ");
+        title.setPreferredSize(new Dimension(350, 20));
+        title.setVerticalAlignment(SwingConstants.BOTTOM);
+        title.setBorder(BorderFactory.createEmptyBorder(3,0,0,0));
+        title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
+        
+        treemap.addControlListener(new ControlAdapter() {
+            public void itemEntered(VisualItem item, MouseEvent e) {
+                title.setText(item.getString(label));
+            }
+            public void itemExited(VisualItem item, MouseEvent e) {
+                title.setText(null);
+            }
+        });
+        
+        Box box = UILib.getBox(new Component[]{title,search}, true, 10, 3, 0);
+
+        JFrame frame = new JFrame("p r e f u s e  |  t r e e m a p");
+        frame.getContentPane().add(treemap, BorderLayout.CENTER);
+        frame.getContentPane().add(box, BorderLayout.SOUTH);
+        UILib.setColor(frame, Color.BLACK, Color.GRAY);
+        frame.pack();
+        
+        return frame;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Set the stroke color for drawing treemap node outlines. A graded
+     * grayscale ramp is used, with higer nodes in the tree drawn in
+     * lighter shades of gray.
+     */
+    public static class BorderColorFunction extends ColorFunction {
+        
+        public BorderColorFunction(String group) {
+            super(group, VisualItem.STROKECOLOR);
+        }
+        
+        public int getColor(VisualItem item) {
+            NodeItem nitem = (NodeItem)item;
+            if ( nitem.isHover() )
+                return ColorLib.rgb(99,130,191);
+            
+            int depth = nitem.getDepth();
+            if ( depth < 2 ) {
+                return ColorLib.gray(100);
+            } else if ( depth < 4 ) {
+                return ColorLib.gray(75);
+            } else {
+                return ColorLib.gray(50);
+            }
+        }
+    }
+    
+    /**
+     * Set fill colors for treemap nodes. Search items are colored
+     * in pink, while normal nodes are shaded according to their
+     * depth in the tree.
+     */
+    public static class FillColorFunction extends ColorFunction {
+        private ColorMap cmap = new ColorMap(
+                ColorMap.getInterpolatedPalette(10,
+                        ColorLib.getColor(0.3f,0.3f,0.3f),
+                        ColorLib.getColor(0,0,0)), 0, 9);
+
+        public FillColorFunction(String group) {
+            super(group, VisualItem.FILLCOLOR);
+        }
+        
+        public int getColor(VisualItem item) {
+            if ( m_vis.isInGroup(item, Visualization.SEARCH_ITEMS) )
+                return ColorLib.rgb(191,99,130);
+            
+            double v = (item instanceof NodeItem ? ((NodeItem)item).getDepth():0);
+            return ColorLib.color((Color)cmap.getColor(v));
+        }
+        
+    } // end of inner class TreeMapColorFunction
+    
+    /**
+     * A renderer for treemap nodes. Draws simple rectangles, but defers
+     * the bounds management to the layout. Leaf nodes are drawn fully,
+     * higher level nodes only have their outlines drawn. Labels are
+     * rendered for top-level (i.e., depth 1) subtrees.
+     */
+    public static class TreeMapRenderer extends ShapeRenderer {
+        private Rectangle2D bounds = new Rectangle2D.Double();
+        public TreeMapRenderer() {
+            m_manageBounds = false;
+        }
+        public int getRenderType(VisualItem item) {
+            if ( ((NodeItem)item).getChildCount() == 0 ) {
+            	// if a leaf node, both draw and fill the node
+                return RENDER_TYPE_DRAW_AND_FILL;
+            } else {
+            	// if not a leaf, only draw the node outline
+                return RENDER_TYPE_DRAW;
+            }
+        }
+        protected Shape getRawShape(VisualItem item) {
+            bounds.setRect(item.getBounds());
+            return bounds;
+        }
+        
+        public void render(Graphics2D g, VisualItem item) {
+            super.render(g, item);
+            // if a top-level node, draw the category name
+            if ( ((NodeItem)item).getDepth() == 1 ) {
+                Rectangle2D b = item.getBounds();
+                String s = item.getString("name");
+                Font f = item.getFont();
+                FontMetrics fm = g.getFontMetrics(f);
+                int w = fm.stringWidth(s);
+                int h = fm.getAscent();
+                g.setColor(Color.LIGHT_GRAY);
+                g.drawString(s, (float)(b.getCenterX()-w/2.0),
+                		        (float)(b.getCenterY()+h/2));
+            }
+        }
+        
+    } // end of inner class NodeRenderer
+    
+} // end of class TreeMap
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d157 1
+a157 1
+        JSearchPanel search = treemap.getSearchQuery().createSearchPanel();
+d224 3
+a226 2
+            ColorLib.getInterpolatedPalette(10,
+                ColorLib.rgb(85,85,85), ColorLib.rgb(0,0,0)), 0, 9);
+d237 1
+a237 1
+            return cmap.getColor(v);
+@
+
+
+1.1.2.3
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d22 1
+d26 1
+d29 2
+d32 1
+d71 2
+a72 1
+        m_vis.setVisible(treeEdges, null, false);
+d75 7
+a81 2
+            new DefaultRendererFactory(new TreeMapRenderer(label)));
+                       
+d83 8
+a90 2
+        final ColorFunction borderColor = new BorderColorFunction(treeNodes);
+        final ColorFunction fillColor = new FillColorFunction(treeNodes);
+d107 2
+d110 1
+a110 2
+        layout.add(borderColor);
+        layout.add(new RepaintAction());
+d113 2
+a114 13
+        // initialize our display
+        setSize(700,600);
+        setItemSorter(new TreeDepthItemSorter());
+        addControlListener(new ControlAdapter() {
+			public void itemEntered(VisualItem item, MouseEvent e) {
+				item.setStrokeColor(borderColor.getColor(item));
+				item.getVisualization().repaint();
+			}
+			public void itemExited(VisualItem item, MouseEvent e) {
+				item.setStrokeColor(item.getEndStrokeColor());
+				item.getVisualization().repaint();
+			}        	
+        });
+d116 1
+a116 1
+        searchQ = new SearchQueryBinding(vt.getNodeTable(), label);
+a124 3
+        
+        // perform layout
+        m_vis.run("layout");
+d248 2
+a249 4
+        private Rectangle2D m_bounds = new Rectangle2D.Double();
+        private String m_label;
+        
+        public TreeMapRenderer(String label) {
+a250 1
+            m_label = label;
+d262 2
+a263 2
+            m_bounds.setRect(item.getBounds());
+            return m_bounds;
+d271 1
+a271 1
+                String s = item.getString(m_label);
+@
+
+
+1.1.2.4
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d99 8
+a106 8
+            public void itemEntered(VisualItem item, MouseEvent e) {
+                item.setStrokeColor(borderColor.getColor(item));
+                item.getVisualization().repaint();
+            }
+            public void itemExited(VisualItem item, MouseEvent e) {
+                item.setStrokeColor(item.getEndStrokeColor());
+                item.getVisualization().repaint();
+            }           
+d124 1
+a124 1
+        return searchQ;
+d253 1
+a253 1
+                // if a leaf node, both draw and fill the node
+d256 1
+a256 1
+                // if not a leaf, only draw the node outline
+d277 1
+a277 1
+                                (float)(b.getCenterY()+h/2));
+@
+
+
+1.1.2.5
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d50 1
+a50 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.6
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a15 1
+import javax.swing.JComponent;
+a16 1
+import javax.swing.JPanel;
+d24 1
+a24 1
+import prefuse.action.assignment.ColorAction;
+d72 2
+a73 2
+        final ColorAction borderColor = new BorderColorAction(treeNodes);
+        final ColorAction fillColor = new FillColorAction(treeNodes);
+d130 1
+a130 3
+        
+        String infile = TREE_CHI;
+        String label = "name";
+d132 3
+a134 2
+            infile = argv[0];
+            label = argv[1];
+a135 3
+        JComponent treemap = demo(infile, label);
+        
+        JFrame frame = new JFrame("p r e f u s e  |  t r e e m a p");
+a136 2
+        frame.setContentPane(treemap);
+        frame.pack();
+d140 1
+a140 1
+    public static JComponent demo(String datafile, final String label) {
+d175 7
+a181 5
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(treemap, BorderLayout.CENTER);
+        panel.add(box, BorderLayout.SOUTH);
+        UILib.setColor(panel, Color.BLACK, Color.GRAY);
+        return panel;
+d191 1
+a191 1
+    public static class BorderColorAction extends ColorAction {
+d193 1
+a193 1
+        public BorderColorAction(String group) {
+d218 1
+a218 1
+    public static class FillColorAction extends ColorAction {
+d223 1
+a223 1
+        public FillColorAction(String group) {
+d235 1
+a235 1
+    } // end of inner class TreeMapColorAction
+@
+
+
+1.1.2.7
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d33 1
+a33 1
+import prefuse.render.AbstractShapeRenderer;
+d249 1
+a249 1
+    public static class TreeMapRenderer extends AbstractShapeRenderer {
+@
+
+

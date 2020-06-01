@@ -1,0 +1,321 @@
+head	1.8;
+access;
+symbols
+	alpha:1.7.0.2
+	Root_alpha:1.7
+	prefuse-alpha-20051229:1.7
+	P20050401_Alpha_PreCHI:1.7;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2006.02.11.06.38.43;	author jheer;	state dead;
+branches;
+next	1.7;
+
+1.7
+date	2004.11.08.02.53.33;	author jheer;	state Exp;
+branches
+	1.7.4.1;
+next	1.6;
+
+1.6
+date	2004.03.25.04.35.38;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.24.01.57.26;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.15.03.33.29;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.08.20.05.51;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.06.00.50.41;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+1.7.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefusex.layout;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.HashMap;
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.NodeItem;
+import edu.berkeley.guir.prefuse.action.assignment.TreeLayout;
+
+/**
+ * Performs a vertical, top-down, layout of a tree.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> - prefuse(AT)jheer.org
+ */
+public class VerticalTreeLayout extends TreeLayout {
+    
+	protected HashMap m_counts;
+	protected int m_heightInc = 25;
+    protected ItemRegistry m_registry;
+
+	/**
+	 * Constructor.
+	 */
+	public VerticalTreeLayout() {
+		try {
+			m_counts = new HashMap();
+		} catch ( Exception e ) {
+			e.printStackTrace();
+		}
+	} //
+
+    public Point2D getLayoutAnchor(ItemRegistry registry) {
+        Point2D anchor = super.getLayoutAnchor();
+        if ( anchor != null )
+            return anchor;
+        
+        Rectangle2D b = getLayoutBounds(registry);
+        double x = 0, y = 0;
+        if ( b != null ) {
+            x = b.getX()+b.getWidth()/2;
+            y = b.getY()+20;
+        }
+        return new Point2D.Double(x,y);
+    } //
+    
+	/**
+	 * @@see edu.berkeley.guir.prefuse.action.Action#run(edu.berkeley.guir.prefuse.ItemRegistry, double)
+	 */
+	public void run(ItemRegistry registry, double frac) {
+        m_registry = registry;
+        Rectangle2D  b = getLayoutBounds(registry);
+		Point2D anchor = getLayoutAnchor(registry);
+        NodeItem n = getLayoutRoot(registry);
+		if ( n != null && n.isVisible() ) {
+			countVisibleDescendants(n);
+			setLocation(n, null, anchor.getX(), anchor.getY());
+			layout(n, (int)anchor.getY()+m_heightInc, b.getX(), b.getX()+b.getWidth());
+			m_counts.clear();			
+		} else {
+			System.err.println("VerticalTreeLayout: Tree root not visible!");
+		}
+	} //
+
+	/**
+	 * Computes the number of visible descendant leaf nodes for each visible
+	 * node.
+	 */
+	private int countVisibleDescendants(NodeItem n) {
+		int count = 0;
+		Iterator childIter = n.getChildren();
+		while ( childIter.hasNext() ) {
+			NodeItem c = (NodeItem)childIter.next();
+		    count += countVisibleDescendants(c);
+		}
+		if ( count == 0 ) {
+			count = 1;
+		}
+		setVisibleDescendants(n, count);
+		return count;
+	} //
+
+	/**
+	 * Store the visible descendant count for a node.
+	 * @@param n
+	 * @@param count
+	 */
+	private void setVisibleDescendants(NodeItem n, int count) {
+		m_counts.put(n,new Integer(count));
+	} //
+	
+	/**
+	 * Retrieve the visible descendant count for a node.b
+	 * @@param n
+	 * @@return int
+	 */
+	private int getVisibleDescendants(NodeItem n) {
+		Integer count = (Integer)m_counts.get(n);
+		return ( count == null ? 0 : count.intValue() );
+	} //
+	
+	/**
+	 * Recursivel compute the layout.
+	 * @@param n the parent NodeItem
+	 * @@param h the current height (depth in the display)
+	 * @@param x1 the minimum breadth co-ordinate
+     * @@param x2 the maximum breadth co-ordinate
+	 */
+	protected void layout(NodeItem n, int h, double x1, double x2) {
+		int numDescendants = getVisibleDescendants(n), i = 0;
+
+		if ( numDescendants == 0 )
+			return;
+
+		double dx  = (x2-x1);
+		double dx2 = dx / 2.0;
+
+		double f = 0.0;
+
+		Iterator childIter = n.getChildren();
+		while ( childIter.hasNext() ) {
+			NodeItem c = (NodeItem)childIter.next();
+			double frac = ((double)getVisibleDescendants(c))/numDescendants;
+			setLocation(c, n, x1 + f*dx + frac*dx2, h);
+			layout(c, h+m_heightInc, x1 + f*dx, x1 + (f+frac)*dx);
+			f += frac;
+		}
+	} //
+
+} // end of class RadialTreeLayout
+@
+
+
+1.7
+log
+@Fixed multicaster bug, other small updates
+@
+text
+@@
+
+
+1.7.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.6
+log
+@A whole lot of update
+@
+text
+@d44 1
+a44 1
+            y = b.getY();
+@
+
+
+1.5
+log
+@New filters added plus more
+@
+text
+@d59 1
+a59 1
+			setLocation(n, anchor.getX(), anchor.getY());
+d126 1
+a126 1
+			setLocation(c, x1 + f*dx + frac*dx2, h);
+a131 11
+	/**
+	 * Set the (x,y) co-ordinates of the given node
+	 * @@param n
+	 * @@param x
+	 * @@param y
+	 */
+	protected void setLocation(NodeItem n, double x, double y) {
+		n.updateLocation(x,y);
+		n.setLocation(x,y);
+	} //
+
+@
+
+
+1.4
+log
+@Updated Javadoc
+@
+text
+@d10 1
+a10 1
+import edu.berkeley.guir.prefuse.action.TreeLayout;
+@
+
+
+1.3
+log
+@Javadoc update and fixes
+@
+text
+@d13 1
+a13 1
+ * Performs tree layout using a vertical, top-down, layout.
+@
+
+
+1.2
+log
+@Updated naming of layout convenience routines
+@
+text
+@d50 1
+a50 1
+	 * @@see edu.berkeley.guir.prefuse.layout.AbstractTreeLayout#layout(edu.berkeley.guir.prefuse.graph.Tree, edu.berkeley.guir.prefuse.ItemRegistry)
+d105 5
+a109 5
+	 * Compute the layout.
+	 * @@param n
+	 * @@param r
+	 * @@param theta1
+	 * @@param theta2
+d111 1
+a111 1
+	protected void layout(NodeItem n, int h, double x2, double x1) {
+d114 1
+a114 1
+		if ( numDescendants == 0 ) {
+a115 1
+		}
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d35 2
+a36 2
+    public Point2D getAnchor(ItemRegistry registry) {
+        Point2D anchor = super.getAnchor();
+d40 1
+a40 1
+        Rectangle2D b = getBounds(registry);
+d54 2
+a55 2
+        Rectangle2D  b = getBounds(registry);
+		Point2D anchor = getAnchor(registry);
+@
+

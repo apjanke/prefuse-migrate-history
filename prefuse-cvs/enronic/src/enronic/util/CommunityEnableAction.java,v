@@ -1,0 +1,76 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.03.10.19.12.52;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.01.21.02.35.09;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Updates
+@
+text
+@package enronic.util;
+
+import java.awt.event.ActionEvent;
+
+import javax.swing.AbstractAction;
+
+import prefusex.community.CommunitySet;
+
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import enronic.Enronic;
+
+/**
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org</a>
+ */
+public class CommunityEnableAction extends AbstractAction {
+
+    private Enronic enronic;
+    
+    public CommunityEnableAction(Enronic enronic) {
+        this.enronic = enronic;
+    } //
+    
+    /**
+     * @@see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+    public void actionPerformed(ActionEvent arg0) {
+        ItemRegistry registry = enronic.getItemRegistry();
+        CommunitySet comm = (CommunitySet)
+        	registry.getFocusManager().getFocusSet(Enronic.COMMUNITY_KEY);
+        comm.init(registry);
+        enronic.getBrowsingColorFunction().updateCommunityMap(comm);
+    } //
+
+} // end of class CommunityEnableAction
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d7 2
+a9 1
+import edu.berkeley.guir.prefusex.community.CommunitySet;
+@
+

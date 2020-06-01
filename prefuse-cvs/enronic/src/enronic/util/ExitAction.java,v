@@ -1,0 +1,42 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.01.21.02.35.09;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@package enronic.util;
+
+import java.awt.event.ActionEvent;
+
+import javax.swing.AbstractAction;
+
+/**
+ * Exits the current application
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ExitAction extends AbstractAction {
+
+    public void actionPerformed(ActionEvent e) {
+        System.exit(0);
+    } //
+
+} // end of class ExitAction
+@

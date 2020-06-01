@@ -1,0 +1,85 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file TableDecoratorItem.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 25
+package prefuse.visual;
+
+import prefuse.Visualization;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class TableDecoratorItem extends TableVisualItem 
+    implements DecoratorItem
+{
+
+    public TableDecoratorItem(Visualization vis, String group, int row) {
+        super(vis, group, row);
+    }
+    
+    /**
+     * @@see prefuse.visual.DecoratorItem#getDecoratedItem()
+     */
+    public VisualItem getDecoratedItem() {
+        VisualTable vt = (VisualTable)getTable();
+        int prow = vt.getParentRow(getRow());
+        return (VisualItem)vt.getParentTable().getTuple(prow);
+    }
+
+} // end of class TableDecoratorItem
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@@
+
+

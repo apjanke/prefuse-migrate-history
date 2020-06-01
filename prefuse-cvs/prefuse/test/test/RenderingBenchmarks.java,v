@@ -1,0 +1,661 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.49;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package test;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
+import java.awt.font.GlyphVector;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.util.logging.Logger;
+
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+
+/**
+ * RenderingBenchmarks
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class RenderingBenchmarks extends JComponent {
+
+    private static final Logger s_logger 
+        = Logger.getLogger(RenderingBenchmarks.class.getName());
+    
+    private StringBuffer sbuf = new StringBuffer();
+    private String testSuite;
+    private String curTest;
+    private int    numItems;
+    private long   timein;
+    private int    fps = 20;
+    
+    public RenderingBenchmarks() {
+        this.setPreferredSize(new Dimension(500,500));
+    }
+    
+    private void startTest(String name, int numItems) {
+        if ( curTest != null )
+            throw new IllegalStateException("In the middle of a test!");
+        this.curTest = name;
+        this.numItems = numItems;
+        Toolkit tk = Toolkit.getDefaultToolkit();
+        tk.sync();
+        this.timein = System.currentTimeMillis();
+    }
+    
+    private void endTest(boolean print) {
+        if ( print ) {
+            long t = System.currentTimeMillis() - timein;
+            double pps = 1000*((double)numItems)/t;
+            double ppf = pps/fps;
+            sbuf.append(curTest).append(" ")
+                .append(curTest.length() > 14 ? "\t" : "\t\t")
+                .append(numItems).append(" \t")
+                .append(t/1000.0).append("s\t")
+                .append(((int)(pps*100))/100.0).append(" pr/s\t")
+                .append(((int)(ppf*100))/100.0).append(" pr/fr")
+                .append('\n');
+        }
+        curTest = null;
+    }
+    
+    public void printHeader() {
+        sbuf.append("PRIMITIVE\t\tCOUNT\tTIME\tPRIMITIVES/SEC\tPRIMITIVES/FRAME @@ ");
+        sbuf.append(fps).append("fps").append('\n');
+    }
+    
+    public void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D)g;
+        
+        int x = 0, y = 0, w = 100, h = 100, c=10;
+        float xf = 0f, yf = 0f, wf = 100f, hf = 100f, cf=10f;
+        int n;
+        
+        g2.setColor(Color.BLACK);
+        boolean print = false;
+        
+        for ( int j=0; j<3; ++j, print = true ) {
+        
+            if ( j == 1 ) {
+                print = true;
+                testSuite = "NORMAL";
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+            } else if ( j == 2 ) {
+                testSuite = "ANTI-ALIASING";
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            }
+            
+            if ( print ) {
+                printHeader();
+            }
+            
+            // lines-direct
+            n = 10000;
+            startTest("lines-direct", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.drawLine(x,y,w,h);
+            }
+            endTest(print);
+            
+            // lines-shape
+            n = 10000;
+            Line2D line = new Line2D.Float(xf,yf,wf,hf);
+            startTest("lines-shape", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.draw(line);
+            }
+            line = null;
+            endTest(print);
+            
+            // rect-direct-draw
+            n = 10000;
+            startTest("rect-direct-draw", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.drawRect(x,y,w,h);
+            }
+            endTest(print);
+            
+            // rect-shape-draw
+            n = 10000;
+            Rectangle2D rect = new Rectangle2D.Float(xf,yf,wf,hf);
+            startTest("rect-shape-draw", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.draw(rect);
+            }
+            rect = null;
+            endTest(print);
+            
+            // rect-direct-fill
+            n = 10000;
+            startTest("rect-direct-fill", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.fillRect(x,y,w,h);
+            }
+            endTest(print);
+            
+            // rect-shape-fill
+            rect = new Rectangle2D.Float(xf,yf,wf,hf);
+            startTest("rect-shape-fill", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.fill(rect);
+            }
+            rect = null;
+            endTest(print);
+
+            // rrect-direct-draw
+            startTest("rrect-direct-draw", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.drawRoundRect(x,y,w,h,c,c);
+            }
+            endTest(print);
+            
+            // rrect-shape-draw
+            RoundRectangle2D rrect = new RoundRectangle2D.Float(xf,yf,wf,hf,cf,cf);
+            startTest("rrect-shape-draw", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.draw(rrect);
+            }
+            rrect = null;
+            endTest(print);
+            
+            // rrect-direct-fill
+            startTest("rrect-direct-fill", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.fillRoundRect(x,y,w,h,c,c);
+            }
+            endTest(print);
+            
+            // rrect-shape-fill
+            rrect = new RoundRectangle2D.Float(xf,yf,wf,hf,cf,cf);
+            startTest("rrect-shape-fill", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.fill(rrect);
+            }
+            rrect = null;
+            endTest(print);
+            
+            // text-direct-int
+            String text = "This is some sample text.";
+            startTest("text-direct-int", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.drawString(text, x+2, h/2);
+            }
+            endTest(print);
+            
+            // text-direct-float
+            startTest("text-direct-float", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.drawString(text, xf+2, hf/2);
+            }
+            endTest(print);
+            
+            // text-glyph-vector
+            Font f = g2.getFont();
+            GlyphVector gvec 
+                = f.createGlyphVector(g2.getFontRenderContext(), text);
+            startTest("text-glyph-vector", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.drawGlyphVector(gvec, xf+2, hf/2);
+            }
+            endTest(print);
+            
+            if ( print ) {
+                s_logger.info("Rendering Benchmarks: "+testSuite+'\n'
+                        +sbuf.toString());
+                sbuf.replace(0, sbuf.length(), "");
+            }
+        }
+        System.exit(0);
+    }
+    
+    public static void main(String[] args) {
+        JFrame f = new JFrame("Rendering Test");
+        f.setSize(500, 500);
+        f.getContentPane().add(new RenderingBenchmarks());
+        f.pack();
+        f.setVisible(true);
+    }
+    
+}
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@@
+
+
+1.1
+log
+@file RenderingBenchmarks.java was initially added on branch beta.
+@
+text
+@d1 223
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 223
+package test;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
+import java.awt.font.GlyphVector;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.util.logging.Logger;
+
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+
+/**
+ * RenderingBenchmarks
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class RenderingBenchmarks extends JComponent {
+
+    private static final Logger s_logger 
+        = Logger.getLogger(RenderingBenchmarks.class.getName());
+    
+    private StringBuffer sbuf = new StringBuffer();
+    private String testSuite;
+    private String curTest;
+    private int    numItems;
+    private long   timein;
+    private int    fps = 20;
+    
+    public RenderingBenchmarks() {
+        this.setPreferredSize(new Dimension(500,500));
+    }
+    
+    private void startTest(String name, int numItems) {
+        if ( curTest != null )
+            throw new IllegalStateException("In the middle of a test!");
+        this.curTest = name;
+        this.numItems = numItems;
+        Toolkit tk = Toolkit.getDefaultToolkit();
+	    tk.sync();
+        this.timein = System.currentTimeMillis();
+    }
+    
+    private void endTest(boolean print) {
+        if ( print ) {
+	        long t = System.currentTimeMillis() - timein;
+	        double pps = 1000*((double)numItems)/t;
+	        double ppf = pps/fps;
+	        sbuf.append(curTest).append(" ")
+	            .append(curTest.length() > 14 ? "\t" : "\t\t")
+	            .append(numItems).append(" \t")
+	            .append(t/1000.0).append("s\t")
+	            .append(((int)(pps*100))/100.0).append(" pr/s\t")
+	            .append(((int)(ppf*100))/100.0).append(" pr/fr")
+                .append('\n');
+        }
+        curTest = null;
+    }
+    
+    public void printHeader() {
+        sbuf.append("PRIMITIVE\t\tCOUNT\tTIME\tPRIMITIVES/SEC\tPRIMITIVES/FRAME @@ ");
+        sbuf.append(fps).append("fps").append('\n');
+    }
+    
+    public void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D)g;
+        
+        int x = 0, y = 0, w = 100, h = 100, c=10;
+        float xf = 0f, yf = 0f, wf = 100f, hf = 100f, cf=10f;
+        int n;
+        
+        g2.setColor(Color.BLACK);
+        boolean print = false;
+        
+        for ( int j=0; j<3; ++j, print = true ) {
+        
+            if ( j == 1 ) {
+                print = true;
+                testSuite = "NORMAL";
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+            } else if ( j == 2 ) {
+                testSuite = "ANTI-ALIASING";
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            }
+            
+            if ( print ) {
+                printHeader();
+            }
+            
+	        // lines-direct
+	        n = 10000;
+	        startTest("lines-direct", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.drawLine(x,y,w,h);
+	        }
+	        endTest(print);
+	        
+	        // lines-shape
+	        n = 10000;
+	        Line2D line = new Line2D.Float(xf,yf,wf,hf);
+	        startTest("lines-shape", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.draw(line);
+	        }
+	        line = null;
+	        endTest(print);
+	        
+	        // rect-direct-draw
+	        n = 10000;
+	        startTest("rect-direct-draw", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.drawRect(x,y,w,h);
+	        }
+	        endTest(print);
+	        
+	        // rect-shape-draw
+	        n = 10000;
+	        Rectangle2D rect = new Rectangle2D.Float(xf,yf,wf,hf);
+	        startTest("rect-shape-draw", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.draw(rect);
+	        }
+	        rect = null;
+	        endTest(print);
+	        
+	        // rect-direct-fill
+	        n = 10000;
+	        startTest("rect-direct-fill", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.fillRect(x,y,w,h);
+	        }
+	        endTest(print);
+	        
+	        // rect-shape-fill
+	        rect = new Rectangle2D.Float(xf,yf,wf,hf);
+	        startTest("rect-shape-fill", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.fill(rect);
+	        }
+	        rect = null;
+	        endTest(print);
+
+	        // rrect-direct-draw
+	        startTest("rrect-direct-draw", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.drawRoundRect(x,y,w,h,c,c);
+	        }
+	        endTest(print);
+	        
+	        // rrect-shape-draw
+	        RoundRectangle2D rrect = new RoundRectangle2D.Float(xf,yf,wf,hf,cf,cf);
+	        startTest("rrect-shape-draw", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.draw(rrect);
+	        }
+	        rrect = null;
+	        endTest(print);
+	        
+	        // rrect-direct-fill
+	        startTest("rrect-direct-fill", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.fillRoundRect(x,y,w,h,c,c);
+	        }
+	        endTest(print);
+	        
+	        // rrect-shape-fill
+	        rrect = new RoundRectangle2D.Float(xf,yf,wf,hf,cf,cf);
+	        startTest("rrect-shape-fill", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.fill(rrect);
+	        }
+	        rrect = null;
+	        endTest(print);
+	        
+	        // text-direct-int
+	        String text = "This is some sample text.";
+	        startTest("text-direct-int", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.drawString(text, x+2, h/2);
+	        }
+	        endTest(print);
+	        
+	        // text-direct-float
+	        startTest("text-direct-float", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.drawString(text, xf+2, hf/2);
+	        }
+	        endTest(print);
+	        
+	        // text-glyph-vector
+	        Font f = g2.getFont();
+	        GlyphVector gvec 
+	            = f.createGlyphVector(g2.getFontRenderContext(), text);
+	        startTest("text-glyph-vector", n);
+	        for ( int i=0; i<n; ++i ) {
+	            g2.drawGlyphVector(gvec, xf+2, hf/2);
+	        }
+	        endTest(print);
+            
+            if ( print ) {
+                s_logger.info("Rendering Benchmarks: "+testSuite+'\n'
+                        +sbuf.toString());
+                sbuf.replace(0, sbuf.length(), "");
+            }
+        }
+        System.exit(0);
+    }
+    
+    public static void main(String[] args) {
+        JFrame f = new JFrame("Rendering Test");
+        f.setSize(500, 500);
+        f.getContentPane().add(new RenderingBenchmarks());
+        f.pack();
+        f.setVisible(true);
+    }
+    
+}
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d46 1
+a46 1
+        tk.sync();
+d52 9
+a60 9
+            long t = System.currentTimeMillis() - timein;
+            double pps = 1000*((double)numItems)/t;
+            double ppf = pps/fps;
+            sbuf.append(curTest).append(" ")
+                .append(curTest.length() > 14 ? "\t" : "\t\t")
+                .append(numItems).append(" \t")
+                .append(t/1000.0).append("s\t")
+                .append(((int)(pps*100))/100.0).append(" pr/s\t")
+                .append(((int)(ppf*100))/100.0).append(" pr/fr")
+d96 52
+a147 52
+            // lines-direct
+            n = 10000;
+            startTest("lines-direct", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.drawLine(x,y,w,h);
+            }
+            endTest(print);
+            
+            // lines-shape
+            n = 10000;
+            Line2D line = new Line2D.Float(xf,yf,wf,hf);
+            startTest("lines-shape", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.draw(line);
+            }
+            line = null;
+            endTest(print);
+            
+            // rect-direct-draw
+            n = 10000;
+            startTest("rect-direct-draw", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.drawRect(x,y,w,h);
+            }
+            endTest(print);
+            
+            // rect-shape-draw
+            n = 10000;
+            Rectangle2D rect = new Rectangle2D.Float(xf,yf,wf,hf);
+            startTest("rect-shape-draw", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.draw(rect);
+            }
+            rect = null;
+            endTest(print);
+            
+            // rect-direct-fill
+            n = 10000;
+            startTest("rect-direct-fill", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.fillRect(x,y,w,h);
+            }
+            endTest(print);
+            
+            // rect-shape-fill
+            rect = new Rectangle2D.Float(xf,yf,wf,hf);
+            startTest("rect-shape-fill", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.fill(rect);
+            }
+            rect = null;
+            endTest(print);
+d149 56
+a204 56
+            // rrect-direct-draw
+            startTest("rrect-direct-draw", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.drawRoundRect(x,y,w,h,c,c);
+            }
+            endTest(print);
+            
+            // rrect-shape-draw
+            RoundRectangle2D rrect = new RoundRectangle2D.Float(xf,yf,wf,hf,cf,cf);
+            startTest("rrect-shape-draw", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.draw(rrect);
+            }
+            rrect = null;
+            endTest(print);
+            
+            // rrect-direct-fill
+            startTest("rrect-direct-fill", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.fillRoundRect(x,y,w,h,c,c);
+            }
+            endTest(print);
+            
+            // rrect-shape-fill
+            rrect = new RoundRectangle2D.Float(xf,yf,wf,hf,cf,cf);
+            startTest("rrect-shape-fill", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.fill(rrect);
+            }
+            rrect = null;
+            endTest(print);
+            
+            // text-direct-int
+            String text = "This is some sample text.";
+            startTest("text-direct-int", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.drawString(text, x+2, h/2);
+            }
+            endTest(print);
+            
+            // text-direct-float
+            startTest("text-direct-float", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.drawString(text, xf+2, hf/2);
+            }
+            endTest(print);
+            
+            // text-glyph-vector
+            Font f = g2.getFont();
+            GlyphVector gvec 
+                = f.createGlyphVector(g2.getFontRenderContext(), text);
+            startTest("text-glyph-vector", n);
+            for ( int i=0; i<n; ++i ) {
+                g2.drawGlyphVector(gvec, xf+2, hf/2);
+            }
+            endTest(print);
+@
+
+

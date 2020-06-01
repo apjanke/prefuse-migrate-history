@@ -1,0 +1,269 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action;
+
+/**
+ * The ActionSwitch selects between a set of Actions, allowing only one
+ * of a group of Actions to be executed at a time.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ActionSwitch extends CompositeAction {
+
+    private int m_switchVal;
+    
+    /**
+     * Creates an empty action switch.
+     */
+    public ActionSwitch() {
+        m_switchVal = 0;
+    }
+    
+    /**
+     * Creates a new ActionSwitch with the given actions and switch value.
+     * @@param acts the Actions to include in this switch
+     * @@param switchVal the switch value indicating which Action to run
+     */
+    public ActionSwitch(Action[] acts, int switchVal) {
+        for ( int i=0; i<acts.length; i++ )
+            m_actions.add(acts[i]);
+        setSwitchValue(switchVal);
+    }
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        if ( m_actions.size() > 0 ) {
+            get(getSwitchValue()).run(frac);
+        }
+    }
+    
+    /**
+     * Returns the current switch value, indicating the index of the Action
+     * that will be executed in reponse to run() invocations.
+     * @@return the switch value
+     */
+    public int getSwitchValue() {
+        return m_switchVal;
+    }
+    
+    /**
+     * Set the switch value. This is the index of the Action that will be
+     * executed in response to run() invocations.
+     * @@param s the new switch value
+     */
+    public void setSwitchValue(int s) {
+        if ( s < 0 || s >= size() )
+            throw new IllegalArgumentException(
+                    "Switch value out of legal range");
+        m_switchVal = s;
+    }
+
+} // end of class ActionSwitch
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d13 1
+a13 1
+
+d20 1
+a20 1
+
+d27 2
+a28 3
+        for (Action element : acts) {
+			m_actions.add(element);
+		}
+d31 1
+a31 1
+
+d35 1
+a35 2
+    @@Override
+	public void run(double frac) {
+d40 1
+a40 1
+
+d49 1
+a49 1
+
+d56 2
+a57 2
+        if ( s < 0 || s >= size() ) {
+			throw new IllegalArgumentException(
+a58 1
+		}
+@
+
+
+1.1
+log
+@file ActionSwitch.java was initially added on branch beta.
+@
+text
+@d1 62
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 58
+package prefuse.action;
+
+/**
+ * The ActionSwitch multiplexes between a set of Actions, allowing only one
+ * of a group of actions to be executed at a given time.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ActionSwitch extends CompositeAction {
+
+    private int m_switchVal;
+    
+    /**
+     * Creates an empty action switch.
+     */
+    public ActionSwitch() {
+        m_switchVal = 0;
+    }
+    
+    /**
+     * Creates a new ActionSwitch with the given actions and switch value.
+     * @@param acts the Actions to include in this switch
+     * @@param switchVal the switch value indicating which Action to run
+     */
+    public ActionSwitch(Action[] acts, int switchVal) {
+        for ( int i=0; i<acts.length; i++ )
+            m_actions.add(acts[i]);
+        setSwitchValue(switchVal);
+    }
+    
+    public void run(double frac) {
+        if ( m_actions.size() > 0 ) {
+            get(getSwitchValue()).run(frac);
+        }
+    }
+    
+    /**
+     * Returns the current switch value, indicating the index of the Action
+     * that will be executed in reponse to run() invocations.
+     * @@return the switch value
+     */
+    public int getSwitchValue() {
+        return m_switchVal;
+    }
+    
+    /**
+     * Set the switch value. This is the index of the Action that will be
+     * executed in response to run() invocations.
+     * @@param s the new switch value
+     */
+    public void setSwitchValue(int s) {
+        if ( s < 0 || s >= size() )
+            throw new IllegalArgumentException("Switch value out of legal range");
+        m_switchVal = s;
+    }
+
+} // end of class ActionSwitch
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d4 2
+a5 2
+ * The ActionSwitch selects between a set of Actions, allowing only one
+ * of a group of Actions to be executed at a time.
+a31 3
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+d54 1
+a54 2
+            throw new IllegalArgumentException(
+                    "Switch value out of legal range");
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d8 1
+a8 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

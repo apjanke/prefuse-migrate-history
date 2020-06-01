@@ -1,0 +1,212 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file TableNodeItem.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 152
+package prefuse.visual;
+
+import java.util.Iterator;
+
+import prefuse.Visualization;
+import prefuse.data.Graph;
+import prefuse.data.Tree;
+import prefuse.data.tuple.Edge;
+import prefuse.data.tuple.TreeNode;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class TableNodeItem extends TableVisualItem implements NodeItem {
+
+    protected Graph m_graph;
+    
+    public TableNodeItem(Visualization vis, String group, int row) {
+        super(vis, group, row);
+        String graph = group.substring(0, group.lastIndexOf("."));
+        m_graph = (Graph)vis.getGroup(graph);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Node#getGraph()
+     */
+    public Graph getGraph() {
+        return m_graph;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.data.tuple.Node#getInDegree()
+     */
+    public int getInDegree() {
+        return m_graph.getInDegree(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Node#getOutDegree()
+     */
+    public int getOutDegree() {
+        return m_graph.getOutDegree(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Node#getDegree()
+     */
+    public int getDegree() {
+        return m_graph.getDegree(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Node#getInEdges()
+     */
+    public Iterator getInEdges() {
+        return m_graph.getInEdges(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.Node#getOutEdges()
+     */
+    public Iterator getOutEdges() {
+        return m_graph.getOutEdges(this);
+    }
+    
+    /**
+     * @@see prefuse.data.tuple.Node#getEdges()
+     */
+    public Iterator getEdges() {
+        return m_graph.getEdges(this);
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.data.tuple.TreeNode#getParent()
+     */
+    public TreeNode getParent() {
+        treeCheck();
+        return ((Tree)m_graph).getParent(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.TreeNode#getParentEdge()
+     */
+    public Edge getParentEdge() {
+        treeCheck();
+        return ((Tree)m_graph).getParentEdge(this);
+    }
+    
+    /**
+     * @@see prefuse.data.tuple.TreeNode#getChildCount()
+     */
+    public int getChildCount() {
+        treeCheck();
+        return ((Tree)m_graph).getChildCount(m_row);
+    }
+
+    public TreeNode getFirstChild() {
+        treeCheck();
+        return ((Tree)m_graph).getFirstChild(this);
+    }
+    
+    public TreeNode getLastChild() {
+        treeCheck();
+        return ((Tree)m_graph).getLastChild(this);
+    }
+    
+    public TreeNode getPreviousSibling() {
+        treeCheck();
+        return ((Tree)m_graph).getPreviousSibling(this);
+    }
+    
+    public TreeNode getNextSibling() {
+        treeCheck();
+        return ((Tree)m_graph).getNextSibling(this);
+    }
+    
+    /**
+     * @@see prefuse.data.tuple.TreeNode#getChildren()
+     */
+    public Iterator getChildren() {
+        treeCheck();
+        return ((Tree)m_graph).getChildren(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.TreeNode#getChildEdges()
+     */
+    public Iterator getChildEdges() {
+        treeCheck();
+        return ((Tree)m_graph).getChildEdges(this);
+    }
+
+    /**
+     * @@see prefuse.data.tuple.TreeNode#getDepth()
+     */
+    public int getDepth() {
+        treeCheck();
+        return ((Tree)m_graph).getDepth(m_row);
+    }
+    
+    protected void treeCheck() {
+        if ( !(m_graph instanceof Tree) ) {
+            throw new UnsupportedOperationException(
+                    "This NodeItem is not part of a tree.");
+        }
+    }
+    
+} // end of class TableNodeItem
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@@
+
+

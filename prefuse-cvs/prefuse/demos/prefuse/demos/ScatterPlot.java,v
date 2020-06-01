@@ -1,0 +1,821 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.1
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.04.12.03.08.35;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.02.20.09.31.43;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.11.06.38.42;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.16.20.07.41;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.07.00.42.28;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Changed ScatterPlot demo to showcase visual encoding changes
+@
+text
+@package prefuse.demos;
+
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JToolBar;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.ActionList;
+import prefuse.action.RepaintAction;
+import prefuse.action.assignment.ColorAction;
+import prefuse.action.assignment.DataShapeAction;
+import prefuse.action.layout.AxisLayout;
+import prefuse.controls.ToolTipControl;
+import prefuse.data.Table;
+import prefuse.data.io.DelimitedTextTableReader;
+import prefuse.render.DefaultRendererFactory;
+import prefuse.render.ShapeRenderer;
+import prefuse.util.ColorLib;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.VisiblePredicate;
+
+/**
+ * A simple scatter plot visualization that allows visual encodings to
+ * be changed at runtime.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ScatterPlot extends Display {
+
+    private static final String group = "data";
+    
+    private ShapeRenderer m_shapeR = new ShapeRenderer(2);
+    
+    public ScatterPlot(Table t, String xfield, String yfield) {
+        this(t, xfield, yfield, null);
+    }
+    
+    public ScatterPlot(Table t, String xfield, String yfield, String sfield) {
+        super(new Visualization());
+        
+        // --------------------------------------------------------------------
+        // STEP 1: setup the visualized data
+        
+        m_vis.addTable(group, t);
+        
+        DefaultRendererFactory rf = new DefaultRendererFactory(m_shapeR);
+        m_vis.setRendererFactory(rf);
+        
+        // --------------------------------------------------------------------
+        // STEP 2: create actions to process the visual data
+        
+        // set up the actions
+        AxisLayout x_axis = new AxisLayout(group, xfield, 
+                Constants.X_AXIS, VisiblePredicate.TRUE);
+        m_vis.putAction("x", x_axis);
+        
+        AxisLayout y_axis = new AxisLayout(group, yfield, 
+                Constants.Y_AXIS, VisiblePredicate.TRUE);
+        m_vis.putAction("y", y_axis);
+
+        ColorAction color = new ColorAction(group, 
+                VisualItem.STROKECOLOR, ColorLib.rgb(100,100,255));
+        m_vis.putAction("color", color);
+        
+        DataShapeAction shape = new DataShapeAction(group, sfield);
+        m_vis.putAction("shape", shape);
+        
+        ActionList draw = new ActionList();
+        draw.add(x_axis);
+        draw.add(y_axis);
+        if ( sfield != null )
+            draw.add(shape);
+        draw.add(color);
+        draw.add(new RepaintAction());
+        m_vis.putAction("draw", draw);
+        
+        // --------------------------------------------------------------------
+        // STEP 3: set up a display and ui components to show the visualization
+
+        setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        setSize(700,450);
+        setHighQuality(true);
+        
+        ToolTipControl ttc = new ToolTipControl(new String[] {xfield,yfield});
+        addControlListener(ttc);
+        
+        
+        // --------------------------------------------------------------------        
+        // STEP 4: launching the visualization
+                
+        m_vis.run("draw");
+
+    }
+    
+    public int getPointSize() {
+        return m_shapeR.getBaseSize();
+    }
+    
+    public void setPointSize(int size) {
+        m_shapeR.setBaseSize(size);
+        repaint();
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public static void main(String[] argv) {
+        String data = "/fisher.iris.txt";
+        String xfield = "SepalLength";
+        String yfield = "PetalLength";
+        String sfield = "Species";
+        if ( argv.length >= 3 ) {
+            data = argv[0];
+            xfield = argv[1];
+            yfield = argv[2];
+            sfield = ( argv.length > 3 ? argv[3] : null );
+        }
+        
+        final ScatterPlot sp = demo(data, xfield, yfield, sfield);
+        JToolBar toolbar = getEncodingToolbar(sp, xfield, yfield, sfield);
+        
+        
+        
+        JFrame frame = new JFrame("p r e f u s e  |  s c a t t e r");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(toolbar, BorderLayout.NORTH);
+        frame.getContentPane().add(sp, BorderLayout.CENTER);
+        frame.pack();
+        frame.setVisible(true);
+    }
+    
+    public static ScatterPlot demo(String data, String xfield, String yfield) {
+        return demo(data, xfield, yfield, null);
+    }
+    
+    public static ScatterPlot demo(String data, String xfield,
+                                   String yfield, String sfield)
+    {
+        Table table = null;
+        try {
+            table = new DelimitedTextTableReader().readTable(data);
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            return null;
+        }
+        ScatterPlot scatter = new ScatterPlot(table, xfield, yfield, sfield);
+        scatter.setPointSize(10);
+        return scatter;
+    }
+    
+    private static JToolBar getEncodingToolbar(final ScatterPlot sp,
+            final String xfield, final String yfield, final String sfield)
+    {
+        int spacing = 10;
+        
+        // create list of column names
+        Table t = (Table)sp.getVisualization().getSourceData(group);
+        String[] colnames = new String[t.getColumnCount()];
+        for ( int i=0; i<colnames.length; ++i )
+            colnames[i] = t.getColumnName(i);
+        
+        // create toolbar that allows visual mappings to be changed
+        JToolBar toolbar = new JToolBar();
+        toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
+        toolbar.add(Box.createHorizontalStrut(spacing));
+        
+        final JComboBox xcb = new JComboBox(colnames);
+        xcb.setSelectedItem(xfield);
+        xcb.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Visualization vis = sp.getVisualization();
+                AxisLayout xaxis = (AxisLayout)vis.getAction("x");
+                xaxis.setDataField((String)xcb.getSelectedItem());
+                vis.run("draw");
+            }
+        });
+        toolbar.add(new JLabel("X: "));
+        toolbar.add(xcb);
+        toolbar.add(Box.createHorizontalStrut(2*spacing));
+        
+        final JComboBox ycb = new JComboBox(colnames);
+        ycb.setSelectedItem(yfield);
+        ycb.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Visualization vis = sp.getVisualization();
+                AxisLayout yaxis = (AxisLayout)vis.getAction("y");
+                yaxis.setDataField((String)ycb.getSelectedItem());
+                vis.run("draw");
+            }
+        });
+        toolbar.add(new JLabel("Y: "));
+        toolbar.add(ycb);
+        toolbar.add(Box.createHorizontalStrut(2*spacing));
+        
+        final JComboBox scb = new JComboBox(colnames);
+        scb.setSelectedItem(sfield);
+        scb.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Visualization vis = sp.getVisualization();
+                DataShapeAction s = (DataShapeAction)vis.getAction("shape");
+                s.setDataField((String)scb.getSelectedItem());
+                vis.run("draw");
+            }
+        });
+        toolbar.add(new JLabel("Shape: "));
+        toolbar.add(scb);
+        toolbar.add(Box.createHorizontalStrut(spacing));
+        toolbar.add(Box.createHorizontalGlue());
+        
+        return toolbar;
+    }
+    
+} // end of class ScatterPlot
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d15 1
+a21 1
+import prefuse.action.layout.Axis;
+d35 1
+a35 1
+ *
+d41 4
+a44 4
+
+    private final ShapeRenderer m_shapeR = new ShapeRenderer(2);
+
+    public ScatterPlot(Table<?> t, String xfield, String yfield) {
+d47 2
+a48 2
+
+    public ScatterPlot(Table<?> t, String xfield, String yfield, String sfield) {
+d50 1
+a50 1
+
+d53 1
+a53 1
+
+d55 1
+a55 1
+
+d58 1
+a58 1
+
+d61 1
+a61 1
+
+d63 2
+a64 2
+        AxisLayout x_axis = new AxisLayout(group, xfield,
+        		Axis.X, VisiblePredicate.TRUE);
+d66 3
+a68 3
+
+        AxisLayout y_axis = new AxisLayout(group, yfield,
+        		Axis.Y, VisiblePredicate.TRUE);
+d71 1
+a71 1
+        ColorAction color = new ColorAction(group,
+d74 1
+a74 1
+
+d77 1
+a77 1
+
+d81 2
+a82 3
+        if ( sfield != null ) {
+			draw.add(shape);
+		}
+d86 1
+a86 1
+
+d93 1
+a93 1
+
+d96 3
+a98 3
+
+
+        // --------------------------------------------------------------------
+d100 1
+a100 1
+
+d104 1
+a104 1
+
+d108 1
+a108 1
+
+d113 1
+a113 1
+
+d115 1
+a115 1
+
+d125 1
+a125 1
+            sfield = argv.length > 3 ? argv[3] : null;
+d127 1
+a127 1
+
+d130 3
+a132 3
+
+
+
+d140 1
+a140 1
+
+d144 1
+a144 1
+
+d148 1
+a148 1
+        Table<?> table = null;
+d159 1
+a159 1
+
+d164 1
+a164 1
+
+d166 1
+a166 1
+        Table<?> t = (Table<?>)sp.getVisualization().getSourceData(group);
+d168 3
+a170 4
+        for ( int i=0; i<colnames.length; ++i ) {
+			colnames[i] = t.getColumnName(i);
+		}
+
+d175 1
+a175 1
+
+d189 1
+a189 1
+
+d203 1
+a203 1
+
+d218 1
+a218 1
+
+d221 1
+a221 1
+
+@
+
+
+2.1
+log
+@Added shape parameter, main method
+@
+text
+@d4 2
+a5 2
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+d10 1
+d12 2
+a13 1
+import javax.swing.JPanel;
+a21 1
+import prefuse.action.filter.VisibilityFilter;
+a24 1
+import prefuse.data.expression.AndPredicate;
+a25 1
+import prefuse.data.query.RangeQueryBinding;
+a28 2
+import prefuse.util.UpdateListener;
+import prefuse.util.ui.JRangeSlider;
+a29 1
+import prefuse.visual.VisualTable;
+d33 3
+d38 1
+a38 1
+public class ScatterPlot extends JPanel {
+a41 2
+    private Visualization m_vis;
+    private Display m_display;
+d49 1
+a49 1
+        super(new BorderLayout());
+d54 1
+a54 2
+        m_vis = new Visualization();
+        VisualTable vt = m_vis.addTable(group, t);
+a60 8
+
+        // set up dynamic queries, search set
+        RangeQueryBinding  xaxisQ = new RangeQueryBinding(vt, xfield);
+        RangeQueryBinding  yaxisQ = new RangeQueryBinding(vt, yfield);
+        
+        // construct the filtering predicate
+        AndPredicate filter = new AndPredicate(xaxisQ.getPredicate(),
+                                               yaxisQ.getPredicate());
+d65 1
+a65 1
+        x_axis.setRangeModel(xaxisQ.getModel());
+d69 1
+a69 1
+        y_axis.setRangeModel(yaxisQ.getModel());
+d73 2
+a74 1
+
+d76 1
+a85 14
+
+        ActionList update = new ActionList();
+        update.add(new VisibilityFilter(group, filter));
+        update.add(x_axis);
+        update.add(y_axis);
+        update.add(new RepaintAction());
+        m_vis.putAction("update", update);
+        
+        UpdateListener lstnr = new UpdateListener() {
+            public void update(Object src) {
+                m_vis.run("update");
+            }
+        };
+        filter.addExpressionListener(lstnr);
+d90 3
+a92 4
+        m_display = new Display(m_vis);
+        m_display.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        m_display.setSize(700,450);
+        m_display.setHighQuality(true);
+d95 1
+a95 1
+        m_display.addControlListener(ttc);
+d100 1
+a100 21
+        
+        this.addComponentListener(lstnr);
+        
+        JRangeSlider xslider = xaxisQ.createHorizontalRangeSlider();
+        JRangeSlider yslider = yaxisQ.createVerticalRangeSlider();
+        
+        xslider.setThumbColor(null);
+        yslider.setThumbColor(null);
+        
+        MouseAdapter qualityControl = new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                m_display.setHighQuality(false);
+            }
+            public void mouseReleased(MouseEvent e) {
+                m_display.setHighQuality(true);
+                m_display.repaint();
+            }
+        };
+        xslider.addMouseListener(qualityControl);
+        yslider.addMouseListener(qualityControl);
+        
+d102 1
+a102 9
+        
+        add(m_display, BorderLayout.CENTER);
+        add(yslider, BorderLayout.EAST);
+        
+        Box xbox = new Box(BoxLayout.X_AXIS);
+        xbox.add(xslider);
+        int corner = yslider.getPreferredSize().width;
+        xbox.add(Box.createHorizontalStrut(corner));
+        add(xbox, BorderLayout.SOUTH);
+a113 4
+    public Display getDisplay() {
+        return m_display;
+    }
+    
+d127 6
+d135 2
+a136 1
+        frame.setContentPane(demo(data, xfield, yfield, sfield));
+d160 62
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d10 1
+d19 1
+d25 1
+d48 4
+d84 3
+a86 1
+                VisualItem.FILLCOLOR, ColorLib.rgb(100,100,255));
+d91 2
+d171 39
+@
+
+
+1.1
+log
+@file ScatterPlot.java was initially added on branch beta.
+@
+text
+@d1 160
+@
+
+
+1.1.2.1
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@a0 169
+package prefuse.demos;
+
+import java.awt.BorderLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.ActionList;
+import prefuse.action.RepaintAction;
+import prefuse.action.assignment.ColorFunction;
+import prefuse.action.filter.VisibilityFilter;
+import prefuse.action.layout.AxisLayout;
+import prefuse.controls.ToolTipControl;
+import prefuse.data.Table;
+import prefuse.data.expression.AndPredicate;
+import prefuse.data.query.RangeQueryBinding;
+import prefuse.render.DefaultRendererFactory;
+import prefuse.render.ShapeItemRenderer;
+import prefuse.util.ColorLib;
+import prefuse.util.UpdateListener;
+import prefuse.util.ui.JRangeSlider;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTable;
+import prefuse.visual.expression.VisiblePredicate;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class ScatterPlot extends JPanel {
+
+    private static final String group = "data";
+    
+    private Visualization m_vis;
+    private Display m_display;
+    private ShapeItemRenderer m_shapeR = new ShapeItemRenderer(2);
+    
+    public ScatterPlot(Table t, String xfield, String yfield) {
+        super(new BorderLayout());
+        
+        // --------------------------------------------------------------------
+        // STEP 1: setup the visualized data
+        
+        m_vis = new Visualization();
+        VisualTable vt = m_vis.addTable(group, t);
+        
+        DefaultRendererFactory rf = new DefaultRendererFactory(m_shapeR);
+        m_vis.setRendererFactory(rf);
+        
+        // --------------------------------------------------------------------
+        // STEP 2: create actions to process the visual data
+
+        // set up dynamic queries, search set
+        RangeQueryBinding  xaxisQ = new RangeQueryBinding(vt, xfield);
+        RangeQueryBinding  yaxisQ = new RangeQueryBinding(vt, yfield);
+        
+        // construct the filtering predicate
+        AndPredicate filter = new AndPredicate(xaxisQ.getPredicate(),
+                                               yaxisQ.getPredicate());
+        
+        // set up the actions
+        AxisLayout x_axis = new AxisLayout(group, xfield, 
+                Constants.X_AXIS, VisiblePredicate.TRUE);
+        x_axis.setRangeModel(xaxisQ.getModel());
+        
+        AxisLayout y_axis = new AxisLayout(group, yfield, 
+                Constants.Y_AXIS, VisiblePredicate.TRUE);
+        y_axis.setRangeModel(yaxisQ.getModel());
+
+        ColorFunction color = new ColorFunction(group, 
+                VisualItem.FILLCOLOR, ColorLib.rgb(100,100,255));
+        
+        ActionList draw = new ActionList();
+        draw.add(x_axis);
+        draw.add(y_axis);
+        draw.add(color);
+        draw.add(new RepaintAction());
+        m_vis.putAction("draw", draw);
+
+        ActionList update = new ActionList();
+        update.add(new VisibilityFilter(group, filter));
+        update.add(x_axis);
+        update.add(y_axis);
+        update.add(new RepaintAction());
+        m_vis.putAction("update", update);
+        
+        UpdateListener lstnr = new UpdateListener() {
+            public void update(Object src) {
+                m_vis.run("update");
+            }
+        };
+        filter.addExpressionListener(lstnr);
+        
+        // --------------------------------------------------------------------
+        // STEP 3: set up a display and ui components to show the visualization
+
+        m_display = new Display(m_vis);
+        m_display.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        m_display.setSize(700,450);
+        m_display.setHighQuality(true);
+        
+        ToolTipControl ttc = new ToolTipControl(new String[] {xfield,yfield});
+        m_display.addControlListener(ttc);
+        
+        
+        // --------------------------------------------------------------------        
+        // STEP 4: launching the visualization
+        
+        this.addComponentListener(lstnr);
+        
+        JRangeSlider xslider = xaxisQ.createHorizontalRangeSlider();
+        JRangeSlider yslider = yaxisQ.createVerticalRangeSlider();
+        
+        xslider.setThumbColor(null);
+        yslider.setThumbColor(null);
+        
+        MouseAdapter qualityControl = new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                m_display.setHighQuality(false);
+            }
+            public void mouseReleased(MouseEvent e) {
+                m_display.setHighQuality(true);
+                m_display.repaint();
+            }
+        };
+        xslider.addMouseListener(qualityControl);
+        yslider.addMouseListener(qualityControl);
+        
+        m_vis.run("draw");
+        
+        add(m_display, BorderLayout.CENTER);
+        add(yslider, BorderLayout.EAST);
+        
+        Box xbox = new Box(BoxLayout.X_AXIS);
+        xbox.add(xslider);
+        int corner = yslider.getPreferredSize().width;
+        xbox.add(Box.createHorizontalStrut(corner));
+        add(xbox, BorderLayout.SOUTH);
+    }
+    
+    public int getPointSize() {
+        return m_shapeR.getBaseSize();
+    }
+    
+    public void setPointSize(int size) {
+        m_shapeR.setBaseSize(size);
+        repaint();
+    }
+    
+    public int getPointShape() {
+        return m_shapeR.getDefaultShape();
+    }
+    
+    public void setPointShape(int shape) {
+        m_shapeR.setDefaultShape(shape);
+        repaint();
+    }
+    
+    public Display getDisplay() {
+        return m_display;
+    }
+    
+} // end of class ScatterPlot
+@
+
+
+1.1.2.2
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d34 1
+a34 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.3
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@d17 1
+a17 1
+import prefuse.action.assignment.ColorAction;
+d76 1
+a76 1
+        ColorAction color = new ColorAction(group, 
+d156 9
+@
+
+
+1.1.2.4
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d25 1
+a25 1
+import prefuse.render.ShapeRenderer;
+d42 1
+a42 1
+    private ShapeRenderer m_shapeR = new ShapeRenderer(2);
+@
+
+

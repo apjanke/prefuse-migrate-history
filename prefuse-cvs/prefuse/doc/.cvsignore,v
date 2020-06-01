@@ -1,0 +1,75 @@
+head	1.3;
+access;
+symbols
+	java_1_5:1.3.0.4
+	Root_java_1_5:1.3
+	beta:1.3.0.2
+	beta-20080113:1.3
+	beta-20071021:1.3
+	beta-20060220:1.3
+	alpha:1.1.0.2
+	Root_alpha:1.1
+	prefuse-alpha-20051229:1.1
+	P20050401_Alpha_PreCHI:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.18.23.40.42;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2006.02.11.06.38.42;	author jheer;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.07.20.31.28;	author jheer;	state Exp;
+branches
+	1.1.4.1;
+next	;
+
+1.1.4.1
+date	2005.12.30.09.16.21;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Ignore API folder, as it can be automatically generated
+@
+text
+@api
+@
+
+
+1.2
+log
+@Merge beta branch back onto main trunk
+@
+text
+@@
+
+
+1.1
+log
+@Updated .cvsignore
+@
+text
+@@
+
+
+1.1.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+

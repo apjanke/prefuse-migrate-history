@@ -1,0 +1,370 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action.animate;
+
+import java.util.Iterator;
+
+import prefuse.action.GroupAction;
+import prefuse.util.ColorLib;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.StartVisiblePredicate;
+
+/**
+ * Animator that interpolates the visibility status of VisualItems. Items
+ * not currently visible but with end visibilty true are faded in, while
+ * items currently visible but with end visibility false are faded out and
+ * finally set to not visible.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class VisibilityAnimator extends GroupAction {
+    
+    /**
+     * Create a new VisibilityAnimator that processes all data groups.
+     */
+    public VisibilityAnimator() {
+        super();
+    }
+    
+    /**
+     * Create a new VisibilityAnimator that processes the specified group.
+     * @@param group the data group to process.
+     */
+    public VisibilityAnimator(String group) {
+        super(group);
+    }
+    
+    /**
+     * @@see prefuse.action.GroupAction#run(double)
+     */
+    public void run(double frac) {
+        if ( frac == 0.0 ) {
+            setup();
+        } else if ( frac == 1.0 ) {
+            finish();
+        }
+    }
+    
+    private void setup() {
+        // handle fade-in nodes
+        Iterator items = m_vis.visibleItems(m_group);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem) items.next();
+            if ( !item.isStartVisible() ) {
+                item.setStartFillColor(
+                        ColorLib.setAlpha(item.getEndFillColor(),0));
+                item.setStartStrokeColor(
+                        ColorLib.setAlpha(item.getEndStrokeColor(),0));
+                item.setStartTextColor(
+                        ColorLib.setAlpha(item.getEndTextColor(),0));
+            }
+        }
+        
+        // handle fade-out nodes
+        items = m_vis.items(m_group, StartVisiblePredicate.TRUE);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem) items.next();
+            if ( !item.isEndVisible() ) {
+                // fade-out case
+                item.setVisible(true);
+                item.setEndFillColor(
+                        ColorLib.setAlpha(item.getStartFillColor(),0));
+                item.setEndStrokeColor(
+                        ColorLib.setAlpha(item.getStartStrokeColor(),0));
+                item.setEndTextColor(
+                        ColorLib.setAlpha(item.getStartTextColor(),0));
+            }
+        }
+    }
+    
+    private void finish() {
+        // set faded-out nodes to permanently invisible
+        Iterator items = m_vis.items(m_group, StartVisiblePredicate.TRUE);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem) items.next();
+            if ( !item.isEndVisible() ) {
+                item.setVisible(false);
+                item.setStartVisible(false);
+            }
+        }
+        
+        // set faded-in nodes to permanently visible
+        items = m_vis.visibleItems(m_group);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem) items.next();
+            if ( !item.isStartVisible() ) {
+                item.setStartVisible(true);
+                item.setStartFillColor(item.getEndFillColor());
+                item.setStartTextColor(item.getEndTextColor());
+                item.setStartStrokeColor(item.getEndStrokeColor());
+            }
+        }
+    }
+
+} // end of class VisibilityAnimator
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d3 2
+d15 1
+a15 1
+ *
+d19 1
+a19 1
+
+d26 1
+a26 1
+
+d34 1
+a34 1
+
+d38 1
+a38 2
+    @@Override
+	public void run(double frac) {
+d45 1
+a45 1
+
+d48 3
+a50 1
+        for(VisualItem<?> item :  m_vis.visibleItems(m_group)) {
+d60 1
+a60 1
+
+d62 3
+a64 1
+        for(VisualItem<?> item :  m_vis.items(m_group, StartVisiblePredicate.TRUE)) {
+d77 1
+a77 1
+
+d80 3
+a82 1
+        for(VisualItem<?> item :  m_vis.items(m_group, StartVisiblePredicate.TRUE)) {
+d88 1
+a88 1
+
+d90 3
+a92 1
+        for(VisualItem<?> item :  m_vis.visibleItems(m_group)) {
+@
+
+
+1.1
+log
+@file VisibilityAnimator.java was initially added on branch beta.
+@
+text
+@d1 102
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 86
+package prefuse.action.animate;
+
+import java.util.Iterator;
+
+import prefuse.action.GroupAction;
+import prefuse.util.ColorLib;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.StartVisiblePredicate;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class VisibilityAnimator extends GroupAction {
+    
+    public VisibilityAnimator(String group) {
+        super(group);
+    }
+    
+    /**
+     * @@see prefuse.action.GroupAction#run(double)
+     */
+    public void run(double frac) {
+        if ( frac == 0.0 ) {
+            setup();
+        } else if ( frac == 1.0 ) {
+            finish();
+        }
+    }
+    
+    private void setup() {
+        // handle fade-in nodes
+        Iterator items = m_vis.visibleItems(m_group);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem) items.next();
+            if ( !item.isStartVisible() ) {
+                item.setStartFillColor(
+                        ColorLib.setAlpha(item.getEndFillColor(),0));
+                item.setStartStrokeColor(
+                        ColorLib.setAlpha(item.getEndStrokeColor(),0));
+                item.setStartTextColor(
+                        ColorLib.setAlpha(item.getEndTextColor(),0));
+            }
+        }
+        
+        // handle fade-out nodes
+        items = m_vis.items(m_group, StartVisiblePredicate.TRUE);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem) items.next();
+            if ( !item.isEndVisible() ) {
+                // fade-out case
+                item.setVisible(true);
+                item.setEndFillColor(
+                        ColorLib.setAlpha(item.getStartFillColor(),0));
+                item.setEndStrokeColor(
+                        ColorLib.setAlpha(item.getStartStrokeColor(),0));
+                item.setEndTextColor(
+                        ColorLib.setAlpha(item.getStartTextColor(),0));
+            }
+        }
+    }
+    
+    private void finish() {
+        // set faded-out nodes to permanently invisible
+        Iterator items = m_vis.items(m_group, StartVisiblePredicate.TRUE);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem) items.next();
+            if ( !item.isEndVisible() ) {
+                item.setVisible(false);
+                item.setStartVisible(false);
+            }
+        }
+        
+        // set faded-in nodes to permanently visible
+        items = m_vis.visibleItems(m_group);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem) items.next();
+            if ( !item.isStartVisible() ) {
+                item.setStartVisible(true);
+                item.setStartFillColor(item.getEndFillColor());
+                item.setStartTextColor(item.getEndTextColor());
+                item.setStartStrokeColor(item.getEndStrokeColor());
+            }
+        }
+    }
+
+} // end of class VisibilityAnimator@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d86 1
+a86 1
+} // end of class VisibilityAnimator
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@a10 5
+ * Animator that interpolates the visibility status of VisualItems. Items
+ * not currently visible but with end visibilty true are faded in, while
+ * items currently visible but with end visibility false are faded out and
+ * finally set to not visible.
+ * 
+a14 11
+    /**
+     * Create a new VisibilityAnimator that processes all data groups.
+     */
+    public VisibilityAnimator() {
+        super();
+    }
+    
+    /**
+     * Create a new VisibilityAnimator that processes the specified group.
+     * @@param group the data group to process.
+     */
+@
+
+
+1.1.2.4
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d16 1
+a16 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

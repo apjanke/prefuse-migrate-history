@@ -1,0 +1,110 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.11.06.38.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2006.02.09.19.29.37;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.02.09.19.29.37;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.demos.applets;
+
+import prefuse.util.ui.JPrefuseApplet;
+
+
+public class FisheyeMenu extends JPrefuseApplet {
+    
+    public void init() {
+        prefuse.demos.FisheyeMenu fm = prefuse.demos.FisheyeMenu.demo();
+        this.getContentPane().add(fm);
+        fm.getVisualization().run("init");
+    }
+    
+} // end of class FisheyeMenu
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d7 2
+a8 3
+
+    @@Override
+	public void init() {
+d13 1
+a13 1
+
+@
+
+
+1.1
+log
+@file FisheyeMenu.java was initially added on branch beta.
+@
+text
+@d1 14
+@
+
+
+1.1.2.1
+log
+@Added demo applets.
+@
+text
+@a0 14
+package prefuse.demos.applets;
+
+import prefuse.util.ui.JPrefuseApplet;
+
+
+public class FisheyeMenu extends JPrefuseApplet {
+    
+    public void init() {
+        prefuse.demos.FisheyeMenu fm = prefuse.demos.FisheyeMenu.demo();
+        this.getContentPane().add(fm);
+        fm.getVisualization().run("init");
+    }
+    
+} // end of class FisheyeMenu
+@
+

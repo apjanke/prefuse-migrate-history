@@ -1,0 +1,297 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.15;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.force;
+
+import java.util.ArrayList;
+
+/**
+ * Represents a spring in a force simulation.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class Spring {
+    private static SpringFactory s_factory = new SpringFactory();
+    
+    /**
+     * Retrieve the SpringFactory instance, which serves as an object pool
+     * for Spring instances.
+     * @@return the Spring Factory
+     */
+    public static SpringFactory getFactory() {
+        return s_factory;
+    }
+    
+    /**
+     * Create a new Spring instance
+     * @@param fi1 the first ForceItem endpoint
+     * @@param fi2 the second ForceItem endpoint
+     * @@param k the spring tension co-efficient
+     * @@param len the spring's resting length
+     */
+    public Spring(ForceItem fi1, ForceItem fi2, float k, float len) {
+        item1 = fi1;
+        item2 = fi2;
+        coeff = k;
+        length = len;
+    }
+    
+    /** The first ForceItem endpoint */
+    public ForceItem item1;
+    /** The second ForceItem endpoint */
+    public ForceItem item2;
+    /** The spring's resting length */
+    public float length;
+    /** The spring tension co-efficient */
+    public float coeff;
+    
+    /**
+     * The SpringFactory is responsible for generating Spring instances
+     * and maintaining an object pool of Springs to reduce garbage collection
+     * overheads while force simulations are running.
+     */
+    public static final class SpringFactory {
+        private int maxSprings = 10000;
+        private ArrayList springs = new ArrayList();
+        
+        /**
+         * Get a Spring instance and set it to the given parameters.
+         */
+        public Spring getSpring(ForceItem f1, ForceItem f2, float k, float length) {
+            if ( springs.size() > 0 ) {
+                Spring s = (Spring)springs.remove(springs.size()-1);
+                s.item1 = f1;
+                s.item2 = f2;
+                s.coeff = k;
+                s.length = length;
+                return s;
+            } else {
+                return new Spring(f1,f2,k,length);
+            }
+        }
+        /**
+         * Reclaim a Spring into the object pool.
+         */
+        public void reclaim(Spring s) {
+            s.item1 = null;
+            s.item2 = null;
+            if ( springs.size() < maxSprings )
+                springs.add(s);
+        }
+    } // end of inner class SpringFactory
+
+} // end of class Spring
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d12 1
+a12 1
+
+d21 1
+a21 1
+
+d35 1
+a35 1
+
+d44 1
+a44 1
+
+d51 3
+a53 3
+        private final int maxSprings = 10000;
+        private final ArrayList<Spring> springs = new ArrayList<Spring>();
+
+d59 1
+a59 1
+                Spring s = springs.remove(springs.size()-1);
+d75 2
+a76 3
+            if ( springs.size() < maxSprings ) {
+				springs.add(s);
+			}
+@
+
+
+1.1
+log
+@file Spring.java was initially added on branch beta.
+@
+text
+@d1 80
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 52
+package prefuse.util.force;
+
+import java.util.ArrayList;
+
+/**
+ * Represents a spring in a force simulation.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class Spring {
+    private static SpringFactory s_factory = new SpringFactory();
+    
+    public static SpringFactory getFactory() {
+        return s_factory;
+    } //
+    
+    public Spring(ForceItem fi1, ForceItem fi2, float k, float len) {
+        item1 = fi1;
+        item2 = fi2;
+        coeff = k;
+        length = len;
+    } //
+    public ForceItem item1;
+    public ForceItem item2;
+    public float length;
+    public float coeff;
+    
+    public static final class SpringFactory {
+        private int maxSprings = 10000;
+        private ArrayList springs = new ArrayList();
+        
+        public Spring getSpring(ForceItem f1, ForceItem f2, float k, float length) {
+            if ( springs.size() > 0 ) {
+                Spring s = (Spring)springs.remove(springs.size()-1);
+                s.item1 = f1;
+                s.item2 = f2;
+                s.coeff = k;
+                s.length = length;
+                return s;
+            } else {
+                return new Spring(f1,f2,k,length);
+            }
+        } //
+        public void reclaim(Spring s) {
+            s.item1 = null;
+            s.item2 = null;
+            if ( springs.size() < maxSprings )
+                springs.add(s);
+        } //
+    }
+} // end of class Spring
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d8 2
+a9 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a13 5
+    /**
+     * Retrieve the SpringFactory instance, which serves as an object pool
+     * for Spring instances.
+     * @@return the Spring Factory
+     */
+d16 1
+a16 1
+    }
+a17 7
+    /**
+     * Create a new Spring instance
+     * @@param fi1 the first ForceItem endpoint
+     * @@param fi2 the second ForceItem endpoint
+     * @@param k the spring tension co-efficient
+     * @@param len the spring's resting length
+     */
+d23 1
+a23 3
+    }
+    
+    /** The first ForceItem endpoint */
+a24 1
+    /** The second ForceItem endpoint */
+a25 1
+    /** The spring's resting length */
+a26 1
+    /** The spring tension co-efficient */
+a28 5
+    /**
+     * The SpringFactory is responsible for generating Spring instances
+     * and maintaining an object pool of Springs to reduce garbage collection
+     * overheads while force simulations are running.
+     */
+a32 3
+        /**
+         * Get a Spring instance and set it to the given parameters.
+         */
+d44 1
+a44 4
+        }
+        /**
+         * Reclaim a Spring into the object pool.
+         */
+d50 2
+a51 3
+        }
+    } // end of inner class SpringFactory
+
+@
+
+

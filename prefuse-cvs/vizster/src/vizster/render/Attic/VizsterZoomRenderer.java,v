@@ -1,0 +1,48 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2004.04.20.03.54.16;	author jheer;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.15.00.36.40;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Vizster 1.0
+@
+text
+@package vizster.render;
+
+/**
+ * 
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> vizster(AT)jheer.org
+ */
+public class VizsterZoomRenderer {
+
+}
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@@
+

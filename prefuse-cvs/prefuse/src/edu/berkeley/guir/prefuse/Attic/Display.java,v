@@ -1,0 +1,2144 @@
+head	1.28;
+access;
+symbols
+	alpha:1.27.0.2
+	Root_alpha:1.27
+	prefuse-alpha-20051229:1.27
+	P20050401_Alpha_PreCHI:1.26;
+locks; strict;
+comment	@# @;
+
+
+1.28
+date	2006.02.11.06.38.44;	author jheer;	state dead;
+branches;
+next	1.27;
+
+1.27
+date	2005.12.15.17.24.27;	author jheer;	state Exp;
+branches
+	1.27.4.1;
+next	1.26;
+
+1.26
+date	2005.04.01.01.25.54;	author jheer;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2005.03.23.02.42.22;	author jheer;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2005.02.15.02.18.33;	author jheer;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2005.01.14.23.26.51;	author jheer;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2005.01.07.02.26.02;	author jheer;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2005.01.04.22.37.45;	author jheer;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2005.01.04.21.36.23;	author jheer;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2005.01.04.19.54.15;	author jheer;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2004.11.08.02.53.30;	author jheer;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2004.04.20.04.19.19;	author jheer;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2004.04.16.06.03.21;	author jheer;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2004.04.15.00.35.17;	author jheer;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2004.04.10.20.48.27;	author jheer;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2004.03.25.04.35.38;	author jheer;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2004.03.23.19.34.05;	author jheer;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2004.03.16.03.05.17;	author jheer;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2004.03.15.03.33.29;	author jheer;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.03.08.20.05.51;	author jheer;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.03.06.00.49.02;	author jheer;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.03.03.08.11.05;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.02.07.34.47;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.02.05.07.05.16;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.01.26.01.36.33;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.09.59;	author jheer;	state Exp;
+branches;
+next	;
+
+1.27.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.28
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.OutputStream;
+import java.util.Iterator;
+
+import javax.imageio.ImageIO;
+import javax.swing.JComponent;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.text.JTextComponent;
+
+import edu.berkeley.guir.prefuse.activity.Activity;
+import edu.berkeley.guir.prefuse.activity.SlowInSlowOutPacer;
+import edu.berkeley.guir.prefuse.event.ControlEventMulticaster;
+import edu.berkeley.guir.prefuse.event.ControlListener;
+import edu.berkeley.guir.prefuse.render.Renderer;
+import edu.berkeley.guir.prefuse.util.ColorLib;
+import edu.berkeley.guir.prefuse.util.FontLib;
+import edu.berkeley.guir.prefuse.util.display.Clip;
+import edu.berkeley.guir.prefuse.util.display.ExportDisplayAction;
+import edu.berkeley.guir.prefuse.util.display.ToolTipManager;
+
+/**
+ * <p>User interface component that provides an interactive visualization 
+ * of a graph. The Display is responsible for drawing items to the
+ * screen and providing callbacks for user interface actions such as
+ * mouse and keyboard events. A Display must be associated with an
+ * {@@link edu.berkeley.guir.prefuse.ItemRegistry ItemRegistry} from 
+ * which it pulls the items to visualize.</p>
+ * 
+ * <p>The {@@link edu.berkeley.guir.prefuse.event.ControlListener ControlListener}
+ * interface provides the various available user interface callbacks. The
+ * {@@link edu.berkeley.guir.prefusex.controls} package contains a number
+ * of pre-built <code>ControlListener</code> implementations for common
+ * interactions.</p>
+ * 
+ * <p>The Display class also supports arbitrary graphics transforms through
+ * the <code>java.awt.geom.AffineTransform</code> class. The 
+ * {@@link #setTransform(java.awt.geom.AffineTransform) setTransform} method
+ * allows arbitrary transforms to be applied, while the 
+ * {@@link #pan(double,double) pan} and 
+ * {@@link #zoom(java.awt.geom.Point2D,double) zoom}
+ * methods provide convenience methods that appropriately update the current
+ * transform to achieve panning and zooming on the presentation space.</p>
+ * 
+ * <p>Additionally, each Display instance also supports use of a text editor
+ * to facilitate direct editing of text. See the various
+ * {@@link #editText(edu.berkeley.guir.prefuse.VisualItem, String) editItem}
+ * methods.</p>
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ * @@see ItemRegistry
+ * @@see edu.berkeley.guir.prefuse.event.ControlListener
+ * @@see edu.berkeley.guir.prefusex.controls
+ */
+public class Display extends JComponent {
+
+	protected ItemRegistry    m_registry;
+	protected ControlListener m_listener;
+	protected BufferedImage   m_offscreen;
+    protected Clip            m_clip = new Clip();
+    protected boolean         m_showDebug = false;
+    protected boolean         m_repaint = false;
+    protected boolean         m_highQuality = false;
+    
+    // transform variables
+    protected AffineTransform   m_transform  = new AffineTransform();
+    protected AffineTransform   m_itransform = new AffineTransform();
+    protected TransformActivity m_transact = new TransformActivity();
+    protected Point2D m_tmpPoint = new Point2D.Double();
+    
+    // frame count and debugging output
+    protected double frameRate;
+    protected int  nframes = 0;
+    private int  sampleInterval = 10;
+    private long mark = -1L;
+    
+    // text editing variables
+    private JTextComponent m_editor;
+    private boolean        m_editing;
+    private VisualItem     m_editItem;
+    private String         m_editAttribute;
+    
+    private ToolTipManager m_ttipManager;
+	
+    /**
+	 * Constructor. Creates a new display instance. You will need to
+	 * associate this Display with an ItemRegistry for it to display
+	 * anything.
+	 */
+    public Display() {
+    	this(null);
+    } //
+    
+	/**
+	 * Creates a new display instance associated with the given
+	 * ItemRegistry.
+	 * @@param registry the ItemRegistry from which this Display
+	 *  should get the items to visualize.
+	 */
+	public Display(ItemRegistry registry) {
+        setDoubleBuffered(false);
+        setBackground(Color.WHITE);
+        
+        // initialize text editor
+        m_editing = false;
+        m_editor = new JTextField();
+        m_editor.setBorder(null);
+        m_editor.setVisible(false);
+        this.add(m_editor);
+        
+        // register input event capturer
+		InputEventCapturer iec = new InputEventCapturer();
+		addMouseListener(iec);
+		addMouseMotionListener(iec);
+		addMouseWheelListener(iec);
+		addKeyListener(iec);
+        
+        // add debugging output control
+        registerKeyboardAction(
+                new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        m_showDebug = !m_showDebug;
+                    }
+                },
+                "debug info", KeyStroke.getKeyStroke("ctrl D"), WHEN_FOCUSED);
+        // add image output control, if this is not an applet
+        try {
+            registerKeyboardAction(
+                new ExportDisplayAction(this),
+                "export display", KeyStroke.getKeyStroke("ctrl E"), WHEN_FOCUSED);
+        } catch ( SecurityException se )  {}
+        
+        setItemRegistry(registry);
+        setSize(400,400); // set a default size
+	} //
+
+    /**
+     * Determines if a debugging string is printed on the Display.
+     * @@param d true to show debugging info, false otherwise
+     */
+    public void setDebug(boolean d) {
+        m_showDebug = d;
+    } //
+    
+    /**
+     * Indicates if a debugging string is being printed on the Display.
+     * @@return true if debugging info is shown, false otherwise
+     */
+    public boolean getDebug() {
+        return m_showDebug;
+    } //
+    
+    public void setUseCustomTooltips(boolean s) {
+        if ( s && m_ttipManager == null ) {
+            m_ttipManager = new ToolTipManager(this);
+            String text = super.getToolTipText();
+            super.setToolTipText(null);
+            m_ttipManager.setToolTipText(text);
+            this.addMouseMotionListener(m_ttipManager);
+        } else if ( !s && m_ttipManager != null ) {
+            this.removeMouseMotionListener(m_ttipManager);
+            String text = m_ttipManager.getToolTipText();
+            m_ttipManager.setToolTipText(null);
+            super.setToolTipText(text);
+            m_ttipManager = null;
+        }
+    } //
+    
+    public ToolTipManager getToolTipManager() {
+        return m_ttipManager;
+    } //
+    
+    public void setToolTipText(String text) {
+        if ( m_ttipManager != null ) {
+            m_ttipManager.setToolTipText(text);
+        } else {
+            super.setToolTipText(text);
+        }
+    } //
+    
+	/**
+	 * Set the size of the Display.
+	 * @@see java.awt.Component#setSize(int, int)
+	 */
+	public void setSize(int width, int height) {
+		m_offscreen = null;
+        setPreferredSize(new Dimension(width,height));
+		super.setSize(width, height);
+	} //
+	
+	/**
+	 * Set the size of the Display.
+	 * @@see java.awt.Component#setSize(java.awt.Dimension)
+	 */
+	public void setSize(Dimension d) {
+		m_offscreen = null;
+        setPreferredSize(d);
+		super.setSize(d);
+	} //
+
+    /**
+     * Reshapes (moves and resizes) this component.
+     */
+    public void reshape(int x, int y, int w, int h) {
+        m_offscreen = null;
+        super.reshape(x,y,w,h);
+    } //
+    
+    /**
+     * Sets the font used by this Display. This determines the font used
+     * by this Display's text editor.
+     */
+    public void setFont(Font f) {
+        super.setFont(f);
+        m_editor.setFont(f);
+    } //
+    
+    /**
+     * Determines if the Display uses a higher quality rendering, using
+     * anti-aliasing. This causes drawing to be much slower, however, and
+     * so is disabled by default.
+     * @@param on true to enable anti-aliased rendering, false to disable it
+     */
+    public void setHighQuality(boolean on) {
+        m_highQuality = on;
+    } //
+    
+    /**
+     * Indicates if the Display is using high quality (return value true) or
+     * regular quality (return value false) rendering.
+     * @@return true if high quality rendering is enabled, false otherwise
+     */
+    public boolean isHighQuality() {
+        return m_highQuality;
+    } //
+    
+    /**
+     * Returns the item registry used by this display.
+     * @@return this Display's ItemRegistry
+     */
+    public ItemRegistry getRegistry() {
+        return m_registry;
+    } //
+    
+    /**
+     * Set the ItemRegistry associated with this Display. This Display
+     * will render the items contained in the provided registry. If this
+     * Display is already associated with a different ItemRegistry, the
+     * Display unregisters itself with the previous registry.
+     * @@param registry the ItemRegistry to associate with this Display.
+     *  A value of null associates this Display with no ItemRegistry
+     *  at all.
+     */
+    public void setItemRegistry(ItemRegistry registry) {
+        if ( m_registry == registry ) {
+            // nothing need be done
+            return;
+        } else if ( m_registry != null ) {
+            // remove this display from it's previous registry
+            m_registry.removeDisplay(this);
+        }
+        m_registry = registry;
+        if ( registry != null )
+            m_registry.addDisplay(this);
+    } //
+
+    // ========================================================================
+    // == TRANSFORM METHODS ===================================================
+    
+    /**
+     * Set the 2D AffineTransform (e.g., scale, shear, pan, rotate) used by
+     * this display before rendering graph items. The provided transform
+     * must be invertible, otherwise an expection will be thrown. For simple
+     * panning and zooming transforms, you can instead use the provided
+     * pan() and zoom() methods.
+     */
+    public void setTransform(AffineTransform transform) 
+        throws NoninvertibleTransformException
+    {
+        m_transform = transform;
+        m_itransform = m_transform.createInverse();
+    } //
+    
+    /**
+     * Returns a reference to the AffineTransformation used by this Display.
+     * Changes made to this reference will likely corrupt the state of 
+     * this display. Use setTransform() to safely update the transform state.
+     * @@return the AffineTransform
+     */
+    public AffineTransform getTransform() {
+        return m_transform;
+    } //
+    
+    /**
+     * Returns a reference to the inverse of the AffineTransformation used by
+     * this display. Changes made to this reference will likely corrupt the
+     * state of this display.
+     * @@return the inverse AffineTransform
+     */
+    public AffineTransform getInverseTransform() {
+        return m_itransform;
+    } //
+    
+    /**
+     * Gets the absolute co-ordinate corresponding to the given screen
+     * co-ordinate.
+     * @@param screen the screen co-ordinate to transform
+     * @@param abs a reference to put the result in. If this is the same
+     *  object as the screen co-ordinate, it will be overridden safely. If
+     *  this value is null, a new Point2D instance will be created and 
+     *  returned.
+     * @@return the point in absolute co-ordinates
+     */
+    public Point2D getAbsoluteCoordinate(Point2D screen, Point2D abs) {
+        return m_itransform.transform(screen, abs);
+    } //
+    
+    /**
+     * Returns the current scale (i.e. zoom value).
+     * @@return the current scale. This is the
+     *  scaling factor along the x-dimension, so be careful when
+     *  using this value in non-uniform scaling cases.
+     */
+    public double getScale() {
+        return m_transform.getScaleX();
+    } //
+    
+    /**
+     * Returns the x-coordinate of the top-left of the display, 
+     * in absolute co-ordinates
+     * @@return the x co-ord of the top-left corner, in absolute coordinates
+     */
+    public double getDisplayX() {
+        return -m_transform.getTranslateX();
+    } //
+    
+    /**
+     * Returns the y-coordinate of the top-left of the display, 
+     * in absolute co-ordinates
+     * @@return the y co-ord of the top-left corner, in absolute coordinates
+     */
+    public double getDisplayY() {
+        return -m_transform.getTranslateY();
+    } //
+    
+    /**
+     * Pans the view provided by this display in screen coordinates.
+     * @@param dx the amount to pan along the x-dimension, in pixel units
+     * @@param dy the amount to pan along the y-dimension, in pixel units
+     */
+    public void pan(double dx, double dy) {
+        double panx = ((double)dx) / m_transform.getScaleX();
+        double pany = ((double)dy) / m_transform.getScaleY();
+        panAbs(panx,pany);
+    } //
+    
+    /**
+     * Pans the view provided by this display in absolute (i.e. non-screen)
+     * coordinates.
+     * @@param dx the amount to pan along the x-dimension, in absolute co-ords
+     * @@param dy the amount to pan along the y-dimension, in absolute co-ords
+     */
+    public void panAbs(double dx, double dy) {
+        m_transform.translate(dx, dy);
+        try {
+            m_itransform = m_transform.createInverse();
+        } catch ( Exception e ) { /*will never happen here*/ }
+    } //
+    
+    /**
+     * Pans the display view to center on the provided point in 
+     * screen (pixel) coordinates.
+     * @@param x the x-point to center on, in screen co-ords
+     * @@param y the y-point to center on, in screen co-ords
+     */
+    public void panTo(Point2D p) {
+        m_itransform.transform(p, m_tmpPoint);
+        panToAbs(m_tmpPoint);
+    } //
+    
+    /**
+     * Pans the display view to center on the provided point in 
+     * absolute (i.e. non-screen) coordinates.
+     * @@param x the x-point to center on, in absolute co-ords
+     * @@param y the y-point to center on, in absolute co-ords
+     */
+    public void panToAbs(Point2D p) {
+        double x = p.getX(); x = (Double.isNaN(x) ? 0 : x);
+        double y = p.getY(); y = (Double.isNaN(y) ? 0 : y);
+        double w = getWidth() /(2*m_transform.getScaleX());
+        double h = getHeight()/(2*m_transform.getScaleY());
+        
+        double dx = w-x-m_transform.getTranslateX();
+        double dy = h-y-m_transform.getTranslateY();
+        m_transform.translate(dx, dy);
+        try {
+            m_itransform = m_transform.createInverse();
+        } catch ( Exception e ) { /*will never happen here*/ }
+    } //
+
+    /**
+     * Zooms the view provided by this display by the given scale,
+     * anchoring the zoom at the specified point in screen coordinates.
+     * @@param p the anchor point for the zoom, in screen coordinates
+     * @@param scale the amount to zoom by
+     */
+    public void zoom(final Point2D p, double scale) {
+        m_itransform.transform(p, m_tmpPoint);
+        zoomAbs(m_tmpPoint, scale);
+    } //    
+    
+    /**
+     * Zooms the view provided by this display by the given scale,
+     * anchoring the zoom at the specified point in absolute coordinates.
+     * @@param p the anchor point for the zoom, in absolute
+     *  (i.e. non-screen) co-ordinates
+     * @@param scale the amount to zoom by
+     */
+    public void zoomAbs(final Point2D p, double scale) {;
+        double zx = p.getX(), zy = p.getY();
+        m_transform.translate(zx, zy);
+        m_transform.scale(scale,scale);
+        m_transform.translate(-zx, -zy);
+        try {
+            m_itransform = m_transform.createInverse();
+        } catch ( Exception e ) { /*will never happen here*/ }
+    } //
+
+    public void animatePan(double dx, double dy, long duration) {
+        double panx = dx / m_transform.getScaleX();
+        double pany = dy / m_transform.getScaleY();
+        animatePanAbs(panx,pany,duration);
+    } //
+    
+    public void animatePanAbs(double dx, double dy, long duration) {
+        m_transact.pan(dx,dy,duration);
+    } //
+    
+    public void animatePanTo(Point2D p, long duration) {
+        Point2D pp = new Point2D.Double();
+        m_itransform.transform(p,pp);
+        animatePanToAbs(pp,duration);
+    } //
+    
+    public void animatePanToAbs(Point2D p, long duration) {
+        m_tmpPoint.setLocation(0,0);
+        m_itransform.transform(m_tmpPoint,m_tmpPoint);
+        double x = p.getX(); x = (Double.isNaN(x) ? 0 : x);
+        double y = p.getY(); y = (Double.isNaN(y) ? 0 : y);
+        double w = ((double)getWidth()) /(2*m_transform.getScaleX());
+        double h = ((double)getHeight())/(2*m_transform.getScaleY());
+        double dx = w-x+m_tmpPoint.getX();
+        double dy = h-y+m_tmpPoint.getY();
+        animatePanAbs(dx,dy,duration);
+    } //
+    
+    public void animateZoom(final Point2D p, double scale, long duration) {
+        Point2D pp = new Point2D.Double();
+        m_itransform.transform(p,pp);
+        animateZoomAbs(pp,scale,duration);
+    } //
+    
+    public void animateZoomAbs(final Point2D p, double scale, long duration) {
+        m_transact.zoom(p,scale,duration);
+    } //
+    
+    public void animatePanAndZoomTo(final Point2D p, double scale, long duration) {
+        Point2D pp = new Point2D.Double();
+        m_itransform.transform(p,pp);
+        animatePanAndZoomToAbs(pp,scale,duration);
+    } //
+    
+    public void animatePanAndZoomToAbs(final Point2D p, double scale, long duration) {
+        m_transact.panAndZoom(p,scale,duration);
+    } //
+    
+    public boolean isTranformInProgress() {
+        return m_transact.isRunning();
+    } //
+    
+    /**
+     * TODO: clean this up to be more general...
+     * TODO: change mechanism so that multiple transform
+     *        activities can be running at once?
+     */
+    private class TransformActivity extends Activity {
+        private double[] src, dst;
+        private AffineTransform m_at;
+        public TransformActivity() {
+            super(2000,20,0);
+            src = new double[6];
+            dst = new double[6];
+            m_at = new AffineTransform();
+            setPacingFunction(new SlowInSlowOutPacer());
+        } //
+        private AffineTransform getTransform() {
+            if ( this.isScheduled() )
+                m_at.setTransform(dst[0],dst[1],dst[2],dst[3],dst[4],dst[5]);
+            else
+                m_at.setTransform(m_transform);
+            return m_at;
+        } //
+        public void panAndZoom(final Point2D p, double scale, long duration) {
+            AffineTransform at = getTransform();
+            this.cancel();
+            setDuration(duration);
+            
+            m_tmpPoint.setLocation(0,0);
+            m_itransform.transform(m_tmpPoint,m_tmpPoint);
+            double x = p.getX(); x = (Double.isNaN(x) ? 0 : x);
+            double y = p.getY(); y = (Double.isNaN(y) ? 0 : y);
+            double w = ((double)getWidth()) /(2*m_transform.getScaleX());
+            double h = ((double)getHeight())/(2*m_transform.getScaleY());
+            double dx = w-x+m_tmpPoint.getX();
+            double dy = h-y+m_tmpPoint.getY();
+            at.translate(dx,dy);
+
+            at.translate(p.getX(), p.getY());
+            at.scale(scale,scale);
+            at.translate(-p.getX(), -p.getY());
+            
+            at.getMatrix(dst);
+            m_transform.getMatrix(src);
+            this.runNow();
+        }
+        public void pan(double dx, double dy, long duration) {
+            AffineTransform at = getTransform();
+            this.cancel();
+            setDuration(duration);
+            at.translate(dx,dy);
+            at.getMatrix(dst);
+            m_transform.getMatrix(src);
+            this.runNow();
+        } //
+        public void zoom(final Point2D p, double scale, long duration) {
+            AffineTransform at = getTransform();
+            this.cancel();
+            setDuration(duration);
+            double zx = p.getX(), zy = p.getY();
+            at.translate(zx, zy);
+            at.scale(scale,scale);
+            at.translate(-zx, -zy);
+            at.getMatrix(dst);
+            m_transform.getMatrix(src);
+            this.runNow();
+        } //
+        protected void run(long elapsedTime) {
+            double f = getPace(elapsedTime);
+            m_transform.setTransform(
+                src[0] + f*(dst[0]-src[0]),
+                src[1] + f*(dst[1]-src[1]),
+                src[2] + f*(dst[2]-src[2]),
+                src[3] + f*(dst[3]-src[3]),
+                src[4] + f*(dst[4]-src[4]),
+                src[5] + f*(dst[5]-src[5])
+            );
+            try {
+                m_itransform = m_transform.createInverse();
+            } catch ( Exception e ) { /* won't happen */ }
+            repaint();
+        } //
+    } // end of inner class TransformActivity
+    
+    // ========================================================================
+    // == RENDERING METHODS ===================================================
+    
+	/**
+	 * Returns the offscreen buffer used by this component for 
+	 *  double-buffering.
+	 * @@return the offscreen buffer
+	 */
+	public BufferedImage getOffscreenBuffer() {
+		return m_offscreen;
+	} //
+	
+    /**
+     * Creates a new buffered image to use as an offscreen buffer.
+     */
+	protected BufferedImage getNewOffscreenBuffer() {
+        return (BufferedImage)createImage(getSize().width, getSize().height);
+	} //
+	
+	/**
+	 * Saves a copy of this display as an image to the specified output stream.
+	 * @@param output the output stream to write to.
+	 * @@param format the image format (e.g., "JPG", "PNG").
+	 * @@param scale how much to scale the image by.
+	 * @@return true if image was successfully saved, false if an error occurred.
+	 */
+	public boolean saveImage(OutputStream output, String format, double scale) {
+	    try {
+	        Dimension d = new Dimension((int)(scale*getWidth()),(int)(scale*getHeight()));
+	        BufferedImage img = (BufferedImage) createImage(d.width, d.height);
+	        Graphics2D g = (Graphics2D)img.getGraphics();
+	        Point2D p = new Point2D.Double(0,0);
+	        zoom(p, scale);
+	        boolean q = isHighQuality();
+	        setHighQuality(true);
+	        paintDisplay(g,d);
+	        setHighQuality(q);
+	        zoom(p, 1/scale);
+	        ImageIO.write(img,format,output);
+	        return true;
+	    } catch ( Exception e ) {
+	        e.printStackTrace();
+	        return false;
+	    }
+	} //
+	
+    /**
+     * Updates this display
+     */
+	public void update(Graphics g) {
+		paint(g);
+	} //
+
+    public void repaint() {
+        if ( !m_repaint ) {
+            m_repaint = true;
+            super.repaint();
+        }
+    } //
+    
+    /**
+     * Paints the offscreen buffer to the provided graphics context.
+     * @@param g the Graphics context to paint to
+     */
+	protected void paintBufferToScreen(Graphics g) {
+        int x = 0, y = 0;
+        BufferedImage img = m_offscreen;
+        //if ( m_clip != null ) {
+        //    x = m_clip.getX();
+        //    y = m_clip.getY();
+        //    img = m_offscreen.getSubimage(x,y,m_clip.getWidth(),m_clip.getHeight());
+        //}
+		g.drawImage(img, x, y, null);
+	} //
+
+	/**
+	 * Immediately repaints the contents of the offscreen buffer
+	 * to the screen. This bypasses the usual rendering loop.
+	 */
+	public void repaintImmediate() {
+		Graphics g = this.getGraphics();
+		if (g != null && m_offscreen != null) {
+			paintBufferToScreen(g);
+		}
+	} //
+
+    /**
+     * Sets the transform of the provided Graphics context to be the
+     * transform of this Display and sets the desired rendering hints.
+     * @@param g the Graphics context to prepare.
+     */
+    protected void prepareGraphics(Graphics2D g) {
+        if ( m_transform != null )
+            g.transform(m_transform);
+        setRenderingHints(g);
+    } //
+    
+	/**
+	 * Sets the rendering hints that should be used while drawing
+	 * the visualization to the screen. Subclasses can override
+     * this method to set hints as desired.
+	 * @@param g the Graphics context on which to set the rendering hints
+	 */
+	protected void setRenderingHints(Graphics2D g) {
+		if ( m_highQuality ) {
+		    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+		            RenderingHints.VALUE_ANTIALIAS_ON);
+		} else {
+			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+					RenderingHints.VALUE_ANTIALIAS_OFF);
+		}
+        g.setRenderingHint(
+            RenderingHints.KEY_RENDERING,
+            RenderingHints.VALUE_RENDER_QUALITY);
+		g.setRenderingHint(
+			RenderingHints.KEY_INTERPOLATION,
+			RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+	} //
+	
+    /**
+     * Returns a string showing debugging info such as number of visualized
+     * items and the current frame rate.
+     * @@return the debug string
+     */
+    protected String getDebugString() {
+        float fr = Math.round(frameRate*100f)/100f;
+        Runtime rt = Runtime.getRuntime();
+        long tm = rt.totalMemory()/1000000L;
+        long mm = rt.maxMemory()/1000000L;
+        
+        StringBuffer sb = new StringBuffer();
+        sb.append("frame rate: ").append(fr).append("fps - ");
+        sb.append(m_registry.size()).append(" items (");
+        sb.append(m_registry.size(ItemRegistry.DEFAULT_NODE_CLASS));
+        sb.append(" nodes, ");
+        sb.append(m_registry.size(ItemRegistry.DEFAULT_EDGE_CLASS));
+        sb.append(" edges) fonts(").append(FontLib.getCacheMissCount());
+        sb.append(") colors(");
+        sb.append(ColorLib.getCacheMissCount()).append(')');
+        sb.append(" mem(");
+        sb.append(tm).append("M / ");
+        sb.append(mm).append("M)");
+        sb.append(" (x:").append(numberString(m_transform.getTranslateX(),2));
+        sb.append(", y:").append(numberString(m_transform.getTranslateY(),2));
+        sb.append(", z:").append(numberString(getScale(),5)).append(")");
+        return sb.toString();
+    } //
+    
+    private String numberString(double number, int decimalPlaces) {
+        String s = String.valueOf(number);
+        int idx = s.indexOf(".");
+        if ( idx == -1 ) {
+            return s;
+        } else {
+            int end = Math.min(s.length(),idx+1+decimalPlaces);
+            return s.substring(0,end);
+        }
+    } //
+    
+	/**
+	 * Paint routine called <i>before</i> items are drawn. Subclasses should
+	 * override this method to perform custom drawing.
+	 * @@param g the Graphics context to draw into
+	 */
+	protected void prePaint(Graphics2D g) {
+	} //
+
+	/**
+	 * Paint routine called <i>after</i> items are drawn. Subclasses should
+	 * override this method to perform custom drawing.
+	 * @@param g the Graphics context to draw into
+	 */
+	protected void postPaint(Graphics2D g) {
+	} //
+
+	/**
+	 * Draws the visualization to the screen. Draws each visible item to the
+	 * screen in a rendering loop. Rendering order can be controlled by adding
+	 * the desired Comparator to the Display's ItemRegistry.
+	 */
+	public void paintComponent(Graphics g) {
+		if  (m_offscreen == null) {
+			m_offscreen = getNewOffscreenBuffer();
+        }
+	    Graphics2D g2D = (Graphics2D) m_offscreen.getGraphics();
+        
+	    // paint the visualization
+		paintDisplay(g2D, getSize());
+
+		paintBufferToScreen(g);		
+		g2D.dispose();
+        m_repaint = false;
+        
+        // compute frame rate
+        nframes++;
+        if ( mark < 0 ) {
+            mark = System.currentTimeMillis();
+            nframes = 0;
+        } else if ( nframes == sampleInterval ){
+            long t = System.currentTimeMillis();
+            frameRate = (1000.0*nframes)/(t-mark);
+            mark = t;
+            nframes = 0;
+            //System.out.println("frameRate: " + frameRate);
+        }
+	} //
+    
+	public void paintDisplay(Graphics2D g2D, Dimension d) {
+	    // paint background
+		g2D.setColor(getBackground());
+		g2D.fillRect(0, 0, d.width, d.height);
+        
+        // show debugging info?
+		if ( m_showDebug ) {
+            g2D.setFont(getFont());
+            g2D.setColor(getForeground());
+            g2D.drawString(getDebugString(), 5, 15);     
+        }
+
+		prepareGraphics(g2D);
+		prePaint(g2D);
+        
+		g2D.setColor(Color.BLACK);
+		synchronized (m_registry) {
+            m_clip.setClip(0,0,d.width,d.height);
+            m_clip.transform(m_itransform);
+            Iterator items = m_registry.getItems();
+            while (items.hasNext()) {
+                try {
+	                VisualItem vi = (VisualItem) items.next();
+	                Renderer renderer = vi.getRenderer();
+	                Rectangle2D b = renderer.getBoundsRef(vi);
+	                
+	                if ( m_clip.intersects(b) )
+	                    renderer.render(g2D, vi);
+                } catch ( Exception e ) {
+                    e.printStackTrace();
+                }
+            }
+		}
+
+		postPaint(g2D);
+	} //
+	
+	/**
+	 * Paints the graph to the provided graphics context, for output to a
+	 * printer.  This method does not double buffer the painting, in order to
+	 * provide the maximum quality.
+	 * 
+	 * @@param g the printer graphics context.
+	 */
+	protected void printComponent(Graphics g) {
+		boolean wasHighQuality = m_highQuality;
+		try {
+			// Set the quality to high for the duration of the printing.
+			m_highQuality = true;
+			// Paint directly to the print graphics context.
+			paintDisplay((Graphics2D) g, getSize());
+		} finally {
+			// Reset the quality to the state it was in before printing.
+			m_highQuality = wasHighQuality;
+		}
+	} //
+	
+    /**
+     * Clears the specified region of the display (in screen co-ordinates)
+     * in the display's offscreen buffer. The cleared region is replaced 
+     * with the background color. Call the repaintImmediate() method to
+     * have this change directly propagate to the screen.
+     * @@param r a Rectangle specifying the region to clear, in screen co-ords
+     */
+	public void clearRegion(Rectangle r) {
+		Graphics2D g2D = (Graphics2D) m_offscreen.getGraphics();
+		if (g2D != null) {
+			g2D.setColor(this.getBackground());
+			g2D.fillRect(r.x, r.y, r.width, r.height);
+		}
+	} //
+
+	/**
+	 * Draws a single item to the <i>offscreen</i> display
+	 * buffer. Useful for incremental drawing. Call the repaintImmediate()
+	 * method to have these changes directly propagate to the screen.
+	 * @@param item
+	 */
+	public void drawItem(VisualItem item) {
+		Graphics2D g2D = (Graphics2D) m_offscreen.getGraphics();
+		if (g2D != null) {
+            prepareGraphics(g2D);
+			item.getRenderer().render(g2D, item);
+		}
+	} //
+
+    // ========================================================================
+    // == CONTROL LISTENER METHODS ============================================
+    
+	/**
+	 * Adds a ControlListener to receive all input events on VisualItems.
+	 * @@param cl the listener to add.
+	 */
+	public void addControlListener(ControlListener cl) {
+		m_listener = ControlEventMulticaster.add(m_listener, cl);
+	} //
+
+	/**
+	 * Removes a registered ControlListener.
+	 * @@param cl the listener to remove.
+	 */
+	public void removeControlListener(ControlListener cl) {
+		m_listener = ControlEventMulticaster.remove(m_listener, cl);
+	} //
+    
+	/**
+	 * Returns the VisualItem located at the given point.
+	 * @@param p the Point at which to look
+	 * @@return the VisualItem located at the given point, if any
+	 */
+	public VisualItem findItem(Point p) {
+        Point2D p2 = (m_itransform==null ? p : 
+                        m_itransform.transform(p, m_tmpPoint));
+		synchronized (m_registry) {
+			Iterator items = m_registry.getItemsReversed();
+			while (items.hasNext()) {
+				VisualItem vi = (VisualItem) items.next();
+				Renderer r = vi.getRenderer();
+				if (r != null && vi.isInteractive()
+				       && r.locatePoint(p2, vi)) {
+					return vi;
+				}
+			}
+		}
+		return null;
+	} //
+    
+	/**
+	 * Captures all mouse and key events on the display, detects relevant 
+	 * VisualItems, and informs ControlListeners.
+	 */
+	public class InputEventCapturer
+		implements MouseMotionListener, MouseWheelListener, MouseListener, KeyListener {
+
+		private VisualItem activeVI = null;
+		private boolean mouseDown = false;
+
+		public void mouseDragged(MouseEvent e) {
+            if (m_listener != null && activeVI != null) {
+				m_listener.itemDragged(activeVI, e);
+			} else if ( m_listener != null ) {
+				m_listener.mouseDragged(e);
+			}
+		} //
+
+		public void mouseMoved(MouseEvent e) {
+			boolean earlyReturn = false;
+			//check if we've gone over any item
+			VisualItem vi = findItem(e.getPoint());
+			if (m_listener != null && activeVI != null && activeVI != vi) {
+				m_listener.itemExited(activeVI, e);
+				earlyReturn = true;
+			}
+			if (m_listener != null && vi != null && vi != activeVI) {
+				m_listener.itemEntered(vi, e);
+				earlyReturn = true;
+			}
+			activeVI = vi;
+			if ( earlyReturn ) return;
+			
+			if ( m_listener != null && vi != null && vi == activeVI ) {
+				m_listener.itemMoved(vi, e);
+			}
+			if ( m_listener != null && vi == null ) {
+				m_listener.mouseMoved(e);
+			}
+		} //
+
+		public void mouseWheelMoved(MouseWheelEvent e) {
+			if (m_listener != null && activeVI != null) {
+				m_listener.itemWheelMoved(activeVI, e);
+			} else if ( m_listener != null ) {
+				m_listener.mouseWheelMoved(e);
+			}
+		} //
+
+		public void mouseClicked(MouseEvent e) {
+			if (m_listener != null && activeVI != null) {
+				m_listener.itemClicked(activeVI, e);
+			} else if ( m_listener != null ) {
+				m_listener.mouseClicked(e);
+			}
+		} //
+
+		public void mousePressed(MouseEvent e) {
+		    mouseDown = true;
+			if (m_listener != null && activeVI != null) {
+				m_listener.itemPressed(activeVI, e);
+			} else if ( m_listener != null ) {
+				m_listener.mousePressed(e);
+			}
+		} //
+
+		public void mouseReleased(MouseEvent e) {
+			if (m_listener != null && activeVI != null) {
+				m_listener.itemReleased(activeVI, e);
+			} else if ( m_listener != null ) {
+				m_listener.mouseReleased(e);
+			}
+            if ( m_listener != null && activeVI != null 
+                    && mouseDown && isOffComponent(e) )
+            {
+                // mouse was dragged off of the component, 
+                // then released, so register an exit
+                m_listener.itemExited(activeVI, e);
+                activeVI = null;
+            }
+            mouseDown = false;
+		} //
+
+		public void mouseEntered(MouseEvent e) {
+			if ( m_listener != null ) {
+				m_listener.mouseEntered(e);	
+			}
+		} //
+
+		public void mouseExited(MouseEvent e) {
+			if (m_listener != null && !mouseDown && activeVI != null) {
+                // we've left the component and an item 
+                // is active but not being dragged, deactivate it
+                m_listener.itemExited(activeVI, e);
+                activeVI = null;
+			}
+			if ( m_listener != null ) {
+				m_listener.mouseExited(e);
+			}
+		} //
+
+		public void keyPressed(KeyEvent e) {
+			if (m_listener != null && activeVI != null) {
+				m_listener.itemKeyPressed(activeVI, e);
+			} else if ( m_listener != null ) {
+				m_listener.keyPressed(e);
+			}
+		} //
+
+		public void keyReleased(KeyEvent e) {
+			if (m_listener != null && activeVI != null) {
+				m_listener.itemKeyReleased(activeVI, e);
+			} else if ( m_listener != null ) {
+				m_listener.keyReleased(e);
+			}
+		} //
+
+		public void keyTyped(KeyEvent e) {
+			if (m_listener != null && activeVI != null) {
+				m_listener.itemKeyTyped(activeVI, e);
+			} else if ( m_listener != null ) {
+				m_listener.keyTyped(e);
+			}
+		} //
+        
+        private boolean isOffComponent(MouseEvent e) {
+            int x = e.getX(), y = e.getY();
+            return ( x<0 || x>getWidth() || y<0 || y>getHeight() );
+        } //
+	} // end of inner class MouseEventCapturer
+    
+    
+    // ========================================================================
+    // == TEXT EDITING CONTROL ================================================
+    
+    /**
+     * Returns the TextComponent used for on-screen text editing.
+     * @@return the TextComponent used for text editing
+     */
+    public JTextComponent getTextEditor() {
+        return m_editor;
+    } //
+    
+    /**
+     * Sets the TextComponent used for on-screen text editing.
+     * @@param tc the TextComponent to use for text editing
+     */
+    public void setTextEditor(JTextComponent tc) {
+        this.remove(m_editor);
+        m_editor = tc;
+        this.add(m_editor, 1);
+    } //
+    
+    /**
+     * Edit text for the given VisualItem and attribute. Presents a text
+     * editing widget spaning the item's bounding box. Use stopEditing()
+     * to hide the text widget. When stopEditing() is called, the attribute
+     * will automatically be updated with the VisualItem.
+     * @@param item the VisualItem to edit
+     * @@param attribute the attribute to edit
+     */
+    public void editText(VisualItem item, String attribute) {
+        if ( m_editing ) { stopEditing(); }
+        Rectangle2D b = item.getBounds();
+        Rectangle r = m_transform.createTransformedShape(b).getBounds();
+        
+        // hacky placement code that attempts to keep text in same place
+        // configured under Windows XP and Java 1.4.2b
+        if ( m_editor instanceof JTextArea ) {
+            r.y -= 2; r.width += 22; r.height += 2;
+        } else {
+            r.x += 3; r.y += 1; r.width -= 5; r.height -= 2;
+        }
+        
+        Font f = getFont();
+        int size = (int)Math.round(f.getSize()*m_transform.getScaleX());
+        Font nf = new Font(f.getFontName(), f.getStyle(), size);
+        m_editor.setFont(nf);
+        
+        editText(item, attribute, r);
+    } //
+    
+    /**
+     * Edit text for the given VisualItem and attribute. Presents a text
+     * editing widget spaning the given bounding box. Use stopEditing()
+     * to hide the text widget. When stopEditing() is called, the attribute
+     * will automatically be updated with the VisualItem.
+     * @@param item the VisualItem to edit
+     * @@param attribute the attribute to edit
+     * @@param r Rectangle representing the desired bounding box of the text
+     *  editing widget
+     */
+    public void editText(VisualItem item, String attribute, Rectangle r) {
+        if ( m_editing ) { stopEditing(); }
+        String txt = item.getAttribute(attribute);
+        m_editItem = item;
+        m_editAttribute = attribute;
+        Paint c = item.getColor(), fc = item.getFillColor();
+        if ( c instanceof Color )
+            m_editor.setForeground((Color)c);
+        if ( fc instanceof Color )
+            m_editor.setBackground((Color)fc);
+        editText(txt, r);
+    } //
+    
+    /**
+     * Show a text editing widget containing the given text and spanning the
+     * specified bounding box. Use stopEditing() to hide the text widget. Use
+     * the method calls getTextEditor().getText() to get the resulting edited
+     * text.
+     * @@param txt the text string to display in the text widget
+     * @@param r Rectangle representing the desired bounding box of the text
+     *  editing widget
+     */
+    public void editText(String txt, Rectangle r) {
+        if ( m_editing ) { stopEditing(); }
+        m_editing = true;
+        m_editor.setBounds(r.x,r.y,r.width,r.height);
+        m_editor.setText(txt);
+        m_editor.setVisible(true);
+        m_editor.setCaretPosition(txt.length());
+        m_editor.requestFocus();
+    } //
+    
+    /**
+     * Stops text editing on the display, hiding the text editing widget. If
+     * the text editor was associated with a specific VisualItem (ie one of the
+     * editText() methods which include a VisualItem as an argument was called),
+     * the item is updated with the edited text.
+     */
+    public void stopEditing() {
+        m_editor.setVisible(false);
+        if ( m_editItem != null ) {
+            String txt = m_editor.getText();
+            m_editItem.setAttribute(m_editAttribute, txt);
+            m_editItem = null;
+            m_editAttribute = null;
+            m_editor.setBackground(null);
+            m_editor.setForeground(null);
+        }
+        m_editing = false;
+    } //
+    
+} // end of class Display
+@
+
+
+1.27
+log
+@Removed unused variable declaration.
+@
+text
+@@
+
+
+1.27.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.26
+log
+@Added try block within rendering loop
+@
+text
+@a932 1
+        private boolean itemDrag = false;
+@
+
+
+1.25
+log
+@prefuse updates
+@
+text
+@d818 10
+a827 6
+                VisualItem vi = (VisualItem) items.next();
+                Renderer renderer = vi.getRenderer();
+                Rectangle2D b = renderer.getBoundsRef(vi);
+                
+                if ( m_clip.intersects(b) )
+                    renderer.render(g2D, vi);
+@
+
+
+1.24
+log
+@Added printComponent patch from trejkaz
+@
+text
+@d493 14
+d529 23
+d623 2
+a624 2
+	        //boolean q = isHighQuality();
+	        //setHighQuality(true);
+d626 1
+a626 1
+	        //setHighQuality(q);
+d732 3
+d738 11
+d911 2
+a912 1
+				if (r != null && r.locatePoint(p2, vi)) {
+@
+
+
+1.23
+log
+@Added security try/catch for ExportDisplayAction
+@
+text
+@d646 1
+a646 1
+            g.setTransform(m_transform);
+a723 1
+        //Graphics2D g2D = (Graphics2D)g;
+d779 20
+@
+
+
+1.22
+log
+@Added ExportDisplayAction for saving display to image
+@
+text
+@d152 3
+a154 2
+        // add image output control
+        registerKeyboardAction(
+d157 1
+@
+
+
+1.21
+log
+@Added image export for the Display
+@
+text
+@d573 1
+a573 1
+	 * @@param format the image format (e.g., "JPG", "PNG", "TIF").
+@
+
+
+1.20
+log
+@Added save action
+@
+text
+@d44 1
+a44 1
+import edu.berkeley.guir.prefuse.util.display.SaveImageAction;
+d151 1
+a151 1
+                "debug", KeyStroke.getKeyStroke("ctrl D"), WHEN_FOCUSED);
+d154 2
+a155 2
+                new SaveImageAction(this),
+                "image save", KeyStroke.getKeyStroke("ctrl I"), WHEN_FOCUSED);
+@
+
+
+1.19
+log
+@Temporary update, will fix more shortly
+@
+text
+@a35 3
+import org.freehep.graphics2d.VectorGraphics;
+import org.freehep.util.export.ExportDialog;
+
+a596 11
+	public boolean saveImage2() {
+	    Dimension d = new Dimension(getWidth(),getHeight());
+        BufferedImage img = (BufferedImage) createImage(d.width, d.height);
+        Graphics2D g = (Graphics2D)img.getGraphics();
+        VectorGraphics vg = VectorGraphics.create(g);
+        paintDisplay(vg,d);
+        ExportDialog export = new ExportDialog();
+        export.showExportDialog(this, "Export view as ...", this, "export");
+        return true;
+	} //
+	
+@
+
+
+1.18
+log
+@Fixed multicaster bug, other small updates
+@
+text
+@d26 1
+d29 1
+d36 3
+a43 1
+import edu.berkeley.guir.prefuse.util.Clip;
+d46 3
+a48 1
+import edu.berkeley.guir.prefuse.util.ToolTipManager;
+d155 4
+d256 9
+d573 38
+d669 1
+a669 1
+		if ( m_highQuality )
+d672 4
+d735 1
+a735 1
+		Graphics2D g2D = (Graphics2D) m_offscreen.getGraphics();
+d738 23
+a760 1
+		// paint background
+a761 1
+		Dimension d = this.getSize();
+d776 1
+a776 1
+            m_clip.setClip(0,0,getWidth(),getHeight());
+a789 17
+
+		paintBufferToScreen(g);		
+		g2D.dispose();
+        m_repaint = false;
+        
+        // compute frame rate
+        nframes++;
+        if ( mark < 0 ) {
+            mark = System.currentTimeMillis();
+            nframes = 0;
+        } else if ( nframes == sampleInterval ){
+            long t = System.currentTimeMillis();
+            frameRate = (1000.0*nframes)/(t-mark);
+            mark = t;
+            nframes = 0;
+            //System.out.println("frameRate: " + frameRate);
+        }
+d791 1
+a791 1
+    
+@
+
+
+1.17
+log
+@Added accessor/mutator for debug info
+@
+text
+@d924 1
+a924 1
+            return ( x<0 || x>getWidth() || y<0 || y>getWidth() );
+@
+
+
+1.16
+log
+@Updated Display's debug output
+@
+text
+@d154 16
+@
+
+
+1.15
+log
+@Application-driven updates
+@
+text
+@d613 5
+a618 1
+        float fr = Math.round(frameRate*100f)/100f;
+d624 2
+a625 2
+        sb.append(" edges) fontCache(").append(FontLib.getCacheMissCount());
+        sb.append(") colorCache(");
+d627 3
+@
+
+
+1.14
+log
+@Added animated pan and zooms
+@
+text
+@d599 3
+@
+
+
+1.13
+log
+@A whole lot of update
+@
+text
+@d34 2
+d84 8
+a91 3
+    
+    protected AffineTransform m_transform  = new AffineTransform();
+    protected AffineTransform m_itransform = new AffineTransform();
+a98 1
+    private boolean m_showDebug = false;
+d100 1
+d103 1
+a103 1
+    private VisualItem      m_editItem;
+d220 10
+d311 28
+d361 31
+d420 98
+d545 7
+d596 3
+a598 2
+		//g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+		//					RenderingHints.VALUE_ANTIALIAS_ON);
+d659 1
+a659 1
+            g2D.setColor(Color.BLACK);
+d675 1
+d685 1
+@
+
+
+1.12
+log
+@More Javadoc updates
+@
+text
+@d24 1
+d144 1
+d492 1
+a492 1
+                Rectangle b = renderer.getBoundsRef(vi);
+d750 2
+a751 1
+        Rectangle r = item.getBounds();
+d760 1
+a760 1
+        r = m_transform.createTransformedShape(r).getBounds();
+@
+
+
+1.11
+log
+@Major refactor
+@
+text
+@d70 1
+a70 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+@
+
+
+1.10
+log
+@More Javadoc updates
+@
+text
+@d12 2
+d30 1
+d33 1
+a34 1
+import edu.berkeley.guir.prefuse.event.ControlEventMulticaster;
+d37 2
+d66 1
+a66 1
+ * {@@link #editText(edu.berkeley.guir.prefuse.GraphItem, String) editItem}
+d80 1
+a80 1
+    protected Clip            m_clip, m_pclip, m_cclip;
+d86 1
+d91 1
+d95 1
+a95 1
+    private GraphItem      m_editItem;
+d100 9
+d110 4
+a113 1
+	 * Constructor. Creates a new display instance.
+d115 1
+a115 1
+	public Display() {
+d133 10
+a142 3
+        m_clip  = new Clip();
+        m_pclip = new Clip();
+        m_cclip = new Clip();
+d227 1
+a227 1
+    public void setRegistry(ItemRegistry registry) {
+d420 19
+d471 7
+a485 19
+            //m_clip.limit(0,0,getWidth(),getHeight());
+//            m_cclip.setClip(Integer.MAX_VALUE, Integer.MAX_VALUE,
+//                            Integer.MIN_VALUE, Integer.MIN_VALUE);
+//            int count = 0;
+//            Iterator items = m_registry.getItems();
+//            while (items.hasNext()) {
+//                GraphItem gi = (GraphItem) items.next();
+//                Rectangle b = gi.getBounds();
+//                m_cclip.union(b);
+//                count++;
+//            }
+//            // update clipping region
+//            if ( count == 0 )
+//                m_cclip.setClip(0,0,getWidth(),getHeight());
+//            m_cclip.transform(m_transform);
+//            m_clip.setClip(m_cclip);
+//            m_clip.union(m_pclip);
+//            m_clip.limit(0,0,getWidth(),getHeight());
+//            m_pclip.setClip(m_cclip);
+d488 3
+a490 3
+                GraphItem gi = (GraphItem) items.next();
+                Renderer renderer = gi.getRenderer();
+                Rectangle b = renderer.getBoundsRef(gi);
+d492 1
+a492 1
+                    renderer.render(g2D, gi);
+d536 1
+a536 1
+	public void drawItem(GraphItem item) {
+d548 1
+a548 1
+	 * Adds a ControlListener to receive all input events on GraphItems.
+d564 1
+a564 1
+	 * Returns the GraphItem located at the given point.
+d566 1
+a566 1
+	 * @@return the GraphItem located at the given point, if any
+d568 1
+a568 1
+	public GraphItem findItem(Point p) {
+d574 4
+a577 4
+				GraphItem gi = (GraphItem) items.next();
+				Renderer r = gi.getRenderer();
+				if (r != null && r.locatePoint(p2, gi)) {
+					return gi;
+d586 1
+a586 1
+	 * GraphItems, and informs ControlListeners.
+d591 1
+a591 1
+		private GraphItem activeGI = null;
+d596 2
+a597 2
+            if (m_listener != null && activeGI != null) {
+				m_listener.itemDragged(activeGI, e);
+d606 3
+a608 3
+			GraphItem g = findItem(e.getPoint());
+			if (m_listener != null && activeGI != null && activeGI != g) {
+				m_listener.itemExited(activeGI, e);
+d611 2
+a612 2
+			if (m_listener != null && g != null && g != activeGI) {
+				m_listener.itemEntered(g, e);
+d615 1
+a615 1
+			activeGI = g;
+d618 2
+a619 2
+			if ( m_listener != null && g != null && g == activeGI ) {
+				m_listener.itemMoved(g, e);
+d621 1
+a621 1
+			if ( m_listener != null && g == null ) {
+d627 2
+a628 2
+			if (m_listener != null && activeGI != null) {
+				m_listener.itemWheelMoved(activeGI, e);
+d635 2
+a636 2
+			if (m_listener != null && activeGI != null) {
+				m_listener.itemClicked(activeGI, e);
+d644 2
+a645 2
+			if (m_listener != null && activeGI != null) {
+				m_listener.itemPressed(activeGI, e);
+d652 2
+a653 2
+			if (m_listener != null && activeGI != null) {
+				m_listener.itemReleased(activeGI, e);
+d657 1
+a657 1
+            if ( m_listener != null && activeGI != null 
+d662 2
+a663 2
+                m_listener.itemExited(activeGI, e);
+                activeGI = null;
+d675 1
+a675 1
+			if (m_listener != null && !mouseDown && activeGI != null) {
+d678 2
+a679 2
+                m_listener.itemExited(activeGI, e);
+                activeGI = null;
+d687 2
+a688 2
+			if (m_listener != null && activeGI != null) {
+				m_listener.itemKeyPressed(activeGI, e);
+d695 2
+a696 2
+			if (m_listener != null && activeGI != null) {
+				m_listener.itemKeyReleased(activeGI, e);
+d703 2
+a704 2
+			if (m_listener != null && activeGI != null) {
+				m_listener.itemKeyTyped(activeGI, e);
+d739 1
+a739 1
+     * Edit text for the given GraphItem and attribute. Presents a text
+d742 2
+a743 2
+     * will automatically be updated with the GraphItem.
+     * @@param item the GraphItem to edit
+d746 1
+a746 1
+    public void editText(GraphItem item, String attribute) {
+d767 1
+a767 1
+     * Edit text for the given GraphItem and attribute. Presents a text
+d770 2
+a771 2
+     * will automatically be updated with the GraphItem.
+     * @@param item the GraphItem to edit
+d776 1
+a776 1
+    public void editText(GraphItem item, String attribute, Rectangle r) {
+d810 2
+a811 2
+     * the text editor was associated with a specific GraphItem (ie one of the
+     * editText() methods which include a GraphItem as an argument was called),
+@
+
+
+1.9
+log
+@Updated Javadoc
+@
+text
+@d198 2
+d210 2
+a211 1
+        m_registry.addDisplay(this);
+@
+
+
+1.8
+log
+@Javadoc update and fixes
+@
+text
+@d37 1
+a37 1
+ * User interface component that provides an interactive visualization 
+d41 22
+a62 1
+ * ItemRegistry from which it pulls the items to visualize.
+d66 3
+@
+
+
+1.7
+log
+@Added custom tooltip handling
+@
+text
+@d504 3
+a506 4
+	 * Returns the GraphItem located at (x,y).
+	 * @@param x the x coordinate
+	 * @@param y the y coordinate
+	 * @@return the GraphItem located at (x,y), if any
+d716 1
+a716 1
+    public void editText(GraphItem nitem, String attribute, Rectangle r) {
+d718 2
+a719 2
+        String txt = nitem.getAttribute(attribute);
+        m_editItem = nitem;
+d721 1
+a721 1
+        Paint c = nitem.getColor(), fc = nitem.getFillColor();
+@
+
+
+1.6
+log
+@Added javadoc documentation
+@
+text
+@d34 1
+d66 2
+d95 28
+d391 1
+a391 1
+		}
+d454 1
+a454 1
+
+a767 3
+    // ========================================================================
+    // == TOOLTIP METHODS =====================================================
+    
+@
+
+
+1.5
+log
+@Overrode the reshape method
+@
+text
+@d36 5
+a40 3
+ * Component that provides an interactive visualization of a graph.
+ * 
+ * Apr 22, 2003 - jheer - Created class
+d52 2
+a53 1
+    protected AffineTransform m_transform, m_itransform;
+d73 1
+d80 6
+a85 5
+		InputEventCapturer mec = new InputEventCapturer();
+		addMouseListener(mec);
+		addMouseMotionListener(mec);
+		addMouseWheelListener(mec);
+		addKeyListener(mec);
+a89 7
+        
+        // XXX DEBUG
+        try {
+            setTransform(new AffineTransform());
+        } catch ( Exception e ) {
+            e.printStackTrace();
+        }
+d112 3
+d120 4
+d129 4
+d137 7
+d271 3
+d278 3
+d285 4
+d311 5
+d324 3
+a326 2
+	 * the visualization to the screem.
+	 * @@param g
+d339 1
+a339 1
+	 * @@param g
+d347 1
+a347 1
+	 * @@param g
+d362 1
+@
+
+
+1.4
+log
+@Major commit of updated architecture
+@
+text
+@d114 5
+@
+
+
+1.3
+log
+@latest and greatest
+@
+text
+@a2 1
+import java.awt.Canvas;
+d5 1
+d8 1
+d25 5
+d31 1
+a31 1
+import edu.berkeley.guir.prefuse.event.PrefuseControlEventMulticaster;
+d33 1
+d43 1
+a43 1
+public class Display extends Canvas {
+d45 1
+a45 2
+	protected Pipeline        m_pipeline;
+	protected ItemRegistry    m_itemRegistry;
+d48 1
+d54 1
+a54 1
+    private int  nframes = 0;
+d57 5
+d67 9
+d81 5
+d87 5
+a91 5
+//        try {
+//            setTransform(AffineTransform.getRotateInstance(Math.PI/6));
+//        } catch ( Exception e ) {
+//            e.printStackTrace();
+//        }
+d100 1
+d110 1
+d114 20
+a133 16
+	/**
+	 * Returns the pipeline associated with this Display instance.
+	 * @@return the pipeline
+	 */
+	public Pipeline getPipeline() {
+		return m_pipeline;
+	} //
+
+	/**
+	 * Sets the pipeline associated with this Display instance.
+	 * @@return the new associated pipeline
+	 */
+	public void setPipeline(Pipeline pipeline) {
+		m_pipeline = pipeline;
+		m_itemRegistry = pipeline.getItemRegistry();
+	} //
+d135 10
+d152 6
+d162 6
+d172 69
+d251 1
+a251 1
+		return (BufferedImage)createImage(getSize().width, getSize().height);
+d259 8
+a266 1
+		g.drawImage(m_offscreen, 0, 0, null);
+d318 1
+a318 2
+	 * the desired Comparator to this visualization's ItemRegistry.
+	 * @@see java.awt.Component#paint(java.awt.Graphics)
+d320 2
+a321 2
+	public void paint(Graphics g) {
+		if (m_offscreen == null) {
+d325 1
+a325 1
+
+d327 1
+a327 1
+		g2D.setColor(this.getBackground());
+d335 30
+a364 7
+		synchronized (m_itemRegistry) {
+			Iterator items = m_itemRegistry.getItems();
+			while (items.hasNext()) {
+				GraphItem gi = (GraphItem) items.next();
+				Renderer renderer = gi.getRenderer();
+				renderer.render(g2D, gi);
+			}
+d382 1
+d386 7
+d415 3
+d423 1
+a423 1
+		m_listener = PrefuseControlEventMulticaster.add(m_listener, cl);
+d431 1
+a431 1
+		m_listener = PrefuseControlEventMulticaster.remove(m_listener, cl);
+d433 1
+a433 1
+
+d443 2
+a444 2
+		synchronized (m_itemRegistry) {
+			Iterator items = m_itemRegistry.getItemsReversed();
+d455 1
+a455 1
+
+a458 2
+	 * 
+	 * TODO ? Improve event handling.
+d465 1
+d468 1
+a468 1
+			if (m_listener != null && activeGI != null) {
+d515 1
+d529 9
+d548 4
+a551 3
+				//we've left the component and an item is active, deactivate it
+				m_listener.itemExited(activeGI, e);
+				activeGI = null;
+d581 5
+d587 115
+a701 1
+
+@
+
+
+1.2
+log
+@Small tweaks
+@
+text
+@d18 3
+d43 3
+d60 6
+d103 15
+d150 6
+d202 1
+a202 1
+		setRenderingHints(g2D);
+d204 1
+a204 7
+
+		/// XXX DEBUG
+		//System.out.println("--- START rendering loop!");
+		//System.out.println("bufsize = " + m_offscreen.getWidth()
+		//					+ " x " + m_offscreen.getHeight());
+		//int drawn = 0;
+
+a211 5
+				
+				/// XXX DEBUG
+				//System.out.println(gi.getAttribute("FullName") + "\t-\t" 
+				//	+ gi.getClass().getName());
+				//drawn++;
+a213 3
+		
+		/// XXX DEBUG
+		//System.out.println("--- END rendering loop: drew " + drawn + " items.");
+d250 1
+a250 1
+			setRenderingHints(g2D);
+d278 2
+d285 1
+a285 1
+				if (r != null && r.locatePoint(p, gi)) {
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@d39 5
+d199 13
+a211 1
+		g2D.dispose();		
+@
+

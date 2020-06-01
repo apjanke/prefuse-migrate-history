@@ -1,0 +1,144 @@
+head	1.3;
+access;
+symbols
+	P20050924_InfoVis:1.3
+	Preliminary_Design:1.2
+	P200501_Prototype:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2005.09.24.18.40.28;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.04.20.03.54.17;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.15.00.36.40;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Update to new version!!
+@
+text
+@package vizster;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
+
+import vizster.ui.Legend;
+import edu.berkeley.guir.prefuse.Display;
+import edu.berkeley.guir.prefuse.util.ColorLib;
+import edu.berkeley.guir.prefuse.util.FontLib;
+
+
+/**
+ * Display subclass that draws a vizster logo.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> vizster(AT)jheer.org
+ */
+public class VizsterDisplay extends Display {
+    
+    private Vizster vizster;
+    private AffineTransform id = new AffineTransform();
+    private Legend legend = null;
+    
+    public VizsterDisplay(Vizster vizster) {
+        super(vizster.getItemRegistry());
+        this.vizster = vizster;
+    } //
+    
+    public void prePaint(Graphics2D g) {
+        Object o = g.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        AffineTransform at = g.getTransform();
+        g.setTransform(id);
+        
+        Color c = ColorLib.getColor(200,200,200,255);
+        Font f = FontLib.getFont("SansSerif",Font.BOLD|Font.ITALIC,48);
+        FontMetrics fm = g.getFontMetrics(f);
+        String s = "vizster";
+        int x = 8, y = fm.getAscent();
+        g.setColor(c);
+        g.setFont(f);
+        g.drawString(s,x,y);
+        if ( vizster.isXRayMode() ) {
+            f = FontLib.getFont("SansSerif",Font.BOLD|Font.ITALIC,18);
+            fm = g.getFontMetrics(f);
+            s = "x-ray";
+            g.setFont(f);
+            g.drawString(s,140,fm.getAscent()-2);
+        }
+        
+        if ( legend != null ) {
+            x = this.getWidth()-legend.getWidth();
+            legend.paint(g,this,x,0);
+        }
+        
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, o);
+        g.setTransform(at);
+    } //
+    
+    public void setLegend(Legend l) {
+        legend = l;
+    } //
+    
+} // end of class VizsterDisplay
+@
+
+
+1.2
+log
+@Vizster 1.0
+@
+text
+@d10 1
+a11 1
+import edu.berkeley.guir.prefuse.ItemRegistry;
+d24 1
+d26 1
+d28 3
+a30 2
+    public VizsterDisplay(ItemRegistry registry) {
+        super(registry);
+d38 2
+d43 1
+a44 1
+        g.setTransform(id);
+d47 15
+a61 1
+        g.drawString("vizster",x,y);
+d63 4
+a66 1
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, o);
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d17 1
+a17 1
+ * 
+@
+

@@ -1,0 +1,178 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.39;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.activity;
+
+/**
+ * A pacing function that provides slow-in, slow-out animation, where the
+ * animation begins at a slower rate, speeds up through the middle of the
+ * animation, and then slows down again before stopping.
+ * 
+ * This is calculated by using an appropriately phased sigmoid function of
+ * the form 1/(1+exp(-x)).
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class SlowInSlowOutPacer implements Pacer {
+    
+    /**
+     * Pacing function providing slow-in, slow-out animation
+     * @@see prefuse.activity.Pacer#pace(double)
+     */
+    public double pace(double f) {
+        return ( f == 0.0 || f == 1.0 ? f : sigmoid(f) );
+    }
+    
+    /**
+     * Computes a normalized sigmoid
+     * @@param x input value in the interval [0,1]
+     */
+    private double sigmoid(double x) {
+        x = 12.0*x - 6.0;
+        return (1.0 / (1.0 + Math.exp(-1.0 * x)));
+    }
+
+} // end of class SlowInSlowOutPacer
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d7 1
+a7 1
+ *
+d14 1
+a14 1
+
+d20 1
+a20 1
+        return f == 0.0 || f == 1.0 ? f : sigmoid(f);
+d22 1
+a22 1
+
+d29 1
+a29 1
+        return 1.0 / (1.0 + Math.exp(-1.0 * x));
+@
+
+
+1.1
+log
+@file SlowInSlowOutPacer.java was initially added on branch beta.
+@
+text
+@d1 32
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 34
+package prefuse.activity;
+
+/**
+ * A pacing function that provides slow-in, slow-out animation, where the
+ * animation begins at a slower rate, speeds up through the middle of the
+ * animation, and then slows down again before stopping.
+ * 
+ * This is calculated by using an appropriately phased sigmoid function of
+ * the form 1/(1+exp(-x)).
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ * @@see prefuse.activity.Pacer
+ */
+public class SlowInSlowOutPacer implements Pacer {
+    
+    /**
+     * Pacing function providing slow-in, slow-out animation
+     * @@see prefuse.activity.Pacer#pace(double)
+     */
+    public double pace(double f) {
+        return ( f == 0.0 || f == 1.0 ? f : sigmoid(f) );
+    } //
+    
+    /**
+     * Computes a normalized sigmoid
+     * @@param x input value in the interval [0,1]
+     */
+    private double sigmoid(double x) {
+        x = 12.0*x - 6.0;
+        return (1.0 / (1.0 + Math.exp(-1.0 * x)));
+    } //
+
+} // end of class SlowInSlowOutPacer
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d11 3
+a13 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d23 1
+a23 1
+    }
+d32 1
+a32 1
+    }
+@
+
+

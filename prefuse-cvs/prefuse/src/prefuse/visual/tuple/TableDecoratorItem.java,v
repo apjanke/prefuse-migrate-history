@@ -1,0 +1,235 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.48;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.08;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.visual.tuple;
+
+import prefuse.data.Graph;
+import prefuse.data.Table;
+import prefuse.visual.DecoratorItem;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTable;
+
+/**
+ * DecoratorItem implementation that uses data values from a backing
+ * VisualTable.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class TableDecoratorItem extends TableVisualItem 
+    implements DecoratorItem
+{   
+    /**
+     * Initialize a new TableDecoratorItem for the given table and row. This
+     * method is used by the appropriate TupleManager instance, and should
+     * not be called directly by client code, unless by a client-supplied
+     * custom TupleManager.
+     * @@param table the data Table
+     * @@param graph ignored by this class
+     * @@param row the table row index
+     */
+    protected void init(Table table, Graph graph, int row) {
+        m_table = table;
+        m_row = m_table.isValidRow(row) ? row : -1;
+    }
+    
+    /**
+     * @@see prefuse.visual.DecoratorItem#getDecoratedItem()
+     */
+    public VisualItem getDecoratedItem() {
+        VisualTable vt = (VisualTable)getTable();
+        int prow = vt.getParentRow(getRow());
+        return (VisualItem)vt.getParentTable().getTuple(prow);
+    }
+
+} // end of class TableDecoratorItem
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d12 1
+a12 1
+ *
+d15 3
+a17 3
+public class TableDecoratorItem extends TableVisualItem<TableDecoratorItem>
+    implements DecoratorItem<TableDecoratorItem>
+{
+d27 1
+a27 2
+    @@Override
+	public void init(Table table, Graph graph, int row) {
+d31 1
+a31 1
+
+d35 2
+a36 2
+    public VisualItem<?> getDecoratedItem() {
+        VisualTable<VisualItem<?>,TableDecoratorItem> vt = (VisualTable<VisualItem<?>,TableDecoratorItem>)getTable();
+d38 1
+a38 1
+        return vt.getParentTable().getTuple(prow);
+@
+
+
+1.1
+log
+@file TableDecoratorItem.java was initially added on branch beta.
+@
+text
+@d1 41
+@
+
+
+1.1.2.1
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a0 28
+package prefuse.visual.tuple;
+
+import prefuse.data.Table;
+import prefuse.visual.DecoratorItem;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTable;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class TableDecoratorItem extends TableVisualItem 
+    implements DecoratorItem
+{
+
+    public TableDecoratorItem(Table table, int row) {
+        super(table, row);
+    }
+    
+    /**
+     * @@see prefuse.visual.DecoratorItem#getDecoratedItem()
+     */
+    public VisualItem getDecoratedItem() {
+        VisualTable vt = (VisualTable)getTable();
+        int prow = vt.getParentRow(getRow());
+        return (VisualItem)vt.getParentTable().getTuple(prow);
+    }
+
+} // end of class TableDecoratorItem
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d9 1
+a9 4
+ * DecoratorItem implementation that uses data values from a backing
+ * VisualTable.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a14 8
+    /**
+     * Create a new TableDecoratorItem for the given table and row. This method
+     * is used by the appropriate TupleManager instance, and should not be
+     * called directly by client code, unless by a client-supplied custom
+     * TupleManager.
+     * @@param table the data Table
+     * @@param row the table row index
+     */
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@a2 1
+import prefuse.data.Graph;
+d16 2
+a17 1
+{   
+d19 4
+a22 4
+     * Initialize a new TableDecoratorItem for the given table and row. This
+     * method is used by the appropriate TupleManager instance, and should
+     * not be called directly by client code, unless by a client-supplied
+     * custom TupleManager.
+a23 1
+     * @@param graph ignored by this class
+d26 2
+a27 3
+    protected void init(Table table, Graph graph, int row) {
+        m_table = table;
+        m_row = m_table.isValidRow(row) ? row : -1;
+@
+
+

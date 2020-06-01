@@ -1,0 +1,1070 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2007.10.21.21.36.04;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.07.15.21.29.04;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.17;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.04;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.44;	author jogiles;	state Exp;
+branches;
+next	2.2.4.2;
+
+2.2.4.2
+date	2008.03.14.09.21.06;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Added root node checks to TreeNodeIterator to avoid iteration errors
+Updated IOLib to support relative file paths (Bug #1775875 from anonymous)
+Updated JRangeSlider to support drags from arrow buttons (Bug #1747778 from colincombe)
+Updated ExpressionParser to avoid long parse bug (Bug #1741759)
+Updated TupleManager to expand tuple list in face of valid rows from CascadedTable instances (Bug #1741106)
+Added checks for min==max condition in NumberRangeModel (Bug #1731911)
+Added patch to Activity and ActivityManager to avoid deadlock on Activity.cancel() (Bug #1708926 fix from joperry)
+Fixed javadoc example for DefaultRendererFactory (Bug #1674371 from cab938)
+Fixed ENDPOLYGON field in VisualItem (Bug #1554408 from dimerman)
+Fixed FisheyeMenu demo to avoid deadlock (Bug #1672798)
+Updated Tree.getDepth to return -1 if node is valid (in the node table) but not in tree (fix from joperry)
+Added Display.reset method to release used memory from an idle, unused Display instance
+Added Graph.removeAllGraphListeners() method
+Added Table.removeAllTableListeners() method
+Added isAsynchronous / setAsynchronous methods to ImageFactory
+Updated Visualization.invalidate to invalidate just the group specified (it incorrectly was invalidating all groups)
+Updated ActivityManager._schedule to call notifyAll when an already scheduled item is re-scheduled
+@
+text
+@package prefuse.render;
+
+import java.awt.Component;
+import java.awt.Image;
+import java.awt.MediaTracker;
+import java.awt.Toolkit;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import prefuse.data.Tuple;
+import prefuse.util.io.IOLib;
+
+
+/**
+ * <p>Utility class that manages loading and storing images. Includes a
+ * configurable LRU cache for managing loaded images. Also supports optional
+ * image scaling of loaded images to cut down on memory and visualization
+ * operation costs.</p>
+ * 
+ * <p>By default images are loaded upon first request. Use the
+ * {@@link #preloadImages(Iterator, String)} method to load images before they
+ * are requested for rendering.</p>
+ * 
+ * @@author alan newberger
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ImageFactory {
+    
+    protected int m_imageCacheSize = 3000;
+    protected int m_maxImageWidth  = 100;
+    protected int m_maxImageHeight = 100;
+    protected boolean m_asynch = true;
+    
+    //a nice LRU cache courtesy of java 1.4
+    protected Map imageCache =
+        new LinkedHashMap((int) (m_imageCacheSize + 1 / .75F), .75F, true) {
+            public boolean removeEldestEntry(Map.Entry eldest) {
+                return size() > m_imageCacheSize;
+            }
+        };
+    protected Map loadMap = new HashMap(50);
+
+    protected final Component component = new Component() {};
+    protected final MediaTracker tracker = new MediaTracker(component);
+    protected int nextTrackerID = 0;
+
+    /**
+     * Create a new ImageFactory. Assumes no scaling of loaded images.
+     */
+    public ImageFactory() {
+        this(-1,-1);
+    }
+    
+    /**
+     * Create a new ImageFactory. This instance will scale loaded images
+     * if they exceed the threshold arguments.
+     * @@param maxImageWidth the maximum width of input images
+     *  (-1 means no limit)
+     * @@param maxImageHeight the maximum height of input images
+     *  (-1 means no limit)
+     */
+    public ImageFactory(int maxImageWidth, int maxImageHeight) {
+        setMaxImageDimensions(maxImageWidth, maxImageHeight);
+    }
+
+    /**
+     * Indicates if this ImageFactory loads images asynchronously (true by
+     * default)
+     * @@return true for asynchronous (background) loading, false for
+     *  synchronous (blocking) loading
+     */
+    public boolean isAsynchronous() {
+    	return m_asynch;
+    }
+    
+    /**
+     * Sets if this ImageFactory loads images asynchronously.
+     * @@param b true for asynchronous (background) loading, false for
+     *  synchronous (blocking) loading
+     */
+    public void setAsynchronous(boolean b) {
+    	m_asynch = b;
+    }
+    
+    /**
+     * Sets the maximum image dimensions of loaded images, images larger than
+     * these limits will be scaled to fit within bounds.
+     * @@param width the maximum width of input images (-1 means no limit)
+     * @@param height the maximum height of input images (-1 means no limit)
+     */
+    public void setMaxImageDimensions(int width, int height) {
+        m_maxImageWidth  = width;
+        m_maxImageHeight = height;
+    }
+
+    /**
+     * Sets the capacity of this factory's image cache
+     * @@param size the new size of the image cache
+     */
+    public void setImageCacheSize(int size) {
+        m_imageCacheSize = size;
+    }
+
+    /**
+     * Indicates if the given string location corresponds to an image
+     * currently stored in this ImageFactory's cache.
+     * @@param imageLocation the image location string
+     * @@return true if the location is a key for a currently cached image,
+     * false otherwise.
+     */
+    public boolean isInCache(String imageLocation) {
+    	return imageCache.containsKey(imageLocation);
+    }
+    
+    /**
+     * <p>Get the image associated with the given location string. If the image
+     * has already been loaded, it simply will return the image, otherwise it
+     * will load it from the specified location.</p>
+     * 
+     * <p>The imageLocation argument must be a valid resource string pointing
+     * to either (a) a valid URL, (b) a file on the classpath, or (c) a file
+     * on the local filesystem. The location will be resolved in that order.
+     * </p>
+     * 
+     * @@param imageLocation the image location as a resource string.
+     * @@return the corresponding image, if available
+     */
+    public Image getImage(String imageLocation) {
+        Image image = (Image) imageCache.get(imageLocation);
+        if (image == null && !loadMap.containsKey(imageLocation)) {
+            URL imageURL = IOLib.urlFromString(imageLocation); 
+            if ( imageURL == null ) {
+                System.err.println("Null image: " + imageLocation);
+                return null;
+            }
+            image = Toolkit.getDefaultToolkit().createImage(imageURL);
+            
+            // if set for synchronous mode, block for image to load.
+            if ( !m_asynch ) {
+                waitForImage(image);
+                addImage(imageLocation, image);
+            } else {
+                int id = ++nextTrackerID;
+                tracker.addImage(image, id);
+                loadMap.put(imageLocation, new LoadMapEntry(id,image));    
+            }
+        } else if ( image == null && loadMap.containsKey(imageLocation) ) {
+            LoadMapEntry entry = (LoadMapEntry)loadMap.get(imageLocation);
+            if ( tracker.checkID(entry.id, true) ) {
+                addImage(imageLocation, entry.image);
+                loadMap.remove(imageLocation);
+                tracker.removeImage(entry.image, entry.id);
+            }
+        } else {
+            return image;
+        }
+        return (Image) imageCache.get(imageLocation);
+    }
+    
+    /**
+     * Adds an image associated with a location string to this factory's cache.
+     * The image will be scaled as dictated by this current factory settings.
+     * 
+     * @@param location the location string uniquely identifying the image
+     * @@param image the actual image
+     * @@return the final image added to the cache. This may be a scaled version
+     *         of the original input image.
+     */
+    public Image addImage(String location, Image image) {
+        if ( m_maxImageWidth > -1 || m_maxImageHeight > -1 ) {
+            image = getScaledImage(image);
+            image.getWidth(null); // trigger image load
+        }
+        imageCache.put(location, image);
+        return image;
+    }
+    
+    /**
+     * Wait for an image to load.
+     * @@param image the image to wait for
+     */
+    protected void waitForImage(Image image) {
+        int id = ++nextTrackerID;
+        tracker.addImage(image, id);
+        try {
+            tracker.waitForID(id, 0);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        tracker.removeImage(image, id);
+    }
+    
+    /**
+     * Scales an image to fit within the current size thresholds.
+     * @@param img the image to scale
+     * @@return the scaled image
+     */
+    protected Image getScaledImage(Image img) {     
+        // resize image, if necessary, to conserve memory
+        //  and reduce future scaling time
+        int w = img.getWidth(null) - m_maxImageWidth;
+        int h = img.getHeight(null) - m_maxImageHeight;
+
+        if ( w > h && w > 0 && m_maxImageWidth > -1 ) {
+            Image scaled = img.getScaledInstance(m_maxImageWidth, -1, Image.SCALE_SMOOTH);
+            img.flush(); //waitForImage(scaled);
+            return scaled;
+        } else if ( h > 0 && m_maxImageHeight > -1 ) {
+            Image scaled = img.getScaledInstance(-1, m_maxImageHeight, Image.SCALE_SMOOTH);
+            img.flush(); //waitForImage(scaled);                
+            return scaled;
+        } else {
+            return img;
+        }
+    }
+    
+    /**
+     * <p>Preloads images for use in a visualization. Images to load are
+     * determined by taking objects from the given iterator and retrieving
+     * the value of the specified field. The items in the iterator must
+     * be instances of the {@@link prefuse.data.Tuple} class.</p>
+     * 
+     * <p>Images are loaded in the order specified by the iterator until the
+     * the iterator is empty or the maximum image cache size is met. Thus
+     * higher priority images should appear sooner in the iteration.</p>
+     * 
+     * @@param iter an Iterator of {@@link prefuse.data.Tuple} instances
+     * @@param field the data field that contains the image location
+     */
+    public void preloadImages(Iterator iter, String field) {
+        boolean synch = m_asynch;
+        m_asynch = false;
+        
+        String loc = null;
+        while ( iter.hasNext() && imageCache.size() <= m_imageCacheSize ) {
+            // get the string describing the image location
+            Tuple t = (Tuple)iter.next();
+            loc = t.getString(field);
+            if ( loc != null ) {
+                getImage(loc);
+            }
+        }
+        m_asynch = synch;
+    }
+    
+    /**
+     * Helper class for storing an id/image pair.
+     */
+    private class LoadMapEntry {
+        public int id;
+        public Image image;
+        public LoadMapEntry(int id, Image image) {
+            this.id = id;
+            this.image = image;
+        }
+    }
+    
+} // end of class ImageFactory
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d22 1
+a22 1
+ *
+d26 1
+a26 1
+ *
+d31 1
+a31 1
+
+d36 1
+a36 1
+
+d38 3
+a40 4
+    protected Map<String, Image> imageCache =
+        new LinkedHashMap<String, Image>((int) (m_imageCacheSize + 1 / .75F), .75F, true) {
+            @@Override
+			public boolean removeEldestEntry(Map.Entry<String, Image> eldest) {
+d44 1
+a44 1
+    protected Map<String, LoadMapEntry> loadMap = new HashMap<String, LoadMapEntry>(50);
+d56 1
+a56 1
+
+d78 1
+a78 1
+
+d87 1
+a87 1
+
+d117 1
+a117 1
+
+d122 1
+a122 1
+     *
+d127 1
+a127 1
+     *
+d132 1
+a132 1
+        Image image = imageCache.get(imageLocation);
+d134 1
+a134 1
+            URL imageURL = IOLib.urlFromString(imageLocation);
+d140 1
+a140 1
+
+d148 1
+a148 1
+                loadMap.put(imageLocation, new LoadMapEntry(id,image));
+d151 1
+a151 1
+            LoadMapEntry entry = loadMap.get(imageLocation);
+d160 1
+a160 1
+        return imageCache.get(imageLocation);
+d162 1
+a162 1
+
+d166 1
+a166 1
+     *
+d180 1
+a180 1
+
+d195 1
+a195 1
+
+d201 1
+a201 1
+    protected Image getScaledImage(Image img) {
+d213 1
+a213 1
+            img.flush(); //waitForImage(scaled);
+d219 1
+a219 1
+
+d225 1
+a225 1
+     *
+d229 1
+a229 1
+     *
+a231 2
+     *
+     * TODO: use Iterable for the first argument
+d233 1
+a233 1
+    public void preloadImages(Iterator<? extends Tuple<?>> iter, String field) {
+d236 1
+a236 1
+
+d240 1
+a240 1
+            Tuple<?> t = iter.next();
+d248 1
+a248 1
+
+d260 1
+a260 1
+
+@
+
+
+2.2.4.2
+log
+@Changed preloadImages interface to accept an Iterable rather than an Iterator
+@
+text
+@d233 2
+d236 1
+a236 1
+    public void preloadImages(Iterable<? extends Tuple<?>> tuples, String field) {
+d241 4
+a244 6
+        
+        for(Tuple<?> t : tuples) {
+        	if(imageCache.size() > m_imageCacheSize) {
+        		break;
+        	}
+        	loc = t.getString(field);
+a248 1
+        
+@
+
+
+2.1
+log
+@Added ImageFactory.isInCache(String) method, changed member variable visibility to protected
+@
+text
+@d70 19
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d32 4
+a35 4
+    private int m_imageCacheSize = 3000;
+    private int m_maxImageWidth  = 100;
+    private int m_maxImageHeight = 100;
+    private boolean m_asynch = true;
+d38 1
+a38 1
+    private Map imageCache =
+d44 1
+a44 1
+    private Map loadMap = new HashMap(50);
+d46 3
+a48 3
+    private final Component component = new Component() {};
+    private final MediaTracker tracker = new MediaTracker(component);
+    private int nextTrackerID = 0;
+d89 11
+@
+
+
+1.1
+log
+@file ImageFactory.java was initially added on branch beta.
+@
+text
+@d1 231
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 224
+package prefuse.render;
+
+import java.awt.Component;
+import java.awt.Image;
+import java.awt.MediaTracker;
+import java.awt.Toolkit;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import prefuse.data.tuple.Tuple;
+import prefuse.util.io.IOLib;
+
+
+/**
+ * <p>Controls loading and management of images. Includes a size-configurable
+ * LRU cache for managing loaded images. Also supports optional image scaling
+ * of loaded images to cut down on memory and visualization operation costs.
+ * </p>
+ * 
+ * <p>By default images are loaded upon first request. Use the
+ * <code>preloadImages()</code> method to load images before they are
+ * requested.</p>
+ * 
+ * @@author newbergr
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ImageFactory {
+	
+	private int m_imageCacheSize = 3000;
+	private int m_maxImageWidth  = 100;
+	private int m_maxImageHeight = 100;
+    private boolean m_asynch = true;
+	
+	//a nice LRU cache courtesy of java 1.4
+	private Map imageCache =
+		new LinkedHashMap((int) (m_imageCacheSize + 1 / .75F), .75F, true) {
+			public boolean removeEldestEntry(Map.Entry eldest) {
+				return size() > m_imageCacheSize;
+			}
+		};
+	private Map loadMap = new HashMap(50);
+
+	private final Component component = new Component() {};
+	private final MediaTracker tracker = new MediaTracker(component);
+	private int nextTrackerID = 0;
+
+	/**
+	 * Constructor. Assumes no scaling of loaded images.
+	 */
+	public ImageFactory() {
+		this(-1,-1);
+	} //
+	
+	/**
+	 * Constructor. This instance will scale loaded images if they exceed the
+	 * threshold arguments.
+	 * @@param maxImageWidth the maximum width of input images (-1 means no limit)
+	 * @@param maxImageHeight the maximum height of input images (-1 means no limit)
+	 */
+	public ImageFactory(int maxImageWidth, int maxImageHeight) {
+		setMaxImageDimensions(maxImageWidth, maxImageHeight);
+	} //
+
+	/**
+	 * Sets the maximum image dimensions of loaded images, images larger than
+	 * these limits will be scaled to fit within bounds.
+	 * @@param width the maximum width of input images (-1 means no limit)
+	 * @@param height the maximum height of input images (-1 means no limit)
+	 */
+	public void setMaxImageDimensions(int width, int height) {
+		m_maxImageWidth  = width;
+		m_maxImageHeight = height;
+	} //
+
+	/**
+	 * Sets the capacity of this factory's image cache
+	 * @@param size the new size of the image cache
+	 */
+	public void setImageCacheSize(int size) {
+		m_imageCacheSize = size;
+	} //
+
+	/**
+	 * Get the image associated with the given location string. If the image
+	 * has already been loaded, it simply will return the image, otherwise it
+	 * will load it from the specified location.
+	 * 
+	 * The imageLocation argument must be a valid resource string.
+	 * 
+	 * @@param imageLocation the image location as a resource string.
+	 * @@return the corresponding image, if available
+	 */
+	public Image getImage(String imageLocation) {
+		Image image = (Image) imageCache.get(imageLocation);
+		if (image == null && !loadMap.containsKey(imageLocation)) {
+			URL imageURL = IOLib.urlFromString(imageLocation); 
+			if ( imageURL == null ) {
+			    System.err.println("Null image: " + imageLocation);
+				return null;
+			}
+			image = Toolkit.getDefaultToolkit().createImage(imageURL);
+			
+			// if set for synchronous mode, block for image to load.
+            if ( !m_asynch ) {
+                waitForImage(image);
+                addImage(imageLocation, image);
+            } else {
+                int id = ++nextTrackerID;
+                tracker.addImage(image, id);
+                loadMap.put(imageLocation, new LoadMapEntry(id,image));    
+            }
+		} else if ( image == null && loadMap.containsKey(imageLocation) ) {
+            LoadMapEntry entry = (LoadMapEntry)loadMap.get(imageLocation);
+            if ( tracker.checkID(entry.id, true) ) {
+                addImage(imageLocation, entry.image);
+                loadMap.remove(imageLocation);
+                tracker.removeImage(entry.image, entry.id);
+            }
+        } else {
+            return image;
+        }
+		return (Image) imageCache.get(imageLocation);
+	} //
+	
+    /**
+     * Adds an image associated with a locaiton string to this factory's cache.
+     * The image will be scaled as dictated by this factory's setting.
+     * 
+     * @@param location
+     *            the location string uniquely identifying the image
+     * @@param image
+     *            the actual image
+     * @@return the final image added to the cache. This may be a scaled version
+     *         of the original input image.
+     */
+    public Image addImage(String location, Image image) {
+        if ( m_maxImageWidth > -1 || m_maxImageHeight > -1 ) {
+            image = getScaledImage(image);
+            image.getWidth(null); // trigger image load
+        }
+        imageCache.put(location, image);
+        return image;
+    } //
+    
+	/**
+	 * Wait for an image to load.
+	 * @@param image the image to wait for
+	 */
+	protected void waitForImage(Image image) {
+		int id = ++nextTrackerID;
+		tracker.addImage(image, id);
+		try {
+			tracker.waitForID(id, 0);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		tracker.removeImage(image, id);
+	} //
+    
+	/**
+	 * Scales an image to fit within the current size thresholds.
+	 * @@param img the image to scale
+	 * @@return the scaled image
+	 */
+	protected Image getScaledImage(Image img) {		
+		// resize image, if necessary, to conserve memory
+		//  and reduce future scaling time
+		int w = img.getWidth(null) - m_maxImageWidth;
+		int h = img.getHeight(null) - m_maxImageHeight;
+
+		if ( w > h && w > 0 && m_maxImageWidth > -1 ) {
+			Image scaled = img.getScaledInstance(m_maxImageWidth, -1, Image.SCALE_SMOOTH);
+			img.flush(); //waitForImage(scaled);
+			return scaled;
+		} else if ( h > 0 && m_maxImageHeight > -1 ) {
+			Image scaled = img.getScaledInstance(-1, m_maxImageHeight, Image.SCALE_SMOOTH);
+			img.flush(); //waitForImage(scaled);				
+			return scaled;
+		} else {
+			return img;
+		}
+	} //
+	
+	/**
+	 * Preloads images for use in a visualization. Images to load are
+	 * determined by taking objects from the given iterator and retrieving
+	 * the attribute of the specified value. The items in the iterator must
+	 * be instances of either <code>Entity</code> or <code>VisualItem</code>.
+	 * Images are loaded in the order specified by the iterator until the
+	 * the iterator is empty or the maximum image cache size is met. Thus
+	 * higher priority images should appear sooner in the iteration.
+	 * @@param iter an Iterator of <code>Entity</code> and/or 
+	 *  <code>VisualItem</code> instances
+	 * @@param attr the attribute that contains the image location
+	 */
+	public void preloadImages(Iterator iter, String field) {
+        boolean synch = m_asynch;
+        m_asynch = false;
+        
+		String loc = null;
+		while ( iter.hasNext() && imageCache.size() <= m_imageCacheSize ) {
+            // get the string describing the image location
+            Tuple t = (Tuple)iter.next();
+            loc = t.getString(field);
+            if ( loc != null ) {
+                getImage(loc);
+            }
+		}
+        m_asynch = synch;
+	} //
+	
+    private class LoadMapEntry {
+        public int id;
+        public Image image;
+        public LoadMapEntry(int id, Image image) {
+            this.id = id;
+            this.image = image;
+        }
+    } //
+    
+} // end of class ImageFactory
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d31 4
+a34 4
+    
+    private int m_imageCacheSize = 3000;
+    private int m_maxImageWidth  = 100;
+    private int m_maxImageHeight = 100;
+d36 71
+a106 71
+    
+    //a nice LRU cache courtesy of java 1.4
+    private Map imageCache =
+        new LinkedHashMap((int) (m_imageCacheSize + 1 / .75F), .75F, true) {
+            public boolean removeEldestEntry(Map.Entry eldest) {
+                return size() > m_imageCacheSize;
+            }
+        };
+    private Map loadMap = new HashMap(50);
+
+    private final Component component = new Component() {};
+    private final MediaTracker tracker = new MediaTracker(component);
+    private int nextTrackerID = 0;
+
+    /**
+     * Constructor. Assumes no scaling of loaded images.
+     */
+    public ImageFactory() {
+        this(-1,-1);
+    } //
+    
+    /**
+     * Constructor. This instance will scale loaded images if they exceed the
+     * threshold arguments.
+     * @@param maxImageWidth the maximum width of input images (-1 means no limit)
+     * @@param maxImageHeight the maximum height of input images (-1 means no limit)
+     */
+    public ImageFactory(int maxImageWidth, int maxImageHeight) {
+        setMaxImageDimensions(maxImageWidth, maxImageHeight);
+    } //
+
+    /**
+     * Sets the maximum image dimensions of loaded images, images larger than
+     * these limits will be scaled to fit within bounds.
+     * @@param width the maximum width of input images (-1 means no limit)
+     * @@param height the maximum height of input images (-1 means no limit)
+     */
+    public void setMaxImageDimensions(int width, int height) {
+        m_maxImageWidth  = width;
+        m_maxImageHeight = height;
+    } //
+
+    /**
+     * Sets the capacity of this factory's image cache
+     * @@param size the new size of the image cache
+     */
+    public void setImageCacheSize(int size) {
+        m_imageCacheSize = size;
+    } //
+
+    /**
+     * Get the image associated with the given location string. If the image
+     * has already been loaded, it simply will return the image, otherwise it
+     * will load it from the specified location.
+     * 
+     * The imageLocation argument must be a valid resource string.
+     * 
+     * @@param imageLocation the image location as a resource string.
+     * @@return the corresponding image, if available
+     */
+    public Image getImage(String imageLocation) {
+        Image image = (Image) imageCache.get(imageLocation);
+        if (image == null && !loadMap.containsKey(imageLocation)) {
+            URL imageURL = IOLib.urlFromString(imageLocation); 
+            if ( imageURL == null ) {
+                System.err.println("Null image: " + imageLocation);
+                return null;
+            }
+            image = Toolkit.getDefaultToolkit().createImage(imageURL);
+            
+            // if set for synchronous mode, block for image to load.
+d115 1
+a115 1
+        } else if ( image == null && loadMap.containsKey(imageLocation) ) {
+d125 3
+a127 3
+        return (Image) imageCache.get(imageLocation);
+    } //
+    
+d148 52
+a199 52
+    /**
+     * Wait for an image to load.
+     * @@param image the image to wait for
+     */
+    protected void waitForImage(Image image) {
+        int id = ++nextTrackerID;
+        tracker.addImage(image, id);
+        try {
+            tracker.waitForID(id, 0);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        tracker.removeImage(image, id);
+    } //
+    
+    /**
+     * Scales an image to fit within the current size thresholds.
+     * @@param img the image to scale
+     * @@return the scaled image
+     */
+    protected Image getScaledImage(Image img) {     
+        // resize image, if necessary, to conserve memory
+        //  and reduce future scaling time
+        int w = img.getWidth(null) - m_maxImageWidth;
+        int h = img.getHeight(null) - m_maxImageHeight;
+
+        if ( w > h && w > 0 && m_maxImageWidth > -1 ) {
+            Image scaled = img.getScaledInstance(m_maxImageWidth, -1, Image.SCALE_SMOOTH);
+            img.flush(); //waitForImage(scaled);
+            return scaled;
+        } else if ( h > 0 && m_maxImageHeight > -1 ) {
+            Image scaled = img.getScaledInstance(-1, m_maxImageHeight, Image.SCALE_SMOOTH);
+            img.flush(); //waitForImage(scaled);                
+            return scaled;
+        } else {
+            return img;
+        }
+    } //
+    
+    /**
+     * Preloads images for use in a visualization. Images to load are
+     * determined by taking objects from the given iterator and retrieving
+     * the attribute of the specified value. The items in the iterator must
+     * be instances of either <code>Entity</code> or <code>VisualItem</code>.
+     * Images are loaded in the order specified by the iterator until the
+     * the iterator is empty or the maximum image cache size is met. Thus
+     * higher priority images should appear sooner in the iteration.
+     * @@param iter an Iterator of <code>Entity</code> and/or 
+     *  <code>VisualItem</code> instances
+     * @@param attr the attribute that contains the image location
+     */
+    public void preloadImages(Iterator iter, String field) {
+d203 2
+a204 2
+        String loc = null;
+        while ( iter.hasNext() && imageCache.size() <= m_imageCacheSize ) {
+d211 1
+a211 1
+        }
+d213 2
+a214 2
+    } //
+    
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@d18 4
+a21 4
+ * <p>Utility class that manages loading and storing images. Includes a
+ * configurable LRU cache for managing loaded images. Also supports optional
+ * image scaling of loaded images to cut down on memory and visualization
+ * operation costs.</p>
+d24 2
+a25 2
+ * {@@link #preloadImages(Iterator, String)} method to load images before they
+ * are requested for rendering.</p>
+d27 2
+a28 2
+ * @@author alan newberger
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d51 1
+a51 1
+     * Create a new ImageFactory. Assumes no scaling of loaded images.
+d55 1
+a55 1
+    }
+d58 4
+a61 6
+     * Create a new ImageFactory. This instance will scale loaded images
+     * if they exceed the threshold arguments.
+     * @@param maxImageWidth the maximum width of input images
+     *  (-1 means no limit)
+     * @@param maxImageHeight the maximum height of input images
+     *  (-1 means no limit)
+d65 1
+a65 1
+    }
+d76 1
+a76 1
+    }
+d84 1
+a84 1
+    }
+d87 1
+a87 1
+     * <p>Get the image associated with the given location string. If the image
+d89 1
+a89 1
+     * will load it from the specified location.</p>
+d91 1
+a91 4
+     * <p>The imageLocation argument must be a valid resource string pointing
+     * to either (a) a valid URL, (b) a file on the classpath, or (c) a file
+     * on the local filesystem. The location will be resolved in that order.
+     * </p>
+d126 1
+a126 1
+    }
+d129 2
+a130 2
+     * Adds an image associated with a location string to this factory's cache.
+     * The image will be scaled as dictated by this current factory settings.
+d132 4
+a135 2
+     * @@param location the location string uniquely identifying the image
+     * @@param image the actual image
+d146 1
+a146 1
+    }
+d161 1
+a161 1
+    }
+d185 1
+a185 1
+    }
+d188 1
+a188 1
+     * <p>Preloads images for use in a visualization. Images to load are
+d190 3
+a192 4
+     * the value of the specified field. The items in the iterator must
+     * be instances of the {@@link prefuse.data.Tuple} class.</p>
+     * 
+     * <p>Images are loaded in the order specified by the iterator until the
+d194 4
+a197 4
+     * higher priority images should appear sooner in the iteration.</p>
+     * 
+     * @@param iter an Iterator of {@@link prefuse.data.Tuple} instances
+     * @@param field the data field that contains the image location
+d213 1
+a213 1
+    }
+a214 3
+    /**
+     * Helper class for storing an id/image pair.
+     */
+d222 1
+a222 1
+    }
+@
+
+
+1.1.2.4
+log
+@Javadoc'd.
+@
+text
+@d194 1
+a194 1
+     * be instances of the {@@link prefuse.data.tuple.Tuple} class.</p>
+d200 1
+a200 1
+     * @@param iter an Iterator of {@@link prefuse.data.tuple.Tuple} instances
+@
+
+
+1.1.2.5
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@d13 1
+a13 1
+import prefuse.data.Tuple;
+d194 1
+a194 1
+     * be instances of the {@@link prefuse.data.Tuple} class.</p>
+d200 1
+a200 1
+     * @@param iter an Iterator of {@@link prefuse.data.Tuple} instances
+@
+
+

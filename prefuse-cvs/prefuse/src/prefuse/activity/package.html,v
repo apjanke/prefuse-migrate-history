@@ -1,0 +1,114 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.24.09.07.09;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@<body>
+<p>General classes for scheduling and running activities
+with specified starting times and durations. Used by all
+{@@link prefuse.action.Action} implementations, these activities can be
+used to perform scheduled data processing and animation. Pacers can be
+used to control the rate of animation, for example, providing slow-in
+slow-out animated transitions.</p>
+</body>@
+
+
+1.1
+log
+@file package.html was initially added on branch beta.
+@
+text
+@d1 8
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 5
+<body>
+The activity package contains classes for scheduling and running activities
+of specified starting times and durations. These activities can be used to
+perform scheduled graph processing and animation.
+</body>@
+
+
+1.1.2.2
+log
+@Added javadoc overview and package text.
+@
+text
+@d2 1
+a2 1
+<p>Classes for scheduling and running activities
+d4 1
+a4 3
+perform scheduled data processing and animation. Pacers can be used to
+control the rate of animation, for example, providing slow-in slow-out
+animated transitions.</p>
+@
+
+
+1.1.2.3
+log
+@Javadoc'd.
+@
+text
+@d2 5
+a6 6
+<p>General classes for scheduling and running activities
+with specified starting times and durations. Used by all
+{@@link prefuse.action.Action} implementations, these activities can be
+used to perform scheduled data processing and animation. Pacers can be
+used to control the rate of animation, for example, providing slow-in
+slow-out animated transitions.</p>
+@
+
+

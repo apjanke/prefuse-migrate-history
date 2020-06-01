@@ -1,0 +1,304 @@
+head	1.5;
+access;
+symbols
+	P20050924_InfoVis:1.5
+	Preliminary_Design:1.4
+	P200501_Prototype:1.4;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2005.09.24.18.40.28;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.11.10.01.53.05;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.04.19.03.34.07;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.04.16.06.01.40;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.15.00.36.40;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Update to new version!!
+@
+text
+@package vizster;
+
+import java.awt.Component;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Timer;
+
+import javax.swing.JOptionPane;
+import javax.swing.UIManager;
+
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.graph.Graph;
+import edu.berkeley.guir.prefuse.graph.io.XMLGraphReader;
+
+import vizster.ui.LoginDialog;
+
+/**
+ * Library of useful routines supporting the Vizster application
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> vizter(AT)jheer.org
+ */
+public class VizsterLib {
+
+    public static final int DEFAULT_ERROR = 0;
+    public static final int PROFILE_ERROR = 1;
+    
+    /**
+     * Exit the application upon occurrence of an error
+     * @@param e the exception accompanying the error, if any
+     * @@param c the parent component, if exists 
+     * @@param msg the error message
+     */
+    public static final void errexit(Exception e, Component c, String msg) {
+        errexit(DEFAULT_ERROR, e, c, msg);
+    } //
+    
+    /**
+     * Exit the application upon occurrence of an error
+     * @@param type the type of error
+     * @@param e the exception accompanying the error, if any
+     * @@param c the parent component, if exists 
+     * @@param msg the error message
+     */
+    public static final void errexit(int type, Exception e, Component c, String msg) {
+        if ( e != null )
+            e.printStackTrace();
+        switch ( type ) {
+        case PROFILE_ERROR:
+            profileLoadError(c,msg);
+            break;
+        default:
+            defaultError(c,msg);
+        }
+        System.exit(1);
+    } //
+    
+    
+    /**
+     * Show an error dialog for a failed profile load
+     * @@param c the parent component
+     * @@param uid the user id of the failed profile
+     */
+    public static final void profileLoadError(Component c, String uid) {
+        JOptionPane.showMessageDialog(c, "Error loading profile: "+uid,
+                "Error Loading Profile", JOptionPane.ERROR_MESSAGE);
+    } //
+    
+    /**
+     * Show an error dialog
+     * @@param c the parent component
+     * @@param msg the error message
+     */
+    public static final void defaultError(Component c, String msg) {
+        JOptionPane.showMessageDialog(c, msg);
+    } //
+    
+    public static final boolean authenticate(Vizster owner, int retries) {
+        LoginDialog ld = new LoginDialog(owner);
+        ld.setVisible(true);
+        return ld.isLoggedIn();
+    } //
+    
+    public static final Graph loadGraph(String graphfile) 
+    	throws FileNotFoundException, IOException
+    {
+        XMLGraphReader gl = new XMLGraphReader();
+        return gl.loadGraph(graphfile);
+    } //
+    
+    public static final void setLookAndFeel() {
+        try {
+            String laf = UIManager.getSystemLookAndFeelClassName();             
+            UIManager.setLookAndFeel(laf);  
+        } catch ( Exception e ) {}
+    } //
+    
+    public static final void setHighlightValue(VisualItem item, int val) {
+        if ( item == null ) return;
+        int[] value = (int[])item.getVizAttribute("highlightValue");
+        if ( value == null ) {
+            value = new int[1];
+            item.setVizAttribute("highlightValue", value);
+        }
+        value[0] = val;
+    } //
+    
+    public static final int getHighlightValue(VisualItem item) {
+        if ( item == null ) return -1;
+        int[] val = (int[])item.getVizAttribute("highlightValue");
+        return ( val==null ? 0 : val[0] );
+    } //
+    
+    private static Timer s_timer;
+    
+    public static final Timer getTimer() {
+        if ( s_timer == null )
+            s_timer = new Timer() {
+            	public void cancel() {
+            	    // do nothing, do not let others cancel the timer
+            	} //
+        	};
+        return s_timer;
+    } //
+    
+} // end of class VizsterLib
+@
+
+
+1.4
+log
+@Major updates for static layout and xml input files
+@
+text
+@d6 1
+d11 1
+d15 1
+a15 1
+import vizster.util.LoginDialog;
+d98 28
+@
+
+
+1.3
+log
+@New DB loader
+@
+text
+@d4 2
+d10 3
+d78 1
+a78 1
+        ld.show();
+d82 7
+@
+
+
+1.2
+log
+@Smooth image zooming, updated login dialog
+@
+text
+@a8 1
+import edu.berkeley.guir.prefuse.graph.external.DatabaseLoader;
+d71 1
+a71 14
+//    /**
+//     * Get login information.
+//     * @@param frame
+//     * @@return
+//     */
+//    public static final String[] authenticate(JFrame frame) {
+//        if ( loginDialog == null )
+//            loginDialog = new LoginDialog(frame);
+//        loginDialog.show();
+//        return loginDialog.getLoginInfo();
+//    } //
+    
+    public static final boolean authenticate(Vizster owner, 
+            DatabaseLoader loader, int retries) {
+a74 23
+        
+//        for (int i=1; retries>=0 && i<=retries; i++) {
+//            try {
+//                if ( loginDialog == null )
+//                    loginDialog = new LoginDialog(frame);
+//                loginDialog.show();
+//                String[] auth = loginDialog.getLoginInfo();
+//                if ( auth == null )
+//                    return false;
+//                loader.connect("com.mysql.jdbc.Driver",
+//                        // first use the host and database name
+//                        "jdbc:mysql://" + auth[0] + "/" + auth[1],
+//                        auth[2],    // now use the login
+//                        auth[3]);   // and finally the password
+//                return true;
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                VizsterLib.defaultError(frame,"Couldn't connect to database");
+//            }
+//            if ( i == retries )
+//                VizsterLib.errexit(null,frame,"Too many login attempts.");
+//        }
+//        return false;
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@a4 1
+import javax.swing.JFrame;
+a21 2
+    private static LoginDialog loginDialog;
+    
+d72 11
+a82 11
+    /**
+     * Get login information.
+     * @@param frame
+     * @@return
+     */
+    public static final String[] authenticate(JFrame frame) {
+        if ( loginDialog == null )
+            loginDialog = new LoginDialog(frame);
+        loginDialog.show();
+        return loginDialog.getLoginInfo();
+    } //
+d84 1
+a84 1
+    public static final boolean authenticate(JFrame frame, 
+d86 26
+a111 22
+        for (int i=1; retries>=0 && i<=retries; i++) {
+            try {
+                if ( loginDialog == null )
+                    loginDialog = new LoginDialog(frame);
+                loginDialog.show();
+                String[] auth = loginDialog.getLoginInfo();
+                if ( auth == null )
+                    return false;
+                loader.connect("com.mysql.jdbc.Driver",
+                        // first use the host and database name
+                        "jdbc:mysql://" + auth[0] + "/" + auth[1],
+                        auth[2],    // now use the login
+                        auth[3]);   // and finally the password
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                VizsterLib.defaultError(frame,"Couldn't connect to database");
+            }
+            if ( i == retries )
+                VizsterLib.errexit(null,frame,"Too many login attempts.");
+        }
+        return false;
+@
+

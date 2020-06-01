@@ -1,0 +1,746 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.15;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	2.0.4.2;
+
+2.0.4.2
+date	2008.03.12.04.59.37;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.force;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+
+/**
+ * Manages a simulation of physical forces acting on bodies. To create a
+ * custom ForceSimulator, add the desired {@@link Force} functions and choose an
+ * appropriate {@@link Integrator}.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ForceSimulator {
+
+    private ArrayList items;
+    private ArrayList springs;
+    private Force[] iforces;
+    private Force[] sforces;
+    private int iflen, sflen;
+    private Integrator integrator;
+    private float speedLimit = 1.0f;
+    
+    /**
+     * Create a new, empty ForceSimulator. A RungeKuttaIntegrator is used
+     * by default.
+     */
+    public ForceSimulator() {
+        this(new RungeKuttaIntegrator());
+    }
+
+    /**
+     * Create a new, empty ForceSimulator.
+     * @@param integr the Integrator to use
+     */
+    public ForceSimulator(Integrator integr) {
+        integrator = integr;
+        iforces = new Force[5];
+        sforces = new Force[5];
+        iflen = 0;
+        sflen = 0;
+        items = new ArrayList();
+        springs = new ArrayList();
+    }
+
+    /**
+     * Get the speed limit, or maximum velocity value allowed by this
+     * simulator.
+     * @@return the "speed limit" maximum velocity value
+     */
+    public float getSpeedLimit() {
+        return speedLimit;
+    }
+    
+    /**
+     * Set the speed limit, or maximum velocity value allowed by this
+     * simulator.
+     * @@param limit the "speed limit" maximum velocity value to use
+     */
+    public void setSpeedLimit(float limit) {
+        speedLimit = limit;
+    }
+    
+    /**
+     * Get the Integrator used by this simulator.
+     * @@return the Integrator
+     */
+    public Integrator getIntegrator() {
+        return integrator;
+    }
+    
+    /**
+     * Set the Integrator used by this simulator.
+     * @@param intgr the Integrator to use
+     */
+    public void setIntegrator(Integrator intgr) {
+        integrator = intgr;
+    }
+    
+    /**
+     * Clear this simulator, removing all ForceItem and Spring instances
+     * for the simulator.
+     */
+    public void clear() {
+        items.clear();
+        Iterator siter = springs.iterator();
+        Spring.SpringFactory f = Spring.getFactory();
+        while ( siter.hasNext() )
+            f.reclaim((Spring)siter.next());
+        springs.clear();
+    }
+    
+    /**
+     * Add a new Force function to the simulator.
+     * @@param f the Force function to add
+     */
+    public void addForce(Force f) {
+        if ( f.isItemForce() ) {
+            if ( iforces.length == iflen ) {
+                // resize necessary
+                Force[] newf = new Force[iflen+10];
+                System.arraycopy(iforces, 0, newf, 0, iforces.length);
+                iforces = newf;
+            }
+            iforces[iflen++] = f;
+        }
+        if ( f.isSpringForce() ) {
+            if ( sforces.length == sflen ) {
+                // resize necessary
+                Force[] newf = new Force[sflen+10];
+                System.arraycopy(sforces, 0, newf, 0, sforces.length);
+                sforces = newf;
+            }
+            sforces[sflen++] = f;
+        }
+    }
+    
+    /**
+     * Get an array of all the Force functions used in this simulator.
+     * @@return an array of Force functions
+     */
+    public Force[] getForces() {
+        Force[] rv = new Force[iflen+sflen];
+        System.arraycopy(iforces, 0, rv, 0, iflen);
+        System.arraycopy(sforces, 0, rv, iflen, sflen);
+        return rv;
+    }
+    
+    /**
+     * Add a ForceItem to the simulation.
+     * @@param item the ForceItem to add
+     */
+    public void addItem(ForceItem item) {
+        items.add(item);
+    }
+    
+    /**
+     * Remove a ForceItem to the simulation.
+     * @@param item the ForceItem to remove
+     */
+    public boolean removeItem(ForceItem item) {
+        return items.remove(item);
+    }
+
+    /**
+     * Get an iterator over all registered ForceItems.
+     * @@return an iterator over the ForceItems.
+     */
+    public Iterator getItems() {
+        return items.iterator();
+    }
+    
+    /**
+     * Add a Spring to the simulation.
+     * @@param item1 the first endpoint of the spring
+     * @@param item2 the second endpoint of the spring
+     * @@return the Spring added to the simulation
+     */
+    public Spring addSpring(ForceItem item1, ForceItem item2) {
+        return addSpring(item1, item2, -1.f, -1.f);
+    }
+    
+    /**
+     * Add a Spring to the simulation.
+     * @@param item1 the first endpoint of the spring
+     * @@param item2 the second endpoint of the spring
+     * @@param length the spring length
+     * @@return the Spring added to the simulation
+     */
+    public Spring addSpring(ForceItem item1, ForceItem item2, float length) {
+        return addSpring(item1, item2, -1.f, length);
+    }
+    
+    /**
+     * Add a Spring to the simulation.
+     * @@param item1 the first endpoint of the spring
+     * @@param item2 the second endpoint of the spring
+     * @@param coeff the spring coefficient
+     * @@param length the spring length
+     * @@return the Spring added to the simulation
+     */
+    public Spring addSpring(ForceItem item1, ForceItem item2, float coeff, float length) {
+        if ( item1 == null || item2 == null )
+            throw new IllegalArgumentException("ForceItems must be non-null");
+        Spring s = Spring.getFactory().getSpring(item1, item2, coeff, length);
+        springs.add(s);
+        return s;
+    }
+    
+    /**
+     * Get an iterator over all registered Springs.
+     * @@return an iterator over the Springs.
+     */
+    public Iterator getSprings() {
+        return springs.iterator();
+    }
+    
+    /**
+     * Run the simulator for one timestep.
+     * @@param timestep the span of the timestep for which to run the simulator
+     */
+    public void runSimulator(long timestep) {
+        accumulate();
+        integrator.integrate(this, timestep);
+    }
+    
+    /**
+     * Accumulate all forces acting on the items in this simulation
+     */
+    public void accumulate() {
+        for ( int i = 0; i < iflen; i++ )
+            iforces[i].init(this);
+        for ( int i = 0; i < sflen; i++ )
+            sforces[i].init(this);
+        Iterator itemIter = items.iterator();
+        while ( itemIter.hasNext() ) {
+            ForceItem item = (ForceItem)itemIter.next();
+            item.force[0] = 0.0f; item.force[1] = 0.0f;
+            for ( int i = 0; i < iflen; i++ )
+                iforces[i].getForce(item);
+        }
+        Iterator springIter = springs.iterator();
+        while ( springIter.hasNext() ) {
+            Spring s = (Spring)springIter.next();
+            for ( int i = 0; i < sflen; i++ ) {
+                sforces[i].getForce(s);
+            }
+        }
+    }
+    
+} // end of class ForceSimulator
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d3 3
+d7 3
+d11 1
+a11 1
+ * @@author Anton Marsden
+d13 1
+a13 88
+public interface ForceSimulator {
+
+	/**
+	 * Get the speed limit, or maximum velocity value allowed by this
+	 * simulator.
+	 * @@return the "speed limit" maximum velocity value
+	 */
+	float getSpeedLimit();
+
+	/**
+	 * Clear this simulator, removing all ForceItem and Spring instances
+	 * for the simulator.
+	 */
+	void clear();
+
+	/**
+	 * Add a new Force function to the simulator.
+	 * @@param f the Force function to add
+	 */
+	void addForce(Force f);
+
+	/**
+	 * Get an array of all the Force functions used in this simulator.
+	 * @@return an array of Force functions
+	 */
+	Force[] getForces();
+
+	/**
+	 * Add a ForceItem to the simulation.
+	 * @@param item the ForceItem to add
+	 */
+	void addItem(ForceItem item);
+
+	/**
+	 * Remove a ForceItem to the simulation.
+	 * @@param item the ForceItem to remove
+	 */
+	boolean removeItem(ForceItem item);
+
+	/**
+	 * Get an iterator over all registered ForceItems.
+	 * @@return an iterator over the ForceItems.
+	 */
+	Iterable<ForceItem> getItems();
+
+	/**
+	 * Add a Spring to the simulation.
+	 * @@param item1 the first endpoint of the spring
+	 * @@param item2 the second endpoint of the spring
+	 * @@return the Spring added to the simulation
+	 */
+	Spring addSpring(ForceItem item1, ForceItem item2);
+
+	/**
+	 * Add a Spring to the simulation.
+	 * @@param item1 the first endpoint of the spring
+	 * @@param item2 the second endpoint of the spring
+	 * @@param length the spring length
+	 * @@return the Spring added to the simulation
+	 */
+	Spring addSpring(ForceItem item1, ForceItem item2, float length);
+
+	/**
+	 * Add a Spring to the simulation.
+	 * @@param item1 the first endpoint of the spring
+	 * @@param item2 the second endpoint of the spring
+	 * @@param coeff the spring coefficient
+	 * @@param length the spring length
+	 * @@return the Spring added to the simulation
+	 */
+	Spring addSpring(ForceItem item1, ForceItem item2, float coeff, float length);
+
+	/**
+	 * Get an iterator over all registered Springs.
+	 * @@return an iterator over the Springs.
+	 */
+	Iterable<Spring> getSprings();
+
+	/**
+	 * Run the simulator for one timestep.
+	 * @@param timestep the span of the timestep for which to run the simulator
+	 */
+	void runSimulator(long timestep);
+
+	/**
+	 * Accumulate all forces acting on the items in this simulation
+	 */
+	void accumulate();
+d15 216
+a230 1
+}@
+
+
+2.0.4.2
+log
+@richer ForceSimulator interface
+@
+text
+@a2 2
+import java.util.List;
+
+d50 1
+a50 1
+	List<ForceItem> getItems();
+d83 1
+a83 1
+	List<Spring> getSprings();
+@
+
+
+1.1
+log
+@file ForceSimulator.java was initially added on branch beta.
+@
+text
+@d1 230
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 152
+package prefuse.util.force;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+
+/**
+ * Manages a simulation of physical forces acting on bodies. To create a
+ * custom ForceSimulator, add the desired force functions and choose an
+ * appropriate integrator.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ForceSimulator {
+
+    private ArrayList items;
+    private ArrayList springs;
+    private Force[] iforces;
+    private Force[] sforces;
+    private int iflen, sflen;
+    private Integrator integrator;
+    private float speedLimit = 1.0f;
+    
+    public ForceSimulator() {
+        this(new RungeKuttaIntegrator());
+    } //
+
+    public ForceSimulator(Integrator integr) {
+        integrator = integr;
+        iforces = new Force[5];
+        sforces = new Force[5];
+        iflen = 0;
+        sflen = 0;
+        items = new ArrayList();
+        springs = new ArrayList();
+    } //
+
+    public float getSpeedLimit() {
+        return speedLimit;
+    } //
+    
+    public void setSpeedLimit(float limit) {
+        speedLimit = limit;
+    } //
+    
+    public Integrator getIntegrator() {
+        return integrator;
+    } //
+    
+    public void setIntegrator(Integrator intgr) {
+        integrator = intgr;
+    } //
+    
+    public void clear() {
+        items.clear();
+        Iterator siter = springs.iterator();
+        Spring.SpringFactory f = Spring.getFactory();
+        while ( siter.hasNext() )
+            f.reclaim((Spring)siter.next());
+        springs.clear();
+    } //
+    
+    public void addForce(Force f) {
+        if ( f.isItemForce() ) {
+            if ( iforces.length == iflen ) {
+                // resize necessary
+                Force[] newf = new Force[iflen+10];
+                System.arraycopy(iforces, 0, newf, 0, iforces.length);
+                iforces = newf;
+            }
+            iforces[iflen++] = f;
+        }
+        if ( f.isSpringForce() ) {
+            if ( sforces.length == sflen ) {
+                // resize necessary
+                Force[] newf = new Force[sflen+10];
+                System.arraycopy(sforces, 0, newf, 0, sforces.length);
+                sforces = newf;
+            }
+            sforces[sflen++] = f;
+        }
+    } //
+    
+    public Force[] getForces() {
+        Force[] rv = new Force[iflen+sflen];
+        System.arraycopy(iforces, 0, rv, 0, iflen);
+        System.arraycopy(sforces, 0, rv, iflen, sflen);
+        return rv;
+    } //
+    
+    public void addItem(ForceItem item) {
+        items.add(item);
+    } //
+    
+    public boolean removeItem(ForceItem item) {
+        return items.remove(item);
+    } //
+
+    public Iterator getItems() {
+        return items.iterator();
+    } //
+    
+    public Spring addSpring(ForceItem item1, ForceItem item2) {
+        return addSpring(item1, item2, -1.f, -1.f);
+    } //
+    
+    public Spring addSpring(ForceItem item1, ForceItem item2, float length) {
+        return addSpring(item1, item2, -1.f, length);
+    } //
+    
+    public Spring addSpring(ForceItem item1, ForceItem item2, float coeff, float length) {
+        if ( item1 == null || item2 == null )
+            throw new IllegalArgumentException("ForceItems must be non-null");
+        Spring s = Spring.getFactory().getSpring(item1, item2, coeff, length);
+        springs.add(s);
+        return s;
+    } //
+    
+    public Iterator getSprings() {
+        return springs.iterator();
+    } //
+    
+    public void runSimulator(long timestep) {
+        accumulate();
+        integrator.integrate(this, timestep);
+    } //
+    
+    /**
+     * Accumulate all forces acting on the items in this simulation
+     */
+    public void accumulate() {
+        for ( int i = 0; i < iflen; i++ )
+            iforces[i].init(this);
+        for ( int i = 0; i < sflen; i++ )
+            sforces[i].init(this);
+        Iterator itemIter = items.iterator();
+        while ( itemIter.hasNext() ) {
+            ForceItem item = (ForceItem)itemIter.next();
+            item.force[0] = 0.0f; item.force[1] = 0.0f;
+            for ( int i = 0; i < iflen; i++ )
+                iforces[i].getForce(item);
+        }
+        Iterator springIter = springs.iterator();
+        while ( springIter.hasNext() ) {
+            Spring s = (Spring)springIter.next();
+            for ( int i = 0; i < sflen; i++ ) {
+                sforces[i].getForce(s);
+            }
+        }
+    } //
+    
+} // end of class ForceSimulator
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d8 2
+a9 2
+ * custom ForceSimulator, add the desired {@@link Force} functions and choose an
+ * appropriate {@@link Integrator}.
+d11 2
+a12 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a23 4
+    /**
+     * Create a new, empty ForceSimulator. A RungeKuttaIntegrator is used
+     * by default.
+     */
+d26 1
+a26 1
+    }
+a27 4
+    /**
+     * Create a new, empty ForceSimulator.
+     * @@param integr the Integrator to use
+     */
+d36 1
+a36 1
+    }
+a37 5
+    /**
+     * Get the speed limit, or maximum velocity value allowed by this
+     * simulator.
+     * @@return the "speed limit" maximum velocity value
+     */
+d40 1
+a40 1
+    }
+a41 5
+    /**
+     * Set the speed limit, or maximum velocity value allowed by this
+     * simulator.
+     * @@param limit the "speed limit" maximum velocity value to use
+     */
+d44 1
+a44 1
+    }
+a45 4
+    /**
+     * Get the Integrator used by this simulator.
+     * @@return the Integrator
+     */
+d48 1
+a48 1
+    }
+a49 4
+    /**
+     * Set the Integrator used by this simulator.
+     * @@param intgr the Integrator to use
+     */
+d52 1
+a52 1
+    }
+a53 4
+    /**
+     * Clear this simulator, removing all ForceItem and Spring instances
+     * for the simulator.
+     */
+d61 1
+a61 1
+    }
+a62 4
+    /**
+     * Add a new Force function to the simulator.
+     * @@param f the Force function to add
+     */
+d82 1
+a82 1
+    }
+a83 4
+    /**
+     * Get an array of all the Force functions used in this simulator.
+     * @@return an array of Force functions
+     */
+d89 1
+a89 1
+    }
+a90 4
+    /**
+     * Add a ForceItem to the simulation.
+     * @@param item the ForceItem to add
+     */
+d93 1
+a93 1
+    }
+a94 4
+    /**
+     * Remove a ForceItem to the simulation.
+     * @@param item the ForceItem to remove
+     */
+d97 1
+a97 1
+    }
+a98 4
+    /**
+     * Get an iterator over all registered ForceItems.
+     * @@return an iterator over the ForceItems.
+     */
+d101 1
+a101 1
+    }
+a102 6
+    /**
+     * Add a Spring to the simulation.
+     * @@param item1 the first endpoint of the spring
+     * @@param item2 the second endpoint of the spring
+     * @@return the Spring added to the simulation
+     */
+d105 1
+a105 1
+    }
+a106 7
+    /**
+     * Add a Spring to the simulation.
+     * @@param item1 the first endpoint of the spring
+     * @@param item2 the second endpoint of the spring
+     * @@param length the spring length
+     * @@return the Spring added to the simulation
+     */
+d109 1
+a109 1
+    }
+a110 8
+    /**
+     * Add a Spring to the simulation.
+     * @@param item1 the first endpoint of the spring
+     * @@param item2 the second endpoint of the spring
+     * @@param coeff the spring coefficient
+     * @@param length the spring length
+     * @@return the Spring added to the simulation
+     */
+d117 1
+a117 1
+    }
+a118 4
+    /**
+     * Get an iterator over all registered Springs.
+     * @@return an iterator over the Springs.
+     */
+d121 1
+a121 1
+    }
+a122 4
+    /**
+     * Run the simulator for one timestep.
+     * @@param timestep the span of the timestep for which to run the simulator
+     */
+d126 1
+a126 1
+    }
+d150 1
+a150 1
+    }
+@
+
+

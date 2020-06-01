@@ -1,0 +1,82 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.04.24.23.13.57;	author amarsden;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2008.04.24.23.13.57;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file PrintDisplayAction.java was initially added on branch java_1_5.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@The beginnings of some printing functionality
+@
+text
+@a0 42
+package prefuse.util.display;
+
+import java.awt.event.ActionEvent;
+
+import javax.swing.AbstractAction;
+
+import prefuse.Display;
+import prefuse.util.io.PrintLib;
+
+/**
+ * Swing ActionListener that reveals a dialog box that allows users to export
+ * the current Display view to a printer.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class PrintDisplayAction extends AbstractAction {
+
+	private final Display display;
+
+	/**
+	 * Create a new ExportDisplayAction for the given Display.
+	 * 
+	 * @@param display
+	 *            the Display to capture
+	 */
+	public PrintDisplayAction(Display display) {
+		this.display = display;
+	}
+
+	private void init() {
+	}
+
+	/**
+	 * Shows the image export dialog and processes the results.
+	 * 
+	 * @@see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+	 */
+	public void actionPerformed(ActionEvent evt) {
+		PrintLib.printComponent(display);
+	}
+
+} // end of class SaveImageAction
+@
+

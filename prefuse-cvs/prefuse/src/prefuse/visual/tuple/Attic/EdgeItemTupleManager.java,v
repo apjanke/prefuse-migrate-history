@@ -1,0 +1,119 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.08;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.52;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file EdgeItemTupleManager.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a0 25
+package prefuse.visual.tuple;
+
+import prefuse.data.Graph;
+import prefuse.data.Table;
+import prefuse.data.tuple.EdgeTupleManager;
+import prefuse.data.tuple.TableTuple;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class EdgeItemTupleManager extends EdgeTupleManager {
+    
+    public EdgeItemTupleManager(Graph g) {
+        super(g);
+    }
+    
+    public EdgeItemTupleManager(Graph g, Table t) {
+        super(g, t);
+    }
+    
+    protected TableTuple newTuple(int row) {
+        return new TableEdgeItem(m_graph, m_table, row);
+    }
+    
+} // end of class EdgeItemTupleManager
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@a8 2
+ * TupleManager for EdgeItem instances.
+ * 
+a12 4
+    /**
+     * Create a new EdgeItemTupleManager
+     * @@param g the backing graph
+     */
+a16 5
+    /**
+     * Create a new EdgeItemTupleManager
+     * @@param g the backing graph
+     * @@param t the backing table
+     */
+a20 3
+    /**
+     * @@see prefuse.data.tuple.TupleManager#newTuple(int)
+     */
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@@
+
+

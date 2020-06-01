@@ -1,0 +1,771 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2007.10.21.21.36.04;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.02.27.03.59.39;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.11.06.38.42;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.24.02.32.49;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.24.02.32.49;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.07.00.42.28;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Added root node checks to TreeNodeIterator to avoid iteration errors
+Updated IOLib to support relative file paths (Bug #1775875 from anonymous)
+Updated JRangeSlider to support drags from arrow buttons (Bug #1747778 from colincombe)
+Updated ExpressionParser to avoid long parse bug (Bug #1741759)
+Updated TupleManager to expand tuple list in face of valid rows from CascadedTable instances (Bug #1741106)
+Added checks for min==max condition in NumberRangeModel (Bug #1731911)
+Added patch to Activity and ActivityManager to avoid deadlock on Activity.cancel() (Bug #1708926 fix from joperry)
+Fixed javadoc example for DefaultRendererFactory (Bug #1674371 from cab938)
+Fixed ENDPOLYGON field in VisualItem (Bug #1554408 from dimerman)
+Fixed FisheyeMenu demo to avoid deadlock (Bug #1672798)
+Updated Tree.getDepth to return -1 if node is valid (in the node table) but not in tree (fix from joperry)
+Added Display.reset method to release used memory from an idle, unused Display instance
+Added Graph.removeAllGraphListeners() method
+Added Table.removeAllTableListeners() method
+Added isAsynchronous / setAsynchronous methods to ImageFactory
+Updated Visualization.invalidate to invalidate just the group specified (it incorrectly was invalidating all groups)
+Updated ActivityManager._schedule to call notifyAll when an already scheduled item is re-scheduled
+@
+text
+@/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.demos;
+
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.ActionList;
+import prefuse.action.RepaintAction;
+import prefuse.action.assignment.ColorAction;
+import prefuse.action.distortion.Distortion;
+import prefuse.action.distortion.FisheyeDistortion;
+import prefuse.action.layout.Layout;
+import prefuse.controls.AnchorUpdateControl;
+import prefuse.controls.ControlAdapter;
+import prefuse.data.Schema;
+import prefuse.data.Table;
+import prefuse.render.DefaultRendererFactory;
+import prefuse.render.LabelRenderer;
+import prefuse.util.ColorLib;
+import prefuse.visual.VisualItem;
+
+/**
+ * <p>A prefuse-based implementation of Fisheye Menus, showcasing the use of
+ * visual distortion to provide access to a large number of data items
+ * without scrolling.</p>
+ * 
+ * <p>This implementation is inspired by the Fisheye Menu research conducted
+ * by Ben Bederson at the University of Maryland. See the
+ * <a href="http://www.cs.umd.edu/hcil/fisheyemenu/">Fisheye Menu project
+ * web site</a> for more details.</p>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class FisheyeMenu extends Display {
+
+    /** The data group name of menu items. */
+    public static final String ITEMS = "items";
+    /** The label data field for menu items. */
+    public static final String LABEL = "label";
+    /** The action data field for menu items. */
+    public static final String ACTION = "action";
+    
+    /**
+     * This schema holds the data representation for internal storage of
+     * menu items.
+     */
+    protected static final Schema ITEM_SCHEMA = new Schema();
+    static {
+        ITEM_SCHEMA.addColumn(LABEL, String.class);
+        ITEM_SCHEMA.addColumn(ACTION, ActionListener.class);
+    }
+    
+    private Table m_items = ITEM_SCHEMA.instantiate(); // table of menu items
+    
+    private double m_maxHeight = 500; // maximum menu height in pixels
+    private double m_scale = 7;       // scale parameter for fisheye distortion
+    
+    /**
+     * Create a new, empty FisheyeMenu.
+     * @@see #addMenuItem(String, javax.swing.Action)
+     */
+    public FisheyeMenu() {
+        super(new Visualization());
+        m_vis.addTable(ITEMS, m_items);
+        
+        // set up the renderer to use
+        LabelRenderer renderer = new LabelRenderer(LABEL);
+        renderer.setHorizontalPadding(0);
+        renderer.setVerticalPadding(1);
+        renderer.setHorizontalAlignment(Constants.LEFT);
+        m_vis.setRendererFactory(new DefaultRendererFactory(renderer));
+        
+        // set up this display
+        setSize(100,470);
+        setHighQuality(true);
+        setBorder(BorderFactory.createEmptyBorder(10,10,10,5));
+        addControlListener(new ControlAdapter() {
+            // dispatch an action event to the menu item
+            public void itemClicked(VisualItem item, MouseEvent e) {
+                ActionListener al = (ActionListener)item.get(ACTION);
+                al.actionPerformed(new ActionEvent(item, e.getID(),
+                    "click", e.getWhen(), e.getModifiers()));
+            }
+        });
+        
+        // text color function
+        // items with the mouse over printed in red, otherwise black
+        ColorAction colors = new ColorAction(ITEMS, VisualItem.TEXTCOLOR);
+        colors.setDefaultColor(ColorLib.gray(0));
+        colors.add("hover()", ColorLib.rgb(255,0,0));
+        
+        // initial layout and coloring
+        ActionList init = new ActionList();
+        init.add(new VerticalLineLayout(m_maxHeight));
+        init.add(colors);
+        init.add(new RepaintAction());
+        m_vis.putAction("init", init);
+
+        // fisheye distortion based on the current anchor location
+        ActionList distort = new ActionList();
+        Distortion feye = new FisheyeDistortion(0,m_scale);
+        distort.add(feye);
+        distort.add(colors);
+        distort.add(new RepaintAction());
+        m_vis.putAction("distort", distort);
+        
+        // update the distortion anchor position to be the current
+        // location of the mouse pointer
+        addControlListener(new AnchorUpdateControl(feye, "distort"));
+    }
+    
+    /**
+     * Adds a menu item to the fisheye menu.
+     * @@param name the menu label to use
+     * @@param action the ActionListener to notify when the item is clicked
+     * The prefuse VisualItem corresponding to this menu item will
+     * be returned by the ActionEvent's getSource() method.
+     */
+    public void addMenuItem(String name, ActionListener listener) {
+        int row = m_items.addRow();
+        m_items.set(row, LABEL, name);
+        m_items.set(row, ACTION, listener);
+    }
+    
+    /**
+     * Run a demonstration of the FisheyeMenu
+     */
+    public static final void main(String[] argv) {
+        // only log warnings
+        Logger.getLogger("prefuse").setLevel(Level.WARNING);
+
+        FisheyeMenu fm = demo();
+        
+        // create and display application window
+        JFrame f = new JFrame("p r e f u s e  |  f i s h e y e");
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.getContentPane().add(fm);
+        f.pack();
+        f.setVisible(true);
+    }
+    
+    public static FisheyeMenu demo() {
+        // create a new fisheye menu and populate it
+        FisheyeMenu fm = new FisheyeMenu();
+        for ( int i=1; i<=72; ++i ) {
+            // add menu items that simply print their label when clicked
+            fm.addMenuItem(String.valueOf(i), new AbstractAction() {
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("clicked item: "+
+                        ((VisualItem)e.getSource()).get(LABEL));
+                    System.out.flush();
+                }
+            });
+        }
+        fm.getVisualization().run("init");
+        return fm;
+    }
+    
+    /**
+     * Lines up all VisualItems vertically. Also scales the size such that
+     * all items fit within the maximum layout size, and updates the
+     * Display to the final computed size.
+     */
+    public class VerticalLineLayout extends Layout {
+        private double m_maxHeight = 600;
+        
+        public VerticalLineLayout(double maxHeight) {
+            m_maxHeight = maxHeight;
+        }
+        
+        public void run(double frac) {
+            // first pass
+            double w = 0, h = 0;
+            Iterator iter = m_vis.items();
+            while ( iter.hasNext() ) {
+                VisualItem item = (VisualItem)iter.next();
+                item.setSize(1.0);
+                h += item.getBounds().getHeight();
+            }
+            double scale = h > m_maxHeight ? m_maxHeight/h : 1.0;
+            
+            Display d = m_vis.getDisplay(0);
+            Insets ins = d.getInsets();
+            
+            // second pass
+            h = ins.top;
+            double ih, y=0, x=ins.left;
+            iter = m_vis.items();
+            while ( iter.hasNext() ) {
+                VisualItem item = (VisualItem)iter.next();
+                item.setSize(scale); item.setEndSize(scale);
+                Rectangle2D b = item.getBounds();
+                
+                w = Math.max(w, b.getWidth());
+                ih = b.getHeight();
+                y = h+(ih/2);
+                setX(item, null, x);
+                setY(item, null, y);
+                h += ih;
+            }
+            
+            // set the display size to fit text
+            setSize(d, (int)Math.round(2*m_scale*w + ins.left + ins.right),
+                       (int)Math.round(h + ins.bottom));
+        }
+        
+        private void setSize(final Display d, final int width, final int height)
+        {
+        	SwingUtilities.invokeLater(new Runnable() {
+        		public void run() {
+        			d.setSize(width, height);
+        		}
+        	});
+        }
+    } // end of inner class VerticalLineLayout
+    
+} // end of class FisheyeMenu
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d21 1
+a21 1
+import prefuse.Alignment;
+d43 1
+a43 1
+ *
+d48 1
+a48 1
+ *
+d59 1
+a59 1
+
+d69 6
+a74 6
+
+    private final Table<?> m_items = Table.createTable(ITEM_SCHEMA); // table of menu items
+
+    private final double m_maxHeight = 500; // maximum menu height in pixels
+    private final double m_scale = 7;       // scale parameter for fisheye distortion
+
+d82 1
+a82 1
+
+d87 1
+a87 1
+        renderer.setHorizontalAlignment(Alignment.LEFT);
+d89 1
+a89 1
+
+d96 1
+a96 2
+            @@Override
+			public void itemClicked(VisualItem<?> item, MouseEvent e) {
+d102 1
+a102 1
+
+d108 1
+a108 1
+
+d123 1
+a123 1
+
+d128 1
+a128 1
+
+d141 1
+a141 1
+
+d150 1
+a150 1
+
+d158 1
+a158 1
+
+d167 1
+a167 1
+                        ((VisualItem<?>)e.getSource()).get(LABEL));
+d175 1
+a175 1
+
+d183 1
+a183 1
+
+d187 2
+a188 3
+
+        @@Override
+		public void run(double frac) {
+d191 1
+a191 1
+            Iterator<? extends VisualItem<?>> iter = m_vis.items().iterator();
+d193 1
+a193 1
+                VisualItem<?> item = iter.next();
+d198 1
+a198 1
+
+d201 1
+a201 1
+
+d205 1
+a205 1
+            iter = m_vis.items().iterator();
+d207 1
+a207 1
+                VisualItem<?> item = iter.next();
+d210 1
+a210 1
+
+d213 1
+a213 1
+                y = h+ih/2;
+d218 1
+a218 1
+
+d223 1
+a223 1
+
+a231 1
+
+d233 1
+a233 1
+
+@
+
+
+2.1
+log
+@Updated demos to simplify external creation of demos from client code.
+@
+text
+@d19 1
+d220 11
+a230 2
+            d.setSize((int)Math.round(2*m_scale*w + ins.left + ins.right),
+                      (int)Math.round(h + ins.bottom));
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@a153 1
+        fm.getVisualization().run("init");
+d171 1
+@
+
+
+1.1
+log
+@file FisheyeMenu.java was initially added on branch beta.
+@
+text
+@d1 224
+@
+
+
+1.1.2.1
+log
+@Added FisheyeMenu demo
+@
+text
+@a0 219
+/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.demos;
+
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.JFrame;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.ActionList;
+import prefuse.action.RepaintAction;
+import prefuse.action.assignment.ColorFunction;
+import prefuse.action.distortion.Distortion;
+import prefuse.action.distortion.FisheyeDistortion;
+import prefuse.action.layout.Layout;
+import prefuse.controls.AnchorUpdateControl;
+import prefuse.controls.ControlAdapter;
+import prefuse.data.Schema;
+import prefuse.data.Table;
+import prefuse.render.DefaultRendererFactory;
+import prefuse.render.TextItemRenderer;
+import prefuse.util.ColorLib;
+import prefuse.visual.VisualItem;
+
+/**
+ * <p>A prefuse-based implementation of Fisheye Menus, showcasing the use of
+ * visual distortion to provide access to a large number of data items
+ * without scrolling.</p>
+ * 
+ * <p>This implementation is inspired by the Fisheye Menu research conducted
+ * by Ben Bederson at the University of Maryland. See the
+ * <a href="http://www.cs.umd.edu/hcil/fisheyemenu/">Fisheye Menu project
+ * web site</a> for more details.</p>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class FisheyeMenu extends Display {
+
+    /** The data group name of menu items. */
+    public static final String ITEMS = "items";
+    /** The label data field for menu items. */
+    public static final String LABEL = "label";
+    /** The action data field for menu items. */
+    public static final String ACTION = "action";
+    
+    /**
+     * This schema holds the data representation for internal storage of
+     * menu items.
+     */
+    protected static final Schema ITEM_SCHEMA = new Schema();
+    static {
+        ITEM_SCHEMA.addColumn(LABEL, String.class);
+        ITEM_SCHEMA.addColumn(ACTION, ActionListener.class);
+    }
+    
+    private Table m_items = ITEM_SCHEMA.instantiate(); // table of menu items
+    
+    private double m_maxHeight = 500; // maximum menu height in pixels
+    private double m_scale = 7;       // scale parameter for fisheye distortion
+    
+    /**
+     * Create a new, empty FisheyeMenu.
+     * @@see #addMenuItem(String, javax.swing.Action)
+     */
+    public FisheyeMenu() {
+        super(new Visualization());
+        m_vis.addTable(ITEMS, m_items);
+        
+        // set up the renderer to use
+        TextItemRenderer renderer = new TextItemRenderer(LABEL);
+        renderer.setHorizontalPadding(0);
+        renderer.setVerticalPadding(1);
+        renderer.setHorizontalAlignment(Constants.LEFT);
+        m_vis.setRendererFactory(new DefaultRendererFactory(renderer));
+        
+        // set up this display
+        setSize(100,470);
+        setHighQuality(true);
+        setBorder(BorderFactory.createEmptyBorder(10,10,10,5));
+        addControlListener(new ControlAdapter() {
+            // dispatch an action event to the menu item
+            public void itemClicked(VisualItem item, MouseEvent e) {
+                ActionListener al = (ActionListener)item.get(ACTION);
+                al.actionPerformed(new ActionEvent(item, e.getID(),
+                    "click", e.getWhen(), e.getModifiers()));
+            }
+        });
+        
+        // text color function
+        // items with the mouse over printed in red, otherwise black
+        ColorFunction colors = new ColorFunction(ITEMS, VisualItem.TEXTCOLOR);
+        colors.setDefaultColor(ColorLib.gray(0));
+        colors.add("hover()", ColorLib.rgb(255,0,0));
+        
+        // initial layout and coloring
+        ActionList init = new ActionList();
+        init.add(new VerticalLineLayout(m_maxHeight));
+        init.add(colors);
+        init.add(new RepaintAction());
+        m_vis.putAction("init", init);
+
+        // fisheye distortion based on the current anchor location
+        ActionList distort = new ActionList();
+        Distortion feye = new FisheyeDistortion(0,m_scale);
+        distort.add(feye);
+        distort.add(colors);
+        distort.add(new RepaintAction());
+        m_vis.putAction("distort", distort);
+        
+        // update the distortion anchor position to be the current
+        // location of the mouse pointer
+        addControlListener(new AnchorUpdateControl(feye, "distort"));
+    }
+    
+    /**
+     * Adds a menu item to the fisheye menu.
+     * @@param name the menu label to use
+     * @@param action the ActionListener to notify when the item is clicked
+     * The prefuse VisualItem corresponding to this menu item will
+     * be returned by the ActionEvent's getSource() method.
+     */
+    public void addMenuItem(String name, ActionListener listener) {
+        int row = m_items.addRow();
+        m_items.set(row, LABEL, name);
+        m_items.set(row, ACTION, listener);
+    }
+    
+    /**
+     * Run a demonstration of the FisheyeMenu
+     */
+    public static final void main(String[] argv) {
+        // only log warnings
+        Logger.getLogger("prefuse").setLevel(Level.WARNING);
+        
+        // create a new fisheye menu and populate it
+        FisheyeMenu fm = new FisheyeMenu();
+        for ( int i=1; i<=72; ++i ) {
+            // add menu items that simply print their label when clicked
+            fm.addMenuItem(String.valueOf(i), new AbstractAction() {
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("clicked item: "+
+                        ((VisualItem)e.getSource()).get(LABEL));
+                    System.out.flush();
+                }
+            });
+        }
+        fm.getVisualization().run("init");
+        
+        // create and display application window
+        JFrame f = new JFrame("p r e f u s e | f i s h e y e");
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.getContentPane().add(fm);
+        f.pack();
+        f.setVisible(true);
+    }
+    
+    /**
+     * Lines up all VisualItems vertically. Also scales the size such that
+     * all items fit within the maximum layout size, and updates the
+     * Display to the final computed size.
+     */
+    public class VerticalLineLayout extends Layout {
+        private double m_maxHeight = 600;
+        
+        public VerticalLineLayout(double maxHeight) {
+            m_maxHeight = maxHeight;
+        }
+        
+        public void run(double frac) {
+            // first pass
+            double w = 0, h = 0;
+            Iterator iter = m_vis.items();
+            while ( iter.hasNext() ) {
+                VisualItem item = (VisualItem)iter.next();
+                item.setSize(1.0);
+                h += item.getBounds().getHeight();
+            }
+            double scale = h > m_maxHeight ? m_maxHeight/h : 1.0;
+            
+            Display d = m_vis.getDisplay(0);
+            Insets ins = d.getInsets();
+            
+            // second pass
+            h = ins.top;
+            double ih, y=0, x=ins.left;
+            iter = m_vis.items();
+            while ( iter.hasNext() ) {
+                VisualItem item = (VisualItem)iter.next();
+                item.setSize(scale); item.setEndSize(scale);
+                Rectangle2D b = item.getBounds();
+                
+                w = Math.max(w, b.getWidth());
+                ih = b.getHeight();
+                y = h+(ih/2);
+                setX(item, null, x);
+                setY(item, null, y);
+                h += ih;
+            }
+            
+            // set the display size to fit text
+            d.setSize((int)Math.round(2*m_scale*w + ins.left + ins.right),
+                      (int)Math.round(h + ins.bottom));
+        }
+    } // end of inner class VerticalLineLayout
+    
+} // end of class FisheyeMenu
+@
+
+
+1.1.2.2
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d48 1
+a48 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.3
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@d25 1
+a25 1
+import prefuse.action.assignment.ColorAction;
+d104 1
+a104 1
+        ColorAction colors = new ColorAction(ITEMS, VisualItem.TEXTCOLOR);
+a146 2
+
+        FisheyeMenu fm = demo();
+a147 11
+        // create and display application window
+        JFrame f = new JFrame("p r e f u s e  |  f i s h e y e");
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.getContentPane().add(fm);
+        f.pack();
+        f.setVisible(true);
+        
+        fm.getVisualization().run("init");
+    }
+    
+    public static FisheyeMenu demo() {
+d160 8
+a167 1
+        return fm;
+@
+
+
+1.1.2.4
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d34 1
+a34 1
+import prefuse.render.LabelRenderer;
+d83 1
+a83 1
+        LabelRenderer renderer = new LabelRenderer(LABEL);
+a153 1
+        fm.getVisualization().run("init");
+d156 2
+@
+
+

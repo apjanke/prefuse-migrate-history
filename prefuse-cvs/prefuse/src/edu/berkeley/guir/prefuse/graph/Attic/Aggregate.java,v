@@ -1,0 +1,167 @@
+head	1.4;
+access;
+symbols
+	alpha:1.3.0.2
+	Root_alpha:1.3
+	prefuse-alpha-20051229:1.3
+	P20050401_Alpha_PreCHI:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2006.02.12.18.23.41;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.24.01.57.26;	author jheer;	state Exp;
+branches
+	1.3.4.1;
+next	1.2;
+
+1.2
+date	2004.03.23.19.34.05;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.10.11;	author jheer;	state Exp;
+branches;
+next	;
+
+1.3.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.graph;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+/**
+ * Represents an aggregation of graph entities.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class Aggregate extends DefaultEntity {
+	
+	// The type of list instance used to store entities.
+	protected static final Class LIST_TYPE = ArrayList.class;
+
+	protected List m_entities;
+	
+	/**
+	 * Default constructor. Creates a new, empty aggregate.
+	 */
+	public Aggregate() {
+		try {
+			m_entities = (List)LIST_TYPE.newInstance();
+		} catch ( Exception e ) {
+			e.printStackTrace();
+		}
+	} //
+	
+	/**
+	 * Returns an iterator over all entities in this aggregate.
+	 * @@return an iterator over this aggregate's entities.
+	 */
+	public Iterator getAggregateEntities() {
+		return m_entities.iterator();
+	} //
+
+	/**
+	 * Indicates if a given entity is in this aggregate.
+	 * @@param n the entity to check for membership
+	 * @@return true if the entity is in this aggregate, false otherwise
+	 */
+	public boolean isAggregateEntity(Entity n) {
+		return ( m_entities.indexOf(n) > -1 );
+	} //
+
+	/**
+	 * Return the total number of entities in this aggregate. If this
+	 * aggregate contains sub-aggregates, only the encompassing 
+	 * sub-aggregate will be counted (i.e. entities in the sub-aggregate
+	 * will not contribute to the count).
+	 * @@return the number of entities
+	 */
+	public int getNumAggregateEntities() {
+		return m_entities.size();
+	} //
+
+	/**
+	 * Add a new entity to this aggregate.
+	 * @@param n the node to add
+	 */
+	public void addAggregateEntity(Entity n) {
+		if ( isAggregateEntity(n) )
+			throw new IllegalStateException("Entity already contained in aggregate!");
+		m_entities.add(n);
+	} //
+	
+	/**
+	 * Remove the given entity from this aggregate.
+	 * @@param n the entity to remove
+	 */
+	public boolean removeAggregateEntity(Entity n) {
+		return ( m_entities.remove(n) );
+	} //
+	
+} // end of class Aggregate
+@
+
+
+1.3
+log
+@New filters added plus more
+@
+text
+@@
+
+
+1.3.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.2
+log
+@More Javadoc updates
+@
+text
+@d13 1
+a13 1
+public class Aggregate extends AbstractEntity {
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@a9 2
+ * Jul 18, 2003 - jheer - Created class
+ * 
+d11 1
+a11 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+@
+

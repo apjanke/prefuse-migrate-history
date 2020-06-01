@@ -1,0 +1,479 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.07;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.43;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.display;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Image;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+/**
+ * Swing widget which displays a preview image and helps select the
+ * scale for an exported image.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ScaleSelector extends JComponent implements ChangeListener {
+
+    private final static int MAX_SIZE = 135;
+    
+    private ImagePanel preview;
+    private JLabel     value;
+    private JLabel     size;
+    private JSlider    slider;
+    private Image      image;
+    private int width, height;
+    
+    /**
+     * Create a new ScaleSelector.
+     */
+    public ScaleSelector() {
+        slider = new JSlider(1,10,1);
+        value  = new JLabel("x1");
+        size = new JLabel("   ");
+        preview = new ImagePanel();
+        
+        value.setPreferredSize(new Dimension(25,10));
+        size.setHorizontalAlignment(JLabel.CENTER);
+        slider.setMajorTickSpacing(1);
+        slider.setSnapToTicks(true);
+        slider.addChangeListener(this);
+        
+        setLayout(new BorderLayout());
+        
+        Box b1 = new Box(BoxLayout.X_AXIS);
+        b1.add(Box.createHorizontalStrut(5));
+        b1.add(Box.createHorizontalGlue());
+        b1.add(preview);
+        b1.add(Box.createHorizontalGlue());
+        b1.add(Box.createHorizontalStrut(5));
+        add(b1, BorderLayout.CENTER);
+        
+        Box b2 = new Box(BoxLayout.X_AXIS);
+        b2.add(slider);
+        b2.add(Box.createHorizontalStrut(5));
+        b2.add(value);
+        
+        Box b3 = new Box(BoxLayout.X_AXIS);
+        b3.add(Box.createHorizontalStrut(5));
+        b3.add(Box.createHorizontalGlue());
+        b3.add(size);
+        b3.add(Box.createHorizontalGlue());
+        b3.add(Box.createHorizontalStrut(5));
+        
+        Box b4 = new Box(BoxLayout.Y_AXIS);
+        b4.add(b2);
+        b4.add(b3);
+        add(b4, BorderLayout.SOUTH);
+    }
+
+    /**
+     * Set the preview image.
+     * @@param img the preview image
+     */
+    public void setImage(Image img) {
+        image = getScaledImage(img);
+        stateChanged(null);
+    }
+    
+    /**
+     * Get a scaled version of the input image.
+     * @@param img the input image
+     * @@return a scaled version of the image
+     */
+    private Image getScaledImage(Image img) {
+        int w = width = img.getWidth(null);
+        int h = height = img.getHeight(null);
+        double ar = ((double)w)/h;
+        
+        int nw = MAX_SIZE, nh = MAX_SIZE;
+        if ( w > h ) {
+            nh = (int)Math.round(nw/ar);
+        } else {
+            nw = (int)Math.round(nh*ar);
+        }
+        return img.getScaledInstance(nw,nh,Image.SCALE_SMOOTH);
+    }
+    
+    /**
+     * Monitor changes to the scale slider.
+     * @@see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
+     */
+    public void stateChanged(ChangeEvent evt) {
+        int scale = slider.getValue();
+        value.setText("x"+String.valueOf(scale));
+        size.setText("Image Size: "+(width*scale)+" x "+(height*scale)+" pixels");
+        preview.repaint();
+    }
+    
+    /**
+     * Get the current image scale reported by the slider.
+     * @@return the image scale to use
+     */
+    public double getScale() {
+        return slider.getValue();
+    }
+    
+    /**
+     * Swing component that draws an image scaled to the current
+     * scale factor.
+     */
+    public class ImagePanel extends JComponent {
+        Dimension d = new Dimension(MAX_SIZE, MAX_SIZE);
+        public ImagePanel() {
+            this.setPreferredSize(d);
+            this.setMinimumSize(d);
+            this.setMaximumSize(d);
+        }
+        public void paintComponent(Graphics g) {
+            double scale = 0.4+(0.06*getScale());
+            int w = (int)Math.round(scale*image.getWidth(null));
+            int h = (int)Math.round(scale*image.getHeight(null));
+            Image img = (scale == 1.0 ? image : 
+                image.getScaledInstance(w,h,Image.SCALE_DEFAULT));
+            int x = (MAX_SIZE-w)/2;
+            int y = (MAX_SIZE-h)/2;
+            g.drawImage(img,x,y,null);
+        }
+    }
+    
+} // end of class ScaleSelector
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a12 1
+import javax.swing.SwingConstants;
+d19 1
+a19 1
+ *
+d25 5
+a29 5
+
+    private final ImagePanel preview;
+    private final JLabel     value;
+    private final JLabel     size;
+    private final JSlider    slider;
+d32 1
+a32 1
+
+d41 1
+a41 1
+
+d43 1
+a43 1
+        size.setHorizontalAlignment(SwingConstants.CENTER);
+d47 1
+a47 1
+
+d49 1
+a49 1
+
+d57 1
+a57 1
+
+d62 1
+a62 1
+
+d69 1
+a69 1
+
+d84 1
+a84 1
+
+d93 2
+a94 2
+        double ar = (double)w/h;
+
+d103 1
+a103 1
+
+d111 1
+a111 1
+        size.setText("Image Size: "+width*scale+" x "+height*scale+" pixels");
+d114 1
+a114 1
+
+d122 1
+a122 1
+
+d134 2
+a135 3
+        @@Override
+		public void paintComponent(Graphics g) {
+            double scale = 0.4+0.06*getScale();
+d138 2
+a139 2
+            Image img = scale == 1.0 ? image :
+                image.getScaledInstance(w,h,Image.SCALE_DEFAULT);
+d145 1
+a145 1
+
+@
+
+
+1.1
+log
+@file ScaleSelector.java was initially added on branch beta.
+@
+text
+@d1 146
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 123
+package prefuse.util.display;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Image;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+/**
+ * A widget which displays a preview image and help select an associated
+ * scale for the image.
+ *  
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ScaleSelector extends JComponent implements ChangeListener {
+
+    private final static int MAX_SIZE = 135;
+    
+    private ImagePanel preview;
+    private JLabel     value;
+    private JLabel     size;
+    private JSlider    slider;
+    private Image      image;
+    private int width, height;
+    
+    public ScaleSelector() {
+        slider = new JSlider(1,10,1);
+        value  = new JLabel("x1");
+        size = new JLabel("   ");
+        preview = new ImagePanel();
+        
+        value.setPreferredSize(new Dimension(25,10));
+        size.setHorizontalAlignment(JLabel.CENTER);
+        slider.setMajorTickSpacing(1);
+        slider.setSnapToTicks(true);
+        slider.addChangeListener(this);
+        
+        setLayout(new BorderLayout());
+        
+        Box b1 = new Box(BoxLayout.X_AXIS);
+        b1.add(Box.createHorizontalStrut(5));
+        b1.add(Box.createHorizontalGlue());
+        b1.add(preview);
+        b1.add(Box.createHorizontalGlue());
+        b1.add(Box.createHorizontalStrut(5));
+        add(b1, BorderLayout.CENTER);
+        
+        Box b2 = new Box(BoxLayout.X_AXIS);
+        b2.add(slider);
+        b2.add(Box.createHorizontalStrut(5));
+        b2.add(value);
+        
+        Box b3 = new Box(BoxLayout.X_AXIS);
+        b3.add(Box.createHorizontalStrut(5));
+        b3.add(Box.createHorizontalGlue());
+        b3.add(size);
+        b3.add(Box.createHorizontalGlue());
+        b3.add(Box.createHorizontalStrut(5));
+        
+        Box b4 = new Box(BoxLayout.Y_AXIS);
+        b4.add(b2);
+        b4.add(b3);
+        add(b4, BorderLayout.SOUTH);
+    } //
+
+    public void setImage(Image img) {
+        image = getScaledImage(img);
+        stateChanged(null);
+    } //
+    
+    private Image getScaledImage(Image img) {
+        int w = width = img.getWidth(null);
+        int h = height = img.getHeight(null);
+        double ar = ((double)w)/h;
+        
+        int nw = MAX_SIZE, nh = MAX_SIZE;
+        if ( w > h ) {
+            nh = (int)Math.round(nw/ar);
+        } else {
+            nw = (int)Math.round(nh*ar);
+        }
+        return img.getScaledInstance(nw,nh,Image.SCALE_SMOOTH);
+    } //
+    
+    public void stateChanged(ChangeEvent evt) {
+        int scale = slider.getValue();
+        value.setText("x"+String.valueOf(scale));
+        size.setText("Image Size: "+(width*scale)+" x "+(height*scale)+" pixels");
+        preview.repaint();
+    } //
+    
+    public double getScale() {
+        return slider.getValue();
+    } //
+    
+    public class ImagePanel extends JComponent {
+        Dimension d = new Dimension(MAX_SIZE, MAX_SIZE);
+        public ImagePanel() {
+            this.setPreferredSize(d);
+            this.setMinimumSize(d);
+            this.setMaximumSize(d);
+        }
+        public void paintComponent(Graphics g) {
+            double scale = 0.4+(0.06*getScale());
+            int w = (int)Math.round(scale*image.getWidth(null));
+            int h = (int)Math.round(scale*image.getHeight(null));
+            Image img = (scale == 1.0 ? image : 
+                image.getScaledInstance(w,h,Image.SCALE_DEFAULT));
+            int x = (MAX_SIZE-w)/2;
+            int y = (MAX_SIZE-h)/2;
+            g.drawImage(img,x,y,null);
+        } //
+    } //
+    
+} // end of class ScaleSelector
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d17 5
+a21 4
+ * Swing widget which displays a preview image and helps select the
+ * scale for an exported image.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a33 3
+    /**
+     * Create a new ScaleSelector.
+     */
+d72 1
+a72 1
+    }
+a73 4
+    /**
+     * Set the preview image.
+     * @@param img the preview image
+     */
+d77 1
+a77 1
+    }
+a78 5
+    /**
+     * Get a scaled version of the input image.
+     * @@param img the input image
+     * @@return a scaled version of the image
+     */
+d91 1
+a91 1
+    }
+a92 4
+    /**
+     * Monitor changes to the scale slider.
+     * @@see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
+     */
+d98 1
+a98 1
+    }
+a99 4
+    /**
+     * Get the current image scale reported by the slider.
+     * @@return the image scale to use
+     */
+d102 1
+a102 1
+    }
+a103 4
+    /**
+     * Swing component that draws an image scaled to the current
+     * scale factor.
+     */
+d120 2
+a121 2
+        }
+    }
+@
+
+

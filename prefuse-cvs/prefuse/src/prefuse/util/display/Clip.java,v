@@ -1,0 +1,1260 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.30.09.08.07;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.43;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.display;
+
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+import java.util.logging.Logger;
+
+/**
+ * Represents a clipping rectangle in a prefuse <code>Display</code>.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class Clip {
+    
+    private static final byte EMPTY   = 0;
+    private static final byte INUSE   = 1;
+    private static final byte INVALID = 2;
+    
+    private double[] clip = new double[8];
+    private byte status = INVALID;
+    
+    /**
+     * Reset the clip to an empty status.
+     */
+    public void reset() {
+        status = EMPTY;
+    }
+    
+    /**
+     * Invalidate the clip. In this state, the clip contents have no meaning.
+     */
+    public void invalidate() {
+        status = INVALID;
+    }
+       
+    /**
+     * Set the clip contents, and set the status to valid and in use.
+     * @@param c the clip whose contents should be copied
+     */
+    public void setClip(Clip c) {
+        status = INUSE;
+        System.arraycopy(c.clip, 0, clip, 0, clip.length);
+    }
+    
+    /**
+     * Set the clip contents, and set the status to valid and in use.
+     * @@param r the clip contents to copy
+     */
+    public void setClip(Rectangle2D r) {
+        setClip(r.getX(),r.getY(),r.getWidth(),r.getHeight());
+    }
+    
+    /**
+     * Set the clip contents, and set the status to valid and in use.
+     * @@param x the minimum x-coordinate
+     * @@param y the minimum y-coorindate
+     * @@param w the clip width
+     * @@param h the clip height
+     */
+    public void setClip(double x, double y, double w, double h) {
+        status = INUSE;
+        clip[0] = x;
+        clip[1] = y;
+        clip[6] = x+w;
+        clip[7] = y+h;
+    }
+    
+    /**
+     * Transform the clip contents. A new clip region will be created
+     * which is the bounding box of the transformed region.
+     * @@param at the affine transform
+     */
+    public void transform(AffineTransform at) {
+        // make the extra corner points valid
+        clip[2] = clip[0]; clip[3] = clip[7];
+        clip[4] = clip[6]; clip[5] = clip[1];
+        
+        // transform the points
+        at.transform(clip,0,clip,0,4);
+        
+        // make safe against rotation
+        double xmin = clip[0], ymin = clip[1];
+        double xmax = clip[6], ymax = clip[7];
+        for ( int i=0; i<7; i+=2 ) {
+            if ( clip[i] < xmin )
+                xmin = clip[i];
+            if ( clip[i] > xmax )
+                xmax = clip[i];
+            if ( clip[i+1] < ymin )
+                ymin = clip[i+1];
+            if ( clip[i+1] > ymax )
+                ymax = clip[i+1];
+        }
+        clip[0] = xmin; clip[1] = ymin;
+        clip[6] = xmax; clip[7] = ymax;
+    }
+    
+    /**
+     * Limit the clip such that it fits within the specified region.
+     * @@param x1 the minimum x-coordinate
+     * @@param y1 the minimum y-coorindate
+     * @@param x2 the maximum x-coordinate
+     * @@param y2 the maximum y-coorindate
+     */
+    public void limit(double x1, double y1, double x2, double y2) {
+        clip[0] = Math.max(clip[0],x1);
+        clip[1] = Math.max(clip[1],y1);
+        clip[6] = Math.min(clip[6],x2);
+        clip[7] = Math.min(clip[7],y2);
+    }
+    
+    /**
+     * Indicates if this Clip intersects the given rectangle expanded
+     * by the additional margin pace.
+     * @@param r the rectangle to test for intersect
+     * @@param margin additional margin "bleed" to include in the intersection
+     * @@return true if the clip intersects the expanded region, false otherwise
+     */
+    public boolean intersects(Rectangle2D r, double margin) {
+        double tw = clip[6]-clip[0];
+        double th = clip[7]-clip[1];
+        double rw = r.getWidth();
+        double rh = r.getHeight();
+        if (rw < 0 || rh < 0 || tw < 0 || th < 0) {
+            return false;
+        }
+        double tx = clip[0];
+        double ty = clip[1];
+        double rx = r.getX()-margin;
+        double ry = r.getY()-margin;
+        rw += rx+2*margin;
+        rh += ry+2*margin;
+        tw += tx;
+        th += ty;
+        //      overflow || intersect
+        return ((rw < rx || rw > tx) &&
+                (rh < ry || rh > ty) &&
+                (tw < tx || tw > rx) &&
+                (th < ty || th > ry));
+    }
+      
+    /**
+     * Union this clip with another clip. As a result, this clip
+     * will become a bounding box around the two original clips.
+     * @@param c the clip to union with
+     */
+    public void union(Clip c) {
+        if ( status == INVALID )
+            return;
+        if ( status == EMPTY ) {
+            setClip(c);
+            status = INUSE;
+            return;
+        }
+        clip[0] = Math.min(clip[0], c.clip[0]);
+        clip[1] = Math.min(clip[1], c.clip[1]);
+        clip[6] = Math.max(clip[6], c.clip[6]);
+        clip[7] = Math.max(clip[7], c.clip[7]);
+    }
+    
+    /**
+     * Union this clip with another region. As a result, this clip
+     * will become a bounding box around the two original regions.
+     * @@param r the rectangle to union with
+     */
+    public void union(Rectangle2D r) {
+        if ( status == INVALID )
+            return;
+        
+        double minx = r.getMinX();
+        double miny = r.getMinY();
+        double maxx = r.getMaxX();
+        double maxy = r.getMaxY();
+        
+        if ( Double.isNaN(minx) || Double.isNaN(miny) ||
+             Double.isNaN(maxx) || Double.isNaN(maxy) ) {
+            Logger.getLogger(getClass().getName()).warning(
+                "Union with invalid clip region: "+r);
+            return;
+        }
+        
+        if ( status == EMPTY ) {
+            setClip(r);
+            status = INUSE;
+            return;
+        }
+        clip[0] = Math.min(clip[0], minx);
+        clip[1] = Math.min(clip[1], miny);
+        clip[6] = Math.max(clip[6], maxx);
+        clip[7] = Math.max(clip[7], maxy);
+    }
+    
+    /**
+     * Union this clip with another region. As a result, this clip
+     * will become a bounding box around the two original regions.
+     * @@param x the x-coordinate of the region to union with
+     * @@param y the y-coordinate of the region to union with
+     * @@param w the width of the region to union with
+     * @@param h the height of the region to union with
+     */
+    public void union(double x, double y, double w, double h) {
+        if ( status == INVALID )
+            return;
+        if ( status == EMPTY ) {
+            setClip(x,y,w,h);
+            status = INUSE;
+            return;
+        }
+        clip[0] = Math.min(clip[0], x);
+        clip[1] = Math.min(clip[1], y);
+        clip[6] = Math.max(clip[6], x+w);
+        clip[7] = Math.max(clip[7], y+h);
+    }
+    
+    /**
+     * Intersect this clip with another region. As a result, this
+     * clip will become the intersecting area of the two regions.
+     * @@param c the clip to intersect with
+     */
+    public void intersection(Clip c) {
+        if ( status == INVALID )
+            return;
+        if ( status == EMPTY ) {
+            setClip(c);
+            status = INUSE;
+            return;
+        }
+        clip[0] = Math.max(clip[0], c.clip[0]);
+        clip[1] = Math.max(clip[1], c.clip[1]);
+        clip[6] = Math.min(clip[6], c.clip[6]);
+        clip[7] = Math.min(clip[7], c.clip[7]);
+    }
+    
+    /**
+     * Intersect this clip with another region. As a result, this
+     * clip will become the intersecting area of the two regions.
+     * @@param r the rectangle to intersect with
+     */
+    public void intersection(Rectangle2D r) {
+        if ( status == INVALID )
+            return;
+        if ( status == EMPTY ) {
+            setClip(r);
+            status = INUSE;
+            return;
+        }
+        clip[0] = Math.max(clip[0], r.getMinX());
+        clip[1] = Math.max(clip[1], r.getMinY());
+        clip[6] = Math.min(clip[6], r.getMaxX());
+        clip[7] = Math.min(clip[7], r.getMaxY());
+    }
+    
+    /**
+     * Intersect this clip with another region. As a result, this
+     * clip will become the intersecting area of the two regions.
+     * @@param x the x-coordinate of the region to intersect with
+     * @@param y the y-coordinate of the region to intersect with
+     * @@param w the width of the region to intersect with
+     * @@param h the height of the region to intersect with
+     */
+    public void intersection(double x, double y, double w, double h) {
+        if ( status == INVALID )
+            return;
+        if ( status == EMPTY ) {
+            setClip(x,y,w,h);
+            status = INUSE;
+            return;
+        }
+        clip[0] = Math.max(clip[0], x);
+        clip[1] = Math.max(clip[1], y);
+        clip[6] = Math.min(clip[6], x+w);
+        clip[7] = Math.min(clip[7], y+h);
+    }
+    
+    /**
+     * Minimally expand the clip such that each coordinate is an integer.
+     */
+    public void expandToIntegerLimits() {
+        clip[0] = Math.floor(clip[0]);
+        clip[1] = Math.floor(clip[1]);
+        clip[6] = Math.ceil(clip[6]);
+        clip[7] = Math.ceil(clip[7]);
+    }
+    
+    /**
+     * Expand the clip in all directions by the given value.
+     * @@param b the value to expand by
+     */
+    public void expand(double b) {
+        clip[0] -= b; clip[1] -= b;
+        clip[6] += b; clip[7] += b;
+    }
+
+    /**
+     * Grow the clip width and height by the given value. The minimum
+     * coordinates will be unchanged.
+     * @@param b the value to grow the width and height by
+     */
+    public void grow(double b) {
+        clip[6] += b; clip[7] += b;
+    }
+    
+    /**
+     * Get the minimum x-coordinate.
+     * @@return the minimum x-coordinate
+     */
+    public double getMinX() {
+        return clip[0];
+    }
+    
+    /**
+     * Get the minimum y-coordinate.
+     * @@return the minimum y-coordinate
+     */
+    public double getMinY() {
+        return clip[1];
+    }
+    
+    /**
+     * Get the maximum x-coordinate.
+     * @@return the maximum x-coordinate
+     */
+    public double getMaxX() {
+        return clip[6];
+    }
+    
+    /**
+     * Get the maximum y-coordinate.
+     * @@return the maximum y-coordinate
+     */
+    public double getMaxY() {
+        return clip[7];
+    }
+    
+    /**
+     * Get the clip's width
+     * @@return the clip width
+     */
+    public double getWidth() {
+        return clip[6]-clip[0];
+    }
+
+    /**
+     * Get the clip's height
+     * @@return the clip height
+     */
+    public double getHeight() {
+        return clip[7]-clip[1];
+    }
+    
+    /**
+     * Indicates if the clip is set to an empty status.
+     * @@return true if the clip is set to empty, false otherwise
+     */
+    public boolean isEmpty() {
+        return status==EMPTY;
+    }
+    
+    /**
+     * Indicates if the clip is set to an invalid status.
+     * @@return true if the clip is set to invalid, false otherwise
+     */
+    public boolean isInvalid() {
+        return status==INVALID;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see java.lang.Object#equals(java.lang.Object)
+     */
+    public boolean equals(Object o) {
+        if ( o instanceof Rectangle2D ) {
+            Rectangle2D r = (Rectangle2D)o;
+            return ( r.getMinX()==clip[0] && r.getMinY()==clip[1] &&
+                     r.getMaxX()==clip[6] && r.getMaxY()==clip[7] );
+        } else if ( o instanceof Clip ) {
+            Clip r = (Clip)o;
+            if ( r.status == status ) {
+                if ( status == Clip.INUSE )
+                    return ( r.clip[0]==clip[0] && r.clip[1]==clip[1] &&
+                            r.clip[6]==clip[6] && r.clip[7]==clip[7] );
+                else
+                    return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+    
+    /**
+     * @@see java.lang.Object#toString()
+     */
+    public String toString() {
+        StringBuffer sb = new StringBuffer(20);
+        sb.append("Clip[");
+        switch (status) {
+        case INVALID:
+            sb.append("invalid");
+            break;
+        case EMPTY:
+            sb.append("empty");
+            break;
+        default:
+            sb.append(clip[0]).append(",");
+            sb.append(clip[1]).append(",");
+            sb.append(clip[6]).append(",");
+            sb.append(clip[7]);
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+    
+} // end of class Clip
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d13 1
+a13 1
+
+d17 2
+a18 2
+
+    private final double[] clip = new double[8];
+d20 1
+a20 1
+
+d27 1
+a27 1
+
+d34 1
+a34 1
+
+d43 1
+a43 1
+
+d51 1
+a51 1
+
+d66 1
+a66 1
+
+d76 1
+a76 1
+
+d79 1
+a79 1
+
+d84 8
+a91 12
+            if ( clip[i] < xmin ) {
+				xmin = clip[i];
+			}
+            if ( clip[i] > xmax ) {
+				xmax = clip[i];
+			}
+            if ( clip[i+1] < ymin ) {
+				ymin = clip[i+1];
+			}
+            if ( clip[i+1] > ymax ) {
+				ymax = clip[i+1];
+			}
+d96 1
+a96 1
+
+d110 1
+a110 1
+
+d135 1
+a135 1
+        return (rw < rx || rw > tx) &&
+d138 1
+a138 1
+                (th < ty || th > ry);
+d140 1
+a140 1
+
+d147 2
+a148 3
+        if ( status == INVALID ) {
+			return;
+		}
+d159 1
+a159 1
+
+d166 3
+a168 4
+        if ( status == INVALID ) {
+			return;
+		}
+
+d173 1
+a173 1
+
+d180 1
+a180 1
+
+d191 1
+a191 1
+
+d201 2
+a202 3
+        if ( status == INVALID ) {
+			return;
+		}
+d213 1
+a213 1
+
+d220 2
+a221 3
+        if ( status == INVALID ) {
+			return;
+		}
+d232 1
+a232 1
+
+d239 2
+a240 3
+        if ( status == INVALID ) {
+			return;
+		}
+d251 1
+a251 1
+
+d261 2
+a262 3
+        if ( status == INVALID ) {
+			return;
+		}
+d273 1
+a273 1
+
+d283 1
+a283 1
+
+d301 1
+a301 1
+
+d309 1
+a309 1
+
+d317 1
+a317 1
+
+d325 1
+a325 1
+
+d333 1
+a333 1
+
+d349 1
+a349 1
+
+d357 1
+a357 1
+
+d365 1
+a365 1
+
+d367 1
+a367 1
+
+d371 1
+a371 2
+    @@Override
+	public boolean equals(Object o) {
+d374 2
+a375 2
+            return r.getMinX()==clip[0] && r.getMinY()==clip[1] &&
+                     r.getMaxX()==clip[6] && r.getMaxY()==clip[7];
+d379 5
+a383 6
+                if ( status == Clip.INUSE ) {
+					return r.clip[0]==clip[0] && r.clip[1]==clip[1] &&
+                            r.clip[6]==clip[6] && r.clip[7]==clip[7];
+				} else {
+					return true;
+				}
+d391 1
+a391 1
+
+d395 1
+a395 2
+    @@Override
+	public String toString() {
+d414 1
+a414 1
+
+@
+
+
+1.1
+log
+@file Clip.java was initially added on branch beta.
+@
+text
+@d1 415
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 253
+package prefuse.util.display;
+
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+
+/**
+ * Represents a clipping rectangle in a prefuse <code>Display</code>.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class Clip {
+    
+    private static final byte EMPTY   = 0;
+    private static final byte INUSE   = 1;
+    private static final byte INVALID = 2;
+    
+    private double[] clip = new double[8];
+    private byte status = INVALID;
+    
+    public void reset() {
+        status = EMPTY;
+    }
+    
+    public void invalidate() {
+        status = INVALID;
+    }
+       
+    public void setClip(Clip c) {
+        status = INUSE;
+        System.arraycopy(c.clip, 0, clip, 0, clip.length);
+    } //
+    
+    public void setClip(Rectangle2D r) {
+        setClip(r.getX(),r.getY(),r.getWidth(),r.getHeight());
+    } //
+    
+    public void setClip(double x, double y, double w, double h) {
+        status = INUSE;
+        clip[0] = x;
+        clip[1] = y;
+        clip[6] = x+w;
+        clip[7] = y+h;
+    } //
+    
+    public void transform(AffineTransform at) {
+        // make the extra corner points valid
+        clip[2] = clip[0]; clip[3] = clip[7];
+        clip[4] = clip[6]; clip[5] = clip[1];
+        
+        // transform the points
+        at.transform(clip,0,clip,0,4);
+        
+        // make safe against rotation
+        double xmin = clip[0], ymin = clip[1];
+        double xmax = clip[6], ymax = clip[7];
+        for ( int i=0; i<7; i+=2 ) {
+            if ( clip[i] < xmin )
+                xmin = clip[i];
+            if ( clip[i] > xmax )
+                xmax = clip[i];
+            if ( clip[i+1] < ymin )
+                ymin = clip[i+1];
+            if ( clip[i+1] > ymax )
+                ymax = clip[i+1];
+        }
+        clip[0] = xmin; clip[1] = ymin;
+        clip[6] = xmax; clip[7] = ymax;
+    } //
+    
+    public void limit(double x, double y, double w, double h) {
+        clip[0] = Math.max(clip[0],x);
+        clip[1] = Math.max(clip[1],y);
+        clip[6] = Math.min(clip[6],w);
+        clip[7] = Math.min(clip[7],h);
+    } //
+    
+    public boolean intersects(Rectangle2D r, double pixel) {
+        double tw = clip[6]-clip[0];
+        double th = clip[7]-clip[1];
+        double rw = r.getWidth();
+        double rh = r.getHeight();
+        if (rw < 0 || rh < 0 || tw < 0 || th < 0) {
+            return false;
+        }
+        double tx = clip[0];
+        double ty = clip[1];
+        double rx = r.getX()-pixel;
+        double ry = r.getY()-pixel;
+        rw += rx+2*pixel;
+        rh += ry+2*pixel;
+        tw += tx;
+        th += ty;
+        //      overflow || intersect
+        return ((rw < rx || rw > tx) &&
+                (rh < ry || rh > ty) &&
+                (tw < tx || tw > rx) &&
+                (th < ty || th > ry));
+    } //
+       
+    public void union(Clip c) {
+        if ( status == INVALID )
+            return;
+        if ( status == EMPTY ) {
+            setClip(c);
+            status = INUSE;
+            return;
+        }
+        clip[0] = Math.min(clip[0], c.clip[0]);
+        clip[1] = Math.min(clip[1], c.clip[1]);
+        clip[6] = Math.max(clip[6], c.clip[6]);
+        clip[7] = Math.max(clip[7], c.clip[7]);
+    } //
+    
+    public void union(Rectangle2D r) {
+        if ( status == INVALID )
+            return;
+        if ( status == EMPTY ) {
+            setClip(r);
+            status = INUSE;
+            return;
+        }
+        clip[0] = Math.min(clip[0], r.getMinX());
+        clip[1] = Math.min(clip[1], r.getMinY());
+        clip[6] = Math.max(clip[6], r.getMaxX());
+        clip[7] = Math.max(clip[7], r.getMaxY());
+    } //
+    
+    public void union(double x, double y, double w, double h) {
+        if ( status == INVALID )
+            return;
+        if ( status == EMPTY ) {
+            setClip(x,y,w,h);
+            status = INUSE;
+            return;
+        }
+        clip[0] = Math.min(clip[0], x);
+        clip[1] = Math.min(clip[1], y);
+        clip[6] = Math.max(clip[6], x+w);
+        clip[7] = Math.max(clip[7], y+h);
+    } //
+    
+    public void intersection(Clip c) {
+        if ( status == INVALID )
+            return;
+        if ( status == EMPTY ) {
+            setClip(c);
+            status = INUSE;
+            return;
+        }
+        clip[0] = Math.max(clip[0], c.clip[0]);
+        clip[1] = Math.max(clip[1], c.clip[1]);
+        clip[6] = Math.min(clip[6], c.clip[6]);
+        clip[7] = Math.min(clip[7], c.clip[7]);
+    } //
+    
+    public void intersection(Rectangle2D r) {
+        if ( status == INVALID )
+            return;
+        if ( status == EMPTY ) {
+            setClip(r);
+            status = INUSE;
+            return;
+        }
+        clip[0] = Math.max(clip[0], r.getMinX());
+        clip[1] = Math.max(clip[1], r.getMinY());
+        clip[6] = Math.min(clip[6], r.getMaxX());
+        clip[7] = Math.min(clip[7], r.getMaxY());
+    }
+    
+    public void intersection(double x, double y, double w, double h) {
+        if ( status == INVALID )
+            return;
+        if ( status == EMPTY ) {
+            setClip(x,y,w,h);
+            status = INUSE;
+            return;
+        }
+        clip[0] = Math.max(clip[0], x);
+        clip[1] = Math.max(clip[1], y);
+        clip[6] = Math.min(clip[6], x+w);
+        clip[7] = Math.min(clip[7], y+h);
+    } //
+    
+    public void expandToIntegerLimits() {
+        clip[0] = Math.floor(clip[0]);
+        clip[1] = Math.floor(clip[1]);
+        clip[6] = Math.ceil(clip[6]);
+        clip[7] = Math.ceil(clip[7]);
+    }
+    
+    public void expand(double b) {
+        clip[0] -= b; clip[1] -= b;
+        clip[6] += b; clip[7] += b;
+    }
+    
+    public void grow(double b) {
+        clip[6] += b; clip[7] += b;
+    }
+    
+    public double getMinX() {
+        return clip[0];
+    } //
+    
+    public double getMinY() {
+        return clip[1];
+    } //
+    
+    public double getMaxX() {
+        return clip[6];
+    }
+    
+    public double getMaxY() {
+        return clip[7];
+    }
+    
+    public double getWidth() {
+        return clip[6]-clip[0];
+    } //
+    
+    public double getHeight() {
+        return clip[7]-clip[1];
+    } //
+    
+    public boolean isEmpty() {
+        return status==EMPTY;
+    }
+    
+    public boolean isInvalid() {
+        return status==INVALID;
+    }
+    
+    public String toString() {
+        StringBuffer sb = new StringBuffer(20);
+        sb.append("Clip[");
+        switch (status) {
+        case INVALID:
+            sb.append("invalid");
+            break;
+        case EMPTY:
+            sb.append("empty");
+            break;
+        default:
+            sb.append(clip[0]).append(",");
+            sb.append(clip[1]).append(",");
+            sb.append(clip[6]).append(",");
+            sb.append(clip[7]);
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+    
+} // end of class Clip
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d32 1
+a32 1
+    }
+d36 1
+a36 1
+    }
+d44 1
+a44 1
+    }
+d69 1
+a69 1
+    }
+d76 1
+a76 1
+    }
+d99 1
+a99 1
+    }
+d113 1
+a113 1
+    }
+d127 1
+a127 1
+    }
+d141 1
+a141 1
+    }
+d155 1
+a155 1
+    }
+d183 1
+a183 1
+    }
+d203 1
+a203 1
+    }
+d207 1
+a207 1
+    }
+d219 1
+a219 1
+    }
+d223 1
+a223 1
+    }
+a232 23
+    // ------------------------------------------------------------------------
+    
+    public boolean equals(Object o) {
+    	if ( o instanceof Rectangle2D ) {
+    		Rectangle2D r = (Rectangle2D)o;
+    		return ( r.getMinX()==clip[0] && r.getMinY()==clip[1] &&
+    				 r.getMaxX()==clip[6] && r.getMaxY()==clip[7] );
+    	} else if ( o instanceof Clip ) {
+    		Clip r = (Clip)o;
+    		if ( r.status == status ) {
+    			if ( status == Clip.INUSE )
+    				return ( r.clip[0]==clip[0] && r.clip[1]==clip[1] &&
+    						r.clip[6]==clip[6] && r.clip[7]==clip[7] );
+    			else
+    				return true;
+    		} else {
+    			return false;
+    		}
+    	} else {
+    		return false;
+    	}
+    }
+    
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d236 18
+a253 18
+        if ( o instanceof Rectangle2D ) {
+            Rectangle2D r = (Rectangle2D)o;
+            return ( r.getMinX()==clip[0] && r.getMinY()==clip[1] &&
+                     r.getMaxX()==clip[6] && r.getMaxY()==clip[7] );
+        } else if ( o instanceof Clip ) {
+            Clip r = (Clip)o;
+            if ( r.status == status ) {
+                if ( status == Clip.INUSE )
+                    return ( r.clip[0]==clip[0] && r.clip[1]==clip[1] &&
+                            r.clip[6]==clip[6] && r.clip[7]==clip[7] );
+                else
+                    return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+@
+
+
+1.1.2.4
+log
+@Much more javadoc
+@
+text
+@d9 2
+a10 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a20 3
+    /**
+     * Reset the clip to an empty status.
+     */
+a24 3
+    /**
+     * Invalidate the clip. In this state, the clip contents have no meaning.
+     */
+a28 4
+    /**
+     * Set the clip contents, and set the status to valid and in use.
+     * @@param c the clip whose contents should be copied
+     */
+a33 4
+    /**
+     * Set the clip contents, and set the status to valid and in use.
+     * @@param r the clip contents to copy
+     */
+a37 7
+    /**
+     * Set the clip contents, and set the status to valid and in use.
+     * @@param x the minimum x-coordinate
+     * @@param y the minimum y-coorindate
+     * @@param w the clip width
+     * @@param h the clip height
+     */
+a45 5
+    /**
+     * Transform the clip contents. A new clip region will be created
+     * which is the bounding box of the transformed region.
+     * @@param at the affine transform
+     */
+d71 8
+a78 22
+    /**
+     * Limit the clip such that it fits within the specified region.
+     * @@param x1 the minimum x-coordinate
+     * @@param y1 the minimum y-coorindate
+     * @@param x2 the maximum x-coordinate
+     * @@param y2 the maximum y-coorindate
+     */
+    public void limit(double x1, double y1, double x2, double y2) {
+        clip[0] = Math.max(clip[0],x1);
+        clip[1] = Math.max(clip[1],y1);
+        clip[6] = Math.min(clip[6],x2);
+        clip[7] = Math.min(clip[7],y2);
+    }
+    
+    /**
+     * Indicates if this Clip intersects the given rectangle expanded
+     * by the additional margin pace.
+     * @@param r the rectangle to test for intersect
+     * @@param margin additional margin "bleed" to include in the intersection
+     * @@return true if the clip intersects the expanded region, false otherwise
+     */
+    public boolean intersects(Rectangle2D r, double margin) {
+d88 4
+a91 4
+        double rx = r.getX()-margin;
+        double ry = r.getY()-margin;
+        rw += rx+2*margin;
+        rh += ry+2*margin;
+d100 1
+a100 6
+      
+    /**
+     * Union this clip with another clip. As a result, this clip
+     * will become a bounding box around the two original clips.
+     * @@param c the clip to union with
+     */
+a114 5
+    /**
+     * Union this clip with another region. As a result, this clip
+     * will become a bounding box around the two original regions.
+     * @@param r the rectangle to union with
+     */
+a128 8
+    /**
+     * Union this clip with another region. As a result, this clip
+     * will become a bounding box around the two original regions.
+     * @@param x the x-coordinate of the region to union with
+     * @@param y the y-coordinate of the region to union with
+     * @@param w the width of the region to union with
+     * @@param h the height of the region to union with
+     */
+a142 5
+    /**
+     * Intersect this clip with another region. As a result, this
+     * clip will become the intersecting area of the two regions.
+     * @@param c the clip to intersect with
+     */
+a156 5
+    /**
+     * Intersect this clip with another region. As a result, this
+     * clip will become the intersecting area of the two regions.
+     * @@param r the rectangle to intersect with
+     */
+a170 8
+    /**
+     * Intersect this clip with another region. As a result, this
+     * clip will become the intersecting area of the two regions.
+     * @@param x the x-coordinate of the region to intersect with
+     * @@param y the y-coordinate of the region to intersect with
+     * @@param w the width of the region to intersect with
+     * @@param h the height of the region to intersect with
+     */
+a184 3
+    /**
+     * Minimally expand the clip such that each coordinate is an integer.
+     */
+a191 4
+    /**
+     * Expand the clip in all directions by the given value.
+     * @@param b the value to expand by
+     */
+d196 1
+a196 6
+
+    /**
+     * Grow the clip width and height by the given value. The minimum
+     * coordinates will be unchanged.
+     * @@param b the value to grow the width and height by
+     */
+a200 4
+    /**
+     * Get the minimum x-coordinate.
+     * @@return the minimum x-coordinate
+     */
+a204 4
+    /**
+     * Get the minimum y-coordinate.
+     * @@return the minimum y-coordinate
+     */
+a208 4
+    /**
+     * Get the maximum x-coordinate.
+     * @@return the maximum x-coordinate
+     */
+a212 4
+    /**
+     * Get the maximum y-coordinate.
+     * @@return the maximum y-coordinate
+     */
+a216 4
+    /**
+     * Get the clip's width
+     * @@return the clip width
+     */
+d220 1
+a220 5
+
+    /**
+     * Get the clip's height
+     * @@return the clip height
+     */
+a224 4
+    /**
+     * Indicates if the clip is set to an empty status.
+     * @@return true if the clip is set to empty, false otherwise
+     */
+a228 4
+    /**
+     * Indicates if the clip is set to an invalid status.
+     * @@return true if the clip is set to invalid, false otherwise
+     */
+a234 3
+    /**
+     * @@see java.lang.Object#equals(java.lang.Object)
+     */
+a255 3
+    /**
+     * @@see java.lang.Object#toString()
+     */
+@
+
+
+1.1.2.5
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@a4 1
+import java.util.logging.Logger;
+a166 13
+        
+        double minx = r.getMinX();
+        double miny = r.getMinY();
+        double maxx = r.getMaxX();
+        double maxy = r.getMaxY();
+        
+        if ( Double.isNaN(minx) || Double.isNaN(miny) ||
+             Double.isNaN(maxx) || Double.isNaN(maxy) ) {
+            Logger.getLogger(getClass().getName()).warning(
+                "Union with invalid clip region: "+r);
+            return;
+        }
+        
+d172 4
+a175 4
+        clip[0] = Math.min(clip[0], minx);
+        clip[1] = Math.min(clip[1], miny);
+        clip[6] = Math.max(clip[6], maxx);
+        clip[7] = Math.max(clip[7], maxy);
+@
+
+

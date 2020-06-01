@@ -1,0 +1,272 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.15;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.force;
+
+/**
+ * Implements a viscosity/drag force to help stabilize items.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class DragForce extends AbstractForce {
+
+    private static String[] pnames = new String[] { "DragCoefficient" };
+    
+    public static final float DEFAULT_DRAG_COEFF = 0.01f;
+    public static final float DEFAULT_MIN_DRAG_COEFF = 0.0f;
+    public static final float DEFAULT_MAX_DRAG_COEFF = 0.1f;
+    public static final int DRAG_COEFF = 0;
+
+    /**
+     * Create a new DragForce.
+     * @@param dragCoeff the drag co-efficient
+     */
+    public DragForce(float dragCoeff) {
+        params = new float[] { dragCoeff };
+        minValues = new float[] { DEFAULT_MIN_DRAG_COEFF };
+        maxValues = new float[] { DEFAULT_MAX_DRAG_COEFF };
+    }
+
+    /**
+     * Create a new DragForce with default drag co-efficient.
+     */
+    public DragForce() {
+        this(DEFAULT_DRAG_COEFF);
+    }
+
+    /**
+     * Returns true.
+     * @@see prefuse.util.force.Force#isItemForce()
+     */
+    public boolean isItemForce() {
+        return true;
+    }
+    
+    /**
+     * @@see prefuse.util.force.AbstractForce#getParameterNames()
+     */
+    protected String[] getParameterNames() {
+        return pnames;
+    }
+    
+    /**
+     * @@see prefuse.util.force.Force#getForce(prefuse.util.force.ForceItem)
+     */
+    public void getForce(ForceItem item) {
+        item.force[0] -= params[DRAG_COEFF]*item.velocity[0];
+        item.force[1] -= params[DRAG_COEFF]*item.velocity[1];
+    }
+
+} // end of class DragForce
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d5 1
+a5 1
+ *
+d11 1
+a11 1
+
+d38 1
+a38 2
+    @@Override
+	public boolean isItemForce() {
+d41 1
+a41 1
+
+d45 1
+a45 2
+    @@Override
+	protected String[] getParameterNames() {
+d48 1
+a48 1
+
+d52 1
+a52 2
+    @@Override
+	public void getForce(ForceItem item) {
+@
+
+
+1.1
+log
+@file DragForce.java was initially added on branch beta.
+@
+text
+@d1 57
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 45
+package prefuse.util.force;
+
+/**
+ * Implements a viscosity/drag force to stabilize items.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class DragForce extends AbstractForce {
+
+    private static String[] pnames = new String[] { "DragCoefficient" };
+    
+    public static final float DEFAULT_DRAG_COEFF = 0.01f;
+    public static final float DEFAULT_MIN_DRAG_COEFF = 0.0f;
+    public static final float DEFAULT_MAX_DRAG_COEFF = 0.1f;
+    public static final int DRAG_COEFF = 0;
+
+    public DragForce(float dragCoeff) {
+        params = new float[] { dragCoeff };
+        minValues = new float[] { DEFAULT_MIN_DRAG_COEFF };
+        maxValues = new float[] { DEFAULT_MAX_DRAG_COEFF };
+    } //
+    
+    public DragForce() {
+        this(DEFAULT_DRAG_COEFF);
+    } //
+
+    public boolean isItemForce() {
+        return true;
+    } //
+    
+    protected String[] getParameterNames() {
+        return pnames;
+    } //
+    
+    /**
+     * Calculates the force vector acting on the given item.
+     * @@param item the ForceItem for which to compute the force
+     */
+    public void getForce(ForceItem item) {
+        item.force[0] -= params[DRAG_COEFF]*item.velocity[0];
+        item.force[1] -= params[DRAG_COEFF]*item.velocity[1];
+    } //
+
+} // end of class DragForce@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d45 1
+a45 1
+} // end of class DragForce
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@d4 1
+a4 1
+ * Implements a viscosity/drag force to help stabilize items.
+d6 2
+a7 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a17 4
+    /**
+     * Create a new DragForce.
+     * @@param dragCoeff the drag co-efficient
+     */
+d22 2
+a23 5
+    }
+
+    /**
+     * Create a new DragForce with default drag co-efficient.
+     */
+d26 1
+a26 1
+    }
+a27 4
+    /**
+     * Returns true.
+     * @@see prefuse.util.force.Force#isItemForce()
+     */
+d30 1
+a30 1
+    }
+a31 3
+    /**
+     * @@see prefuse.util.force.AbstractForce#getParameterNames()
+     */
+d34 1
+a34 1
+    }
+d37 2
+a38 1
+     * @@see prefuse.util.force.Force#getForce(prefuse.util.force.ForceItem)
+d43 1
+a43 1
+    }
+@
+
+

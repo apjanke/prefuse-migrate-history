@@ -1,0 +1,198 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.40;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.activity;
+
+/**
+ * Adapter class for ActivityListeners. Provides empty implementations of
+ * ActivityListener routines.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ActivityAdapter implements ActivityListener {
+
+    /**
+     * @@see prefuse.activity.ActivityListener#activityScheduled(prefuse.activity.Activity)
+     */
+    public void activityScheduled(Activity a) {
+    }
+
+    /**
+     * @@see prefuse.activity.ActivityListener#activityStarted(prefuse.activity.Activity)
+     */
+    public void activityStarted(Activity a) {
+    }
+
+    /**
+     * @@see prefuse.activity.ActivityListener#activityStepped(prefuse.activity.Activity)
+     */
+    public void activityStepped(Activity a) {
+    }
+
+    /**
+     * @@see prefuse.activity.ActivityListener#activityFinished(prefuse.activity.Activity)
+     */
+    public void activityFinished(Activity a) {
+    }
+
+    /**
+     * @@see prefuse.activity.ActivityListener#activityCancelled(prefuse.activity.Activity)
+     */
+    public void activityCancelled(Activity a) {
+    }
+
+} // end of class ActivityAdapter
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d6 1
+a6 1
+ *
+@
+
+
+1.1
+log
+@file ActivityAdapter.java was initially added on branch beta.
+@
+text
+@d1 42
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 45
+package prefuse.activity;
+
+
+/**
+ * Adapter class for ActivityListeners. Provides empty implementations of
+ * ActivityListener routines.
+ * 
+ * Feb 9, 2004 - jheer - Created class
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ActivityAdapter implements ActivityListener {
+
+    /**
+     * @@see prefuse.activity.ActivityListener#activityScheduled(prefuse.activity.Activity)
+     */
+    public void activityScheduled(Activity a) {
+    } //
+
+    /**
+     * @@see prefuse.activity.ActivityListener#activityStarted(prefuse.activity.Activity)
+     */
+    public void activityStarted(Activity a) {
+    } //
+
+    /**
+     * @@see prefuse.activity.ActivityListener#activityStepped(prefuse.activity.Activity)
+     */
+    public void activityStepped(Activity a) {
+    } //
+
+    /**
+     * @@see prefuse.activity.ActivityListener#activityFinished(prefuse.activity.Activity)
+     */
+    public void activityFinished(Activity a) {
+    } //
+
+    /**
+     * @@see prefuse.activity.ActivityListener#activityCancelled(prefuse.activity.Activity)
+     */
+    public void activityCancelled(Activity a) {
+    } //
+
+} // end of class ActivityAdapter
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d3 1
+d8 2
+d11 1
+a11 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d19 1
+a19 1
+    }
+d25 1
+a25 1
+    }
+d31 1
+a31 1
+    }
+d37 1
+a37 1
+    }
+d43 1
+a43 1
+    }
+@
+
+

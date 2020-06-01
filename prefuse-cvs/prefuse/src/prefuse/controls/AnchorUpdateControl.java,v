@@ -1,0 +1,523 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.32;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.32;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.24.02.32.36;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.40;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.controls;
+
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+
+import prefuse.Display;
+import prefuse.action.layout.Layout;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Follows the mouse cursor, updating the anchor parameter for any number
+ * of layout instances to match the current cursor position. Will also
+ * run a given activity in response to cursor updates.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class AnchorUpdateControl extends ControlAdapter {
+    
+    private boolean m_anchorOverItem;
+    private Layout[] m_layouts;
+    private String m_action;
+    private Point2D  m_tmp = new Point2D.Double();
+    
+    /**
+     * Create a new AnchorUpdateControl.
+     * @@param layout the layout for which to update the anchor point
+     */
+    public AnchorUpdateControl(Layout layout) {
+        this(layout,null);
+    }
+
+    /**
+     * Create a new AnchorUpdateControl.
+     * @@param layout the layout for which to update the anchor point
+     * @@param action the name of an action to run upon anchor updates
+     */
+    public AnchorUpdateControl(Layout layout, String action) {
+        this(new Layout[] {layout}, action);
+    }
+
+    /**
+     * Create a new AnchorUpdateControl.
+     * @@param layout the layout for which to update the anchor point
+     * @@param action the name of an action to run upon anchor updates
+     * @@param overItem indicates if anchor update events should be processed
+     * while the mouse cursor is hovered over a VisualItem.
+     */
+    public AnchorUpdateControl(Layout layout, String action, boolean overItem)
+    {
+        this(new Layout[] {layout}, action, overItem);
+    }
+    
+    /**
+     * Create a new AnchorUpdateControl.
+     * @@param layout the layouts for which to update the anchor point
+     * @@param action the name of an action to run upon anchor updates
+     */
+    public AnchorUpdateControl(Layout[] layout, String action) {
+        this(layout, action, true);
+    }
+    
+    /**
+     * Create a new AnchorUpdateControl.
+     * @@param layout the layouts for which to update the anchor point
+     * @@param action the name of an action to run upon anchor updates
+     * @@param overItem indicates if anchor update events should be processed
+     * while the mouse cursor is hovered over a VisualItem.
+     */
+    public AnchorUpdateControl(Layout[] layout, String action, boolean overItem)
+    {
+        m_layouts = (Layout[])layout.clone();
+        m_action = action;
+        m_anchorOverItem = overItem;
+    }
+    
+    // ------------------------------------------------------------------------
+
+    /**
+     * @@see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
+     */
+    public void mouseExited(MouseEvent e) {
+        for ( int i=0; i<m_layouts.length; i++ ) 
+            m_layouts[i].setLayoutAnchor(null);
+        runAction(e);
+    }
+    
+    /**
+     * @@see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
+     */
+    public void mouseMoved(MouseEvent e) {
+        moveEvent(e);
+    }
+    
+    /**
+     * @@see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
+     */
+    public void mouseDragged(MouseEvent e) {
+        moveEvent(e);
+    }
+    
+    /**
+     * @@see prefuse.controls.Control#itemDragged(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemDragged(VisualItem item, MouseEvent e) {
+        if ( m_anchorOverItem ) moveEvent(e);
+    }
+
+    /**
+     * @@see prefuse.controls.Control#itemMoved(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+    public void itemMoved(VisualItem item, MouseEvent e) {
+        if ( m_anchorOverItem ) moveEvent(e);
+    }
+    
+    /**
+     * Registers a mouse move event, updating the anchor point for all
+     * registered layout instances.
+     * @@param e the MouseEvent
+     */
+    public void moveEvent(MouseEvent e) {
+        Display d = (Display)e.getSource();
+        d.getAbsoluteCoordinate(e.getPoint(), m_tmp);
+        for ( int i=0; i<m_layouts.length; i++ ) 
+            m_layouts[i].setLayoutAnchor(m_tmp);
+        runAction(e);
+    }
+
+    /**
+     * Runs an optional action upon anchor update.
+     * @@param e MouseEvent
+     */
+    private void runAction(MouseEvent e) {
+        if ( m_action != null ) {
+            Display d = (Display)e.getSource();
+            d.getVisualization().run(m_action);
+        }
+    }
+        
+} // end of class AnchorUpdateControl
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d15 1
+a15 1
+ *
+d19 6
+a24 6
+
+    private final boolean m_anchorOverItem;
+    private final Layout[] m_layouts;
+    private final String m_action;
+    private final Point2D  m_tmp = new Point2D.Double();
+
+d53 1
+a53 1
+
+d62 1
+a62 1
+
+d72 1
+a72 1
+        m_layouts = layout.clone();
+d76 1
+a76 1
+
+d82 3
+a84 5
+    @@Override
+	public void mouseExited(MouseEvent e) {
+        for (Layout element : m_layouts) {
+			element.setLayoutAnchor(null);
+		}
+d87 1
+a87 1
+
+d91 1
+a91 2
+    @@Override
+	public void mouseMoved(MouseEvent e) {
+d94 1
+a94 1
+
+d98 1
+a98 2
+    @@Override
+	public void mouseDragged(MouseEvent e) {
+d101 1
+a101 1
+
+d105 2
+a106 5
+    @@Override
+	public void itemDragged(VisualItem<?> item, MouseEvent e) {
+        if ( m_anchorOverItem ) {
+			moveEvent(e);
+		}
+d112 2
+a113 5
+    @@Override
+	public void itemMoved(VisualItem<?> item, MouseEvent e) {
+        if ( m_anchorOverItem ) {
+			moveEvent(e);
+		}
+d115 1
+a115 1
+
+d124 2
+a125 3
+        for (Layout element : m_layouts) {
+			element.setLayoutAnchor(m_tmp);
+		}
+d139 1
+a139 1
+
+@
+
+
+1.1
+log
+@file AnchorUpdateControl.java was initially added on branch beta.
+@
+text
+@d1 140
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 62
+package prefuse.controls;
+
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+
+import prefuse.Display;
+import prefuse.action.layout.Layout;
+import prefuse.activity.Activity;
+
+
+/**
+ * Follows the mouse cursor, updating the anchor parameter for any number
+ * of layout instances to match the current cursor position. Will also
+ * run a given activity in response to cursor updates.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class AnchorUpdateControl extends ControlAdapter {
+    
+    private Layout[] m_layouts;
+    private Activity m_activity;
+    private Point2D  m_tmp = new Point2D.Float();
+    
+    public AnchorUpdateControl(Layout layout) {
+        this(layout,null);
+    } //
+    
+    public AnchorUpdateControl(Layout layout, Activity update) {
+        this(new Layout[] {layout}, update);
+    } //
+    
+    public AnchorUpdateControl(Layout[] layout, Activity update) {
+        m_layouts = (Layout[])layout.clone();
+        m_activity = update;
+    } //
+    
+    public void mouseExited(MouseEvent e) {
+        for ( int i=0; i<m_layouts.length; i++ ) 
+            m_layouts[i].setLayoutAnchor(null);
+        if ( m_activity != null )
+            m_activity.run();
+    } //
+    
+    public void mouseMoved(MouseEvent e) {
+        moveEvent(e);
+    } //
+    
+    public void mouseDragged(MouseEvent e) {
+        moveEvent(e);
+    } //
+    
+    public void moveEvent(MouseEvent e) {
+        Display d = (Display)e.getSource();
+        d.getAbsoluteCoordinate(e.getPoint(), m_tmp);
+        for ( int i=0; i<m_layouts.length; i++ ) 
+            m_layouts[i].setLayoutAnchor(m_tmp);
+        if ( m_activity != null )
+            m_activity.run();
+    } //
+        
+} // end of class AnchorUpdateControl
+@
+
+
+1.1.2.2
+log
+@Updated distortion mechanisms
+@
+text
+@d8 1
+a8 1
+import prefuse.visual.VisualItem;
+a20 1
+    private boolean m_anchorOverItem;
+d22 2
+a23 2
+    private String m_action;
+    private Point2D  m_tmp = new Point2D.Double();
+d27 1
+a27 1
+    }
+d29 3
+a31 12
+    public AnchorUpdateControl(Layout layout, String action) {
+        this(new Layout[] {layout}, action);
+    }
+    
+    public AnchorUpdateControl(Layout layout, String action, boolean overItem)
+    {
+        this(new Layout[] {layout}, action, overItem);
+    }
+    
+    public AnchorUpdateControl(Layout[] layout, String action) {
+        this(layout, action, true);
+    }
+d33 1
+a33 2
+    public AnchorUpdateControl(Layout[] layout, String action, boolean overItem)
+    {
+d35 2
+a36 3
+        m_action = action;
+        m_anchorOverItem = overItem;
+    }
+a37 2
+    // ------------------------------------------------------------------------
+
+d41 3
+a43 2
+        runAction((Display)e.getSource());
+    }
+d47 1
+a47 1
+    }
+d51 1
+a51 9
+    }
+    
+    public void itemDragged(VisualItem item, MouseEvent e) {
+        if ( m_anchorOverItem ) moveEvent(e);
+    }
+
+    public void itemMoved(VisualItem item, MouseEvent e) {
+        if ( m_anchorOverItem ) moveEvent(e);
+    }
+d58 3
+a60 7
+        runAction((Display)e.getSource());
+    }
+
+    private void runAction(Display d) {
+        if ( m_action != null )
+            d.getVisualization().run(m_action);
+    }
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@d16 2
+a17 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a25 4
+    /**
+     * Create a new AnchorUpdateControl.
+     * @@param layout the layout for which to update the anchor point
+     */
+d29 1
+a29 6
+
+    /**
+     * Create a new AnchorUpdateControl.
+     * @@param layout the layout for which to update the anchor point
+     * @@param action the name of an action to run upon anchor updates
+     */
+d33 1
+a33 8
+
+    /**
+     * Create a new AnchorUpdateControl.
+     * @@param layout the layout for which to update the anchor point
+     * @@param action the name of an action to run upon anchor updates
+     * @@param overItem indicates if anchor update events should be processed
+     * while the mouse cursor is hovered over a VisualItem.
+     */
+a38 5
+    /**
+     * Create a new AnchorUpdateControl.
+     * @@param layout the layouts for which to update the anchor point
+     * @@param action the name of an action to run upon anchor updates
+     */
+a42 7
+    /**
+     * Create a new AnchorUpdateControl.
+     * @@param layout the layouts for which to update the anchor point
+     * @@param action the name of an action to run upon anchor updates
+     * @@param overItem indicates if anchor update events should be processed
+     * while the mouse cursor is hovered over a VisualItem.
+     */
+a51 3
+    /**
+     * @@see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
+     */
+d55 1
+a55 1
+        runAction(e);
+a57 3
+    /**
+     * @@see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
+     */
+a61 3
+    /**
+     * @@see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
+     */
+a65 3
+    /**
+     * @@see prefuse.controls.Control#itemDragged(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+a69 3
+    /**
+     * @@see prefuse.controls.Control#itemMoved(prefuse.visual.VisualItem, java.awt.event.MouseEvent)
+     */
+a73 5
+    /**
+     * Registers a mouse move event, updating the anchor point for all
+     * registered layout instances.
+     * @@param e the MouseEvent
+     */
+d79 1
+a79 1
+        runAction(e);
+d82 2
+a83 7
+    /**
+     * Runs an optional action upon anchor update.
+     * @@param e MouseEvent
+     */
+    private void runAction(MouseEvent e) {
+        if ( m_action != null ) {
+            Display d = (Display)e.getSource();
+a84 1
+        }
+@
+
+

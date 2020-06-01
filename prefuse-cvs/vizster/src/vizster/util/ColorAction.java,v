@@ -1,0 +1,120 @@
+head	1.3;
+access;
+symbols
+	P20050924_InfoVis:1.3
+	Preliminary_Design:1.2
+	P200501_Prototype:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2005.09.24.18.40.28;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.11.10.01.53.05;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.20.03.54.13;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Update to new version!!
+@
+text
+@package vizster.util;
+
+import java.awt.event.ActionEvent;
+
+import javax.swing.AbstractAction;
+import javax.swing.JToggleButton;
+
+import vizster.Vizster;
+import vizster.action.VizsterXRayColorFunction;
+
+/**
+ * Updates which attribute is visualized in the attribute comparison mode
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> vizster(AT)jheer.org
+ */
+public class ColorAction extends AbstractAction {
+
+    private Vizster vizster;
+    private JToggleButton prev;
+    
+    public ColorAction(Vizster vizster) {
+        this.vizster = vizster;
+    } //
+    
+    /**
+     * @@see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        JToggleButton tog = (JToggleButton)e.getSource();
+        
+        if ( prev != null && prev != tog ) {
+            prev.setSelected(false);
+            prev.putClientProperty("on", Boolean.FALSE);
+            prev = null;
+        }
+        
+        Boolean onB = (Boolean)tog.getClientProperty("on");
+        boolean on = (onB == null ? tog.isSelected() : !onB.booleanValue());
+        if ( on ) {
+            Integer attrI = (Integer)tog.getClientProperty("attr");
+            tog.putClientProperty("on", Boolean.TRUE);
+            int idx = attrI.intValue();
+            VizsterXRayColorFunction cf = vizster.getComparisonColorFunction();
+            cf.setCurrentAttribute(idx);
+            vizster.setMode(Vizster.COMPARE_MODE);
+            prev = tog;
+        } else {
+            JToggleButton inv = (JToggleButton)tog.getClientProperty("inv");
+            inv.doClick();
+            tog.putClientProperty("on", Boolean.FALSE);
+            vizster.setMode(Vizster.BROWSE_MODE);
+        }
+        vizster.redraw();
+    } //
+
+} // end of class ColorAction
+@
+
+
+1.2
+log
+@Major updates for static layout and xml input files
+@
+text
+@d9 1
+a9 1
+import vizster.color.ComparisonColorFunction;
+d20 1
+d31 7
+d44 1
+a44 1
+            ComparisonColorFunction cf = vizster.getComparisonColorFunction();
+d47 1
+@
+
+
+1.1
+log
+@Vizster 1.0
+@
+text
+@d45 1
+@
+

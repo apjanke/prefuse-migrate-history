@@ -1,0 +1,686 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.1
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2007.10.21.21.36.04;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.02.20.09.34.02;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.17;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.30.09.08.04;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.44;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Added root node checks to TreeNodeIterator to avoid iteration errors
+Updated IOLib to support relative file paths (Bug #1775875 from anonymous)
+Updated JRangeSlider to support drags from arrow buttons (Bug #1747778 from colincombe)
+Updated ExpressionParser to avoid long parse bug (Bug #1741759)
+Updated TupleManager to expand tuple list in face of valid rows from CascadedTable instances (Bug #1741106)
+Added checks for min==max condition in NumberRangeModel (Bug #1731911)
+Added patch to Activity and ActivityManager to avoid deadlock on Activity.cancel() (Bug #1708926 fix from joperry)
+Fixed javadoc example for DefaultRendererFactory (Bug #1674371 from cab938)
+Fixed ENDPOLYGON field in VisualItem (Bug #1554408 from dimerman)
+Fixed FisheyeMenu demo to avoid deadlock (Bug #1672798)
+Updated Tree.getDepth to return -1 if node is valid (in the node table) but not in tree (fix from joperry)
+Added Display.reset method to release used memory from an idle, unused Display instance
+Added Graph.removeAllGraphListeners() method
+Added Table.removeAllTableListeners() method
+Added isAsynchronous / setAsynchronous methods to ImageFactory
+Updated Visualization.invalidate to invalidate just the group specified (it incorrectly was invalidating all groups)
+Updated ActivityManager._schedule to call notifyAll when an already scheduled item is re-scheduled
+@
+text
+@package prefuse.render;
+
+import prefuse.data.expression.Predicate;
+import prefuse.data.expression.parser.ExpressionParser;
+import prefuse.util.PredicateChain;
+import prefuse.visual.EdgeItem;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * <p>Default factory implementation from which to retrieve VisualItem
+ * renderers.</p>
+ * 
+ * <p>
+ * This class supports the use of a default renderer for EdgeItems (the default
+ * edge renderer) and another for all other non-edge VisualItems (the default
+ * item renderer). In addition, any number of additional Renderer mapping rules
+ * can be added, by specifying a Predicate to apply and a Renderer to return
+ * for matching items. Predicate/Renderer mappings are checked in the order in
+ * which they were added to the factory.
+ * </p>
+ * 
+ * <p>If left unspecified, a {@@link ShapeRenderer} is used as the default
+ * item renderer and an {@@link EdgeRenderer} instance is used as the default
+ * edge renderer.</p>
+ * 
+ * <p>For example, the following code snippet creates a new
+ * DefaultRendererFactory, changes the default edge renderer to be an
+ * EdgeRenderer using curved edges, and adds a new rule which maps items in
+ * the group "data" to a text renderer that pulls its text from a field named
+ * "label".</p>
+ * <pre>
+ *   DefaultRendererFactory rf = new DefaultRendererFactory();
+ *   rf.setDefaultEdgeRenderer(new EdgeRenderer(Constants.EDGE_TYPE_CURVE);
+ *   rf.add("INGROUP('data')", new LabelRenderer("label");
+ * </pre>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class DefaultRendererFactory implements RendererFactory {
+
+    private PredicateChain m_chain = new PredicateChain();
+    private Renderer m_itemRenderer;
+    private Renderer m_edgeRenderer;
+    
+    /**
+     * Default Constructor. A ShapeRenderer instance will be used for the
+     * default item renderer and an EdgeRenderer instance will be used for the
+     * default edge renderer.
+     * @@see ShapeRenderer
+     * @@see EdgeRenderer
+     */
+    public DefaultRendererFactory() {
+       this(new ShapeRenderer());
+    }
+    
+    /**
+     * Constructor. Creates a new DefaultRendererFactory with the specified
+     * default item renderer. An EdgeRenderer instance will be used for the
+     * default edge renderer.
+     * @@param itemRenderer the default item renderer. This is the default for
+     * rendering all items except EdgeItem instances.
+     * @@see EdgeRenderer
+     */
+    public DefaultRendererFactory(Renderer itemRenderer) {
+        this(itemRenderer, new EdgeRenderer());
+    }
+    
+    /**
+     * Constructor. Creates a new DefaultRendererFactory with the specified
+     * default item and edge renderers.
+     * @@param itemRenderer the default item renderer. This is the default for
+     * rendering all items except EdgeItem instances.
+     * @@param edgeRenderer the default edge renderer. This is the default for
+     * rendering EdgeItem instances.
+     */
+    public DefaultRendererFactory(Renderer itemRenderer, Renderer edgeRenderer)
+    {
+        m_itemRenderer = itemRenderer;
+        m_edgeRenderer = edgeRenderer;
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Sets the default renderer. This renderer will be returned by
+     * {@@link #getRenderer(VisualItem)} whenever there are no matching
+     * predicates and the input item <em>is not</em> an EdgeItem. To set the
+     * default renderer for EdgeItems, see
+     * {@@link #setDefaultEdgeRenderer(Renderer)}.
+     * @@param r the Renderer to use as the default
+     * @@see #setDefaultEdgeRenderer(Renderer)
+     */
+    public void setDefaultRenderer(Renderer r) {
+        m_itemRenderer = r;
+    }
+    
+    /**
+     * Gets the default renderer. This renderer will be returned by
+     * {@@link #getRenderer(VisualItem)} whenever there are no matching
+     * predicates and the input item <em>is not</em> an EdgeItem.
+     * @@return the default Renderer for non-edge VisualItems
+     */
+    public Renderer getDefaultRenderer() {
+        return m_itemRenderer;
+    }
+    
+    /**
+     * Sets the default edge renderer. This renderer will be returned by
+     * {@@link #getRenderer(VisualItem)} whenever there are no matching
+     * predicates and the input item <em>is</em> an EdgeItem. To set the
+     * default renderer for non-EdgeItems, see
+     * {@@link #setDefaultRenderer(Renderer)}.
+     * @@param r the Renderer to use as the default for EdgeItems
+     * @@see #setDefaultRenderer(Renderer)
+     */
+    public void setDefaultEdgeRenderer(Renderer r) {
+        m_edgeRenderer = r;
+    }
+    
+    /**
+     * Gets the default edge renderer. This renderer will be returned by
+     * {@@link #getRenderer(VisualItem)} whenever there are no matching
+     * predicates and the input item <em>is</em> an EdgeItem.
+     * @@return the default Renderer for EdgeItems
+     */
+    public Renderer getDefaultEdgeRenderer() {
+        return m_edgeRenderer;
+    }
+    
+    /**
+     * Adds a new mapping to this RendererFactory. If an input item to
+     * {@@link #getRenderer(VisualItem)} matches the predicate, then the
+     * corresponding Renderer will be returned. Predicates are evaluated in the
+     * order in which they are added, so if an item matches multiple
+     * predicates, the Renderer for the earliest match will be returned.
+     * @@param p a Predicate for testing a VisualItem
+     * @@param r the Renderer to return if an item matches the Predicate
+     */
+    public void add(Predicate p, Renderer r) {
+        m_chain.add(p, r);
+    }
+    
+    /**
+     * Adds a new mapping to this RendererFactory. If an input item to
+     * {@@link #getRenderer(VisualItem)} matches the predicate, then the
+     * corresponding Renderer will be returned. Predicates are evaluated in the
+     * order in which they are added, so if an item matches multiple
+     * predicates, the Renderer for the earliest match will be returned.
+     * @@param predicate a String in the prefuse expression language. This
+     *  String will be parsed to create a corresponding Predicate instance.
+     * @@param r the Renderer to return if an item matches the Predicate
+     */
+    public void add(String predicate, Renderer r) {
+        Predicate p = (Predicate)ExpressionParser.parse(predicate);
+        add(p, r);
+    }
+    
+    /**
+     * Return a Renderer instance for the input VisualItem. The VisualItem
+     * is matched against the registered Predicates, and if a match is found
+     * the corresponding Renderer is returned. Predicate matches are evaluated
+     * in the order in which Predicate/Renderer mappings were added to this
+     * RendererFactory. If no matches are found, either the default renderer
+     * (for all VisualItems except EdgeItems) or the default edge renderer (for
+     * EdgeItems) is returned.
+     */
+    public Renderer getRenderer(VisualItem item) {
+        Renderer r = (Renderer)m_chain.get(item);
+        if ( r != null )
+            return r;
+        else if ( item instanceof EdgeItem )
+            return m_edgeRenderer;
+        else
+            return m_itemRenderer;
+    }
+    
+} // end of class DefaultRendererFactory
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d13 1
+a13 1
+ *
+d22 1
+a22 1
+ *
+d26 1
+a26 1
+ *
+d37 1
+a37 1
+ *
+d42 1
+a42 1
+    private final PredicateChain m_chain = new PredicateChain();
+d45 1
+a45 1
+
+d56 1
+a56 1
+
+d68 1
+a68 1
+
+d84 1
+a84 1
+
+d97 1
+a97 1
+
+d107 1
+a107 1
+
+d120 1
+a120 1
+
+d130 1
+a130 1
+
+d143 1
+a143 1
+
+d158 1
+a158 1
+
+d168 1
+a168 1
+    public Renderer getRenderer(VisualItem<?> item) {
+d170 6
+a175 7
+        if ( r != null ) {
+			return r;
+		} else if ( item instanceof EdgeItem ) {
+			return m_edgeRenderer;
+		} else {
+			return m_itemRenderer;
+		}
+d177 1
+a177 1
+
+@
+
+
+2.1
+log
+@Added getters for default renderers.
+@
+text
+@d35 1
+a35 1
+ *   rf.addRenderer("INGROUP('data')", new LabelRenderer("label");
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d99 10
+d122 10
+@
+
+
+1.1
+log
+@file DefaultRendererFactory.java was initially added on branch beta.
+@
+text
+@d1 158
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 160
+package prefuse.render;
+
+import prefuse.data.expression.Predicate;
+import prefuse.data.expression.parser.ExpressionParser;
+import prefuse.util.collections.CopyOnWriteArrayList;
+import prefuse.visual.EdgeItem;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Default factory implementation from which to retrieve VisualItem renderers.
+ * 
+ * <p>
+ * This class supports the use of a default renderer for EdgeItems (the default
+ * edge renderer) and another for all other non-edge VisualItems (the default
+ * item renderer). In addition, any number of additional Renderer mapping rules
+ * can be added, by specifying a Predicate to apply and a Renderer to return
+ * for matching items. Predicate/Renderer mappings are checked in the order in
+ * which they were added to the factory.
+ * </p>
+ * 
+ * <p>If left unspecified, a {@@link ShapeItemRenderer ShapeItemRenderer} is
+ * used as the default item renderer and an {@@link EdgeRenderer EdgeRenderer}
+ * instance is used as the default edge renderer.</p>
+ * 
+ * <p>For example, the following code snippet creates a new
+ * DefaultRendererFactory, changes the default edge renderer to be an
+ * EdgeRenderer using curved edges, and adds a new rule which maps items in
+ * the group "data" to a text renderer that pulls its text from a field named
+ * "label".</p>
+ * <pre>
+ *   DefaultRendererFactory rf = new DefaultRendererFactory();
+ *   rf.setDefaultEdgeRenderer(new EdgeRenderer(Constants.EDGE_TYPE_CURVE);
+ *   rf.addRenderer("INGROUP('data')", new TextItemRenderer("label");
+ * </pre>
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class DefaultRendererFactory implements RendererFactory {
+
+    private CopyOnWriteArrayList m_predicates = new CopyOnWriteArrayList();
+    private CopyOnWriteArrayList m_renderers = new CopyOnWriteArrayList();
+    private Renderer m_itemRenderer;
+    private Renderer m_edgeRenderer;
+    
+    /**
+     * Default Constructor. A ShapeItemRenderer instance will be used for the
+     * default item renderer and an EdgeRenderer instance will be used for the
+     * default edge renderer.
+     * @@see ShapeItemRenderer
+     * @@see EdgeRenderer
+     */
+    public DefaultRendererFactory() {
+       this(new ShapeItemRenderer());
+    }
+    
+    /**
+     * Constructor. Creates a new DefaultRendererFactory with the specified
+     * default item renderer. An EdgeRenderer instance will be used for the
+     * default edge renderer.
+     * @@param itemRenderer the default item renderer. This is the default for
+     * rendering all items except EdgeItem instances.
+     * @@see EdgeRenderer
+     */
+    public DefaultRendererFactory(Renderer itemRenderer) {
+    	this(itemRenderer, new EdgeRenderer());
+    }
+    
+    /**
+     * Constructor. Creates a new DefaultRendererFactory with the specified
+     * default item and edge renderers.
+     * @@param itemRenderer the default item renderer. This is the default for
+     * rendering all items except EdgeItem instances.
+     * @@param edgeRenderer the default edge renderer. This is the default for
+     * rendering EdgeItem instances.
+     */
+    public DefaultRendererFactory(Renderer itemRenderer, Renderer edgeRenderer)
+    {
+        m_itemRenderer = itemRenderer;
+        m_edgeRenderer = edgeRenderer;
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Sets the default renderer. This renderer will be returned by
+     * {@@code getRenderer} whenever there are no matching predicates
+     * and the input item <em>is not</em> an EdgeItem. To set the default
+     * renderer for EdgeItems, see {@@code setDefaultEdgeRenderer}.
+     * @@param r the Renderer to use as the default
+     * @@see setDefaultEdgeRenderer
+     */
+    public void setDefaultRenderer(Renderer r) {
+        m_itemRenderer = r;
+    }
+    
+    /**
+     * Sets the default edge renderer. This renderer will be returned by
+     * {@@code getRenderer} whenever there are no matching predicates
+     * and the input item <em>is</em> an EdgeItem. To set the default renderer
+     * for non-EdgeItems, see {@@code setDefaultRenderer}.
+     * @@param r the Renderer to use as the default for EdgeItems
+     * @@see setDefaultRenderer
+     */
+    public void setDefaultEdgeRenderer(Renderer r) {
+    	m_edgeRenderer = r;
+    }
+    
+    /**
+     * Adds a new mapping to this RendererFactory. If an input item to
+     * {@@code getRenderer} matches the predicate, then the corresponding
+     * Renderer will be returned. Predicates are evaluated in the order
+     * in which they are added, so if an item matches multiple predicates,
+     * the Renderer for the earliest match will be returned.
+     * @@param p a Predicate for testing a VisualItem
+     * @@param r the Renderer to return if an item matches the Predicate
+     */
+    public void add(Predicate p, Renderer r) {
+        m_predicates.add(p);
+        m_renderers.add(r);
+    }
+    
+    /**
+     * Adds a new mapping to this RendererFactory. If an input item to
+     * {@@code getRenderer} matches the predicate, then the corresponding
+     * Renderer will be returned. Predicates are evaluated in the order
+     * in which they are added, so if an item matches multiple predicates,
+     * the Renderer for the earliest match will be returned.
+     * @@param predicate a String in the prefuse expression language. This
+     *  String will be parsed to create a corresponding Predicate instance.
+     * @@param r the Renderer to return if an item matches the Predicate
+     */
+    public void add(String predicate, Renderer r) {
+        Predicate p = (Predicate)ExpressionParser.parse(predicate);
+        add(p, r);
+    }
+    
+    /**
+     * Return a Renderer instance for the input VisualItem. The VisualItem
+     * is matched against the registered Predicates, and if a match is found
+     * the corresponding Renderer is returned. Predicate matches are evaluated
+     * in the order in which Predicate/Renderer mappings were added to this
+     * RendererFactory. If no matches are found, either the default renderer
+     * (for all VisualItems except EdgeItems) or the default edge renderer (for
+     * EdgeItems) is returned.
+     */
+    public Renderer getRenderer(VisualItem item) {
+        Object[] preds = m_predicates.getArray();
+        for ( int i=0; i<preds.length; ++i ) {
+            if ( ((Predicate)preds[i]).getBoolean(item) )
+                return (Renderer)m_renderers.get(i);
+        }
+        if ( item instanceof EdgeItem )
+        	return m_edgeRenderer;
+        else
+        	return m_itemRenderer;
+    }
+    
+} // end of class DefaultRendererFactory
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d5 1
+a5 1
+import prefuse.util.PredicateChain;
+d38 1
+a38 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+d42 2
+a43 1
+	private PredicateChain m_chain = new PredicateChain();
+d120 2
+a121 1
+        m_chain.add(p, r);
+d149 6
+a154 4
+    	Renderer r = (Renderer)m_chain.get(item);
+    	if ( r != null )
+    		return r;
+    	else if ( item instanceof EdgeItem )
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d42 1
+a42 1
+    private PredicateChain m_chain = new PredicateChain();
+d66 1
+a66 1
+        this(itemRenderer, new EdgeRenderer());
+d106 1
+a106 1
+        m_edgeRenderer = r;
+d147 5
+a151 5
+        Renderer r = (Renderer)m_chain.get(item);
+        if ( r != null )
+            return r;
+        else if ( item instanceof EdgeItem )
+            return m_edgeRenderer;
+d153 1
+a153 1
+            return m_itemRenderer;
+@
+
+
+1.1.2.4
+log
+@Much more javadoc
+@
+text
+@d11 1
+a11 2
+ * <p>Default factory implementation from which to retrieve VisualItem
+ * renderers.</p>
+d22 3
+a24 3
+ * <p>If left unspecified, a {@@link ShapeItemRenderer} is used as the default
+ * item renderer and an {@@link EdgeRenderer} instance is used as the default
+ * edge renderer.</p>
+d37 2
+a38 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.5
+log
+@Javadoc'd.
+@
+text
+@d87 3
+a89 4
+     * {@@link #getRenderer(VisualItem)} whenever there are no matching
+     * predicates and the input item <em>is not</em> an EdgeItem. To set the
+     * default renderer for EdgeItems, see
+     * {@@link #setDefaultEdgeRenderer(Renderer)}.
+d91 1
+a91 1
+     * @@see #setDefaultEdgeRenderer(Renderer)
+d99 3
+a101 4
+     * {@@link #getRenderer(VisualItem)} whenever there are no matching
+     * predicates and the input item <em>is</em> an EdgeItem. To set the
+     * default renderer for non-EdgeItems, see
+     * {@@link #setDefaultRenderer(Renderer)}.
+d103 1
+a103 1
+     * @@see #setDefaultRenderer(Renderer)
+d111 4
+a114 4
+     * {@@link #getRenderer(VisualItem)} matches the predicate, then the
+     * corresponding Renderer will be returned. Predicates are evaluated in the
+     * order in which they are added, so if an item matches multiple
+     * predicates, the Renderer for the earliest match will be returned.
+d124 4
+a127 4
+     * {@@link #getRenderer(VisualItem)} matches the predicate, then the
+     * corresponding Renderer will be returned. Predicates are evaluated in the
+     * order in which they are added, so if an item matches multiple
+     * predicates, the Renderer for the earliest match will be returned.
+@
+
+
+1.1.2.6
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d23 1
+a23 1
+ * <p>If left unspecified, a {@@link ShapeRenderer} is used as the default
+d35 1
+a35 1
+ *   rf.addRenderer("INGROUP('data')", new LabelRenderer("label");
+d47 1
+a47 1
+     * Default Constructor. A ShapeRenderer instance will be used for the
+d50 1
+a50 1
+     * @@see ShapeRenderer
+d54 1
+a54 1
+       this(new ShapeRenderer());
+@
+
+

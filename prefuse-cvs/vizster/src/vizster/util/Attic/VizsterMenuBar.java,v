@@ -1,0 +1,298 @@
+head	1.7;
+access;
+symbols
+	Preliminary_Design:1.6
+	P200501_Prototype:1.6;
+locks; strict;
+comment	@# @;
+
+
+1.7
+date	2005.09.24.18.40.28;	author jheer;	state dead;
+branches;
+next	1.6;
+
+1.6
+date	2005.01.19.23.28.08;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.11.10.01.53.05;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.04.20.04.18.33;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.04.20.03.54.13;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.04.15.01.51.01;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.04.15.00.36.40;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.7
+log
+@Update to new version!!
+@
+text
+@package vizster.util;
+
+import javax.swing.Action;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.KeyStroke;
+
+import edu.berkeley.guir.prefuse.util.display.ExportDisplayAction;
+
+import vizster.Vizster;
+
+/**
+ * The menubar for the Vizster application
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> vizster(AT)jheer.org
+ */
+public class VizsterMenuBar extends JMenuBar {
+
+    static final String DBUG = "Toggle Debug Display";
+    static final String LOAD = "Open Network File...";
+    static final String CONN = "Connect to Network Database...";
+    static final String SAVE = "Save Visible Network to File...";
+    static final String EXPT = "Export Display Image...";
+    static final String EXIT = "Exit";
+    static final String GOTO = "Go To Profile...";
+    static final String FSIM = "Configure Force Simulator...";
+    static final String ANIM = "Toggle Animation";
+    static final String LAYT = "Re-Compute Layout";
+    static final String GMAP = "Grayscale";
+    static final String HMAP = "Hot";
+    static final String CMAP = "Cool";
+    
+    private Vizster vizster;
+    
+    public VizsterMenuBar(Vizster vizster) {
+        this.vizster = vizster;
+        initUI();
+    } //
+    
+    private void initUI() {
+        JMenu fileM = new JMenu("File");
+        JMenu laytM = new JMenu("Layout");
+        JMenu toolM = new JMenu("Tools");
+        JMenu cmapM = new JMenu("ColorMaps");
+        
+        JMenuItem dbugI = new JMenuItem(DBUG);
+        JMenuItem loadI = new JMenuItem(LOAD);
+        JMenuItem connI = new JMenuItem(CONN);
+        JMenuItem saveI = new JMenuItem(SAVE);
+        JMenuItem exptI = new JMenuItem(EXPT);
+        JMenuItem exitI = new JMenuItem(EXIT);
+        JMenuItem gotoI = new JMenuItem(GOTO);
+        JMenuItem fsimI = new JMenuItem(FSIM);
+        JMenuItem animI = new JMenuItem(ANIM);
+        JMenuItem laytI = new JMenuItem(LAYT);
+        JMenuItem gmapI = new JCheckBoxMenuItem(GMAP);
+        JMenuItem hmapI = new JCheckBoxMenuItem(HMAP);
+        JMenuItem cmapI = new JCheckBoxMenuItem(CMAP);
+        
+        ButtonGroup buttG = new ButtonGroup();
+        buttG.add(gmapI); gmapI.setSelected(true);
+        buttG.add(hmapI);
+        buttG.add(cmapI);
+        
+        dbugI.setAccelerator(KeyStroke.getKeyStroke("ctrl D"));
+        loadI.setAccelerator(KeyStroke.getKeyStroke("ctrl O"));
+        saveI.setAccelerator(KeyStroke.getKeyStroke("ctrl S"));
+        exptI.setAccelerator(KeyStroke.getKeyStroke("ctrl E"));
+        gotoI.setAccelerator(KeyStroke.getKeyStroke("ctrl G"));
+        fsimI.setAccelerator(KeyStroke.getKeyStroke("ctrl F"));
+        animI.setAccelerator(KeyStroke.getKeyStroke("ctrl K"));
+        laytI.setAccelerator(KeyStroke.getKeyStroke("ctrl L"));
+        gmapI.setAccelerator(KeyStroke.getKeyStroke("ctrl 1"));
+        hmapI.setAccelerator(KeyStroke.getKeyStroke("ctrl 2"));
+        cmapI.setAccelerator(KeyStroke.getKeyStroke("ctrl 3"));
+        
+        exitI.setActionCommand(EXIT);
+        loadI.setActionCommand(LOAD);
+        connI.setActionCommand(CONN);
+        saveI.setActionCommand(SAVE);
+        exptI.setActionCommand(EXPT);
+        gotoI.setActionCommand(GOTO);
+        fsimI.setActionCommand(FSIM);
+        animI.setActionCommand(ANIM);
+        laytI.setActionCommand(LAYT);
+        gmapI.setActionCommand(GMAP);
+        hmapI.setActionCommand(HMAP);
+        cmapI.setActionCommand(CMAP);
+        
+        dbugI.addActionListener(new DebugInfoAction(vizster));
+        
+        Action loadAction = new LoadNetworkAction(vizster);
+        loadI.addActionListener(loadAction);
+        connI.addActionListener(loadAction);
+        
+        saveI.addActionListener(new SaveVisibleNetworkAction(vizster));
+        exptI.addActionListener(new ExportDisplayAction(vizster.getDisplay()));
+        exitI.addActionListener(new ExitAction());
+        gotoI.addActionListener(new GotoAction(vizster));
+        fsimI.addActionListener(new ForceConfigAction(vizster));
+        
+        animI.addActionListener(new ToggleAnimationAction(vizster));
+        laytI.addActionListener(new StaticLayoutAction(vizster));
+        
+        ColorMapAction cmapA = new ColorMapAction(vizster);
+        gmapI.addActionListener(cmapA);
+        hmapI.addActionListener(cmapA);
+        cmapI.addActionListener(cmapA);
+        
+        fileM.add(dbugI);
+        fileM.add(loadI);
+        fileM.add(connI);
+        fileM.add(saveI);
+        fileM.add(exptI);
+        fileM.add(exitI);
+        laytM.add(animI);
+        laytM.add(laytI);
+        toolM.add(gotoI);
+        toolM.add(fsimI);
+        cmapM.add(gmapI);
+        cmapM.add(hmapI);
+        cmapM.add(cmapI);
+        
+        add(fileM);
+        add(laytM);
+        add(toolM);
+        add(cmapM);
+    } //
+    
+} // end of class VizsterMenuBar
+@
+
+
+1.6
+log
+@Added search panel update, new menu item
+@
+text
+@@
+
+
+1.5
+log
+@Major updates for static layout and xml input files
+@
+text
+@d11 2
+d24 1
+a24 1
+    static final String LOAD = "Load Network from File...";
+d26 2
+a27 1
+    static final String SAVE = "Save Visible Network...";
+d54 1
+d70 1
+d72 1
+d85 1
+d101 1
+d118 1
+@
+
+
+1.4
+log
+@Vizster 1.0
+@
+text
+@d3 1
+d22 3
+d28 2
+d43 1
+d48 3
+d54 2
+d66 1
+d69 2
+a70 1
+        
+d76 3
+d81 2
+d88 6
+d98 3
+d107 3
+d111 2
+d120 1
+@
+
+
+1.3
+log
+@Vizster 1.0
+@
+text
+@d20 1
+d40 1
+d53 1
+d68 1
+d78 1
+@
+
+
+1.2
+log
+@Vizster update
+@
+text
+@d3 2
+d13 1
+a13 2
+ * 
+ * Apr 13, 2004 - jheer - Created class
+d20 6
+a25 3
+    private static final String EXIT = "Exit";
+    private static final String GOTO = "Go To Profile...";
+    private static final String FSIM = "Configure Force Simulator...";
+d37 1
+d42 8
+d52 5
+a56 1
+        fsimI.setAccelerator(KeyStroke.getKeyStroke("ctrl F S"));
+d61 3
+d69 5
+d77 3
+d83 1
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@d21 1
+d36 1
+d39 1
+d43 1
+d47 1
+d51 1
+@
+

@@ -1,0 +1,44 @@
+head	1.1;
+access;
+symbols
+	P20050924_InfoVis:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.09.24.18.40.29;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Update to new version!!
+@
+text
+@package vizster.controls;
+
+import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+/**
+ * FocusRequester
+ *  
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class FocusRequester extends MouseAdapter {
+
+    public void mouseEntered(MouseEvent evt) {
+        Component c = evt.getComponent();
+        c.requestFocus();
+    } //
+    
+} // end of class FocusRequester
+@

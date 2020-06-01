@@ -1,0 +1,1061 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.05.15.23.28.10;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.02.27.03.59.39;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.11.06.38.42;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.02.09.05.12.45;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.09.10.33.59;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state Exp;
+branches;
+next	2.2.4.2;
+
+2.2.4.2
+date	2008.02.23.01.16.16;	author amarsden;	state Exp;
+branches;
+next	2.2.4.3;
+
+2.2.4.3
+date	2008.02.26.05.02.53;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Fixed infinite loop bug in TreeRootAction
+@
+text
+@package prefuse.demos;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.MouseEvent;
+import java.util.Iterator;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.ActionList;
+import prefuse.action.GroupAction;
+import prefuse.action.ItemAction;
+import prefuse.action.RepaintAction;
+import prefuse.action.animate.ColorAnimator;
+import prefuse.action.animate.PolarLocationAnimator;
+import prefuse.action.animate.QualityControlAnimator;
+import prefuse.action.animate.VisibilityAnimator;
+import prefuse.action.assignment.ColorAction;
+import prefuse.action.assignment.FontAction;
+import prefuse.action.layout.CollapsedSubtreeLayout;
+import prefuse.action.layout.graph.RadialTreeLayout;
+import prefuse.activity.SlowInSlowOutPacer;
+import prefuse.controls.ControlAdapter;
+import prefuse.controls.DragControl;
+import prefuse.controls.FocusControl;
+import prefuse.controls.HoverActionControl;
+import prefuse.controls.PanControl;
+import prefuse.controls.ZoomControl;
+import prefuse.controls.ZoomToFitControl;
+import prefuse.data.Graph;
+import prefuse.data.Node;
+import prefuse.data.Table;
+import prefuse.data.Tuple;
+import prefuse.data.event.TupleSetListener;
+import prefuse.data.io.GraphMLReader;
+import prefuse.data.query.SearchQueryBinding;
+import prefuse.data.search.PrefixSearchTupleSet;
+import prefuse.data.search.SearchTupleSet;
+import prefuse.data.tuple.DefaultTupleSet;
+import prefuse.data.tuple.TupleSet;
+import prefuse.render.AbstractShapeRenderer;
+import prefuse.render.DefaultRendererFactory;
+import prefuse.render.EdgeRenderer;
+import prefuse.render.LabelRenderer;
+import prefuse.util.ColorLib;
+import prefuse.util.FontLib;
+import prefuse.util.ui.JFastLabel;
+import prefuse.util.ui.JSearchPanel;
+import prefuse.util.ui.UILib;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.InGroupPredicate;
+import prefuse.visual.sort.TreeDepthItemSorter;
+
+
+/**
+ * Demonstration of a node-link tree viewer
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class RadialGraphView extends Display {
+
+    public static final String DATA_FILE = "/socialnet.xml";
+    
+    private static final String tree = "tree";
+    private static final String treeNodes = "tree.nodes";
+    private static final String treeEdges = "tree.edges";
+    private static final String linear = "linear";
+    
+    private LabelRenderer m_nodeRenderer;
+    private EdgeRenderer m_edgeRenderer;
+    
+    private String m_label = "label";
+    
+    public RadialGraphView(Graph g, String label) {
+        super(new Visualization());
+        m_label = label;
+
+        // -- set up visualization --
+        m_vis.add(tree, g);
+        m_vis.setInteractive(treeEdges, null, false);
+        
+        // -- set up renderers --
+        m_nodeRenderer = new LabelRenderer(m_label);
+        m_nodeRenderer.setRenderType(AbstractShapeRenderer.RENDER_TYPE_FILL);
+        m_nodeRenderer.setHorizontalAlignment(Constants.CENTER);
+        m_nodeRenderer.setRoundedCorner(8,8);
+        m_edgeRenderer = new EdgeRenderer();
+        
+        DefaultRendererFactory rf = new DefaultRendererFactory(m_nodeRenderer);
+        rf.add(new InGroupPredicate(treeEdges), m_edgeRenderer);
+        m_vis.setRendererFactory(rf);
+               
+        // -- set up processing actions --
+        
+        // colors
+        ItemAction nodeColor = new NodeColorAction(treeNodes);
+        ItemAction textColor = new TextColorAction(treeNodes);
+        m_vis.putAction("textColor", textColor);
+        
+        ItemAction edgeColor = new ColorAction(treeEdges,
+                VisualItem.STROKECOLOR, ColorLib.rgb(200,200,200));
+        
+        FontAction fonts = new FontAction(treeNodes, 
+                FontLib.getFont("Tahoma", 10));
+        fonts.add("ingroup('_focus_')", FontLib.getFont("Tahoma", 11));
+        
+        // recolor
+        ActionList recolor = new ActionList();
+        recolor.add(nodeColor);
+        recolor.add(textColor);
+        m_vis.putAction("recolor", recolor);
+        
+        // repaint
+        ActionList repaint = new ActionList();
+        repaint.add(recolor);
+        repaint.add(new RepaintAction());
+        m_vis.putAction("repaint", repaint);
+        
+        // animate paint change
+        ActionList animatePaint = new ActionList(400);
+        animatePaint.add(new ColorAnimator(treeNodes));
+        animatePaint.add(new RepaintAction());
+        m_vis.putAction("animatePaint", animatePaint);
+        
+        // create the tree layout action
+        RadialTreeLayout treeLayout = new RadialTreeLayout(tree);
+        //treeLayout.setAngularBounds(-Math.PI/2, Math.PI);
+        m_vis.putAction("treeLayout", treeLayout);
+        
+        CollapsedSubtreeLayout subLayout = new CollapsedSubtreeLayout(tree);
+        m_vis.putAction("subLayout", subLayout);
+        
+        // create the filtering and layout
+        ActionList filter = new ActionList();
+        filter.add(new TreeRootAction(tree));
+        filter.add(fonts);
+        filter.add(treeLayout);
+        filter.add(subLayout);
+        filter.add(textColor);
+        filter.add(nodeColor);
+        filter.add(edgeColor);
+        m_vis.putAction("filter", filter);
+        
+        // animated transition
+        ActionList animate = new ActionList(1250);
+        animate.setPacingFunction(new SlowInSlowOutPacer());
+        animate.add(new QualityControlAnimator());
+        animate.add(new VisibilityAnimator(tree));
+        animate.add(new PolarLocationAnimator(treeNodes, linear));
+        animate.add(new ColorAnimator(treeNodes));
+        animate.add(new RepaintAction());
+        m_vis.putAction("animate", animate);
+        m_vis.alwaysRunAfter("filter", "animate");
+        
+        // ------------------------------------------------
+        
+        // initialize the display
+        setSize(600,600);
+        setItemSorter(new TreeDepthItemSorter());
+        addControlListener(new DragControl());
+        addControlListener(new ZoomToFitControl());
+        addControlListener(new ZoomControl());
+        addControlListener(new PanControl());
+        addControlListener(new FocusControl(1, "filter"));
+        addControlListener(new HoverActionControl("repaint"));
+        
+        // ------------------------------------------------
+        
+        // filter graph and perform layout
+        m_vis.run("filter");
+        
+        // maintain a set of items that should be interpolated linearly
+        // this isn't absolutely necessary, but makes the animations nicer
+        // the PolarLocationAnimator should read this set and act accordingly
+        m_vis.addFocusGroup(linear, new DefaultTupleSet());
+        m_vis.getGroup(Visualization.FOCUS_ITEMS).addTupleSetListener(
+            new TupleSetListener() {
+                public void tupleSetChanged(TupleSet t, Tuple[] add, Tuple[] rem) {
+                    TupleSet linearInterp = m_vis.getGroup(linear);
+                    if ( add.length < 1 ) return; linearInterp.clear();
+                    for ( Node n = (Node)add[0]; n!=null; n=n.getParent() )
+                        linearInterp.addTuple(n);
+                }
+            }
+        );
+        
+        SearchTupleSet search = new PrefixSearchTupleSet();
+        m_vis.addFocusGroup(Visualization.SEARCH_ITEMS, search);
+        search.addTupleSetListener(new TupleSetListener() {
+            public void tupleSetChanged(TupleSet t, Tuple[] add, Tuple[] rem) {
+                m_vis.cancel("animatePaint");
+                m_vis.run("recolor");
+                m_vis.run("animatePaint");
+            }
+        });
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public static void main(String argv[]) {
+        String infile = DATA_FILE;
+        String label = "name";
+        
+        if ( argv.length > 1 ) {
+            infile = argv[0];
+            label = argv[1];
+        }
+        
+        UILib.setPlatformLookAndFeel();
+        
+        JFrame frame = new JFrame("p r e f u s e  |  r a d i a l g r a p h v i e w");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setContentPane(demo(infile, label));
+        frame.pack();
+        frame.setVisible(true);
+    }
+    
+    public static JPanel demo() {
+        return demo(DATA_FILE, "name");
+    }
+    
+    public static JPanel demo(String datafile, final String label) {
+        Graph g = null;
+        try {
+            g = new GraphMLReader().readGraph(datafile);
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        return demo(g, label);
+    }
+    
+    public static JPanel demo(Graph g, final String label) {        
+        // create a new radial tree view
+        final RadialGraphView gview = new RadialGraphView(g, label);
+        Visualization vis = gview.getVisualization();
+        
+        // create a search panel for the tree map
+        SearchQueryBinding sq = new SearchQueryBinding(
+             (Table)vis.getGroup(treeNodes), label,
+             (SearchTupleSet)vis.getGroup(Visualization.SEARCH_ITEMS));
+        JSearchPanel search = sq.createSearchPanel();
+        search.setShowResultCount(true);
+        search.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
+        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+        
+        final JFastLabel title = new JFastLabel("                 ");
+        title.setPreferredSize(new Dimension(350, 20));
+        title.setVerticalAlignment(SwingConstants.BOTTOM);
+        title.setBorder(BorderFactory.createEmptyBorder(3,0,0,0));
+        title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
+        
+        gview.addControlListener(new ControlAdapter() {
+            public void itemEntered(VisualItem item, MouseEvent e) {
+                if ( item.canGetString(label) )
+                    title.setText(item.getString(label));
+            }
+            public void itemExited(VisualItem item, MouseEvent e) {
+                title.setText(null);
+            }
+        });
+        
+        Box box = new Box(BoxLayout.X_AXIS);
+        box.add(Box.createHorizontalStrut(10));
+        box.add(title);
+        box.add(Box.createHorizontalGlue());
+        box.add(search);
+        box.add(Box.createHorizontalStrut(3));
+        
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(gview, BorderLayout.CENTER);
+        panel.add(box, BorderLayout.SOUTH);
+        
+        Color BACKGROUND = Color.WHITE;
+        Color FOREGROUND = Color.DARK_GRAY;
+        UILib.setColor(panel, BACKGROUND, FOREGROUND);
+        
+        return panel;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Switch the root of the tree by requesting a new spanning tree
+     * at the desired root
+     */
+    public static class TreeRootAction extends GroupAction {
+        public TreeRootAction(String graphGroup) {
+            super(graphGroup);
+        }
+        public void run(double frac) {
+            TupleSet focus = m_vis.getGroup(Visualization.FOCUS_ITEMS);
+            if ( focus==null || focus.getTupleCount() == 0 ) return;
+            
+            Graph g = (Graph)m_vis.getGroup(m_group);
+            Node f = null;
+            Iterator tuples = focus.tuples();
+            while (tuples.hasNext() && !g.containsTuple(f=(Node)tuples.next()))
+            {
+                f = null;
+            }
+            if ( f == null ) return;
+            g.getSpanningTree(f);
+        }
+    }
+    
+    /**
+     * Set node fill colors
+     */
+    public static class NodeColorAction extends ColorAction {
+        public NodeColorAction(String group) {
+            super(group, VisualItem.FILLCOLOR, ColorLib.rgba(255,255,255,0));
+            add("_hover", ColorLib.gray(220,230));
+            add("ingroup('_search_')", ColorLib.rgb(255,190,190));
+            add("ingroup('_focus_')", ColorLib.rgb(198,229,229));
+        }
+                
+    } // end of inner class NodeColorAction
+    
+    /**
+     * Set node text colors
+     */
+    public static class TextColorAction extends ColorAction {
+        public TextColorAction(String group) {
+            super(group, VisualItem.TEXTCOLOR, ColorLib.gray(0));
+            add("_hover", ColorLib.rgb(255,0,0));
+        }
+    } // end of inner class TextColorAction
+    
+    
+} // end of class RadialGraphView
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d17 1
+a17 1
+import prefuse.Alignment;
+a59 1
+import prefuse.visual.NodeItem;
+d74 1
+a74 1
+
+d79 4
+a82 4
+
+    private final LabelRenderer m_nodeRenderer;
+    private final EdgeRenderer m_edgeRenderer;
+
+d84 1
+a84 1
+
+d92 1
+a92 1
+
+d95 2
+a96 2
+        m_nodeRenderer.setRenderType(AbstractShapeRenderer.RenderType.FILL);
+        m_nodeRenderer.setHorizontalAlignment(Alignment.CENTER);
+d99 1
+a99 1
+
+d103 1
+a103 1
+
+d105 1
+a105 1
+
+d110 1
+a110 1
+
+d113 2
+a114 2
+
+        FontAction fonts = new FontAction(treeNodes,
+d117 1
+a117 1
+
+d123 1
+a123 1
+
+d129 1
+a129 1
+
+d135 1
+a135 1
+
+d140 1
+a140 1
+
+d143 1
+a143 1
+
+d154 1
+a154 1
+
+d165 1
+a165 1
+
+d167 1
+a167 1
+
+d177 1
+a177 1
+
+d179 1
+a179 1
+
+d182 1
+a182 1
+
+d186 1
+a186 2
+        final DefaultTupleSet<VisualItem<?>> linearInterp = new DefaultTupleSet<VisualItem<?>>();
+        m_vis.addFocusGroup(linear, linearInterp);
+d189 5
+a193 8
+                public void tupleSetChanged(TupleSet<?> t, Tuple<?>[] add, Tuple<?>[] rem) {
+                    if ( add.length < 1 ) {
+						return;
+					}
+                    linearInterp.clear();
+                    for ( NodeItem<?,?> n = (NodeItem<?,?>)add[0]; n!=null; n=n.getParent() ) {
+						linearInterp.addTuple(n);
+					}
+d197 2
+a198 2
+
+        SearchTupleSet<VisualItem<?>> search = new PrefixSearchTupleSet<VisualItem<?>>();
+d201 1
+a201 1
+            public void tupleSetChanged(TupleSet<?> t, Tuple<?>[] add, Tuple<?>[] rem) {
+d208 1
+a208 1
+
+d210 1
+a210 1
+
+d214 1
+a214 1
+
+d219 1
+a219 1
+
+d221 1
+a221 1
+
+d228 1
+a228 1
+
+d232 1
+a232 1
+
+d234 1
+a234 1
+        Graph<?,?,?> g = null;
+d243 2
+a244 2
+
+    public static JPanel demo(Graph<?,?,?> g, final String label) {
+d248 1
+a248 1
+
+d251 2
+a252 2
+             (Table<?>)vis.getGroup(treeNodes), label,
+             (SearchTupleSet<VisualItem<?>>)vis.getGroup(Visualization.SEARCH_ITEMS));
+d257 1
+a257 1
+
+d263 1
+a263 1
+
+d265 3
+a267 5
+            @@Override
+			public void itemEntered(VisualItem<?> item, MouseEvent e) {
+                if ( item.canGetString(label) ) {
+					title.setText(item.getString(label));
+				}
+d269 1
+a269 2
+            @@Override
+			public void itemExited(VisualItem<?> item, MouseEvent e) {
+d273 1
+a273 1
+
+d280 1
+a280 1
+
+d284 1
+a284 1
+
+d288 1
+a288 1
+
+d291 1
+a291 1
+
+d293 1
+a293 1
+
+d302 5
+a306 8
+        @@Override
+		public void run(double frac) {
+            TupleSet<?> focus = m_vis.getGroup(Visualization.FOCUS_ITEMS);
+            if ( focus==null || focus.getTupleCount() == 0 ) {
+				return;
+			}
+
+            Graph g = (Graph) m_vis.getGroup(m_group);
+d308 2
+a309 2
+            Iterator<? extends Tuple<?>> tuples = focus.tuples().iterator();
+            while (tuples.hasNext() && !g.containsTuple(f=(Node<?,?>)tuples.next()))
+d313 1
+a313 3
+            if ( f == null ) {
+				return;
+			}
+d317 1
+a317 1
+
+d328 1
+a328 1
+
+d330 1
+a330 1
+
+d340 2
+a341 2
+
+
+@
+
+
+2.2.4.2
+log
+@New feature: scroll bars for Displays
+@
+text
+@a14 1
+import javax.swing.JScrollBar;
+a37 1
+import prefuse.controls.WheelZoomControl;
+a56 1
+import prefuse.util.ui.DisplayScrollBar;
+a174 1
+        addControlListener(new WheelZoomControl());
+a288 6
+
+        JPanel scrollableView = new JPanel(new BorderLayout());
+        scrollableView.add(gview, BorderLayout.CENTER);
+        scrollableView.add(new DisplayScrollBar(gview, JScrollBar.HORIZONTAL), BorderLayout.SOUTH);
+        scrollableView.add(new DisplayScrollBar(gview, JScrollBar.VERTICAL), BorderLayout.EAST);
+        
+d290 1
+a290 1
+        panel.add(scrollableView, BorderLayout.CENTER);
+@
+
+
+2.2.4.3
+log
+@Moved RenderType outside of AbstractShapeRenderer (it is now a top level enum)
+@
+text
+@d53 1
+a56 1
+import prefuse.render.RenderType;
+d99 1
+a99 1
+        m_nodeRenderer.setRenderType(RenderType.FILL);
+@
+
+
+2.1
+log
+@Updated demos to simplify external creation of demos from client code.
+@
+text
+@d8 1
+d308 3
+a310 1
+            while ( !g.containsTuple(f=(Node)focus.tuples().next()) ) {
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d50 1
+a52 1
+import prefuse.render.AbstractShapeRenderer;
+d228 4
+@
+
+
+1.1
+log
+@file RadialGraphView.java was initially added on branch beta.
+@
+text
+@d1 335
+@
+
+
+1.1.2.1
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@a0 335
+package prefuse.demos;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.MouseEvent;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.ActionList;
+import prefuse.action.GroupAction;
+import prefuse.action.ItemAction;
+import prefuse.action.RepaintAction;
+import prefuse.action.animate.ColorAnimator;
+import prefuse.action.animate.PolarLocationAnimator;
+import prefuse.action.animate.QualityControlAnimator;
+import prefuse.action.animate.VisibilityAnimator;
+import prefuse.action.assignment.ColorAction;
+import prefuse.action.assignment.FontAction;
+import prefuse.action.layout.CollapsedSubtreeLayout;
+import prefuse.action.layout.graph.RadialTreeLayout;
+import prefuse.activity.SlowInSlowOutPacer;
+import prefuse.controls.ControlAdapter;
+import prefuse.controls.DragControl;
+import prefuse.controls.FocusControl;
+import prefuse.controls.HoverActionControl;
+import prefuse.controls.PanControl;
+import prefuse.controls.ZoomControl;
+import prefuse.controls.ZoomToFitControl;
+import prefuse.data.Graph;
+import prefuse.data.Node;
+import prefuse.data.Table;
+import prefuse.data.Tuple;
+import prefuse.data.event.TupleSetListener;
+import prefuse.data.io.GraphMLReader;
+import prefuse.data.query.SearchQueryBinding;
+import prefuse.data.search.PrefixSearchTupleSet;
+import prefuse.data.search.SearchTupleSet;
+import prefuse.data.tuple.DefaultTupleSet;
+import prefuse.data.tuple.TupleSet;
+import prefuse.render.DefaultRendererFactory;
+import prefuse.render.EdgeRenderer;
+import prefuse.render.AbstractShapeRenderer;
+import prefuse.render.LabelRenderer;
+import prefuse.util.ColorLib;
+import prefuse.util.FontLib;
+import prefuse.util.ui.JFastLabel;
+import prefuse.util.ui.JSearchPanel;
+import prefuse.util.ui.UILib;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.InGroupPredicate;
+import prefuse.visual.sort.TreeDepthItemSorter;
+
+
+/**
+ * Demonstration of a node-link tree viewer
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class RadialGraphView extends Display {
+
+    public static final String DATA_FILE = "/socialnet.xml";
+    
+    private static final String tree = "tree";
+    private static final String treeNodes = "tree.nodes";
+    private static final String treeEdges = "tree.edges";
+    private static final String linear = "linear";
+    
+    private LabelRenderer m_nodeRenderer;
+    private EdgeRenderer m_edgeRenderer;
+    
+    private String m_label = "label";
+    
+    public RadialGraphView(Graph g, String label) {
+        super(new Visualization());
+        m_label = label;
+
+        // -- set up visualization --
+        m_vis.add(tree, g);
+        m_vis.setInteractive(treeEdges, null, false);
+        
+        // -- set up renderers --
+        m_nodeRenderer = new LabelRenderer(m_label);
+        m_nodeRenderer.setRenderType(AbstractShapeRenderer.RENDER_TYPE_FILL);
+        m_nodeRenderer.setHorizontalAlignment(Constants.CENTER);
+        m_nodeRenderer.setRoundedCorner(8,8);
+        m_edgeRenderer = new EdgeRenderer();
+        
+        DefaultRendererFactory rf = new DefaultRendererFactory(m_nodeRenderer);
+        rf.add(new InGroupPredicate(treeEdges), m_edgeRenderer);
+        m_vis.setRendererFactory(rf);
+               
+        // -- set up processing actions --
+        
+        // colors
+        ItemAction nodeColor = new NodeColorAction(treeNodes);
+        ItemAction textColor = new TextColorAction(treeNodes);
+        m_vis.putAction("textColor", textColor);
+        
+        ItemAction edgeColor = new ColorAction(treeEdges,
+                VisualItem.STROKECOLOR, ColorLib.rgb(200,200,200));
+        
+        FontAction fonts = new FontAction(treeNodes, 
+                FontLib.getFont("Tahoma", 10));
+        fonts.add("ingroup('_focus_')", FontLib.getFont("Tahoma", 11));
+        
+        // recolor
+        ActionList recolor = new ActionList();
+        recolor.add(nodeColor);
+        recolor.add(textColor);
+        m_vis.putAction("recolor", recolor);
+        
+        // repaint
+        ActionList repaint = new ActionList();
+        repaint.add(recolor);
+        repaint.add(new RepaintAction());
+        m_vis.putAction("repaint", repaint);
+        
+        // animate paint change
+        ActionList animatePaint = new ActionList(400);
+        animatePaint.add(new ColorAnimator(treeNodes));
+        animatePaint.add(new RepaintAction());
+        m_vis.putAction("animatePaint", animatePaint);
+        
+        // create the tree layout action
+        RadialTreeLayout treeLayout = new RadialTreeLayout(tree);
+        //treeLayout.setAngularBounds(-Math.PI/2, Math.PI);
+        m_vis.putAction("treeLayout", treeLayout);
+        
+        CollapsedSubtreeLayout subLayout = new CollapsedSubtreeLayout(tree);
+        m_vis.putAction("subLayout", subLayout);
+        
+        // create the filtering and layout
+        ActionList filter = new ActionList();
+        filter.add(new TreeRootAction(tree));
+        filter.add(fonts);
+        filter.add(treeLayout);
+        filter.add(subLayout);
+        filter.add(textColor);
+        filter.add(nodeColor);
+        filter.add(edgeColor);
+        m_vis.putAction("filter", filter);
+        
+        // animated transition
+        ActionList animate = new ActionList(1250);
+        animate.setPacingFunction(new SlowInSlowOutPacer());
+        animate.add(new QualityControlAnimator());
+        animate.add(new VisibilityAnimator(tree));
+        animate.add(new PolarLocationAnimator(treeNodes, linear));
+        animate.add(new ColorAnimator(treeNodes));
+        animate.add(new RepaintAction());
+        m_vis.putAction("animate", animate);
+        m_vis.alwaysRunAfter("filter", "animate");
+        
+        // ------------------------------------------------
+        
+        // initialize the display
+        setSize(600,600);
+        setItemSorter(new TreeDepthItemSorter());
+        addControlListener(new DragControl());
+        addControlListener(new ZoomToFitControl());
+        addControlListener(new ZoomControl());
+        addControlListener(new PanControl());
+        addControlListener(new FocusControl(1, "filter"));
+        addControlListener(new HoverActionControl("repaint"));
+        
+        // ------------------------------------------------
+        
+        // filter graph and perform layout
+        m_vis.run("filter");
+        
+        // maintain a set of items that should be interpolated linearly
+        // this isn't absolutely necessary, but makes the animations nicer
+        // the PolarLocationAnimator should read this set and act accordingly
+        m_vis.addFocusGroup(linear, new DefaultTupleSet());
+        m_vis.getGroup(Visualization.FOCUS_ITEMS).addTupleSetListener(
+            new TupleSetListener() {
+                public void tupleSetChanged(TupleSet t, Tuple[] add, Tuple[] rem) {
+                    TupleSet linearInterp = m_vis.getGroup(linear);
+                    if ( add.length < 1 ) return; linearInterp.clear();
+                    for ( Node n = (Node)add[0]; n!=null; n=n.getParent() )
+                        linearInterp.addTuple(n);
+                }
+            }
+        );
+        
+        SearchTupleSet search = new PrefixSearchTupleSet();
+        m_vis.addFocusGroup(Visualization.SEARCH_ITEMS, search);
+        search.addTupleSetListener(new TupleSetListener() {
+            public void tupleSetChanged(TupleSet t, Tuple[] add, Tuple[] rem) {
+                m_vis.cancel("animatePaint");
+                m_vis.run("recolor");
+                m_vis.run("animatePaint");
+            }
+        });
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public static void main(String argv[]) {
+        String infile = DATA_FILE;
+        String label = "name";
+        
+        if ( argv.length > 1 ) {
+            infile = argv[0];
+            label = argv[1];
+        }
+        
+        UILib.setPlatformLookAndFeel();
+        
+        JFrame frame = new JFrame("p r e f u s e  |  r a d i a l t r e e v i e w");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setContentPane(demo(infile, label));
+        frame.pack();
+        frame.setVisible(true);
+    }
+    
+    public static JPanel demo(String datafile, final String label) {
+        Graph g = null;
+        try {
+            g = new GraphMLReader().readGraph(datafile);
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        return demo(g, label);
+    }
+    
+    public static JPanel demo(Graph g, final String label) {        
+        // create a new radial tree view
+        final RadialGraphView gview = new RadialGraphView(g, label);
+        Visualization vis = gview.getVisualization();
+        
+        // create a search panel for the tree map
+        SearchQueryBinding sq = new SearchQueryBinding(
+             (Table)vis.getGroup(treeNodes), label,
+             (SearchTupleSet)vis.getGroup(Visualization.SEARCH_ITEMS));
+        JSearchPanel search = sq.createSearchPanel();
+        search.setShowResultCount(true);
+        search.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
+        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+        
+        final JFastLabel title = new JFastLabel("                 ");
+        title.setPreferredSize(new Dimension(350, 20));
+        title.setVerticalAlignment(SwingConstants.BOTTOM);
+        title.setBorder(BorderFactory.createEmptyBorder(3,0,0,0));
+        title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
+        
+        gview.addControlListener(new ControlAdapter() {
+            public void itemEntered(VisualItem item, MouseEvent e) {
+                if ( item.canGetString(label) )
+                    title.setText(item.getString(label));
+            }
+            public void itemExited(VisualItem item, MouseEvent e) {
+                title.setText(null);
+            }
+        });
+        
+        Box box = new Box(BoxLayout.X_AXIS);
+        box.add(Box.createHorizontalStrut(10));
+        box.add(title);
+        box.add(Box.createHorizontalGlue());
+        box.add(search);
+        box.add(Box.createHorizontalStrut(3));
+        
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(gview, BorderLayout.CENTER);
+        panel.add(box, BorderLayout.SOUTH);
+        
+        Color BACKGROUND = Color.WHITE;
+        Color FOREGROUND = Color.DARK_GRAY;
+        UILib.setColor(panel, BACKGROUND, FOREGROUND);
+        
+        return panel;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Switch the root of the tree by requesting a new spanning tree
+     * at the desired root
+     */
+    public static class TreeRootAction extends GroupAction {
+        public TreeRootAction(String graphGroup) {
+            super(graphGroup);
+        }
+        public void run(double frac) {
+            TupleSet focus = m_vis.getGroup(Visualization.FOCUS_ITEMS);
+            if ( focus==null || focus.getTupleCount() == 0 ) return;
+            
+            Graph g = (Graph)m_vis.getGroup(m_group);
+            Node f = null;
+            while ( !g.containsTuple(f=(Node)focus.tuples().next()) ) {
+                f = null;
+            }
+            if ( f == null ) return;
+            g.getSpanningTree(f);
+        }
+    }
+    
+    /**
+     * Set node fill colors
+     */
+    public static class NodeColorAction extends ColorAction {
+        public NodeColorAction(String group) {
+            super(group, VisualItem.FILLCOLOR, ColorLib.rgba(255,255,255,0));
+            add("_hover", ColorLib.gray(220,230));
+            add("ingroup('_search_')", ColorLib.rgb(255,190,190));
+            add("ingroup('_focus_')", ColorLib.rgb(198,229,229));
+        }
+                
+    } // end of inner class NodeColorAction
+    
+    /**
+     * Set node text colors
+     */
+    public static class TextColorAction extends ColorAction {
+        public TextColorAction(String group) {
+            super(group, VisualItem.TEXTCOLOR, ColorLib.gray(0));
+            add("_hover", ColorLib.rgb(255,0,0));
+        }
+    } // end of inner class TextColorAction
+    
+    
+} // end of class RadialGraphView
+@
+
+
+1.1.2.2
+log
+@Changed interaction mechanism of RotationControl
+Added documentation of expression language to ExpressionParser javadoc
+Added inclusion of edge arrows in bounds computation for EdgeRenderer
+Added integer dimensions check to LabelRenderer
+Added new readme file
+@
+text
+@d221 1
+a221 1
+        JFrame frame = new JFrame("p r e f u s e  |  r a d i a l g r a p h v i e w");
+@
+
+

@@ -1,0 +1,446 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action;
+
+import prefuse.Visualization;
+import prefuse.activity.Activity;
+import prefuse.util.collections.CopyOnWriteArrayList;
+
+/**
+ * Abstract base class for Action implementations that hold a collection
+ * of subclasses.
+ *  
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public abstract class CompositeAction extends Action {
+
+    protected CopyOnWriteArrayList m_actions = new CopyOnWriteArrayList();
+    
+    /**
+     * Creates a new run-once CompositeAction.
+     */
+    public CompositeAction() {
+        super(null, 0);
+    }
+
+    /**
+     * Creates a new run-once CompositeAction that processes the given
+     * Visualization.
+     * @@param vis the {@@link prefuse.Visualization} processed by this Action
+     */
+    public CompositeAction(Visualization vis) {
+        super(vis, 0);
+    }
+    
+    /**
+     * Creates a new CompositeAction of specified duration and default
+     * step time of 20 milliseconds.
+     * @@param duration the duration of this Activity, in milliseconds
+     */
+    public CompositeAction(long duration) {
+        super(null, duration, Activity.DEFAULT_STEP_TIME);
+    }
+    
+    /**
+     * Creates a new CompositeAction of specified duration and default
+     * step time of 20 milliseconds that processes the given
+     * Visualization.
+     * @@param vis the {@@link prefuse.Visualization} processed by this Action
+     * @@param duration the duration of this Activity, in milliseconds
+     */
+    public CompositeAction(Visualization vis, long duration) {
+        super(vis, duration, Activity.DEFAULT_STEP_TIME);
+    }
+    
+    /**
+     * Creates a new CompositeAction of specified duration and step time.
+     * @@param duration the duration of this Activity, in milliseconds
+     * @@param stepTime the time to wait in milliseconds between executions
+     *  of the action list
+     */
+    public CompositeAction(long duration, long stepTime) {
+        super(null, duration, stepTime);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Set the Visualization processed by this Action. This also calls
+     * {@@link Action#setVisualization(Visualization)} on all Action instances
+     * contained within this composite.
+     * @@param vis the {@@link prefuse.Visualization} to process
+     */
+    public void setVisualization(Visualization vis) {
+        super.setVisualization(vis);
+        for ( int i=0; i<m_actions.size(); ++i ) {
+            get(i).setVisualization(vis);
+        }
+    }
+    
+    /**
+     * Returns the number of Actions in the composite.
+     * @@return the size of this composite
+     */
+    public int size() {
+        return m_actions.size();
+    }
+    
+    /**
+     * Adds an Action to the end of the composite list.
+     * @@param a the Action instance to add
+     */
+    public void add(Action a) {
+        m_actions.add(a);
+    }
+    
+    /**
+     * Adds an Action at the given index.
+     * @@param i the index at which to add the Action
+     * @@param a the Action instance to add
+     */
+    public void add(int i, Action a) {
+        m_actions.add(i, a);
+    }
+    
+    /**
+     * Returns the Action at the specified index.
+     * @@param i the index
+     * @@return the requested Action
+     */
+    public Action get(int i) {
+        return (Action)m_actions.get(i);
+    }
+    
+    /**
+     * Removes a given Action from the composite.
+     * @@param a the Action to remove
+     * @@return true if the Action was found and removed, false otherwise
+     */
+    public boolean remove(Action a) {
+        return m_actions.remove(a);
+    }
+    
+    /**
+     * Removes the Action at the specified index.
+     * @@param i the index
+     * @@return the removed Action
+     */
+    public Action remove(int i) {
+        return (Action)m_actions.remove(i);
+    }
+    
+} // end of class CompositeAction
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a2 2
+import java.util.concurrent.CopyOnWriteArrayList;
+
+d5 1
+d10 1
+a10 1
+ *
+d15 2
+a16 2
+    protected CopyOnWriteArrayList<Action> m_actions = new CopyOnWriteArrayList<Action>();
+
+d32 1
+a32 1
+
+d41 1
+a41 1
+
+d52 1
+a52 1
+
+d62 1
+a62 1
+
+d64 1
+a64 1
+
+d71 1
+a71 2
+    @@Override
+	public void setVisualization(Visualization vis) {
+d77 1
+a77 1
+
+d85 1
+a85 1
+
+d93 1
+a93 1
+
+d102 1
+a102 1
+
+d109 1
+a109 1
+        return m_actions.get(i);
+d111 1
+a111 1
+
+d120 1
+a120 1
+
+d127 1
+a127 1
+        return m_actions.remove(i);
+d129 1
+a129 1
+
+@
+
+
+1.1
+log
+@file CompositeAction.java was initially added on branch beta.
+@
+text
+@d1 130
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 109
+package prefuse.action;
+
+import prefuse.Visualization;
+import prefuse.activity.Activity;
+import prefuse.util.collections.CopyOnWriteArrayList;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public abstract class CompositeAction extends Action {
+
+    protected CopyOnWriteArrayList m_actions = new CopyOnWriteArrayList();
+    
+    /**
+     * Creates a new run-once CompositeAction.
+     */
+    public CompositeAction() {
+        super(null, 0);
+    }
+
+    public CompositeAction(Visualization vis) {
+        super(vis, 0);
+    }
+    
+    /**
+     * Creates a new CompositeAction of specified duration and default
+     * step time of 20 milliseconds.
+     * @@param duration the duration of this Activity, in milliseconds
+     */
+    public CompositeAction(long duration) {
+        super(null, duration, Activity.DEFAULT_STEP_TIME);
+    }
+    
+    public CompositeAction(Visualization vis, long duration) {
+        super(vis, duration, Activity.DEFAULT_STEP_TIME);
+    }
+    
+    /**
+     * Creates a new CompositeAction of specified duration and step time.
+     * @@param duration the duration of this Activity, in milliseconds
+     * @@param stepTime the time to wait in milliseconds between executions
+     *  of the action list
+     */
+    public CompositeAction(long duration, long stepTime) {
+        super(null, duration, stepTime);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public void setVisualization(Visualization vis) {
+        super.setVisualization(vis);
+        for ( int i=0; i<m_actions.size(); ++i ) {
+            get(i).setVisualization(vis);
+        }
+    }
+    
+    /**
+     * Returns the number of Actions
+     * @@return the size of this composite
+     */
+    public int size() {
+        return m_actions.size();
+    }
+    
+    /**
+     * Adds an Action to the end of the list
+     * @@param a the Action instance to add
+     */
+    public void add(Action a) {
+        m_actions.add(a);
+    }
+    
+    /**
+     * Adds an Action at the given index
+     * @@param i the index at which to add the Action
+     * @@param a the Action instance to add
+     */
+    public void add(int i, Action a) {
+        m_actions.add(i, a);
+    }
+    
+    /**
+     * Returns the Action at the specified index
+     * @@param i the index
+     * @@return the requested Action
+     */
+    public Action get(int i) {
+        return (Action)m_actions.get(i);
+    }
+    
+    /**
+     * Removes a given Action
+     * @@param a the Action to remove
+     * @@return true if the Action was found and removed, false otherwise
+     */
+    public boolean remove(Action a) {
+        return m_actions.remove(a);
+    }
+    
+    /**
+     * Removes the Action at the specified index
+     * @@param i the index
+     * @@return the removed Action
+     */
+    public Action remove(int i) {
+        return (Action)m_actions.remove(i);
+    }
+    
+} // end of class CompositeAction
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@a7 3
+ * Abstract base class for Action implementations that hold a collection
+ * of subclasses.
+ *  
+a20 5
+    /**
+     * Creates a new run-once CompositeAction that processes the given
+     * Visualization.
+     * @@param vis the {@@link prefuse.Visualization} processed by this Action
+     */
+a33 7
+    /**
+     * Creates a new CompositeAction of specified duration and default
+     * step time of 20 milliseconds that processes the given
+     * Visualization.
+     * @@param vis the {@@link prefuse.Visualization} processed by this Action
+     * @@param duration the duration of this Activity, in milliseconds
+     */
+a49 6
+    /**
+     * Set the Visualization processed by this Action. This also calls
+     * {@@link Action#setVisualization(Visualization)} on all Action instances
+     * contained within this composite.
+     * @@param vis the {@@link prefuse.Visualization} to process
+     */
+d58 1
+a58 1
+     * Returns the number of Actions in the composite.
+d66 1
+a66 1
+     * Adds an Action to the end of the composite list.
+d74 1
+a74 1
+     * Adds an Action at the given index.
+d83 1
+a83 1
+     * Returns the Action at the specified index.
+d92 1
+a92 1
+     * Removes a given Action from the composite.
+d101 1
+a101 1
+     * Removes the Action at the specified index.
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d11 1
+a11 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

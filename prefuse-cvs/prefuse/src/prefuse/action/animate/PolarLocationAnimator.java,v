@@ -1,0 +1,503 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action.animate;
+
+import java.awt.geom.Point2D;
+
+import prefuse.Display;
+import prefuse.action.ItemAction;
+import prefuse.util.MathLib;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Animator that interpolates between starting and ending display locations
+ * by linearly interpolating between polar coordinates.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class PolarLocationAnimator extends ItemAction {
+    
+    private Point2D m_anchor = new Point2D.Double();
+    private String  m_linear = null;
+    
+    // temp variables
+    private double ax, ay, sx, sy, ex, ey, x, y;
+    private double dt1, dt2, sr, st, er, et, r, t, stt, ett;
+    
+    /**
+     * Creates a PolarLocationAnimator that operates on all VisualItems
+     * within a Visualization.
+     */
+    public PolarLocationAnimator() {
+        super();
+    }
+    
+    /**
+     * Creates a PolarLocationAnimator that operates on VisualItems
+     * within the specified group.
+     * @@param group the data group to process
+     */
+    public PolarLocationAnimator(String group) {
+        super(group);
+    }
+    
+    /**
+     * Creates a PolarLocationAnimator that operates on VisualItems
+     * within the specified group, while using regular linear interpolation
+     * (in Cartesian (x,y) coordinates rather than polar coordinates) for
+     * items also contained within the specified linearGroup. 
+     * @@param group the data group to process
+     * @@param linearGroup the group of items that should be interpolated
+     * in Cartesian (standard x,y) coordinates rather than polar coordinates.
+     * Note that this animator will not process any items in 
+     * <code>linearGroup</code> that are not also in <code>group</code>.
+     */
+    public PolarLocationAnimator(String group, String linearGroup) {
+        super(group);
+        m_linear = linearGroup;
+    }
+
+    private void setAnchor() {
+        Display d = getVisualization().getDisplay(0);
+        m_anchor.setLocation(d.getWidth()/2,d.getHeight()/2);
+        d.getAbsoluteCoordinate(m_anchor, m_anchor);
+        ax = m_anchor.getX();
+        ay = m_anchor.getY();
+    }
+
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        setAnchor();
+        super.run(frac);
+    }
+    
+    /**
+     * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+     */
+    public void process(VisualItem item, double frac) {
+        if ( m_linear != null && item.isInGroup(m_linear) ) {
+            // perform linear interpolation instead
+            double s = item.getStartX();
+            item.setX(s + frac*(item.getEndX()-s));
+            s = item.getStartY();
+            item.setY(s + frac*(item.getEndY()-s));
+            return;
+        }
+        
+        // otherwise, interpolate in polar coordinates
+        sx = item.getStartX() - ax;
+        sy = item.getStartY() - ay;
+        ex = item.getEndX() - ax;
+        ey = item.getEndY() - ay;
+            
+        sr = Math.sqrt(sx*sx + sy*sy);
+        st = Math.atan2(sy,sx);
+            
+        er = Math.sqrt(ex*ex + ey*ey);
+        et = Math.atan2(ey,ex);
+        
+        stt = st < 0 ? st+MathLib.TWO_PI : st;
+        ett = et < 0 ? et+MathLib.TWO_PI : et;
+            
+        dt1 = et - st;
+        dt2 = ett - stt;
+            
+        if ( Math.abs(dt1) < Math.abs(dt2) ) {
+            t = st + frac * dt1;
+        } else {
+            t = stt + frac * dt2;
+        }
+        r = sr + frac * (er - sr);
+                        
+        x = Math.round(ax + r*Math.cos(t));
+        y = Math.round(ay + r*Math.sin(t));
+            
+        item.setX(x);
+        item.setY(y);
+    }
+
+} // end of class PolarLocationAnimator
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d14 1
+a14 1
+ *
+d18 2
+a19 2
+
+    private final Point2D m_anchor = new Point2D.Double();
+d21 1
+a21 1
+
+d25 1
+a25 1
+
+d33 1
+a33 1
+
+d42 1
+a42 1
+
+d47 1
+a47 1
+     * items also contained within the specified linearGroup.
+d51 1
+a51 1
+     * Note that this animator will not process any items in
+d70 1
+a70 2
+    @@Override
+	public void run(double frac) {
+d74 1
+a74 1
+
+d78 1
+a78 2
+    @@Override
+	public void process(VisualItem<?> item, double frac) {
+d87 1
+a87 1
+
+d93 1
+a93 1
+
+d96 1
+a96 1
+
+d99 1
+a99 1
+
+d102 1
+a102 1
+
+d105 1
+a105 1
+
+d112 1
+a112 1
+
+d115 1
+a115 1
+
+@
+
+
+1.1
+log
+@file PolarLocationAnimator.java was initially added on branch beta.
+@
+text
+@d1 120
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 80
+package prefuse.action.animate;
+
+import java.awt.geom.Point2D;
+
+import prefuse.Display;
+import prefuse.action.ItemAction;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Interpolates between starting and ending display locations by linearly
+ * interpolating between polar co-ordinates.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class PolarLocationAnimator extends ItemAction {
+
+	private static final double TWO_PI = 2*Math.PI;
+	
+    private Point2D m_anchor = new Point2D.Double();
+    
+    // temp variables
+    private double ax, ay, sx, sy, ex, ey, x, y;
+    private double dt1, dt2, sr, st, er, et, r, t, stt, ett;
+    
+    public PolarLocationAnimator() {
+        super();
+    }
+    
+    public PolarLocationAnimator(String group) {
+        super(group);
+    }
+
+    private void setAnchor() {
+        Display d = getVisualization().getDisplay(0);
+        m_anchor.setLocation(d.getWidth()/2,d.getHeight()/2);
+        d.getAbsoluteCoordinate(m_anchor, m_anchor);
+        ax = m_anchor.getX();
+        ay = m_anchor.getY();
+    }
+    
+    public void run(double frac) {
+        setAnchor();
+        super.run(frac);
+    }
+    
+	public void process(VisualItem item, double frac) {
+        sx = item.getStartX() - ax;
+        sy = item.getStartY() - ay;
+        ex = item.getEndX() - ax;
+        ey = item.getEndY() - ay;
+            
+		sr = Math.sqrt(sx*sx + sy*sy);
+        st = Math.atan2(sy,sx);
+            
+		er = Math.sqrt(ex*ex + ey*ey);
+        et = Math.atan2(ey,ex);
+		
+        stt = st < 0 ? st+TWO_PI : st;
+		ett = et < 0 ? et+TWO_PI : et;
+			
+		dt1 = et - st;
+		dt2 = ett - stt;
+			
+		if ( Math.abs(dt1) < Math.abs(dt2) ) {
+			t = st + frac * dt1;
+		} else {
+			t = stt + frac * dt2;
+		}
+		r = sr + frac * (er - sr);
+						
+		x = Math.round(ax + r*Math.cos(t));
+		y = Math.round(ay + r*Math.sin(t));
+            
+		item.setX(x);
+        item.setY(y);
+	}
+
+} // end of class PolarLocationAnimator
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a6 1
+import prefuse.util.MathLib;
+d12 1
+a12 1
+ * interpolating between polar coordinates.
+d15 1
+a15 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+d18 2
+a21 1
+    private String  m_linear = null;
+a26 4
+    /**
+     * Creates a PolarLocationAnimator that operates on all VisualItems
+     * within a Visualization.
+     */
+a30 5
+    /**
+     * Creates a PolarLocationAnimator that operates on VisualItems
+     * within the specified group.
+     * @@param group the data group to process
+     */
+a33 16
+    
+    /**
+     * Creates a PolarLocationAnimator that operates on VisualItems
+     * within the specified group, while using regular linear interpolation
+     * (in Cartesian (x,y) coordinates rather than polar coordinates) for
+     * items also contained within the specified linearGroup. 
+     * @@param group the data group to process
+     * @@param linearGroup the group of items that should be interpolated
+     * in Cartesian (standard x,y) coordinates rather than polar coordinates.
+     * Note that this animator will not process any items in 
+     * <code>linearGroup</code> that are not also in <code>group</code>.
+     */
+    public PolarLocationAnimator(String group, String linearGroup) {
+        super(group);
+        m_linear = linearGroup;
+    }
+d42 1
+a42 4
+
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+a47 3
+	/**
+	 * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+	 */
+a48 10
+		if ( m_linear != null && item.isInGroup(m_linear) ) {
+			// perform linear interpolation instead
+			double s = item.getStartX();
+			item.setX(s + frac*(item.getEndX()-s));
+			s = item.getStartY();
+			item.setY(s + frac*(item.getEndY()-s));
+			return;
+		}
+		
+		// otherwise, interpolate in polar coordinates
+d60 2
+a61 2
+        stt = st < 0 ? st+MathLib.TWO_PI : st;
+		ett = et < 0 ? et+MathLib.TWO_PI : et;
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d19 1
+a19 1
+    
+d76 14
+a89 14
+    /**
+     * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+     */
+    public void process(VisualItem item, double frac) {
+        if ( m_linear != null && item.isInGroup(m_linear) ) {
+            // perform linear interpolation instead
+            double s = item.getStartX();
+            item.setX(s + frac*(item.getEndX()-s));
+            s = item.getStartY();
+            item.setY(s + frac*(item.getEndY()-s));
+            return;
+        }
+        
+        // otherwise, interpolate in polar coordinates
+d95 1
+a95 1
+        sr = Math.sqrt(sx*sx + sy*sy);
+d98 1
+a98 1
+        er = Math.sqrt(ex*ex + ey*ey);
+d100 1
+a100 1
+        
+d102 14
+a115 1
+        ett = et < 0 ? et+MathLib.TWO_PI : et;
+d117 1
+a117 14
+        dt1 = et - st;
+        dt2 = ett - stt;
+            
+        if ( Math.abs(dt1) < Math.abs(dt2) ) {
+            t = st + frac * dt1;
+        } else {
+            t = stt + frac * dt2;
+        }
+        r = sr + frac * (er - sr);
+                        
+        x = Math.round(ax + r*Math.cos(t));
+        y = Math.round(ay + r*Math.sin(t));
+            
+        item.setX(x);
+d119 1
+a119 1
+    }
+@
+
+
+1.1.2.4
+log
+@Lots of javadoc
+@
+text
+@d12 2
+a13 2
+ * Animator that interpolates between starting and ending display locations
+ * by linearly interpolating between polar coordinates.
+d15 2
+a16 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

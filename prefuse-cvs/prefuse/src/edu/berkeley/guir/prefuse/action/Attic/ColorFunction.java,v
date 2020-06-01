@@ -1,0 +1,155 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2004.03.24.01.57.25;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.16.03.05.16;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@New filters added plus more
+@
+text
+@package edu.berkeley.guir.prefuse.action;
+
+import java.awt.Color;
+import java.awt.Paint;
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+
+/**
+ * Simple ColorFunction which returns "black" for the draw color and
+ * "gray" for the fill color when a color is requested. Subclasses 
+ * should override the getColor() and getFillColor() methods to provide
+ * custom color selection functions.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ColorFunction extends AbstractAction {
+    
+	public void run(ItemRegistry registry, double frac) {
+		Iterator itemIter = registry.getItems();
+		while ( itemIter.hasNext() ) {
+			VisualItem item = (VisualItem)itemIter.next();
+            Paint c = getColor(item), o = item.getColor();
+			if ( o == null ) item.setColor(getInitialColor(item));			
+			item.updateColor(c);			
+			item.setColor(c);
+			
+			c = getFillColor(item); o = item.getFillColor();
+			if ( o == null ) item.setFillColor(getInitialFillColor(item));
+			item.updateFillColor(c);			
+			item.setFillColor(c);
+		}
+	} //
+
+	protected Paint getInitialColor(VisualItem item) {
+		return getColor(item);
+	} //
+	
+	protected Paint getInitialFillColor(VisualItem item) {
+		return getFillColor(item);
+	} //
+
+	public Paint getColor(VisualItem item) {
+		return Color.BLACK;
+	} //
+
+	public Paint getFillColor(VisualItem item) {
+		return Color.GRAY;
+	} //
+
+} // end of class ColorFunction
+@
+
+
+1.3
+log
+@Major refactor
+@
+text
+@@
+
+
+1.2
+log
+@More Javadoc updates
+@
+text
+@d7 1
+a7 1
+import edu.berkeley.guir.prefuse.GraphItem;
+d24 1
+a24 1
+			GraphItem item = (GraphItem)itemIter.next();
+d37 1
+a37 1
+	protected Paint getInitialColor(GraphItem item) {
+d41 1
+a41 1
+	protected Paint getInitialFillColor(GraphItem item) {
+d45 1
+a45 1
+	public Paint getColor(GraphItem item) {
+d49 1
+a49 1
+	public Paint getFillColor(GraphItem item) {
+a51 7
+    
+    public static Color calcIntermediateColor(Color c1, Color c2, double frac) {
+        return new Color(
+                (int)Math.round(frac*c2.getRed()   + (1-frac)*c1.getRed()),
+                (int)Math.round(frac*c2.getGreen() + (1-frac)*c1.getGreen()),
+                (int)Math.round(frac*c2.getBlue()  + (1-frac)*c1.getBlue()));
+    } //
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d11 4
+a14 5
+ * Simple ColorFunction which blindly returns "black" when a color is
+ * requested. Subclasses should override the getColor() and getFillColor()
+ * methods to provide custom color selection functions.
+ * 
+ * Apr 30, 2003 - jheer - Created class
+d17 1
+a17 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+d50 1
+a50 1
+		return Color.BLACK;
+@
+

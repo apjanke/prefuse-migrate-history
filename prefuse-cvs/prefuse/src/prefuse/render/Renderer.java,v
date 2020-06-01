@@ -1,0 +1,251 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.04;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.44;	author jogiles;	state Exp;
+branches;
+next	2.0.4.2;
+
+2.0.4.2
+date	2008.03.03.04.02.27;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.render;
+
+import java.awt.Graphics2D;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Interface for rendering VisualItems, providing drawing as well as location
+ * checking and bounding box routines.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ * @@author alan newberger
+ */
+public interface Renderer {
+
+    /**
+     * Provides a default graphics context for renderers to do useful
+     * things like compute string widths when an external graphics context
+     * has not yet been provided.
+     */
+    public static final Graphics2D DEFAULT_GRAPHICS = (Graphics2D)
+        new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).getGraphics();
+
+    /**
+     * Render item into a Graphics2D context.
+     * @@param g the Graphics2D context
+     * @@param item the visual item to draw
+     */
+    public void render(Graphics2D g, VisualItem item);
+
+    /**
+     * Returns true if the Point is located inside the extents of the item.
+     * This calculation matches against the exaxt item shape, and so is more
+     * sensitive than just checking within a bounding box.
+     * @@param p the point to test for containment
+     * @@param item the item to test containment against
+     * @@return true if the point is contained within the the item, else false
+     */
+    public boolean locatePoint(Point2D p, VisualItem item);
+
+    /**
+     * Calculates and sets the bounding rectangle for an item. This is called
+     * by a VisualItem when it validates its bounds.
+     * @@param item the item to compute the bounding box for
+     */
+    public void setBounds(VisualItem item);
+
+} // end of interface Renderer
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a4 1
+import java.awt.geom.Rectangle2D;
+d13 1
+a13 1
+ *
+d32 1
+a32 1
+    public void render(Graphics2D g, VisualItem<?> item);
+d36 1
+a36 1
+     * This calculation matches against the exact item shape, and so is more
+d42 1
+a42 2
+    public boolean locatePoint(Point2D p, VisualItem<?> item);
+
+d45 1
+a45 1
+     * Calculates the bounding rectangle for an item. This is called
+a47 7
+     * @@param bounds the rectangle to populate with the bounding box
+     */
+    public void calculateBounds(VisualItem<?> item, Rectangle2D bounds);
+
+    /**
+     *
+     * @@return true iff the renderer manages the bounds of the items it renders
+d49 1
+a49 1
+	public boolean managesBounds();
+@
+
+
+2.0.4.2
+log
+@javadoc update
+@
+text
+@d56 1
+a56 1
+     * @@return true if and only if the renderer manages the bounds of the items it renders
+@
+
+
+1.1
+log
+@file Renderer.java was initially added on branch beta.
+@
+text
+@d1 51
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 48
+package prefuse.render;
+
+import java.awt.Graphics2D;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Interface for rendering VisualItems. Supports drawing as well as location
+ * and bounding box routines.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ * @@author alan newberger
+ */
+public interface Renderer {
+
+    /**
+     * Provides a default graphics context for renderers to do useful
+     * things like compute string widths when an external graphics context
+     * has not yet been provided.
+     */
+    public static final Graphics2D DEFAULT_GRAPHICS = (Graphics2D)
+        new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).getGraphics();
+
+    /**
+     * Render item into a Graphics2D context.
+     * @@param g the Graphics2D context
+     * @@param item the item to draw
+     */
+    public void render(Graphics2D g, VisualItem item);
+
+    /**
+     * Returns true if the Point is located inside coordinates of the item.
+     * @@param p the point to test for containment
+     * @@param item the item to test containment against
+     * @@return true if the point is contained within the the item, else false
+     */
+    public boolean locatePoint(Point2D p, VisualItem item);
+
+    /**
+     * Computes and set the bounding rectangle for the item.
+     * @@param item the item to compute the bounding box for
+     */
+    public void setBounds(VisualItem item);
+
+} // end of interface Renderer
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d11 2
+a12 2
+ * Interface for rendering VisualItems, providing drawing as well as location
+ * checking and bounding box routines.
+d14 1
+a14 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d30 1
+a30 1
+     * @@param item the visual item to draw
+d35 1
+a35 3
+     * Returns true if the Point is located inside the extents of the item.
+     * This calculation matches against the exaxt item shape, and so is more
+     * sensitive than just checking within a bounding box.
+d43 1
+a43 2
+     * Calculates and sets the bounding rectangle for an item. This is called
+     * by a VisualItem when it validates its bounds.
+@
+
+

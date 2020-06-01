@@ -1,0 +1,434 @@
+head	1.9;
+access;
+symbols
+	alpha:1.8.0.2
+	Root_alpha:1.8
+	prefuse-alpha-20051229:1.8
+	P20050401_Alpha_PreCHI:1.8;
+locks; strict;
+comment	@# @;
+
+
+1.9
+date	2006.02.11.06.38.43;	author jheer;	state dead;
+branches;
+next	1.8;
+
+1.8
+date	2005.01.14.23.12.48;	author jheer;	state Exp;
+branches
+	1.8.4.1;
+next	1.7;
+
+1.7
+date	2004.03.25.04.35.38;	author jheer;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.03.24.01.57.26;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.15.03.33.29;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.11.19.11.12;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.08.21.31.50;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.06.00.50.41;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+1.8.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.9
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefusex.layout;
+
+import java.awt.geom.Point2D;
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.NodeItem;
+import edu.berkeley.guir.prefuse.action.assignment.TreeLayout;
+
+/**
+ * <p>Calculates a BalloonTree layout of a tree. This layout places children
+ * nodes radially around their parents, and is equivalent to a 2D view of
+ * a ConeTree.</p>
+ * 
+ * <p>This is an implementation of the algorithm presented in G. Melançon and 
+ * I. Herman, Circular Drawings of Rooted Trees, Reports of the Centre for 
+ * Mathematics and Computer Sciences, Report Number INS–9817, 1998.
+ * </p>
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class BalloonTreeLayout extends TreeLayout {
+    
+    private ItemRegistry m_registry;
+    private int m_minRadius = 2;
+    
+    public BalloonTreeLayout() {
+        this(2);
+    } //
+    
+    public BalloonTreeLayout(int minRadius) {
+        m_minRadius = 2;
+    } //
+    
+    /**
+     * @@see edu.berkeley.guir.prefuse.action.Action#run(edu.berkeley.guir.prefuse.ItemRegistry, double)
+     */
+    public void run(ItemRegistry registry, double frac) {
+        m_registry = registry;
+        Point2D anchor = getLayoutAnchor(registry);
+        NodeItem n = getLayoutRoot(registry);
+        layout(n,anchor.getX(),anchor.getY());
+    } //
+    
+    public int getMinRadius() {
+        return m_minRadius;
+    } //
+    
+    public void setMinRadius(int minRadius) {
+        m_minRadius = minRadius;
+    } //
+    
+    public void layout(NodeItem n, double x, double y) {
+        firstWalk(n);
+        secondWalk(n,null,x,y,1,0);
+    } //
+    
+    private void firstWalk(NodeItem n) {
+        ParamBlock np = getParams(n);
+        np.d = 0;
+        double s = 0;
+        Iterator childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            firstWalk(c);
+            ParamBlock cp = getParams(c);
+            np.d = Math.max(np.d,cp.r);
+            cp.a = Math.atan(((double)cp.r)/(np.d+cp.r));
+            s += cp.a;
+        }
+        adjustChildren(np, s);
+        setRadius(np);
+    } //
+    
+    private void adjustChildren(ParamBlock np, double s) {
+        if ( s > Math.PI ) {
+            np.c = Math.PI/s;
+            np.f = 0;
+        } else {
+            np.c = 1;
+            np.f = Math.PI - s;
+        }
+    } //
+    
+    private void setRadius(ParamBlock np) {
+        np.r = Math.max(np.d,m_minRadius) + 2*np.d;
+    } //
+    
+    private void setRadius(NodeItem n, ParamBlock np) {
+        int numChildren = n.getChildCount();
+        double p  = Math.PI;
+        double fs = (numChildren==0 ? 0 : np.f/numChildren);
+        double pr = 0;
+        double bx = 0, by = 0;
+        Iterator childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            ParamBlock cp = getParams(c);
+            p += pr + cp.a + fs;
+            bx += (cp.r)*Math.cos(p);
+            by += (cp.r)*Math.sin(p);
+            pr = cp.a;
+        }
+        if ( numChildren != 0 ) {
+            bx /= numChildren;
+            by /= numChildren;
+        }
+        np.rx = -bx;
+        np.ry = -by;
+        
+        p = Math.PI;
+        pr = 0;
+        np.r = 0;
+        childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            ParamBlock cp = getParams(c);
+            p += pr + cp.a + fs;
+            double x = cp.r*Math.cos(p)-bx;
+            double y = cp.r*Math.sin(p)-by;
+            double d = Math.sqrt(x*x+y*y) + cp.r;
+            np.r = Math.max(np.r, (int)Math.round(d));
+            pr = cp.a;
+        }
+        if ( np.r == 0 )
+            np.r = m_minRadius + 2*np.d;
+    } //
+    
+    private void secondWalk2(NodeItem n, NodeItem r, 
+            double x, double y, double l, double t)
+    {
+        ParamBlock np = getParams(n);
+        double cost = Math.cos(t);
+        double sint = Math.sin(t);
+        double nx = x + l*(np.rx*cost-np.ry*sint);
+        double ny = y + l*(np.rx*sint+np.ry*cost);
+        setLocation(n,r,nx,ny);
+        double dd = l*np.d;
+        double p  = Math.PI;
+        double fs = np.f / (n.getChildCount()+1);
+        double pr = 0;
+        Iterator childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            ParamBlock cp = getParams(c);
+            double aa = np.c * cp.a;
+            double rr = np.d * Math.tan(aa)/(1-Math.tan(aa));
+            p += pr + aa + fs;
+            double xx = (l*rr+dd)*Math.cos(p)+np.rx;
+            double yy = (l*rr+dd)*Math.sin(p)+np.ry;
+            double x2 = xx*cost - yy*sint;
+            double y2 = xx*sint + yy*cost;
+            pr = aa;
+            secondWalk2(c, n, x+x2, y+y2, l*rr/cp.r, p);
+        }
+    } //
+    
+    private void secondWalk(NodeItem n, NodeItem r,
+            double x, double y, double l, double t)
+    {
+        setLocation(n,r,x,y);
+        ParamBlock np = getParams(n);
+        int numChildren = n.getChildCount();
+        double dd = l*np.d;
+        double p  = t + Math.PI;
+        double fs = (numChildren==0 ? 0 : np.f/numChildren);
+        double pr = 0;
+        Iterator childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            ParamBlock cp = getParams(c);
+            double aa = np.c * cp.a;
+            double rr = np.d * Math.tan(aa)/(1-Math.tan(aa));
+            p += pr + aa + fs;
+            double xx = (l*rr+dd)*Math.cos(p);
+            double yy = (l*rr+dd)*Math.sin(p);
+            pr = aa;
+            secondWalk(c, n, x+xx, y+yy, l*np.c/*l*rr/cp.r*/, p);
+        }
+    } //
+    
+    private ParamBlock getParams(NodeItem n) {
+        ParamBlock np = (ParamBlock)n.getVizAttribute("balloonParams");
+        if ( np == null ) {
+            np = new ParamBlock();
+            n.setVizAttribute("balloonParams", np);
+        }
+        return np;
+    } //
+    
+    public class ParamBlock {
+        public int d;
+        public int r;
+        public double rx, ry;
+        public double a;
+        public double c;
+        public double f;
+    } //
+
+} // end of class BalloonTreeLayout
+@
+
+
+1.8
+log
+@Added access to minRadius parameter
+@
+text
+@@
+
+
+1.8.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.7
+log
+@A whole lot of update
+@
+text
+@d28 8
+d46 8
+@
+
+
+1.6
+log
+@New filters added plus more
+@
+text
+@a8 1
+import edu.berkeley.guir.prefuse.graph.DefaultTree;
+a27 1
+    
+d34 1
+a34 2
+        DefaultTree tree = (DefaultTree)registry.getGraph();
+        NodeItem n = registry.getNodeItem(tree.getRoot());
+d40 1
+a40 1
+        secondWalk(n,x,y,1,0);
+d114 3
+a116 1
+    private void secondWalk2(NodeItem n, double x, double y, double l, double t) {
+d122 1
+a122 2
+        n.updateLocation(nx,ny);
+        n.setLocation(nx,ny);
+d139 1
+a139 1
+            secondWalk(c, x+x2, y+y2, l*rr/cp.r, p);
+d143 4
+a146 3
+    private void secondWalk(NodeItem n, double x, double y, double l, double t) {
+        n.updateLocation(x,y);
+        n.setLocation(x,y);
+d163 1
+a163 1
+            secondWalk(c, x+xx, y+yy, l*np.c/*l*rr/cp.r*/, p);
+@
+
+
+1.5
+log
+@Updated Javadoc
+@
+text
+@d8 1
+a8 1
+import edu.berkeley.guir.prefuse.action.TreeLayout;
+@
+
+
+1.4
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@d12 1
+a12 1
+ * Calculates a Balloon DefaultTree layout of a tree. This layout places children
+d14 6
+a19 1
+ * a Cone DefaultTree.
+d78 1
+a78 1
+        int numChildren = n.getNumChildren();
+d127 1
+a127 1
+        double fs = np.f / (n.getNumChildren()+1);
+d149 1
+a149 1
+        int numChildren = n.getNumChildren();
+@
+
+
+1.3
+log
+@Moved garbage collection into abstract Filter
+@
+text
+@d9 1
+a9 1
+import edu.berkeley.guir.prefuse.graph.Tree;
+d12 1
+a12 1
+ * Calculates a Balloon Tree layout of a tree. This layout places children
+d14 1
+a14 1
+ * a Cone Tree.
+d31 1
+a31 1
+        Tree tree = (Tree)registry.getGraph();
+@
+
+
+1.2
+log
+@Updated naming of layout convenience routines
+@
+text
+@a5 1
+import edu.berkeley.guir.prefuse.Display;
+a23 13
+    public Point2D getLayoutAnchor() {
+        Point2D anchor = super.getLayoutAnchor();
+        if ( anchor != null )
+            return anchor;
+        
+        double x = 0, y = 0;
+        if ( m_registry != null ) {
+            Display d = m_registry.getDisplay(0);
+            x = d.getWidth()/2; y = d.getHeight()/2;
+        }
+        return new Point2D.Double(x,y);
+    } //
+    
+d30 1
+a30 1
+        Point2D anchor = getLayoutAnchor();
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d25 2
+a26 2
+    public Point2D getAnchor() {
+        Point2D anchor = super.getAnchor();
+d44 1
+a44 1
+        Point2D anchor = getAnchor();
+@
+

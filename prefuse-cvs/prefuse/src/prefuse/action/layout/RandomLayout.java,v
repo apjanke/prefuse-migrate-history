@@ -1,0 +1,240 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.18;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.39;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action.layout;
+
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+import java.util.Random;
+
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Performs a random layout of items within the layout bounds.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class RandomLayout extends Layout {
+
+    private Random r = new Random(12345678L);
+    
+    /**
+     * Create a new RandomLayout that processes all items.
+     */
+    public RandomLayout() {
+        super();
+    }
+    
+    /**
+     * Create a new RandomLayout.
+     * @@param group the data group to layout
+     */
+    public RandomLayout(String group) {
+        super(group);
+    }
+
+    /**
+     * Set the seed value for the random number generator.
+     * @@param seed the random seed value
+     */
+    public void setRandomSeed(long seed) {
+        r.setSeed(seed);
+    }
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        Rectangle2D b = getLayoutBounds();
+        double x, y;
+        double w = b.getWidth();
+        double h = b.getHeight();
+        Iterator iter = getVisualization().visibleItems(m_group);
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            x = (int)(b.getX() + r.nextDouble()*w);
+            y = (int)(b.getY() + r.nextDouble()*h);
+            setX(item,null,x);
+            setY(item,null,y);
+        }
+    }
+
+} // end of class RandomLayout
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d4 1
+d17 2
+a18 2
+    private final Random r = new Random(12345678L);
+
+d25 1
+a25 1
+
+d41 1
+a41 1
+
+d45 1
+a45 2
+    @@Override
+	public void run(double frac) {
+d50 3
+a52 1
+        for(VisualItem<?> item : getVisualization().visibleItems(m_group)) {
+@
+
+
+1.1
+log
+@file RandomLayout.java was initially added on branch beta.
+@
+text
+@d1 60
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 47
+package prefuse.action.layout;
+
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+import java.util.Random;
+
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Performs a random layout of graph nodes within the layout's bounds.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class RandomLayout extends Layout {
+
+    private Random r = new Random(12345678L);
+    
+    public RandomLayout() {
+        super();
+    }
+    
+    public RandomLayout(String group) {
+        super(group);
+    }
+
+    public void setRandomSeed(long seed) {
+        r.setSeed(seed);
+    }
+    
+    public void run(double frac) {
+        Rectangle2D b = getLayoutBounds();
+        double x, y;
+        double w = b.getWidth();
+        double h = b.getHeight();
+        Iterator iter = getVisualization().visibleItems(m_group);
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            x = (int)(b.getX() + r.nextDouble()*w);
+            y = (int)(b.getY() + r.nextDouble()*h);
+            setX(item,null,x);
+            setY(item,null,y);
+        }
+    } //
+
+} // end of class RandomLayout
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d11 1
+a11 1
+ * Performs a random layout of items within the layout bounds.
+d13 2
+a14 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a19 3
+    /**
+     * Create a new RandomLayout that processes all items.
+     */
+a23 4
+    /**
+     * Create a new RandomLayout.
+     * @@param group the data group to layout
+     */
+a27 4
+    /**
+     * Set the seed value for the random number generator.
+     * @@param seed the random seed value
+     */
+a31 3
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+d45 1
+a45 1
+    }
+@
+
+

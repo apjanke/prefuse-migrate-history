@@ -1,0 +1,321 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2009.07.26.01.20.43;	author chrisnf;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	2.0.4.2;
+
+2.0.4.2
+date	2008.11.12.22.28.36;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Javadoc correction for ArrayAnimator
+@
+text
+@package prefuse.action.animate;
+
+import java.util.logging.Logger;
+
+import prefuse.action.ItemAction;
+import prefuse.util.PrefuseLib;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Animator that interpolates an array of numerical values.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ArrayAnimator extends ItemAction {
+
+    private static final Logger s_logger
+        = Logger.getLogger(ArrayAnimator.class.getName());
+    
+    private String m_field; // the field
+    private String m_start; // the start field
+    private String m_end;   // the end field
+    
+    /**
+     * Create a new ArrayAnimator that processes the given data group
+     * and interpolates arrays in the given data field.
+     * @@param group the data group to process
+     * @@param field the data field to interpolate. This should be an
+     * interpolated field (have start and end instances as well as
+     * the field name itself).
+     */
+    public ArrayAnimator(String group, String field) {
+        super(group);
+        m_field = field;
+        m_start = PrefuseLib.getStartField(field);
+        m_end = PrefuseLib.getEndField(field);
+    }
+    
+    /**
+     * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+     */
+    public void process(VisualItem item, double frac) {
+        Object o = item.get(m_field);
+        if ( o instanceof float[] ) {
+            float[] a = (float[])o;
+            float[] s = (float[])item.get(m_start);
+            float[] e = (float[])item.get(m_end);
+            
+            float f = (float)frac;
+            for ( int i=0; i<a.length; ++i ) {
+                if ( Float.isNaN(a[i]) ) break;
+                a[i] = s[i] + f*(e[i]-s[i]);
+            }
+            item.setValidated(false);
+        } else if ( o instanceof double[] ) {
+            double[] a = (double[])o;
+            double[] s = (double[])item.get(m_start);
+            double[] e = (double[])item.get(m_end);
+            
+            for ( int i=0; i<a.length; ++i ) {
+                if ( Double.isNaN(a[i]) ) break;
+                a[i] = s[i] + frac*(e[i]-s[i]);
+            }
+            item.setValidated(false);
+        } else {
+            s_logger.warning("Encountered non-double/non-float array type: "
+                    + (o==null ? "null" : o.getClass().getName()));
+        }
+    }
+
+} // end of class ArrayAnimator
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d11 1
+a11 1
+ * Animator that inerpolates an array of numerical values.
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d12 1
+a12 1
+ *
+d19 5
+a23 5
+
+    private final String m_field; // the field
+    private final String m_start; // the start field
+    private final String m_end;   // the end field
+
+d38 1
+a38 1
+
+d42 1
+a42 2
+    @@Override
+	public void process(VisualItem<?> item, double frac) {
+d48 1
+a48 1
+
+d51 1
+a51 3
+                if ( Float.isNaN(a[i]) ) {
+					break;
+				}
+d59 1
+a59 1
+
+d61 1
+a61 3
+                if ( Double.isNaN(a[i]) ) {
+					break;
+				}
+@
+
+
+2.0.4.2
+log
+@typo fix
+@
+text
+@d11 1
+a11 1
+ * Animator that interpolates an array of numerical values.
+@
+
+
+1.1
+log
+@file ArrayAnimator.java was initially added on branch beta.
+@
+text
+@d1 71
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 61
+package prefuse.action.animate;
+
+import java.util.logging.Logger;
+
+import prefuse.action.ItemAction;
+import prefuse.util.PrefuseLib;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class ArrayAnimator extends ItemAction {
+
+    private static final Logger s_logger
+        = Logger.getLogger(ArrayAnimator.class.getName());
+    
+    private String m_field;
+    private String m_start;
+    private String m_end;
+    
+    public ArrayAnimator(String group, String field) {
+        super(group);
+        m_field = field;
+        m_start = PrefuseLib.getStartField(field);
+        m_end = PrefuseLib.getEndField(field);
+    }
+    
+    /**
+     * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+     */
+    public void process(VisualItem item, double frac) {
+        Object o = item.get(m_field);
+        if ( o instanceof float[] ) {
+            float[] a = (float[])o;
+            float[] s = (float[])item.get(m_start);
+            float[] e = (float[])item.get(m_end);
+            
+            float f = (float)frac;
+            for ( int i=0; i<a.length; ++i ) {
+                if ( Float.isNaN(a[i]) ) break;
+                a[i] = s[i] + f*(e[i]-s[i]);
+            }
+            item.setValidated(false);
+        } else if ( o instanceof double[] ) {
+            double[] a = (double[])o;
+            double[] s = (double[])item.get(m_start);
+            double[] e = (double[])item.get(m_end);
+            
+            for ( int i=0; i<a.length; ++i ) {
+                if ( Double.isNaN(a[i]) ) break;
+                a[i] = s[i] + frac*(e[i]-s[i]);
+            }
+            item.setValidated(false);
+        } else {
+            s_logger.warning("Encountered non-double/non-float array type: "
+                    + (o==null ? "null" : o.getClass().getName()));
+        }
+    }
+
+} // end of class ArrayAnimator
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@a10 2
+ * Animator that inerpolates an array of numerical values.
+ * 
+d18 3
+a20 3
+    private String m_field; // the field
+    private String m_start; // the start field
+    private String m_end;   // the end field
+a21 8
+    /**
+     * Create a new ArrayAnimator that processes the given data group
+     * and interpolates arrays in the given data field.
+     * @@param group the data group to process
+     * @@param field the data field to interpolate. This should be an
+     * interpolated field (have start and end instances as well as
+     * the field name itself).
+     */
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d13 1
+a13 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

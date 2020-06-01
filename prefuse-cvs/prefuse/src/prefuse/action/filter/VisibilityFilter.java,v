@@ -1,0 +1,320 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.02.19.01.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action.filter;
+
+import java.util.Iterator;
+
+import prefuse.Visualization;
+import prefuse.action.GroupAction;
+import prefuse.data.expression.OrPredicate;
+import prefuse.data.expression.Predicate;
+import prefuse.util.PrefuseLib;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.VisiblePredicate;
+
+/**
+ * Filter Action that sets visible all items that meet a given Predicate
+ * condition and sets all other items invisible.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class VisibilityFilter extends GroupAction {
+    
+    private Predicate m_filter;
+    private Predicate m_predicate;
+    
+    /**
+     * Create a new VisibilityFilter.
+     * @@param p the test predicate used to determine visibility
+     */
+    public VisibilityFilter(Predicate p) {
+        setPredicate(p);
+    }
+
+    /**
+     * Create a new VisibilityFilter.
+     * @@param group the data group to process
+     * @@param p the test predicate used to determine visibility
+     */
+    public VisibilityFilter(String group, Predicate p) {
+        super(group);
+        setPredicate(p);
+    }
+
+    /**
+     * Create a new VisibilityFilter.
+     * @@param vis the Visualization to process
+     * @@param group the data group to process
+     * @@param p the test predicate used to determine visibility
+     */
+    public VisibilityFilter(Visualization vis, String group, Predicate p) {
+        super(vis, group);
+        setPredicate(p);
+    }
+
+    /**
+     * Set the test predicate used to determine visibility.
+     * @@param p the test predicate to set
+     */
+    protected void setPredicate(Predicate p) {
+        m_predicate = p;
+        m_filter = new OrPredicate(p, VisiblePredicate.TRUE);
+    }
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        Iterator items = m_vis.items(m_group, m_filter);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem)items.next();
+            PrefuseLib.updateVisible(item, m_predicate.getBoolean(item));
+        }
+    }
+
+} // end of class VisibilityAction
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d3 2
+d16 1
+a16 1
+ *
+d20 1
+a20 1
+
+d23 1
+a23 1
+
+d61 1
+a61 1
+
+d65 4
+a68 3
+    @@Override
+	public void run(double frac) {
+        for(VisualItem<?> item :  m_vis.items(m_group, m_filter)) {
+@
+
+
+1.1
+log
+@file VisibilityFilter.java was initially added on branch beta.
+@
+text
+@d1 73
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 48
+package prefuse.action.filter;
+
+import java.util.Iterator;
+
+import prefuse.Visualization;
+import prefuse.action.GroupAction;
+import prefuse.data.expression.OrPredicate;
+import prefuse.data.expression.Predicate;
+import prefuse.util.PrefuseLib;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.VisiblePredicate;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class VisibilityFilter extends GroupAction {
+    
+    private Predicate m_filter;
+    private Predicate m_predicate;
+    
+    public VisibilityFilter(Predicate p) {
+        setPredicate(p);
+    }
+    
+    public VisibilityFilter(String group, Predicate p) {
+        super(group);
+        setPredicate(p);
+    }
+    
+    public VisibilityFilter(Visualization vis, String group, Predicate p) {
+        super(vis, group);
+        setPredicate(p);
+    }
+
+    protected void setPredicate(Predicate p) {
+        m_predicate = p;
+        m_filter = new OrPredicate(p, VisiblePredicate.TRUE);
+    }
+    
+    public void run(double frac) {
+        Iterator items = m_vis.items(m_group, m_filter);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem)items.next();
+            PrefuseLib.updateVisible(item, m_predicate.getBoolean(item));
+        }
+    }
+
+} // end of class VisibilityAction
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a13 1
+ * TODO - separate filter and test predicate
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@d14 1
+a14 3
+ * Filter Action that sets visible all items that meet a given Predicate
+ * condition and sets all other items invisible.
+ * 
+a21 4
+    /**
+     * Create a new VisibilityFilter.
+     * @@param p the test predicate used to determine visibility
+     */
+d25 1
+a25 6
+
+    /**
+     * Create a new VisibilityFilter.
+     * @@param group the data group to process
+     * @@param p the test predicate used to determine visibility
+     */
+d30 1
+a30 7
+
+    /**
+     * Create a new VisibilityFilter.
+     * @@vis the Visualization to process
+     * @@param group the data group to process
+     * @@param p the test predicate used to determine visibility
+     */
+a35 4
+    /**
+     * Set the test predicate used to determine visibility.
+     * @@param p the test predicate to set
+     */
+a40 3
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+@
+
+
+1.1.2.4
+log
+@Javadoc'd.
+@
+text
+@d44 1
+a44 1
+     * @@param vis the Visualization to process
+@
+
+
+1.1.2.5
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d17 1
+a17 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

@@ -1,0 +1,682 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.01.23.23.55.36;	author jogiles;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2008.02.23.21.09.00;	author amarsden;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2008.02.23.21.21.02;	author amarsden;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2008.03.10.09.20.31;	author amarsden;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2008.03.14.22.50.15;	author amarsden;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2008.04.14.23.30.14;	author amarsden;	state Exp;
+branches;
+next	1.1.2.7;
+
+1.1.2.7
+date	2008.04.15.03.26.23;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file MultiEdgePositioningLayout.java was initially added on branch java_1_5.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a0 255
+package prefuse.action.layout.graph;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+import java.util.Map;
+import java.util.Set;
+
+import prefuse.Alignment;
+
+import prefuse.action.layout.Layout;
+import prefuse.data.Graph;
+
+import prefuse.util.PrefuseLib;
+import prefuse.util.collections.MultiMap;
+import prefuse.util.display.PolarLine2D;
+
+import prefuse.visual.EdgeItem;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+
+/**
+ * This layout positions the edges in a graph to be half way between 
+ * 
+ * @@author Anton Marsden
+ */
+public class MultiEdgePositioningLayout extends Layout
+{
+	protected String m_edgeGroup;
+
+    protected Alignment     m_xAlign1   = Alignment.CENTER;
+    protected Alignment     m_yAlign1   = Alignment.CENTER;
+    protected Alignment     m_xAlign2   = Alignment.CENTER;
+    protected Alignment     m_yAlign2   = Alignment.CENTER;
+
+    protected double edgeSeparation = 50.0;
+    
+    private final MultiMap<NodePair, EdgeItem<?,?>> pairToEdges = new MultiMap<NodePair, EdgeItem<?,?>>();
+
+    private static final double PI_DIV_2 = Math.PI / 2.0d;
+
+	public MultiEdgePositioningLayout(String graph) {
+		super(graph);
+		m_edgeGroup = PrefuseLib.getGroupName(graph, Graph.EDGES);
+	}
+
+	public double getEdgeSeparation() {
+		return edgeSeparation;
+	}
+
+	public void setEdgeSeparation(double edgeSeparation) {
+		this.edgeSeparation = edgeSeparation;
+	}
+
+	/**
+     * Get the horizontal alignment of the edge mount point with the first node.
+     * @@return the horizontal alignment
+     */
+    public Alignment getHorizontalAlignment1() {
+        return m_xAlign1;
+    }
+
+    /**
+     * Get the vertical alignment of the edge mount point with the first node.
+     * @@return the vertical alignment
+     */
+    public Alignment getVerticalAlignment1() {
+        return m_yAlign1;
+    }
+
+    /**
+     * Get the horizontal alignment of the edge mount point with the second
+     * node.
+     * @@return the horizontal alignment
+     */
+    public Alignment getHorizontalAlignment2() {
+        return m_xAlign2;
+    }
+
+    /**
+     * Get the vertical aligment of the edge mount point with the second node.
+     * @@return the vertical alignment
+     */
+    public Alignment getVerticalAlignment2() {
+        return m_yAlign2;
+    }
+
+    /**
+     * Set the horizontal alignment of the edge mount point with the first node.
+     * @@param align the horizontal alignment
+     */
+    public void setHorizontalAlignment1(Alignment align) {
+        m_xAlign1 = align;
+    }
+
+    /**
+     * Set the vertical alignment of the edge mount point with the first node.
+     * @@param align the vertical alignment
+     */
+    public void setVerticalAlignment1(Alignment align) {
+        m_yAlign1 = align;
+    }
+
+    /**
+     * Set the horizontal alignment of the edge mount point with the second
+     * node.
+     * @@param align the horizontal alignment
+     */
+    public void setHorizontalAlignment2(Alignment align) {
+        m_xAlign2 = align;
+    }
+
+    /**
+     * Set the vertical alignment of the edge mount point with the second node.
+     * @@param align the vertical alignment
+     */
+    public void setVerticalAlignment2(Alignment align) {
+        m_yAlign2 = align;
+    }
+
+    public void run( double frac )
+    {
+    	pairToEdges.clear();
+    	
+        // locate all the edges
+        for ( VisualItem<?> item : m_vis.visibleItems( m_edgeGroup ) )
+        {
+            EdgeItem<?, ?> edge = (EdgeItem<?, ?>) item;
+			pairToEdges.put(new NodePair(edge.getSourceItem(), edge
+					.getTargetItem()), edge);
+        }
+
+        final double halfEdgeSep = edgeSeparation / 2.0d;
+
+        for (Map.Entry<NodePair, Set<EdgeItem<?, ?>>> entry : pairToEdges
+				.entrySet()) {
+			NodePair nodePair = entry.getKey();
+			final Set<EdgeItem<?, ?>> edges = entry.getValue();
+			// handle the normal case (single edge) efficiently
+			if (edges.size() == 1) {
+				EdgeItem<?, ?> edge = edges.iterator().next();
+				if (!edge.isFixed()) {
+					Point2D centroid = getCentroid(nodePair);
+					PrefuseLib.setX(edge, null, centroid.getX());
+					PrefuseLib.setY(edge, null, centroid.getY());
+				}
+			} else {
+				// TODO: better handle the case where edges go in both directions
+				final boolean odd = edges.size() % 2 == 1;
+				final PolarLine2D origLine = getPolarLine(nodePair);
+				Point2D centroid = getCentroid(nodePair);
+				PolarLine2D perpLine = new PolarLine2D(centroid.getX(),
+						centroid.getY(), 0.0, origLine.getTheta());
+				int count = 0;
+				for (EdgeItem<?, ?> edge : edges) {
+					if (!edge.isFixed()) {
+
+						if (odd) {
+							perpLine.setRadius(edgeSeparation
+									* ((count + 1) / 2));
+							perpLine.setTheta(origLine.getTheta()
+									+ (count % 2 == 0 ? PI_DIV_2 : -PI_DIV_2));
+						} else {
+							perpLine.setRadius(halfEdgeSep + edgeSeparation
+									* (count / 2));
+							perpLine.setTheta(origLine.getTheta()
+									+ (count % 2 == 0 ? PI_DIV_2 : -PI_DIV_2));
+						}
+
+						PrefuseLib.setX(edge, null, perpLine.getX2());
+						PrefuseLib.setY(edge, null, perpLine.getY2());
+					}
+					// increase the count regardless of whether we position the
+					// edge
+					count++;
+				}
+			}
+		}
+
+    }
+
+    protected PolarLine2D getPolarLine( NodePair pair )
+    {
+        Point2D start = getAlignedPoint( pair.a.getBounds(), m_xAlign1, m_yAlign1);
+        Point2D end   = getAlignedPoint( pair.b.getBounds(), m_xAlign2, m_yAlign2);
+
+        return new PolarLine2D( start, end );
+    }
+
+    protected Point2D getCentroid( NodePair pair )
+    {
+        Point2D start = getAlignedPoint( pair.a.getBounds(), m_xAlign1, m_yAlign1);
+        Point2D end   = getAlignedPoint( pair.b.getBounds(), m_xAlign2, m_yAlign2);
+
+        return new Point2D.Double( ( end.getX() + start.getX() ) / 2.0, ( end.getY() + start.getY() ) / 2.0 );
+    }
+
+    protected static Point2D getAlignedPoint( Rectangle2D r, Alignment xAlign, Alignment yAlign )
+    {
+        double x = r.getX();
+        double y = r.getY();
+        double w = r.getWidth();
+        double h = r.getHeight();
+        if ( xAlign == Alignment.CENTER )
+        {
+            x = x + ( w / 2 );
+        }
+        else if ( xAlign == Alignment.RIGHT )
+        {
+            x = x + w;
+        }
+        if ( yAlign == Alignment.CENTER )
+        {
+            y = y + ( h / 2 );
+        }
+        else if ( yAlign == Alignment.BOTTOM )
+        {
+            y = y + h;
+        }
+
+        return new Point2D.Double( x, y );
+    }
+
+    private static class NodePair
+    {
+        private final NodeItem<?,?> a;
+        private final NodeItem<?,?> b;
+
+        public NodePair( NodeItem<?,?> a, NodeItem<?,?> b )
+        {
+            this.a = a;
+            this.b = b;
+        }
+
+        public boolean equals( Object other )
+        {
+            if ( this == other )
+            {
+                return true;
+            }
+            if ( !( other instanceof NodePair ) )
+            {
+                return false;
+            }
+            NodePair o = (NodePair) other;
+
+            return a == o.a && b == o.b || a == o.b && b == o.a;
+        }
+
+        public int hashCode()
+        {
+            return a.hashCode() ^ b.hashCode();
+        }
+    }
+}
+@
+
+
+1.1.2.2
+log
+@*** empty log message ***
+@
+text
+@d23 1
+a23 3
+ * This layout positions the edges in a graph to be half way between the nodes (as per the
+ * EdgePositioningLayout). If there are multiple node-node edges then the edge positions will be spread out
+ * along the equi-distant line between the nodes.
+a46 4
+	/**
+	 * Get the separation gap for edges linking the same two nodes.
+	 * @@return the edge separation
+	 */
+a50 4
+	/**
+	 * Sets the separation gap between the edges linking the same two nodes.
+	 * @@param edgeSeparation the edge separation
+	 */
+@
+
+
+1.1.2.3
+log
+@Eliminated unnecessary methods from the EdgeItem interface
+@
+text
+@d139 2
+a140 1
+			pairToEdges.put(new NodePair(edge.getSourceNode(), edge.getTargetNode()), edge);
+@
+
+
+1.1.2.4
+log
+@Minor tweaks to edge layouts
+@
+text
+@d4 1
+a13 3
+import prefuse.util.GraphicsLib;
+import prefuse.util.MathLib;
+import prefuse.util.ObjectPair;
+d23 3
+a25 4
+ * This layout positions the edges in a graph to be half way between the nodes
+ * (as per the EdgePositioningLayout). If there are multiple node-node edges
+ * then the edge positions will be spread out along the equi-distant line
+ * between the nodes.
+d29 2
+a30 1
+public class MultiEdgePositioningLayout extends Layout {
+d33 8
+a40 4
+	protected Alignment m_xAlign1 = Alignment.CENTER;
+	protected Alignment m_yAlign1 = Alignment.CENTER;
+	protected Alignment m_xAlign2 = Alignment.CENTER;
+	protected Alignment m_yAlign2 = Alignment.CENTER;
+d42 1
+a42 3
+	protected double edgeSeparation = 50.0;
+
+	private final MultiMap<ObjectPair<? extends NodeItem<?, ?>>, EdgeItem<?, ?>> pairToEdges = new MultiMap<ObjectPair<? extends NodeItem<?, ?>>, EdgeItem<?, ?>>();
+a50 1
+	 * 
+d59 1
+a59 3
+	 * 
+	 * @@param edgeSeparation
+	 *            the edge separation
+d66 75
+a140 7
+	 * Get the horizontal alignment of the edge mount point with the first node.
+	 * 
+	 * @@return the horizontal alignment
+	 */
+	public Alignment getHorizontalAlignment1() {
+		return m_xAlign1;
+	}
+d142 1
+a142 8
+	/**
+	 * Get the vertical alignment of the edge mount point with the first node.
+	 * 
+	 * @@return the vertical alignment
+	 */
+	public Alignment getVerticalAlignment1() {
+		return m_yAlign1;
+	}
+d144 1
+a144 75
+	/**
+	 * Get the horizontal alignment of the edge mount point with the second
+	 * node.
+	 * 
+	 * @@return the horizontal alignment
+	 */
+	public Alignment getHorizontalAlignment2() {
+		return m_xAlign2;
+	}
+
+	/**
+	 * Get the vertical aligment of the edge mount point with the second node.
+	 * 
+	 * @@return the vertical alignment
+	 */
+	public Alignment getVerticalAlignment2() {
+		return m_yAlign2;
+	}
+
+	/**
+	 * Set the horizontal alignment of the edge mount point with the first node.
+	 * 
+	 * @@param align
+	 *            the horizontal alignment
+	 */
+	public void setHorizontalAlignment1(Alignment align) {
+		m_xAlign1 = align;
+	}
+
+	/**
+	 * Set the vertical alignment of the edge mount point with the first node.
+	 * 
+	 * @@param align
+	 *            the vertical alignment
+	 */
+	public void setVerticalAlignment1(Alignment align) {
+		m_yAlign1 = align;
+	}
+
+	/**
+	 * Set the horizontal alignment of the edge mount point with the second
+	 * node.
+	 * 
+	 * @@param align
+	 *            the horizontal alignment
+	 */
+	public void setHorizontalAlignment2(Alignment align) {
+		m_xAlign2 = align;
+	}
+
+	/**
+	 * Set the vertical alignment of the edge mount point with the second node.
+	 * 
+	 * @@param align
+	 *            the vertical alignment
+	 */
+	public void setVerticalAlignment2(Alignment align) {
+		m_yAlign2 = align;
+	}
+
+	public void run(double frac) {
+		pairToEdges.clear();
+
+		// locate all the edges
+		for (VisualItem<?> item : m_vis.visibleItems(m_edgeGroup)) {
+			EdgeItem<?, ?> edge = (EdgeItem<?, ?>) item;
+			pairToEdges.put(new ObjectPair(edge.getSourceNode(), edge
+					.getTargetNode()), edge);
+		}
+
+		final double halfEdgeSep = edgeSeparation / 2.0d;
+
+		Point2D centroid = new Point2D.Double();
+
+		for (Map.Entry<ObjectPair<? extends NodeItem<?, ?>>, Set<EdgeItem<?, ?>>> entry : pairToEdges
+d146 1
+a146 1
+			ObjectPair nodePair = entry.getKey();
+d152 1
+a152 1
+					getCentroid(centroid, nodePair);
+d157 1
+a157 2
+				// TODO: better handle the case where edges go in both
+				// directions
+d160 1
+a160 1
+				getCentroid(centroid, nodePair);
+d171 1
+a171 1
+									+ (count % 2 == 0 ? MathLib.PI_DIV_2 : -MathLib.PI_DIV_2));
+d176 1
+a176 1
+									+ (count % 2 == 0 ? MathLib.PI_DIV_2 : -MathLib.PI_DIV_2));
+d189 1
+a189 24
+	}
+
+	protected PolarLine2D getPolarLine(ObjectPair<? extends NodeItem<?, ?>> pair) {
+		Point2D start = new Point2D.Double();
+		Point2D end = new Point2D.Double();
+		GraphicsLib.getAlignedPoint(start, pair.getA().getBounds(), m_xAlign1,
+				m_yAlign1);
+		GraphicsLib.getAlignedPoint(end, pair.getB().getBounds(), m_xAlign2,
+				m_yAlign2);
+		return new PolarLine2D(start, end);
+	}
+
+	protected void getCentroid(Point2D p,
+			ObjectPair<? extends NodeItem<?, ?>> pair) {
+		Point2D start = new Point2D.Double();
+		Point2D end = new Point2D.Double();
+		GraphicsLib.getAlignedPoint(start, pair.getA().getBounds(), m_xAlign1,
+				m_yAlign1);
+		GraphicsLib.getAlignedPoint(end, pair.getB().getBounds(), m_xAlign2,
+				m_yAlign2);
+		p.setLocation((end.getX() + start.getX()) / 2.0, (end.getY() + start
+				.getY()) / 2.0);
+
+	}
+d191 73
+@
+
+
+1.1.2.5
+log
+@Moved the PolarLine2D class into the prefuse.util.ui package
+@
+text
+@d18 1
+a18 1
+import prefuse.util.ui.PolarLine2D;
+@
+
+
+1.1.2.6
+log
+@additional feature: allow node bounds to be considered when positioning the edge between the two nodes
+@
+text
+@a2 1
+import java.awt.geom.Line2D;
+d29 1
+a29 1
+ *
+a41 2
+	protected boolean considerNodeBounds;
+
+d51 1
+a51 1
+	 *
+d60 1
+a60 1
+	 *
+d70 1
+a70 1
+	 *
+d79 1
+a79 1
+	 *
+d89 1
+a89 1
+	 *
+d98 1
+a98 1
+	 *
+d107 1
+a107 1
+	 *
+d117 1
+a117 1
+	 *
+d128 1
+a128 1
+	 *
+d138 1
+a138 1
+	 *
+a145 16
+	/**
+	 *
+	 * @@return
+	 */
+	public boolean getConsiderNodeBounds() {
+		return considerNodeBounds;
+	}
+
+	/**
+	 *
+	 * @@return
+	 */
+	public void setConsiderNodeBounds(boolean considerNodeBounds) {
+		this.considerNodeBounds = considerNodeBounds;
+	}
+
+d168 1
+a168 1
+					getMidPoint(centroid, nodePair);
+d177 1
+a177 1
+				getMidPoint(centroid, nodePair);
+d188 1
+a188 2
+									+ (count % 2 == 0 ? MathLib.PI_DIV_2
+											: -MathLib.PI_DIV_2));
+d193 1
+a193 2
+									+ (count % 2 == 0 ? MathLib.PI_DIV_2
+											: -MathLib.PI_DIV_2));
+d218 1
+a218 1
+	protected void getMidPoint(Point2D p,
+a225 14
+		if (considerNodeBounds) {
+			// find intersections
+			Line2D line = new Line2D.Double(start, end);
+			Point2D[] points = new Point2D[2];
+			points[0] = new Point2D.Double();
+			points[1] = new Point2D.Double();
+			if (GraphicsLib.intersectLineRectangle(line, pair.getB().getBounds(), points) > 0) {
+				end.setLocation(points[0]);
+			}
+			line.setLine(line.getX2(), line.getY2(), line.getX1(), line.getY1());
+			if (GraphicsLib.intersectLineRectangle(line, pair.getA().getBounds(), points) > 0) {
+				start.setLocation(points[0]);
+			}
+		}
+@
+
+
+1.1.2.7
+log
+@more flexibility for edge positioning
+@
+text
+@a44 2
+	protected boolean positionHiddenEdges;
+
+a164 16
+	/**
+	 *
+	 * @@return
+	 */
+	public boolean isPositionHiddenEdges() {
+		return positionHiddenEdges;
+	}
+
+	/**
+	 *
+	 * @@param positionHiddenEdges
+	 */
+	public void setPositionHiddenEdges(boolean positionHiddenEdges) {
+		this.positionHiddenEdges = positionHiddenEdges;
+	}
+
+d169 1
+a169 4
+
+
+
+		for (VisualItem<?> item : (positionHiddenEdges ? m_vis.items(m_edgeGroup) : m_vis.visibleItems(m_edgeGroup))) {
+@
+
+

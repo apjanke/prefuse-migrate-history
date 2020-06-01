@@ -1,0 +1,446 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.32;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.32;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.07.00.42.54;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.09.10.33.59;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.40;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.controls;
+
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
+
+import prefuse.Display;
+import prefuse.util.ui.UILib;
+
+
+/**
+ * Control that can be used to rotate the display. This results in a
+ * transformation of the display itself, such that all aspects are
+ * rotated. For example, after a rotation of 180 degrees, upright
+ * text strings will subsequently upside down. To rotate item positions
+ * but leave other aspects such as orientation intact, you can
+ * instead create a new {@@link prefuse.action.Action} module that rotates
+ * just the item co-ordinates.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class RotationControl extends ControlAdapter {
+
+    private Point down = new Point();
+    private double baseAngle = 0; // the baseline angle of the rotation
+    private int m_button;         // the mouse button to use
+    
+    /**
+     * Create a new RotateControl. Rotations will be initiated by dragging
+     * the mouse with the left mouse button pressed.
+     */
+    public RotationControl() {
+        this(Control.LEFT_MOUSE_BUTTON);
+    }
+    
+    /**
+     * Create a new RotateControl
+     * @@param mouseButton the mouse button that should initiate a rotation. One
+     * of {@@link Control#LEFT_MOUSE_BUTTON},
+     * {@@link Control#MIDDLE_MOUSE_BUTTON}, or 
+     * {@@link Control#RIGHT_MOUSE_BUTTON}.
+     */
+    public RotationControl(int mouseButton) {
+        m_button = mouseButton;
+    }
+    
+    /**
+     * @@see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
+     */
+    public void mousePressed(MouseEvent e) {
+        if ( UILib.isButtonPressed(e, m_button) ) {
+            Display display = (Display)e.getComponent();
+            display.setCursor(
+                Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+            down.setLocation(e.getPoint());
+            baseAngle = Double.NaN;
+        }
+    }
+    
+    /**
+     * @@see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
+     */
+    public void mouseDragged(MouseEvent e) {
+        if ( UILib.isButtonPressed(e, m_button) ) {
+            int dy = e.getY() - down.y;
+            int dx = e.getX() - down.x;
+            double angle = Math.atan2(dy, dx);
+            
+            // only rotate once the base angle has been established
+            if ( !Double.isNaN(baseAngle) ) {
+                Display display = (Display)e.getComponent();
+                display.rotate(down, angle-baseAngle);
+            }
+            baseAngle = angle;
+        }
+    }
+    
+    /**
+     * @@see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
+     */
+    public void mouseReleased(MouseEvent e) {
+        if ( UILib.isButtonPressed(e, m_button) ) {
+            e.getComponent().setCursor(Cursor.getDefaultCursor());
+        }
+    }
+    
+} // end of class RotationControl
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d24 1
+a24 1
+    private final Point down = new Point();
+d26 2
+a27 2
+    private final int m_button;         // the mouse button to use
+
+d35 1
+a35 1
+
+d40 1
+a40 1
+     * {@@link Control#MIDDLE_MOUSE_BUTTON}, or
+d46 1
+a46 1
+
+d50 1
+a50 2
+    @@Override
+	public void mousePressed(MouseEvent e) {
+d59 1
+a59 1
+
+d63 1
+a63 2
+    @@Override
+	public void mouseDragged(MouseEvent e) {
+d68 1
+a68 1
+
+d77 1
+a77 1
+
+d81 1
+a81 2
+    @@Override
+	public void mouseReleased(MouseEvent e) {
+d86 1
+a86 1
+
+@
+
+
+1.1
+log
+@file RotationControl.java was initially added on branch beta.
+@
+text
+@d1 87
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 84
+package prefuse.controls;
+
+import java.awt.Cursor;
+import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
+
+import javax.swing.SwingUtilities;
+
+import prefuse.Display;
+
+
+/**
+ * Rotates the display.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class RotationControl extends ControlAdapter {
+
+    private int xLast;//, yLast;
+    private boolean repaint = true;
+    
+    /**
+     * Creates a new rotation control that issues repaint requests as an item
+     * is dragged.
+     */
+    public RotationControl() {
+        this(true);
+    } //
+    
+    /**
+     * Creates a new rotation control that optionally issues repaint requests
+     * as an item is dragged.
+     * @@param repaint indicates whether or not repaint requests are issued
+     *  as rotation events occur. This can be set to false if other activities
+     *  (for example, a continuously running force simulation) are already
+     *  issuing repaint events.
+     */
+    public RotationControl(boolean repaint) {
+        this.repaint = repaint;
+    } //
+    
+    public void mousePressed(MouseEvent e) {
+        if ( SwingUtilities.isLeftMouseButton(e) ) {
+            Display display = (Display)e.getComponent();
+            display.setCursor(
+                Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
+            xLast = e.getX(); //yLast = e.getY();
+        }
+    } //
+    
+    public void mouseDragged(MouseEvent e) {
+        if ( SwingUtilities.isLeftMouseButton(e) ) {
+            Display display = (Display)e.getComponent();
+            
+            int x = e.getX();//, y = e.getY();
+            int dx = x-xLast;
+            //int dy = y-yLast;
+
+            //double angle = Math.atan2(dy,dx);
+            double angle = ((double)dx)/40;
+            
+            AffineTransform at = display.getTransform();
+            at.rotate(angle);
+            try {
+                display.setTransform(at);
+            } catch ( Exception ex ) {
+                ex.printStackTrace();
+            }
+            
+            //yLast = y;
+            xLast = x;
+            if ( repaint )
+                display.repaint();
+        }
+    } //
+    
+    public void mouseReleased(MouseEvent e) {
+        if ( SwingUtilities.isLeftMouseButton(e) ) {
+            e.getComponent().setCursor(Cursor.getDefaultCursor());
+        }
+    } //
+    
+} // end of class ZoomControl
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d13 1
+a13 1
+ * Control that can be used to rotates the display.
+d15 2
+a16 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d29 1
+a29 1
+    }
+d41 1
+a41 1
+    }
+a42 3
+    /**
+     * @@see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
+     */
+d50 1
+a50 1
+    }
+a51 3
+    /**
+     * @@see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
+     */
+d76 1
+a76 1
+    }
+a77 3
+    /**
+     * @@see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
+     */
+d82 1
+a82 1
+    }
+@
+
+
+1.1.2.3
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a3 1
+import java.awt.Point;
+d5 1
+d19 1
+a19 2
+    private Point down = new Point();
+    private int xLast;
+d49 1
+a49 2
+                Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+            down.setLocation(e.getPoint());
+d61 1
+a61 1
+            int x = e.getX();
+d63 3
+a66 1
+            display.rotate(down, angle);
+d68 9
+@
+
+
+1.1.2.4
+log
+@Changed interaction mechanism of RotationControl
+Added documentation of expression language to ExpressionParser javadoc
+Added inclusion of edge arrows in bounds computation for EdgeRenderer
+Added integer dimensions check to LabelRenderer
+Added new readme file
+@
+text
+@d7 2
+a9 1
+import prefuse.util.ui.UILib;
+d13 1
+a13 7
+ * Control that can be used to rotate the display. This results in a
+ * transformation of the display itself, such that all aspects are
+ * rotated. For example, after a rotation of 180 degrees, upright
+ * text strings will subsequently upside down. To rotate item positions
+ * but leave other aspects such as orientation intact, you can
+ * instead create a new {@@link prefuse.action.Action} module that rotates
+ * just the item co-ordinates.
+d20 2
+a21 2
+    private double baseAngle = 0; // the baseline angle of the rotation
+    private int m_button;         // the mouse button to use
+d24 2
+a25 2
+     * Create a new RotateControl. Rotations will be initiated by dragging
+     * the mouse with the left mouse button pressed.
+d28 1
+a28 1
+        this(Control.LEFT_MOUSE_BUTTON);
+d32 6
+a37 5
+     * Create a new RotateControl
+     * @@param mouseButton the mouse button that should initiate a rotation. One
+     * of {@@link Control#LEFT_MOUSE_BUTTON},
+     * {@@link Control#MIDDLE_MOUSE_BUTTON}, or 
+     * {@@link Control#RIGHT_MOUSE_BUTTON}.
+d39 2
+a40 2
+    public RotationControl(int mouseButton) {
+        m_button = mouseButton;
+d47 1
+a47 1
+        if ( UILib.isButtonPressed(e, m_button) ) {
+d52 1
+a52 1
+            baseAngle = Double.NaN;
+d60 7
+a66 4
+        if ( UILib.isButtonPressed(e, m_button) ) {
+            int dy = e.getY() - down.y;
+            int dx = e.getX() - down.x;
+            double angle = Math.atan2(dy, dx);
+d68 3
+a70 6
+            // only rotate once the base angle has been established
+            if ( !Double.isNaN(baseAngle) ) {
+                Display display = (Display)e.getComponent();
+                display.rotate(down, angle-baseAngle);
+            }
+            baseAngle = angle;
+d78 1
+a78 1
+        if ( UILib.isButtonPressed(e, m_button) ) {
+d83 1
+a83 1
+} // end of class RotationControl
+@
+
+

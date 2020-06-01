@@ -1,0 +1,526 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.03.22.18.52.50;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.02.19.01.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	2.1.4.2;
+
+2.1.4.2
+date	2008.04.01.23.22.16;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Added getter/setter methods for filter source groups
+@
+text
+@package prefuse.action.filter;
+
+import java.util.Iterator;
+
+import prefuse.Constants;
+import prefuse.Visualization;
+import prefuse.action.GroupAction;
+import prefuse.data.Graph;
+import prefuse.data.expression.Predicate;
+import prefuse.data.tuple.TupleSet;
+import prefuse.data.util.BreadthFirstIterator;
+import prefuse.data.util.FilterIterator;
+import prefuse.util.PrefuseLib;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.InGroupPredicate;
+
+/**
+ * Filter Action that sets visible all items within a specified graph distance
+ * from a set of focus items; all other items will be set to invisible.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class GraphDistanceFilter extends GroupAction {
+
+    protected int m_distance;
+    protected String m_sources;
+    protected Predicate m_groupP;
+    protected BreadthFirstIterator m_bfs;
+   
+    /**
+     * Create a new GraphDistanceFilter that processes the given data group
+     * and uses a graph distance of 1. By default, the
+     * {@@link prefuse.Visualization#FOCUS_ITEMS} group will be used as the
+     * source nodes from which to measure the distance.
+     * @@param group the group to process. This group should resolve to a
+     * Graph instance, otherwise exceptions will be thrown when this
+     * Action is run.
+     */
+    public GraphDistanceFilter(String group) {
+        this(group, 1);
+    }
+    
+    /**
+     * Create a new GraphDistanceFilter that processes the given data group
+     * and uses the given graph distance. By default, the
+     * {@@link prefuse.Visualization#FOCUS_ITEMS} group will be used as the
+     * source nodes from which to measure the distance.
+     * @@param group the group to process. This group should resolve to a
+     * Graph instance, otherwise exceptions will be thrown when this
+     * Action is run.
+     * @@param distance the graph distance within which items will be
+     * visible.
+     */
+    public GraphDistanceFilter(String group, int distance) {
+        this(group, Visualization.FOCUS_ITEMS, distance);
+    }
+    
+    /**
+     * Create a new GraphDistanceFilter that processes the given data group
+     * and uses the given graph distance.
+     * @@param group the group to process. This group should resolve to a
+     * Graph instance, otherwise exceptions will be thrown when this
+     * Action is run.
+     * @@param sources the group to use as source nodes for measuring
+     * graph distance.
+     * @@param distance the graph distance within which items will be
+     * visible.
+     */
+    public GraphDistanceFilter(String group, String sources, int distance)
+    {
+        super(group);
+        m_sources = sources;
+        m_distance = distance;
+        m_groupP = new InGroupPredicate(
+            PrefuseLib.getGroupName(group, Graph.NODES));
+        m_bfs = new BreadthFirstIterator();
+    }
+    
+    /**
+     * Return the graph distance threshold used by this filter.
+     * @@return the graph distance threshold
+     */
+    public int getDistance() {
+        return m_distance;
+    }
+
+    /**
+     * Set the graph distance threshold used by this filter.
+     * @@param distance the graph distance threshold to use
+     */
+    public void setDistance(int distance) {
+        m_distance = distance;
+    }
+    
+    /**
+     * Get the name of the group to use as source nodes for measuring
+     * graph distance. These form the roots from which the graph distance
+     * is measured.
+     * @@return the source data group
+     */
+    public String getSources() {
+        return m_sources;
+    }
+    
+    /**
+     * Set the name of the group to use as source nodes for measuring
+     * graph distance. These form the roots from which the graph distance
+     * is measured.
+     * @@param sources the source data group
+     */
+    public void setSources(String sources) {
+        m_sources = sources;
+    }
+    
+    /**
+     * @@see prefuse.action.GroupAction#run(double)
+     */
+    public void run(double frac) {
+        // mark the items
+        Iterator items = m_vis.visibleItems(m_group);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem)items.next();
+            item.setDOI(Constants.MINIMUM_DOI);
+        }
+        
+        // set up the graph traversal
+        TupleSet src = m_vis.getGroup(m_sources);
+        Iterator srcs = new FilterIterator(src.tuples(), m_groupP);
+        m_bfs.init(srcs, m_distance, Constants.NODE_AND_EDGE_TRAVERSAL);
+        
+        // traverse the graph
+        while ( m_bfs.hasNext() ) {
+            VisualItem item = (VisualItem)m_bfs.next();
+            int d = m_bfs.getDepth(item);
+            PrefuseLib.updateVisible(item, true);
+            item.setDOI(-d);
+            item.setExpanded(d < m_distance);
+        }
+        
+        // mark unreached items
+        items = m_vis.visibleItems(m_group);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem)items.next();
+            if ( item.getDOI() == Constants.MINIMUM_DOI ) {
+                PrefuseLib.updateVisible(item, false);
+                item.setExpanded(false);
+            }
+        }
+    }
+
+} // end of class GraphDistanceFilter
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d3 3
+d12 1
+a12 2
+import prefuse.data.util.FilterIterable;
+import prefuse.data.util.BreadthFirstIterator.TraversalType;
+d20 1
+a20 1
+ *
+d29 1
+a29 1
+
+d42 1
+a42 1
+
+d57 1
+a57 1
+
+d78 1
+a78 1
+
+d94 1
+a94 1
+
+d104 1
+a104 1
+
+d114 1
+a114 1
+
+d118 1
+a118 2
+    @@Override
+	public void run(double frac) {
+d120 4
+a123 2
+        for(VisualItem<?> item :  m_vis.visibleItems(m_group)) {
+            item.setDOI(VisualItem.MINIMUM_DOI);
+d125 1
+a125 1
+
+d127 4
+a130 4
+        TupleSet<? extends VisualItem<?>> src = m_vis.getGroup(m_sources);
+        Iterable<? extends VisualItem<?>> srcs = FilterIterable.createFilterIterable(src.tuples(), m_groupP);
+        m_bfs.init(srcs, m_distance, TraversalType.NODE_AND_EDGE_TRAVERSAL);
+
+d133 1
+a133 1
+            VisualItem<?> item = (VisualItem<?>)m_bfs.next();
+d139 1
+a139 1
+
+d141 4
+a144 2
+        for(VisualItem<?> item :  m_vis.visibleItems(m_group)) {
+            if ( item.getDOI() == VisualItem.MINIMUM_DOI ) {
+@
+
+
+2.1.4.2
+log
+@Minor change to the way tree iterators work
+@
+text
+@d10 1
+a10 1
+import prefuse.data.util.TraversalType;
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d96 20
+@
+
+
+1.1
+log
+@file GraphDistanceFilter.java was initially added on branch beta.
+@
+text
+@d1 131
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 90
+package prefuse.action.filter;
+
+import java.util.Iterator;
+
+import prefuse.Constants;
+import prefuse.Visualization;
+import prefuse.action.GroupAction;
+import prefuse.data.Graph;
+import prefuse.data.expression.Predicate;
+import prefuse.data.filter.FilterIterator;
+import prefuse.data.tuple.TupleSet;
+import prefuse.data.util.BreadthFirstIterator;
+import prefuse.util.PrefuseLib;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.InGroupPredicate;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class GraphDistanceFilter extends GroupAction {
+
+    protected int m_distance;
+    protected String m_sources;
+    protected Predicate m_groupP;
+    
+    protected BreadthFirstIterator m_bfs;
+    
+    public GraphDistanceFilter(String group) {
+        this(group, 1);
+    }
+    
+    public GraphDistanceFilter(String group, int distance) {
+        this(group, Visualization.FOCUS_ITEMS, distance);
+    }
+    
+    public GraphDistanceFilter(String group, String sources, int distance)
+    {
+        super(group);
+        m_sources = sources;
+        m_distance = distance;
+        m_groupP = new InGroupPredicate(
+            PrefuseLib.getGroupName(group, Graph.NODE_TABLE));
+        m_bfs = new BreadthFirstIterator();
+    }
+    
+    public int getDistance() {
+        return m_distance;
+    }
+    
+    public void setDistance(int distance) {
+        m_distance = distance;
+    }
+    
+    /**
+     * @@see prefuse.action.GroupAction#run(double)
+     */
+    public void run(double frac) {
+        // mark the items
+        Iterator items = m_vis.visibleItems(m_group);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem)items.next();
+            item.setDOI(Constants.MINIMUM_DOI);
+        }
+        
+        // set up the graph traversal
+        TupleSet src = m_vis.getGroup(m_sources);
+        Iterator srcs = new FilterIterator(src.tuples(), m_groupP);
+        m_bfs.init(srcs, m_distance, Constants.NODE_AND_EDGE_TRAVERSAL);
+        
+        // traverse the graph
+        while ( m_bfs.hasNext() ) {
+            VisualItem item = (VisualItem)m_bfs.next();
+            int d = m_bfs.getDepth(item);
+            PrefuseLib.updateVisible(item, true);
+            item.setDOI(-d);
+            item.setExpanded(d < m_distance);
+        }
+        
+        // mark unreached items
+        items = m_vis.visibleItems(m_group);
+        while ( items.hasNext() ) {
+            VisualItem item = (VisualItem)items.next();
+            if ( item.getDOI() == Constants.MINIMUM_DOI ) {
+                PrefuseLib.updateVisible(item, false);
+                item.setExpanded(false);
+            }
+        }
+    }
+
+} // end of class GraphDistanceFilter
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d42 1
+a42 1
+            PrefuseLib.getGroupName(group, Graph.NODES));
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@a17 3
+ * Filter Action that sets visible all items within a specified graph distance
+ * from a set of focus items; all other items will be set to invisible.
+ * 
+d25 1
+d27 1
+a27 10
+   
+    /**
+     * Create a new GraphDistanceFilter that processes the given data group
+     * and uses a graph distance of 1. By default, the
+     * {@@link prefuse.Visualization#FOCUS_ITEMS} group will be used as the
+     * source nodes from which to measure the distance.
+     * @@param group the group to process. This group should resolve to a
+     * Graph instance, otherwise exceptions will be thrown when this
+     * Action is run.
+     */
+a31 11
+    /**
+     * Create a new GraphDistanceFilter that processes the given data group
+     * and uses the given graph distance. By default, the
+     * {@@link prefuse.Visualization#FOCUS_ITEMS} group will be used as the
+     * source nodes from which to measure the distance.
+     * @@param group the group to process. This group should resolve to a
+     * Graph instance, otherwise exceptions will be thrown when this
+     * Action is run.
+     * @@param distance the graph distance within which items will be
+     * visible.
+     */
+a35 11
+    /**
+     * Create a new GraphDistanceFilter that processes the given data group
+     * and uses the given graph distance.
+     * @@param group the group to process. This group should resolve to a
+     * Graph instance, otherwise exceptions will be thrown when this
+     * Action is run.
+     * @@param sources the group to use as source nodes for measuring
+     * graph distance.
+     * @@param distance the graph distance within which items will be
+     * visible.
+     */
+a45 4
+    /**
+     * Return the graph distance threshold used by this filter.
+     * @@return the graph distance threshold
+     */
+d49 1
+a49 5
+
+    /**
+     * Set the graph distance threshold used by this filter.
+     * @@param distance the graph distance threshold to use
+     */
+@
+
+
+1.1.2.4
+log
+@Javadoc'd.
+@
+text
+@d10 1
+a12 1
+import prefuse.data.util.FilterIterator;
+@
+
+
+1.1.2.5
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d21 1
+a21 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

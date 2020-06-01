@@ -1,0 +1,1184 @@
+head	2.4;
+access;
+symbols
+	java_1_5:2.4.0.4
+	Root_java_1_5:2.4
+	beta:2.4.0.2
+	beta-20080113:2.4
+	beta-20071021:2.4
+	beta-20060220:2.2
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2007.10.21.21.36.05;	author jheer;	state Exp;
+branches
+	2.4.4.1;
+next	2.3;
+
+2.3
+date	2006.06.12.14.09.14;	author jheer;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.02.20.09.36.03;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.15.18.53.52;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.30.09.08.10;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.4.4.1
+date	2008.01.23.23.55.42;	author jogiles;	state Exp;
+branches;
+next	2.4.4.2;
+
+2.4.4.2
+date	2008.02.29.06.13.24;	author amarsden;	state Exp;
+branches;
+next	2.4.4.3;
+
+2.4.4.3
+date	2008.03.10.10.59.29;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Added root node checks to TreeNodeIterator to avoid iteration errors
+Updated IOLib to support relative file paths (Bug #1775875 from anonymous)
+Updated JRangeSlider to support drags from arrow buttons (Bug #1747778 from colincombe)
+Updated ExpressionParser to avoid long parse bug (Bug #1741759)
+Updated TupleManager to expand tuple list in face of valid rows from CascadedTable instances (Bug #1741106)
+Added checks for min==max condition in NumberRangeModel (Bug #1731911)
+Added patch to Activity and ActivityManager to avoid deadlock on Activity.cancel() (Bug #1708926 fix from joperry)
+Fixed javadoc example for DefaultRendererFactory (Bug #1674371 from cab938)
+Fixed ENDPOLYGON field in VisualItem (Bug #1554408 from dimerman)
+Fixed FisheyeMenu demo to avoid deadlock (Bug #1672798)
+Updated Tree.getDepth to return -1 if node is valid (in the node table) but not in tree (fix from joperry)
+Added Display.reset method to release used memory from an idle, unused Display instance
+Added Graph.removeAllGraphListeners() method
+Added Table.removeAllTableListeners() method
+Added isAsynchronous / setAsynchronous methods to ImageFactory
+Updated Visualization.invalidate to invalidate just the group specified (it incorrectly was invalidating all groups)
+Updated ActivityManager._schedule to call notifyAll when an already scheduled item is re-scheduled
+@
+text
+@package prefuse.util.io;
+
+import java.awt.Component;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
+
+import javax.swing.JFileChooser;
+
+import prefuse.data.Graph;
+import prefuse.data.Table;
+import prefuse.data.io.CSVTableReader;
+import prefuse.data.io.DelimitedTextTableReader;
+import prefuse.data.io.GraphMLReader;
+import prefuse.data.io.GraphReader;
+import prefuse.data.io.TableReader;
+import prefuse.data.io.TreeMLReader;
+import prefuse.util.StringLib;
+import prefuse.util.collections.ByteArrayList;
+
+/**
+ * Library routines for input/output tasks.
+ *  
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class IOLib {
+
+    private IOLib() {
+        // disallow instantiation
+    }
+    
+    /**
+     * Indicates if a given String is a URL string. Checks to see if the string
+     * begins with the "http:/", "ftp:/", or "file:/" protocol strings.
+     * @@param s the string to check
+     * @@return true if a url string matching the listed protocols,
+     * false otherwise
+     */
+    public static boolean isUrlString(String s) {
+        return s.startsWith("http:/") ||
+               s.startsWith("ftp:/")  ||
+               s.startsWith("file:/");
+    }
+    
+    /**
+     * From a string description, attempt to generate a URL object. The string
+     * may point to an Internet location (e.g., http:// or ftp:// URL),
+     * a resource on the class path (resulting in a resource URL that points
+     * into the current classpath), or a file on the local filesystem
+     * (resulting in a file:// URL). The String will be checked in that order
+     * in an attempt to resolve it to a valid URL.
+     * @@param location the location string for which to get a URL object
+     * @@return a URL object, or null if the location string could not be
+     * resolved
+     */
+    public static URL urlFromString(String location) {
+        return urlFromString(location, null, true);
+    }
+    
+    /**
+     * From a string description, attempt to generate a URL object. The string
+     * may point to an Internet location (e.g., http:// or ftp:// URL),
+     * a resource on the class path (resulting in a resource URL that points
+     * into the current classpath), or, if the <code>includeFileSystem</code>
+     * flag is true, a file on the local filesystem
+     * (resulting in a file:// URL). The String will be checked in that order
+     * in an attempt to resolve it to a valid URL.
+     * @@param location the location string for which to get a URL object
+     * @@param referrer the class to check for classpath resource items, the
+     * location string will be resolved against the package/folder containing
+     * this class 
+     * @@param includeFileSystem indicates if the file system should be
+     * included in the search to resolve the location String
+     * @@return a URL object, or null if the location string could not be
+     * resolved
+     */
+    public static URL urlFromString(String location, Class referrer,
+                                    boolean includeFileSystem)
+    {
+        URL url = null;
+        if ( isUrlString(location) ) {
+            // explicit URL string
+            try {
+                url = new URL(location);
+            } catch ( Exception e ) {
+                e.printStackTrace();
+            }
+        } else {
+            // attempt to get a URL pointing into the classpath
+            if ( referrer != null )
+                url = referrer.getResource(location);
+            else
+                url = IOLib.class.getResource(location);
+
+            if ( url == null && !location.startsWith("/") )
+                url = IOLib.class.getResource("/"+location);
+            
+            if ( includeFileSystem && url == null ) {
+                // if still not found, check the file system
+            	File f = new File(location);
+            	if ( f.exists() ) {
+                    try {
+                    	url = f.toURI().toURL();
+                    } catch ( Exception e ) {}
+                }
+            }
+        }
+        return url;
+    }
+    
+    /**
+     * Get an input string corresponding to the given location string. The
+     * string will first be resolved to a URL and an input stream will be
+     * requested from the URL connection. If this fails, the location will
+     * be resolved against the file system. Also, if a gzip file is found,
+     * the input stream will also be wrapped by a GZipInputStream. If the
+     * location string can not be resolved, a null value is returned
+     * @@param location the location string
+     * @@return an InputStream for the resolved location string
+     * @@throws IOException if an input/ouput error occurs
+     */
+    public static InputStream streamFromString(String location) 
+        throws IOException
+    {
+        InputStream is = null;
+        
+        // try to get a working url from the string
+        URL url = urlFromString(location, null, false);
+        if ( url != null ) {
+            is = url.openStream();
+        } else {
+            // if that failed, try the file system
+            File f = new File(location);
+            if ( f.exists() )
+                is = new FileInputStream(f);
+        }
+        
+        if ( is == null ) {
+            return null; // couldn't find it
+        } else if ( isGZipFile(location) ) {
+            return new GZIPInputStream(is);
+        } else {
+            return is;
+        }
+    }
+    
+    /**
+     * Returns the extension for a file or null if there is none
+     * @@param f the input file
+     * @@return the file extension, or null if none
+     */
+    public static String getExtension(File f) {
+        return (f != null ? getExtension(f.getName()) : null);
+    }
+    
+    /**
+     * Indicates if the given file ends with a file extension of
+     * ".gz" or ".Z", indicating a GZip file.
+     * @@param file a String of the filename or URL of the file
+     * @@return true if the extension is ".gz" or ".Z", false otherwise
+     */
+    public static boolean isGZipFile(String file) {
+    	String ext = getExtension(file);
+        return "gz".equals(ext) || "z".equals(ext);
+    }
+    
+    /**
+     * Indicates if the given file ends with a file extension of
+     * ".zip", indicating a Zip file.
+     * @@param file a String of the filename or URL of the file
+     * @@return true if the extension is ".zip", false otherwise
+     */
+    public static boolean isZipFile(String file) {
+        return "zip".equals(getExtension(file));
+    }
+    
+    /**
+     * Returns the extension for a file or null if there is none
+     * @@param filename the input filename
+     * @@return the file extension, or null if none
+     */
+    public static String getExtension(String filename) {
+        int i = filename.lastIndexOf('.');
+        if ( i>0 && i<filename.length()-1 ) {
+            return filename.substring(i+1).toLowerCase();
+        } else {
+            return null;
+        }
+    }
+    
+    /**
+     * Reads an input stream into a list of byte values.
+     * @@param is the input stream to read
+     * @@return a ByteArrayList containing the contents of the input stream
+     * @@throws IOException if an input/ouput error occurs
+     */
+    public static ByteArrayList readAsBytes(InputStream is) throws IOException {
+        ByteArrayList buf = new ByteArrayList();
+        byte[] b = new byte[8192];
+        int nread = -1;
+        while ( (nread=is.read(b)) >= 0 ) {
+            buf.add(b, 0, nread);
+        }
+        return buf;
+    }
+    
+    /**
+     * Reads an input stream into a single String result.
+     * @@param is the input stream to read
+     * @@return a String containing the contents of the input stream
+     * @@throws IOException if an input/ouput error occurs
+     */
+    public static String readAsString(InputStream is) throws IOException {
+        StringBuffer buf = new StringBuffer();
+        byte[] b = new byte[8192];
+        int nread = -1;
+        while ( (nread=is.read(b)) >= 0 ) {
+            String s = new String(b, 0, nread);
+            buf.append(s);
+        }
+        return buf.toString();
+    }
+    
+    /**
+     * Reads data pulled from the given location string into a single String
+     * result. The method attempts to retrieve an InputStream using the
+     * {@@link #streamFromString(String)} method, then read the input stream
+     * into a String result.
+     * @@param location the location String
+     * @@return a String with the requested data
+     * @@throws IOException if an input/ouput error occurs
+     * @@see #streamFromString(String)
+     */
+    public static String readAsString(String location) throws IOException {
+        return readAsString(streamFromString(location));
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Present a file chooser dialog for loading a Table data set.
+     * @@param c user interface component from which the request is being made
+     * @@return a newly loaded Table, or null if not found or action canceled
+     */
+    public static Table getTableFile(Component c) {
+        JFileChooser jfc = new JFileChooser();
+        jfc.setDialogType(JFileChooser.OPEN_DIALOG);
+        jfc.setDialogTitle("Open Table File");
+        jfc.setAcceptAllFileFilterUsed(false);
+        
+        SimpleFileFilter ff;
+        
+        // TODO: have this generate automatically
+        // tie into PrefuseConfig??
+        
+        // CSV
+        ff = new SimpleFileFilter("csv",
+                "Comma Separated Values (CSV) File (*.csv)",
+                new CSVTableReader());
+        ff.addExtension("gz");
+        jfc.setFileFilter(ff);
+
+        // Pipe-Delimited
+        ff = new SimpleFileFilter("txt",
+                "Pipe-Delimited Text File (*.txt)",
+                new DelimitedTextTableReader("|"));
+        ff.addExtension("gz");
+        jfc.setFileFilter(ff);
+
+        // Tab-Delimited
+        ff = new SimpleFileFilter("txt",
+                "Tab-Delimited Text File (*.txt)",
+                new DelimitedTextTableReader());
+        ff.addExtension("gz");
+        jfc.setFileFilter(ff);
+        
+        int retval = jfc.showOpenDialog(c);
+        if (retval != JFileChooser.APPROVE_OPTION)
+            return null;
+        
+        File f = jfc.getSelectedFile();
+        ff = (SimpleFileFilter)jfc.getFileFilter();
+        TableReader tr = (TableReader)ff.getUserData();
+        
+        try {
+            return tr.readTable(streamFromString(f.getAbsolutePath()));
+        } catch ( Exception e ) {
+            Logger.getLogger(IOLib.class.getName()).warning(
+                e.getMessage() + "\n" + StringLib.getStackTrace(e));
+            return null;
+        }
+    }
+    
+    /**
+     * Present a file chooser dialog for loading a Graph or Tree data set.
+     * @@param c user interface component from which the request is being made
+     * @@return a newly loaded Graph, or null if not found or action canceled
+     */
+    public static Graph getGraphFile(Component c) {
+        JFileChooser jfc = new JFileChooser();
+        jfc.setDialogType(JFileChooser.OPEN_DIALOG);
+        jfc.setDialogTitle("Open Graph or Tree File");
+        jfc.setAcceptAllFileFilterUsed(false);
+        
+        SimpleFileFilter ff;
+        
+        // TODO: have this generate automatically
+        // tie into PrefuseConfig??
+
+        // TreeML
+        ff = new SimpleFileFilter("xml",
+                "TreeML File (*.xml, *.treeml)",
+                new TreeMLReader());
+        ff.addExtension("treeml");
+        ff.addExtension("gz");
+        jfc.setFileFilter(ff);
+        
+        // GraphML
+        ff = new SimpleFileFilter("xml",
+                "GraphML File (*.xml, *.graphml)",
+                new GraphMLReader());
+        ff.addExtension("graphml");
+        ff.addExtension("gz");
+        jfc.setFileFilter(ff);
+        
+        int retval = jfc.showOpenDialog(c);
+        if (retval != JFileChooser.APPROVE_OPTION)
+            return null;
+        
+        File f = jfc.getSelectedFile();
+        ff = (SimpleFileFilter)jfc.getFileFilter();
+        GraphReader gr = (GraphReader)ff.getUserData();
+        
+        try {
+            return gr.readGraph(streamFromString(f.getAbsolutePath()));
+        } catch ( Exception e ) {
+            Logger.getLogger(IOLib.class.getName()).warning(
+                e.getMessage() + "\n" + StringLib.getStackTrace(e));
+            return null;
+        }
+    }
+    
+} // end of class IOLib
+@
+
+
+2.4.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d27 1
+a27 1
+ *
+d35 1
+a35 1
+
+d48 1
+a48 1
+
+d63 1
+a63 1
+
+d75 1
+a75 1
+     * this class
+d81 1
+a81 1
+    public static URL urlFromString(String location, Class<?> referrer,
+d94 8
+a101 10
+            if ( referrer != null ) {
+				url = referrer.getResource(location);
+			} else {
+				url = IOLib.class.getResource(location);
+			}
+
+            if ( url == null && !location.startsWith("/") ) {
+				url = IOLib.class.getResource("/"+location);
+			}
+
+d114 1
+a114 1
+
+d126 1
+a126 1
+    public static InputStream streamFromString(String location)
+d130 1
+a130 1
+
+d138 2
+a139 3
+            if ( f.exists() ) {
+				is = new FileInputStream(f);
+			}
+d141 1
+a141 1
+
+d150 1
+a150 1
+
+d157 1
+a157 1
+        return f != null ? getExtension(f.getName()) : null;
+d159 1
+a159 1
+
+d170 1
+a170 1
+
+d180 1
+a180 1
+
+d194 1
+a194 1
+
+d210 1
+a210 1
+
+d227 1
+a227 1
+
+d241 1
+a241 1
+
+d243 1
+a243 1
+
+d254 1
+a254 1
+
+d256 1
+a256 1
+
+d259 1
+a259 1
+
+d280 1
+a280 1
+
+d282 3
+a284 4
+        if (retval != JFileChooser.APPROVE_OPTION) {
+			return null;
+		}
+
+d288 1
+a288 1
+
+d297 1
+a297 1
+
+d301 1
+a301 1
+     * @@return a newly loaded Graph, or null if not found or action cancelled
+d308 1
+a308 1
+
+d310 1
+a310 1
+
+d321 1
+a321 1
+
+d329 1
+a329 1
+
+d331 3
+a333 4
+        if (retval != JFileChooser.APPROVE_OPTION) {
+			return null;
+		}
+
+d337 1
+a337 1
+
+d346 1
+a346 1
+
+@
+
+
+2.4.4.2
+log
+@Extended ByteArrayOutputStream rather than reinventing the wheel
+@
+text
+@d205 1
+a205 1
+        ByteArrayList buf = new ByteArrayList(8192);
+d209 1
+a209 1
+            buf.write(b, 0, nread);
+@
+
+
+2.4.4.3
+log
+@use InputStreamReader instead of new String(...)
+@
+text
+@a7 1
+import java.io.InputStreamReader;
+a220 1
+    	InputStreamReader isr = new InputStreamReader(is);
+d222 1
+a222 1
+        char[] cc = new char[8192];
+d224 3
+a226 2
+        while ( (nread=isr.read(cc)) >= 0 ) {
+            buf.append(cc, 0, nread);
+@
+
+
+2.3
+log
+@Updated IOLib to recognize GZip files with ".Z" extension
+@
+text
+@d104 2
+a105 1
+                if ( (new File(location)).exists() ) {
+d107 1
+a107 1
+                        url = new URL("file:///"+location);
+@
+
+
+2.2
+log
+@Changed ordering in the file filters.
+@
+text
+@d161 1
+a161 1
+     * ".gz", indicating a GZip file.
+d163 1
+a163 1
+     * @@return true if the extension is ".gz", false otherwise
+d166 2
+a167 1
+        return "gz".equals(getExtension(file));
+@
+
+
+2.1
+log
+@Added .graphml and .treeml suffixes to file input dialogs
+@
+text
+@d264 8
+a271 1
+        
+a278 7
+        // Pipe-Delimited
+        ff = new SimpleFileFilter("txt",
+                "Pipe-Delimited Text File (*.txt)",
+                new DelimitedTextTableReader("|"));
+        ff.addExtension("gz");
+        jfc.setFileFilter(ff);
+        
+d311 8
+a327 8
+        // TreeML
+        ff = new SimpleFileFilter("xml",
+                "TreeML File (*.xml, *.treeml)",
+                new TreeMLReader());
+        ff.addExtension("treeml");
+        ff.addExtension("gz");
+        jfc.setFileFilter(ff);
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d314 1
+a314 1
+                "GraphML File (*.xml)",
+d316 1
+d322 1
+a322 1
+                "TreeML File (*.xml)",
+d324 1
+@
+
+
+1.1
+log
+@file IOLib.java was initially added on branch beta.
+@
+text
+@d1 343
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 149
+package prefuse.util.io;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.zip.GZIPInputStream;
+
+import prefuse.util.collections.ByteArrayList;
+
+/**
+ * Useful library routines for input/output tasks
+ *  
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class IOLib {
+
+    private IOLib() {
+        // disallow instantiation
+    } //
+    
+    public static boolean isUrlString(String s) {
+        return s.startsWith("http:/") ||
+               s.startsWith("ftp:/")  ||
+               s.startsWith("file:/");
+    }
+    
+    public static URL urlFromString(String location) {
+        return urlFromString(location, null);
+    }
+    
+    public static URL urlFromString(String location, Class referrer) {
+        URL url = null;
+        if ( isUrlString(location) ) {
+            // explicit URL string
+            try {
+                url = new URL(location);
+            } catch ( Exception e ) {
+                e.printStackTrace();
+            }
+        } else {
+            // attempt to get a URL pointing into the classpath
+            if ( referrer != null )
+                url = referrer.getResource(location);
+            else
+                url = IOLib.class.getResource(location);
+
+            if ( url == null && !location.startsWith("/") )
+                url = IOLib.class.getResource("/"+location);
+        }
+        return url;
+    }
+    
+    public static InputStream streamFromString(String location) 
+        throws IOException
+    {
+        InputStream is = null;
+        
+        // try to get a working url from the string
+        URL url = urlFromString(location);
+        if ( url != null ) {
+            is = url.openStream();
+        } else {
+            // if that failed, try the file system
+            File f = new File(location);
+            if ( f.exists() )
+                is = new FileInputStream(f);
+        }
+        
+        if ( is == null ) {
+            return null; // couldn't find it
+        } else if ( isGZipFile(location) ) {
+            return new GZIPInputStream(is);
+        } else {
+            return is;
+        }
+    }
+    
+    /**
+     * Returns the extension for a file or null if there is none
+     * @@param f the input file
+     * @@return the file extension, or null if none
+     */
+    public static String getExtension(File f) {
+    	return (f != null ? getExtension(f.getName()) : null);
+    } //
+    
+    /**
+     * Indicates if the given file ends with a file extension of
+     * ".gz", indicating a GZip file.
+     * @@param file a String of the filename or URL of the file
+     * @@return true if the extension is ".gz", false otherwise
+     */
+    public static boolean isGZipFile(String file) {
+        return "gz".equals(getExtension(file));
+    }
+    
+    /**
+     * Indicates if the given file ends with a file extension of
+     * ".zip", indicating a Zip file.
+     * @@param file a String of the filename or URL of the file
+     * @@return true if the extension is ".zip", false otherwise
+     */
+    public static boolean isZipFile(String file) {
+        return "zip".equals(getExtension(file));
+    }
+    
+    /**
+     * Returns the extension for a file or null if there is none
+     * @@param filename the input filename
+     * @@return the file extension, or null if none
+     */
+    public static String getExtension(String filename) {
+	    int i = filename.lastIndexOf('.');
+	    if ( i>0 && i<filename.length()-1 ) {
+	        return filename.substring(i+1).toLowerCase();
+	    } else {
+	        return null;
+	    }
+    } //
+    
+    public static ByteArrayList readAsBytes(InputStream is) throws IOException {
+        ByteArrayList buf = new ByteArrayList();
+        byte[] b = new byte[8192];
+        int nread = -1;
+        while ( (nread=is.read(b)) >= 0 ) {
+            buf.add(b, 0, nread);
+        }
+        return buf;
+    }
+    
+    public static String readAsString(InputStream is) throws IOException {
+        StringBuffer buf = new StringBuffer();
+        byte[] b = new byte[8192];
+        int nread = -1;
+        while ( (nread=is.read(b)) >= 0 ) {
+            String s = new String(b, 0, nread);
+            buf.append(s);
+        }
+        return buf.toString();
+    }
+    
+    public static String readAsString(String location) throws IOException {
+        return readAsString(streamFromString(location));
+    }
+    
+} // end of class IOLib
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d87 1
+a87 1
+        return (f != null ? getExtension(f.getName()) : null);
+d116 6
+a121 6
+        int i = filename.lastIndexOf('.');
+        if ( i>0 && i<filename.length()-1 ) {
+            return filename.substring(i+1).toLowerCase();
+        } else {
+            return null;
+        }
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@d15 2
+a16 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d22 1
+a22 1
+    }
+a23 7
+    /**
+     * Indicates if a given String is a URL string. Checks to see if the string
+     * begins with the "http:/", "ftp:/", or "file:/" protocol strings.
+     * @@param s the string to check
+     * @@return true if a url string matching the listed protocols,
+     * false otherwise
+     */
+a29 7
+    /**
+     * From a string description, attempt to generate a URL object. The string
+     * may point to a website, a resource on the class path.
+     * @@param location the location string for which to get a URL object
+     * @@return a URL object, or null if the location string could not be
+     * resolved
+     */
+a33 10
+    /**
+     * From a string description, attempt to generate a URL object. The string
+     * may point to a website, a resource on the class path.
+     * @@param location the location string for which to get a URL object
+     * @@param referrer the class to check for classpath resource items, the
+     * location string will be resolved against the package/folder containing
+     * this class 
+     * @@return a URL object, or null if the location string could not be
+     * resolved
+     */
+a55 11
+    /**
+     * Get an input string corresponding to the given location string. The
+     * string will first be resolved to a URL and an input stream will be
+     * requested from the URL connection. If this fails, the location will
+     * be resolved against the file system. Also, if a gzip file is found,
+     * the input stream will also be wrapped by a GZipInputStream. If the
+     * location string can not be resolved, a null value is returned
+     * @@param location the location string
+     * @@return an InputStream for the resolved location string
+     * @@throws IOException if an input/ouput error occurs
+     */
+d88 1
+a88 1
+    }
+d122 1
+a122 1
+    }
+a123 6
+    /**
+     * Reads an input stream into a list of byte values.
+     * @@param is the input stream to read
+     * @@return a ByteArrayList containing the contents of the input stream
+     * @@throws IOException if an input/ouput error occurs
+     */
+a133 6
+    /**
+     * Reads an input stream into a single String result.
+     * @@param is the input stream to read
+     * @@return a String containing the contents of the input stream
+     * @@throws IOException if an input/ouput error occurs
+     */
+a144 10
+    /**
+     * Reads data pulled from the given location string into a single String
+     * result. The method attempts to retrieve an InputStream using the
+     * {@@link #streamFromString(String)} method, then read the input stream
+     * into a String result.
+     * @@param location the location String
+     * @@return a String with the requested data
+     * @@throws IOException if an input/ouput error occurs
+     * @@see #streamFromString(String)
+     */
+@
+
+
+1.1.2.4
+log
+@Much more javadoc
+@
+text
+@d13 1
+a13 1
+ * Library routines for input/output tasks.
+@
+
+
+1.1.2.5
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a2 1
+import java.awt.Component;
+a7 1
+import java.util.logging.Logger;
+a9 11
+import javax.swing.JFileChooser;
+
+import prefuse.data.Graph;
+import prefuse.data.Table;
+import prefuse.data.io.CSVTableReader;
+import prefuse.data.io.DelimitedTextTableReader;
+import prefuse.data.io.GraphMLReader;
+import prefuse.data.io.GraphReader;
+import prefuse.data.io.TableReader;
+import prefuse.data.io.TreeMLReader;
+import prefuse.util.StringLib;
+d38 1
+a38 5
+     * may point to an Internet location (e.g., http:// or ftp:// URL),
+     * a resource on the class path (resulting in a resource URL that points
+     * into the current classpath), or a file on the local filesystem
+     * (resulting in a file:// URL). The String will be checked in that order
+     * in an attempt to resolve it to a valid URL.
+d44 1
+a44 1
+        return urlFromString(location, null, true);
+d49 1
+a49 6
+     * may point to an Internet location (e.g., http:// or ftp:// URL),
+     * a resource on the class path (resulting in a resource URL that points
+     * into the current classpath), or, if the <code>includeFileSystem</code>
+     * flag is true, a file on the local filesystem
+     * (resulting in a file:// URL). The String will be checked in that order
+     * in an attempt to resolve it to a valid URL.
+a53 2
+     * @@param includeFileSystem indicates if the file system should be
+     * included in the search to resolve the location String
+d57 1
+a57 3
+    public static URL urlFromString(String location, Class referrer,
+                                    boolean includeFileSystem)
+    {
+a74 9
+            
+            if ( includeFileSystem && url == null ) {
+                // if still not found, check the file system
+                if ( (new File(location)).exists() ) {
+                    try {
+                        url = new URL("file://"+location);
+                    } catch ( Exception e ) {}
+                }
+            }
+d96 1
+a96 1
+        URL url = urlFromString(location, null, false);
+a204 103
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Present a file chooser dialog for loading a Table data set.
+     * @@param c user interface component from which the request is being made
+     * @@return a newly loaded Table, or null if not found or action canceled
+     */
+    public static Table getTableFile(Component c) {
+        JFileChooser jfc = new JFileChooser();
+        jfc.setDialogType(JFileChooser.OPEN_DIALOG);
+        jfc.setDialogTitle("Open Table File");
+        jfc.setAcceptAllFileFilterUsed(false);
+        
+        SimpleFileFilter ff;
+        
+        // TODO: have this generate automatically
+        // tie into PrefuseConfig??
+        
+        // CSV
+        ff = new SimpleFileFilter("csv",
+                "Comma Separated Values (CSV) File (*.csv)",
+                new CSVTableReader());
+        ff.addExtension("gz");
+        jfc.setFileFilter(ff);
+        
+        // Tab-Delimited
+        ff = new SimpleFileFilter("txt",
+                "Tab-Delimited Text File (*.txt)",
+                new DelimitedTextTableReader());
+        ff.addExtension("gz");
+        jfc.setFileFilter(ff);
+        
+        // Pipe-Delimited
+        ff = new SimpleFileFilter("txt",
+                "Pipe-Delimited Text File (*.txt)",
+                new DelimitedTextTableReader("|"));
+        ff.addExtension("gz");
+        jfc.setFileFilter(ff);
+        
+        int retval = jfc.showOpenDialog(c);
+        if (retval != JFileChooser.APPROVE_OPTION)
+            return null;
+        
+        File f = jfc.getSelectedFile();
+        ff = (SimpleFileFilter)jfc.getFileFilter();
+        TableReader tr = (TableReader)ff.getUserData();
+        
+        try {
+            return tr.readTable(streamFromString(f.getAbsolutePath()));
+        } catch ( Exception e ) {
+            Logger.getLogger(IOLib.class.getName()).warning(
+                e.getMessage() + "\n" + StringLib.getStackTrace(e));
+            return null;
+        }
+    }
+    
+    /**
+     * Present a file chooser dialog for loading a Graph or Tree data set.
+     * @@param c user interface component from which the request is being made
+     * @@return a newly loaded Graph, or null if not found or action canceled
+     */
+    public static Graph getGraphFile(Component c) {
+        JFileChooser jfc = new JFileChooser();
+        jfc.setDialogType(JFileChooser.OPEN_DIALOG);
+        jfc.setDialogTitle("Open Graph or Tree File");
+        jfc.setAcceptAllFileFilterUsed(false);
+        
+        SimpleFileFilter ff;
+        
+        // TODO: have this generate automatically
+        // tie into PrefuseConfig??
+        
+        // GraphML
+        ff = new SimpleFileFilter("xml",
+                "GraphML File (*.xml)",
+                new GraphMLReader());
+        ff.addExtension("gz");
+        jfc.setFileFilter(ff);
+        
+        // TreeML
+        ff = new SimpleFileFilter("xml",
+                "TreeML File (*.xml)",
+                new TreeMLReader());
+        ff.addExtension("gz");
+        jfc.setFileFilter(ff);
+
+        int retval = jfc.showOpenDialog(c);
+        if (retval != JFileChooser.APPROVE_OPTION)
+            return null;
+        
+        File f = jfc.getSelectedFile();
+        ff = (SimpleFileFilter)jfc.getFileFilter();
+        GraphReader gr = (GraphReader)ff.getUserData();
+        
+        try {
+            return gr.readGraph(streamFromString(f.getAbsolutePath()));
+        } catch ( Exception e ) {
+            Logger.getLogger(IOLib.class.getName()).warning(
+                e.getMessage() + "\n" + StringLib.getStackTrace(e));
+            return null;
+        }
+    }
+    
+@
+
+
+1.1.2.6
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d106 1
+a106 1
+                        url = new URL("file:///"+location);
+@
+
+

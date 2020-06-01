@@ -1,0 +1,703 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.32;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.32;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.40;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.controls;
+
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.util.EventListener;
+
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Listener interface for processing user interface events on a Display.
+ * 
+ * @@author alan newberger
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface Control extends EventListener, 
+    MouseListener, MouseMotionListener, MouseWheelListener, KeyListener
+{
+    /** Represents the use of the left mouse button */
+    public static final int LEFT_MOUSE_BUTTON   = MouseEvent.BUTTON1_MASK;
+    /** Represents the use of the middle mouse button */
+    public static final int MIDDLE_MOUSE_BUTTON = MouseEvent.BUTTON2_MASK;
+    /** Represents the use of the right mouse button */
+    public static final int RIGHT_MOUSE_BUTTON  = MouseEvent.BUTTON3_MASK;
+    
+    /**
+     * Indicates if this Control is currently enabled.
+     * @@return true if the control is enabled, false if disabled
+     */
+    public boolean isEnabled();
+    
+    /**
+     * Sets the enabled status of this control.
+     * @@param enabled true to enable the control, false to disable it
+     */
+    public void setEnabled(boolean enabled);
+    
+    // -- Actions performed on VisualItems ------------------------------------
+
+    /**
+     * Invoked when a mouse button is pressed on a VisualItem and then dragged.
+     */
+    public void itemDragged(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when the mouse cursor has been moved onto a VisualItem but
+     *  no buttons have been pushed.
+     */
+    public void itemMoved(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when the mouse wheel is rotated while the mouse is over a
+     *  VisualItem.
+     */
+    public void itemWheelMoved(VisualItem item, MouseWheelEvent e);
+    
+    /**
+     * Invoked when the mouse button has been clicked (pressed and released) on
+     *  a VisualItem.
+     */
+    public void itemClicked(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when a mouse button has been pressed on a VisualItem.
+     */
+    public void itemPressed(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when a mouse button has been released on a VisualItem.
+     */
+    public void itemReleased(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when the mouse enters a VisualItem.
+     */
+    public void itemEntered(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when the mouse exits a VisualItem.
+     */
+    public void itemExited(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when a key has been pressed, while the mouse is over
+     *  a VisualItem.
+     */
+    public void itemKeyPressed(VisualItem item, KeyEvent e);
+    
+    /**
+     * Invoked when a key has been released, while the mouse is over
+     *  a VisualItem.
+     */
+    public void itemKeyReleased(VisualItem item, KeyEvent e);
+    
+    /**
+     * Invoked when a key has been typed, while the mouse is over
+     *  a VisualItem.
+     */
+    public void itemKeyTyped(VisualItem item, KeyEvent e);
+    
+    
+    // -- Actions performed on the Display ------------------------------------
+    
+    /**
+     * Invoked when the mouse enters the Display.
+     */
+    public void mouseEntered(MouseEvent e);
+    
+    /**
+     * Invoked when the mouse exits the Display.
+     */
+    public void mouseExited(MouseEvent e);
+    
+    /**
+     * Invoked when a mouse button has been pressed on the Display but NOT
+     *  on a VisualItem.
+     */
+    public void mousePressed(MouseEvent e);
+    
+    /**
+     * Invoked when a mouse button has been released on the Display but NOT
+     *  on a VisualItem.
+     */
+    public void mouseReleased(MouseEvent e);
+    
+    /**
+     * Invoked when the mouse button has been clicked (pressed and released) on
+     *  the Display, but NOT on a VisualItem.
+     */
+    public void mouseClicked(MouseEvent e);
+    
+    /**
+     * Invoked when a mouse button is pressed on the Display (but NOT a 
+     *  VisualItem) and then dragged.
+     */
+    public void mouseDragged(MouseEvent e);
+    
+    /**
+     * Invoked when the mouse cursor has been moved on the Display (but NOT a
+     * VisualItem) and no buttons have been pushed.
+     */
+    public void mouseMoved(MouseEvent e);
+    
+    /**
+     * Invoked when the mouse wheel is rotated while the mouse is over the
+     *  Display (but NOT a VisualItem).
+     */
+    public void mouseWheelMoved(MouseWheelEvent e);
+    
+    /**
+     * Invoked when a key has been pressed, while the mouse is NOT 
+     *  over a VisualItem.
+     */
+    public void keyPressed(KeyEvent e);
+    
+    /**
+     * Invoked when a key has been released, while the mouse is NOT
+     *  over a VisualItem.
+     */
+    public void keyReleased(KeyEvent e);
+    
+    /**
+     * Invoked when a key has been typed, while the mouse is NOT
+     *  over a VisualItem.
+     */
+    public void keyTyped(KeyEvent e);
+
+} // end of inteface ControlListener
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a2 1
+import java.awt.event.InputEvent;
+d17 1
+a17 1
+ *
+d21 1
+a21 1
+public interface Control extends EventListener,
+d25 1
+a25 1
+    public static final int LEFT_MOUSE_BUTTON   = InputEvent.BUTTON1_MASK;
+d27 1
+a27 1
+    public static final int MIDDLE_MOUSE_BUTTON = InputEvent.BUTTON2_MASK;
+d29 2
+a30 2
+    public static final int RIGHT_MOUSE_BUTTON  = InputEvent.BUTTON3_MASK;
+
+d36 1
+a36 1
+
+d42 1
+a42 1
+
+d48 2
+a49 2
+    public void itemDragged(VisualItem<?> item, MouseEvent e);
+
+d54 2
+a55 2
+    public void itemMoved(VisualItem<?> item, MouseEvent e);
+
+d60 2
+a61 2
+    public void itemWheelMoved(VisualItem<?> item, MouseWheelEvent e);
+
+d66 2
+a67 2
+    public void itemClicked(VisualItem<?> item, MouseEvent e);
+
+d71 2
+a72 2
+    public void itemPressed(VisualItem<?> item, MouseEvent e);
+
+d76 2
+a77 2
+    public void itemReleased(VisualItem<?> item, MouseEvent e);
+
+d81 2
+a82 2
+    public void itemEntered(VisualItem<?> item, MouseEvent e);
+
+d86 2
+a87 2
+    public void itemExited(VisualItem<?> item, MouseEvent e);
+
+d92 2
+a93 2
+    public void itemKeyPressed(VisualItem<?> item, KeyEvent e);
+
+d98 2
+a99 2
+    public void itemKeyReleased(VisualItem<?> item, KeyEvent e);
+
+d104 3
+a106 3
+    public void itemKeyTyped(VisualItem<?> item, KeyEvent e);
+
+
+d108 1
+a108 1
+
+d113 1
+a113 1
+
+d118 1
+a118 1
+
+d124 1
+a124 1
+
+d130 1
+a130 1
+
+d136 1
+a136 1
+
+d138 1
+a138 1
+     * Invoked when a mouse button is pressed on the Display (but NOT a
+d142 1
+a142 1
+
+d148 1
+a148 1
+
+d154 1
+a154 1
+
+d156 1
+a156 1
+     * Invoked when a key has been pressed, while the mouse is NOT
+d160 1
+a160 1
+
+d166 1
+a166 1
+
+d173 1
+a173 1
+} // end of interface ControlListener
+@
+
+
+1.1
+log
+@file Control.java was initially added on branch beta.
+@
+text
+@d1 173
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 172
+package prefuse.controls;
+
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.util.EventListener;
+
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Listener interface for processing user interface events on 
+ * a prefuse Display.
+ * 
+ * @@version 1.0
+ * @@author newbergr
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public interface Control extends EventListener, 
+    MouseListener, MouseMotionListener, MouseWheelListener, KeyListener
+{
+    public static final int LEFT_MOUSE_BUTTON   = MouseEvent.BUTTON1_MASK;
+    public static final int MIDDLE_MOUSE_BUTTON = MouseEvent.BUTTON2_MASK;
+    public static final int RIGHT_MOUSE_BUTTON  = MouseEvent.BUTTON3_MASK;
+    
+    /**
+     * Indicates if this Control is currently enabled.
+     * @@return true if the control is enabled, false if disabled
+     */
+    public boolean isEnabled();
+    
+    /**
+     * Sets the enabled status of this control.
+     * @@param enabled true to enable the control, false to disable it
+     */
+    public void setEnabled(boolean enabled);
+    
+	// -- Actions performed on VisualItems ------------------------------------
+
+	/**
+	 * Invoked when a mouse button is pressed on a VisualItem and then dragged.
+	 */
+	public void itemDragged(VisualItem item, MouseEvent e);
+	
+	/**
+	 * Invoked when the mouse cursor has been moved onto a VisualItem but
+	 *  no buttons have been pushed.
+	 */
+	public void itemMoved(VisualItem item, MouseEvent e);
+	
+	/**
+	 * Invoked when the mouse wheel is rotated while the mouse is over a
+	 *  VisualItem.
+	 */
+	public void itemWheelMoved(VisualItem item, MouseWheelEvent e);
+	
+	/**
+	 * Invoked when the mouse button has been clicked (pressed and released) on
+	 *  a VisualItem.
+	 */
+	public void itemClicked(VisualItem item, MouseEvent e);
+	
+	/**
+	 * Invoked when a mouse button has been pressed on a VisualItem.
+	 */
+	public void itemPressed(VisualItem item, MouseEvent e);
+	
+	/**
+	 * Invoked when a mouse button has been released on a VisualItem.
+	 */
+	public void itemReleased(VisualItem item, MouseEvent e);
+	
+	/**
+	 * Invoked when the mouse enters a VisualItem.
+	 */
+	public void itemEntered(VisualItem item, MouseEvent e);
+	
+	/**
+	 * Invoked when the mouse exits a VisualItem.
+	 */
+	public void itemExited(VisualItem item, MouseEvent e);
+	
+	/**
+	 * Invoked when a key has been pressed, while the mouse is over
+	 * 	a VisualItem.
+	 */
+	public void itemKeyPressed(VisualItem item, KeyEvent e);
+	
+	/**
+	 * Invoked when a key has been released, while the mouse is over
+	 *  a VisualItem.
+	 */
+	public void itemKeyReleased(VisualItem item, KeyEvent e);
+	
+	/**
+	 * Invoked when a key has been typed, while the mouse is over
+	 *  a VisualItem.
+	 */
+	public void itemKeyTyped(VisualItem item, KeyEvent e);
+	
+	
+	// -- Actions performed on the Display ------------------------------------
+	
+	/**
+	 * Invoked when the mouse enters the Display.
+	 */
+	public void mouseEntered(MouseEvent e);
+	
+	/**
+	 * Invoked when the mouse exits the Display.
+	 */
+	public void mouseExited(MouseEvent e);
+	
+	/**
+	 * Invoked when a mouse button has been pressed on the Display but NOT
+	 *  on a VisualItem.
+	 */
+	public void mousePressed(MouseEvent e);
+	
+	/**
+	 * Invoked when a mouse button has been released on the Display but NOT
+	 *  on a VisualItem.
+	 */
+	public void mouseReleased(MouseEvent e);
+	
+	/**
+	 * Invoked when the mouse button has been clicked (pressed and released) on
+	 *  the Display, but NOT on a VisualItem.
+	 */
+	public void mouseClicked(MouseEvent e);
+	
+	/**
+	 * Invoked when a mouse button is pressed on the Display (but NOT a 
+	 *  VisualItem) and then dragged.
+	 */
+	public void mouseDragged(MouseEvent e);
+	
+	/**
+	 * Invoked when the mouse cursor has been moved on the Display (but NOT a
+	 * VisualItem) and no buttons have been pushed.
+	 */
+	public void mouseMoved(MouseEvent e);
+	
+	/**
+	 * Invoked when the mouse wheel is rotated while the mouse is over the
+	 *  Display (but NOT a VisualItem).
+	 */
+	public void mouseWheelMoved(MouseWheelEvent e);
+	
+	/**
+	 * Invoked when a key has been pressed, while the mouse is NOT 
+	 *  over a VisualItem.
+	 */
+	public void keyPressed(KeyEvent e);
+	
+	/**
+	 * Invoked when a key has been released, while the mouse is NOT
+	 *  over a VisualItem.
+	 */
+	public void keyReleased(KeyEvent e);
+	
+	/**
+	 * Invoked when a key has been typed, while the mouse is NOT
+	 *  over a VisualItem.
+	 */
+	public void keyTyped(KeyEvent e);
+
+} // end of inteface ControlListener
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d42 1
+a42 1
+    // -- Actions performed on VisualItems ------------------------------------
+d44 127
+a170 127
+    /**
+     * Invoked when a mouse button is pressed on a VisualItem and then dragged.
+     */
+    public void itemDragged(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when the mouse cursor has been moved onto a VisualItem but
+     *  no buttons have been pushed.
+     */
+    public void itemMoved(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when the mouse wheel is rotated while the mouse is over a
+     *  VisualItem.
+     */
+    public void itemWheelMoved(VisualItem item, MouseWheelEvent e);
+    
+    /**
+     * Invoked when the mouse button has been clicked (pressed and released) on
+     *  a VisualItem.
+     */
+    public void itemClicked(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when a mouse button has been pressed on a VisualItem.
+     */
+    public void itemPressed(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when a mouse button has been released on a VisualItem.
+     */
+    public void itemReleased(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when the mouse enters a VisualItem.
+     */
+    public void itemEntered(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when the mouse exits a VisualItem.
+     */
+    public void itemExited(VisualItem item, MouseEvent e);
+    
+    /**
+     * Invoked when a key has been pressed, while the mouse is over
+     *  a VisualItem.
+     */
+    public void itemKeyPressed(VisualItem item, KeyEvent e);
+    
+    /**
+     * Invoked when a key has been released, while the mouse is over
+     *  a VisualItem.
+     */
+    public void itemKeyReleased(VisualItem item, KeyEvent e);
+    
+    /**
+     * Invoked when a key has been typed, while the mouse is over
+     *  a VisualItem.
+     */
+    public void itemKeyTyped(VisualItem item, KeyEvent e);
+    
+    
+    // -- Actions performed on the Display ------------------------------------
+    
+    /**
+     * Invoked when the mouse enters the Display.
+     */
+    public void mouseEntered(MouseEvent e);
+    
+    /**
+     * Invoked when the mouse exits the Display.
+     */
+    public void mouseExited(MouseEvent e);
+    
+    /**
+     * Invoked when a mouse button has been pressed on the Display but NOT
+     *  on a VisualItem.
+     */
+    public void mousePressed(MouseEvent e);
+    
+    /**
+     * Invoked when a mouse button has been released on the Display but NOT
+     *  on a VisualItem.
+     */
+    public void mouseReleased(MouseEvent e);
+    
+    /**
+     * Invoked when the mouse button has been clicked (pressed and released) on
+     *  the Display, but NOT on a VisualItem.
+     */
+    public void mouseClicked(MouseEvent e);
+    
+    /**
+     * Invoked when a mouse button is pressed on the Display (but NOT a 
+     *  VisualItem) and then dragged.
+     */
+    public void mouseDragged(MouseEvent e);
+    
+    /**
+     * Invoked when the mouse cursor has been moved on the Display (but NOT a
+     * VisualItem) and no buttons have been pushed.
+     */
+    public void mouseMoved(MouseEvent e);
+    
+    /**
+     * Invoked when the mouse wheel is rotated while the mouse is over the
+     *  Display (but NOT a VisualItem).
+     */
+    public void mouseWheelMoved(MouseWheelEvent e);
+    
+    /**
+     * Invoked when a key has been pressed, while the mouse is NOT 
+     *  over a VisualItem.
+     */
+    public void keyPressed(KeyEvent e);
+    
+    /**
+     * Invoked when a key has been released, while the mouse is NOT
+     *  over a VisualItem.
+     */
+    public void keyReleased(KeyEvent e);
+    
+    /**
+     * Invoked when a key has been typed, while the mouse is NOT
+     *  over a VisualItem.
+     */
+    public void keyTyped(KeyEvent e);
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@d16 2
+a17 1
+ * Listener interface for processing user interface events on a Display.
+d19 3
+a21 2
+ * @@author alan newberger
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a25 1
+    /** Represents the use of the left mouse button */
+a26 1
+    /** Represents the use of the middle mouse button */
+a27 1
+    /** Represents the use of the right mouse button */
+@
+
+

@@ -1,0 +1,143 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.41;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.visual;
+
+/**
+ * VisualItem that "decorates" another VisualItem. DecoratorItem instances
+ * allow the decorated item to be retrieved, and used to compute visual
+ * properties for this item. Example decorator items might include attaching
+ * an external label to an item or adding interactive handles to another
+ * item.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface DecoratorItem extends VisualItem {
+
+    /**
+     * Get the VisualItem that this item is decorating.
+     * @@return the decorated VisualItem
+     */
+    public VisualItem getDecoratedItem();
+    
+} // end of interface DecoratorItem
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d9 1
+a9 1
+ *
+d12 1
+a12 1
+public interface DecoratorItem <T extends DecoratorItem<T>> extends VisualItem<T> {
+d18 2
+a19 3
+
+	public VisualItem<?> getDecoratedItem();
+
+@
+
+
+1.1
+log
+@file DecoratorItem.java was initially added on branch beta.
+@
+text
+@d1 20
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 10
+package prefuse.visual;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public interface DecoratorItem extends VisualItem {
+
+    public VisualItem getDecoratedItem();
+    
+} // end of interface DecoratorItem
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d4 1
+a4 7
+ * VisualItem that "decorates" another VisualItem. DecoratorItem instances
+ * allow the decorated item to be retrieved, and used to compute visual
+ * properties for this item. Example decorator items might include attaching
+ * an external label to an item or adding interactive handles to another
+ * item.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a7 4
+    /**
+     * Get the VisualItem that this item is decorating.
+     * @@return the decorated VisualItem
+     */
+@
+
+

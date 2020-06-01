@@ -1,0 +1,254 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2004.03.24.01.57.26;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.16.03.05.17;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.06.00.47.23;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.46;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@New filters added plus more
+@
+text
+@package edu.berkeley.guir.prefuse.activity;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.action.*;
+
+/**
+ * <p>The ActionPipeline represents a chain of Actions that perform graph
+ * processing. These pipelines can then be submitted to the ActivityManager
+ * to be executed. In addition, ActionPipeline also implements the Action
+ * interface, so ActionPipelines can be placed within other ActionPipelines,
+ * allowing recursive composition of different sets of Actions.</p>
+ * 
+ * <p>As a subclass of Activity, ActionPipelines can be of two kinds. 
+ * <i>Run-once</i> pipelines have
+ * a duration value of zero, and simply run once when scheduled. Pipelines
+ * with a duration greater than zero can be executed multiple times, waiting
+ * a specified step time between each execution until the activity has run for
+ * its full duration.</p>
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ * @@see Activity
+ * @@see edu.berkeley.guir.prefuse.action.Action
+ */
+public class ActionPipeline extends Activity implements Action {
+
+    private ItemRegistry   m_registry;
+    private ArrayList      m_actions = new ArrayList();
+    
+    /**
+     * Creates a new run-once ActionPipeline that operates on the 
+     * given ItemRegistry.
+     * @@param registry the ItemRegistry that Actions should process
+     */
+    public ActionPipeline(ItemRegistry registry) {
+        this(registry, 0);
+    }
+    
+    /**
+     * Creates a new ActionPipeline of specified duration and default
+     * step time of 20 milliseconds.
+     * @@param registry the ItemRegistry that Actions should process
+     * @@param duration the duration of this Activity, in milliseconds
+     */
+    public ActionPipeline(ItemRegistry registry, long duration) {
+        this(registry, duration, Activity.DEFAULT_STEP_TIME);
+    } //
+    
+    /**
+     * Creates a new ActionPipeline of specified duration and step time.
+     * @@param registry the ItemRegistry that Actions should process
+     * @@param duration the duration of this Activity, in milliseconds
+     * @@param stepTime the time to wait in milliseconds between executions
+     *  of the pipeline
+     */
+    public ActionPipeline(ItemRegistry registry, long duration, long stepTime) {
+        this(registry, duration, stepTime, System.currentTimeMillis());
+    } //
+    
+    /**
+     * Creates a new ActionPipeline of specified duration, step time, and
+     * staring time.
+     * @@param registry the ItemRegistry that Actions should process
+     * @@param duration the duration of this Activity, in milliseconds
+     * @@param stepTime the time to wait in milliseconds between executions
+     *  of the pipeline
+     * @@param startTime the scheduled start time for this Activity, if it is
+     *  later scheduled.
+     */
+    public ActionPipeline(ItemRegistry registry, long duration, long stepTime, long startTime) {
+        super(duration, stepTime, startTime);
+        m_registry = registry;
+    } //
+    
+    /**
+     * Returns the number of Actions in the pipeline.
+     * @@return the size of this pipeline
+     */
+    public synchronized int size() {
+        return m_actions.size();
+    } //
+    
+    /**
+     * Adds an Action to the end of the pipeline
+     * @@param a the Action instance to add
+     */
+    public synchronized void add(Action a) {
+        m_actions.add(a);
+    } //
+    
+    /**
+     * Adds an Action to the pipeline at the given index
+     * @@param i the index at which to add the Action
+     * @@param a the Action instance to add
+     */
+    public synchronized void add(int i, Action a) {
+        m_actions.add(i, a);
+    } //
+    
+    /**
+     * Returns the Action at the specified index in the pipeline
+     * @@param i the index
+     * @@return the requested Action
+     */
+    public synchronized Action get(int i) {
+        return (Action)m_actions.get(i);
+    } //
+    
+    /**
+     * Removes a given Action from the pipeline
+     * @@param a the Action to remove
+     * @@return true if the Action was found and removed, false otherwise
+     */
+    public synchronized boolean remove(Action a) {
+        return m_actions.remove(a);
+    } //
+    
+    /**
+     * Removes the Action at the specified index in the pipeline
+     * @@param i the index
+     * @@return the removed Action
+     */
+    public synchronized Action remove(int i) {
+        return (Action)m_actions.remove(i);
+    } //
+    
+    /**
+     * Runs this ActionPipeline (as an Activity)
+     * @@see edu.berkeley.guir.prefuse.activity.Activity#run(long)
+     */
+    protected synchronized void run(long elapsedTime) {
+        run(m_registry, getPace(elapsedTime));
+    } //
+    
+    /**
+     * Runs this ActionPipeline.
+     * @@see edu.berkeley.guir.prefuse.action.Action#run(edu.berkeley.guir.prefuse.ItemRegistry, double)
+     */
+    public void run(ItemRegistry registry, double frac) {
+        synchronized ( m_registry ) {
+            Iterator iter = m_actions.iterator();
+            while ( iter.hasNext() ) {
+                Action a = (Action)iter.next();
+                if ( a.isEnabled() ) a.run(m_registry, frac);
+            }
+        }
+    } //
+
+} // end of class Action
+@
+
+
+1.3
+log
+@More Javadoc updates
+@
+text
+@@
+
+
+1.2
+log
+@Refactored use of pacing function
+@
+text
+@d10 5
+d16 6
+a21 1
+ * Feb 5, 2004 - jheer - Created class
+d25 2
+d33 5
+d42 6
+d52 7
+d63 10
+d78 4
+d86 4
+d94 5
+d103 5
+d110 1
+a110 1
+    }
+d112 5
+d121 5
+d130 4
+d138 4
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@a19 1
+    private Pacer m_pacer;
+a37 8
+    public synchronized Pacer getPacingFunction() {
+        return m_pacer;
+    } //
+    
+    public synchronized void setPacingFunction(Pacer pfunc) {
+        m_pacer = pfunc;
+    } //
+    
+d63 1
+a63 6
+        // determine the fraction of elapsed activity time
+        long duration = getDuration();
+        double frac = (duration == 0L ? 0.0 : ((double)elapsedTime)/duration);
+        frac = Math.min(1, Math.max(0, frac));
+        frac = m_pacer!=null ? m_pacer.pace(frac) : frac;
+        run(m_registry, frac);
+@
+

@@ -1,0 +1,116 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2004.03.24.01.57.25;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.11.19.11.12;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.08.21.31.49;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@New filters added plus more
+@
+text
+@package edu.berkeley.guir.prefuse.action;
+
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.NodeItem;
+import edu.berkeley.guir.prefuse.graph.Node;
+
+/**
+ * Filters graph nodes, allowing all nodes in the graph to be visualized. By
+ * default, garbage collection on node items is performed.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class GraphNodeFilter extends Filter {
+
+    /**
+     * Constructor.
+     */
+    public GraphNodeFilter() {
+        super(ItemRegistry.DEFAULT_NODE_CLASS, true);
+    } //
+    
+	public void run(ItemRegistry registry, double frac) {
+		Iterator nodeIter = registry.getGraph().getNodes();
+		while ( nodeIter.hasNext() ) {
+			NodeItem item = registry.getNodeItem((Node)nodeIter.next(), true);
+        }
+        
+		// optional garbage collection
+        super.run(registry, frac);
+	} //
+
+} // end of class GraphNodeFilter
+@
+
+
+1.3
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@@
+
+
+1.2
+log
+@Moved garbage collection into abstract Filter
+@
+text
+@d28 2
+a29 3
+			Node node = (Node)nodeIter.next();
+			NodeItem item = registry.getNodeItem(node, true);
+		}
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d10 2
+a11 3
+ * Filters graph nodes, allowing all nodes in the graph to be visualized
+ * 
+ * Apr 22, 2003 - jheer - Created class
+d14 1
+a14 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+d16 1
+a16 1
+public class GraphNodeFilter extends AbstractAction {
+d18 7
+d31 3
+@
+

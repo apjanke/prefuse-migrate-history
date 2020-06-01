@@ -1,0 +1,105 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.04.07.22.49.52;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.24.09.07.09;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.24.09.07.09;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Fixed javadoc bug. Thanks to Bjorn for the heads-up.
+@
+text
+@<body>
+<p>Action modules for constructing animations. Most Animator actions require
+an <i>interpolated</i> data fields--such that a backing data table has
+three columns, one each for start values, current values, and ending
+values. See {@@link prefuse.data.Schema#addInterpolatedColumn(String, Class)}
+for more.</p>
+</body>@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d4 1
+a4 1
+not three columns, one each for start values, current values, and ending
+@
+
+
+1.1
+log
+@file package.html was initially added on branch beta.
+@
+text
+@d1 7
+@
+
+
+1.1.2.1
+log
+@Added javadoc overview and package text.
+@
+text
+@a0 3
+<body>
+<p>Action modules for constructing animations.</p>
+</body>@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d2 1
+a2 5
+<p>Action modules for constructing animations. Most Animator actions require
+an <i>interpolated</i> data fields--such that a backing data table has
+not three columns, one each for start values, current values, and ending
+values. See {@@link prefuse.data.Schema#addInterpolatedColumn(String, Class)}
+for more.</p>
+@
+
+

@@ -1,0 +1,202 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action;
+
+import prefuse.Visualization;
+
+/**
+ * Issues a repaint request to a Visualization.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class RepaintAction extends Action {
+
+    /**
+     * Create a new RepaintAction.
+     */
+    public RepaintAction() {
+        super();
+    }
+    
+    /**
+     * Create a new RepaintAction.
+     * @@param vis the Visualization to repaint
+     */
+    public RepaintAction(Visualization vis) {
+        super(vis);
+    }
+    
+    /**
+     * Calls the {@@link prefuse.Visualization#repaint()} method on
+     * this Action's associated Visualization.
+     */
+    public void run(double frac) {
+        getVisualization().repaint();
+    }
+
+} // end of class RepaintAction
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d19 1
+a19 1
+
+d27 1
+a27 1
+
+d32 1
+a32 2
+    @@Override
+	public void run(double frac) {
+@
+
+
+1.1
+log
+@file RepaintAction.java was initially added on branch beta.
+@
+text
+@d1 36
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 36
+package prefuse.action;
+
+import prefuse.Visualization;
+
+/**
+ * Issues repaint requests to all displays tied to a given Visualization.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class RepaintAction extends Action {
+
+    /**
+     * Constructor.
+     */
+    public RepaintAction() {
+        super();
+    }
+    
+    /**
+     * Constructor.
+     * @@param vis the Visualization to repaint
+     */
+    public RepaintAction(Visualization vis) {
+        super(vis);
+    }
+    
+    /**
+     * Calls repaint on all displays associated with the given ItemRegistry.
+     * @@see prefuse.action.Action#run(prefuse.a_old.ItemRegistry, double)
+     */
+    public void run(double frac) {
+        getVisualization().repaint();
+    }
+
+} // end of class RepaintAction
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d6 1
+a6 1
+ * Issues a repaint request to a Visualization.
+d14 1
+a14 1
+     * Create a new RepaintAction.
+d21 1
+a21 1
+     * Create a new RepaintAction.
+d29 2
+a30 2
+     * Calls the {@@link prefuse.Visualization#repaint()} method on
+     * this Action's associated Visualization.
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d9 1
+a9 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

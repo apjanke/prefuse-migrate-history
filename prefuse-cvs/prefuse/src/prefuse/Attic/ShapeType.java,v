@@ -1,0 +1,85 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.01.23.23.55.42;	author jogiles;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2008.01.23.23.55.42;	author jogiles;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2008.02.24.00.22.30;	author amarsden;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file ShapeType.java was initially added on branch java_1_5.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a0 31
+package prefuse;
+
+/**
+ *
+ * @@author Anton Marsden
+ */
+public enum ShapeType {
+    /** No shape. Draw nothing. */
+    NONE,
+    /** Rectangle/Square shape */
+    RECTANGLE,
+    /** Ellipse/Circle shape */
+    ELLIPSE,
+    /** Diamond shape */
+    DIAMOND,
+    /** Cross shape */
+    CROSS,
+    /** Star shape */
+    STAR,
+    /** Up-pointing triangle shape */
+    TRIANGLE_UP,
+    /** Down-pointing triangle shape */
+    TRIANGLE_DOWN,
+    /** Left-pointing triangle shape */
+    TRIANGLE_LEFT,
+    /** Right-pointing triangle shape */
+    TRIANGLE_RIGHT,
+    /** Hexagon shape */
+    HEXAGON;
+
+}
+@
+
+
+1.1.2.2
+log
+@Refactored the shape work to allow for custom ShapeBuilders. VisualItem.SHAPE has been replaced with VisualItem.SHAPEBUILDER.
+@
+text
+@@
+
+

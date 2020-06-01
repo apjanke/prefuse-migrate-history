@@ -1,0 +1,1243 @@
+head	2.5;
+access;
+symbols
+	java_1_5:2.5.0.4
+	Root_java_1_5:2.5
+	beta:2.5.0.2
+	beta-20080113:2.5
+	beta-20071021:2.5
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.5
+date	2007.10.21.00.57.59;	author jheer;	state Exp;
+branches
+	2.5.4.1;
+next	2.4;
+
+2.4
+date	2006.04.07.22.15.22;	author jheer;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2006.03.17.20.23.33;	author jheer;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.03.08.19.13.39;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.03.06.00.34.16;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.5.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	2.5.4.2;
+
+2.5.4.2
+date	2008.04.01.23.22.15;	author amarsden;	state Exp;
+branches;
+next	2.5.4.3;
+
+2.5.4.3
+date	2008.04.15.04.58.35;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.5
+log
+@Added patch to TreeMLWriter to avoid dumping null values (Patch #1758889 from mwlinnem)
+Added patch to Display fixing pan-while-rotating bug (Patch #1770541 from trejkaz for Bug #1770531)
+Added patch to allow maximization of GraphView demo (Patch #1574233 from vocaro)
+Added patch for WheelZoomControl in TreeView demo (Patch #1574674 from vocaro)
+Updated TreeNodeIterator to support both pre-order and post-order traversal policies
+Updated SquarifiedTreeMapLayout to properly handle expanded/collapsed nodes
+@
+text
+@package prefuse.action.layout.graph;
+
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+
+import prefuse.data.Graph;
+import prefuse.data.Schema;
+import prefuse.data.tuple.TupleSet;
+import prefuse.data.util.TreeNodeIterator;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * <p>
+ * TreeLayout instance computing a TreeMap layout that optimizes for low
+ * aspect ratios of visualized tree nodes. TreeMaps are a form of space-filling
+ * layout that represents nodes as boxes on the display, with children nodes
+ * represented as boxes placed within their parent's box.
+ * </p>
+ * <p>
+ * This particular algorithm is taken from Bruls, D.M., C. Huizing, and 
+ * J.J. van Wijk, "Squarified Treemaps" In <i>Data Visualization 2000, 
+ * Proceedings of the Joint Eurographics and IEEE TCVG Sumposium on 
+ * Visualization</i>, 2000, pp. 33-42. Available online at:
+ * <a href="http://www.win.tue.nl/~vanwijk/stm.pdf">
+ * http://www.win.tue.nl/~vanwijk/stm.pdf</a>.
+ * </p>
+ * <p>
+ * For more information on TreeMaps in general, see 
+ * <a href="http://www.cs.umd.edu/hcil/treemap-history/">
+ * http://www.cs.umd.edu/hcil/treemap-history/</a>.
+ * </p>
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class SquarifiedTreeMapLayout extends TreeLayout {
+
+    // column value in which layout stores area information
+    public static final String AREA = "_area";
+    public static final Schema AREA_SCHEMA = new Schema();
+    static {
+        AREA_SCHEMA.addColumn(AREA, double.class);
+    }
+    
+    private static Comparator s_cmp = new Comparator() {
+        public int compare(Object o1, Object o2) {
+            double s1 = ((VisualItem)o1).getDouble(AREA);
+            double s2 = ((VisualItem)o2).getDouble(AREA);
+            return ( s1>s2 ? 1 : (s1<s2 ? -1 : 0));
+        }
+    };
+    private ArrayList m_kids = new ArrayList();
+    private ArrayList m_row  = new ArrayList();
+    private Rectangle2D m_r  = new Rectangle2D.Double();
+    
+    private double m_frame; // space between parents border and children
+    
+    /**
+     * Creates a new SquarifiedTreeMapLayout with no spacing between
+     * parent areas and their enclosed children.
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+     */
+    public SquarifiedTreeMapLayout(String group) {
+        this(group, 0);
+    }
+    
+    /**
+     * Creates a new SquarifiedTreeMapLayout with the specified spacing between
+     * parent areas and their enclosed children.
+     * @@param frame the amount of desired framing space between
+     * parent areas and their enclosed children.
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+     */
+    public SquarifiedTreeMapLayout(String group, double frame) {
+        super(group);
+        setFrameWidth(frame);
+    }
+    
+    /**
+     * Sets the amount of desired framing space between parent rectangles and
+     * their enclosed children. Use a value of 0 to remove frames altogether.
+     * If you adjust the frame value, you must re-run the layout to see the
+     * change reflected. Negative frame values are not allowed and will result
+     * in an IllegalArgumentException.
+     * @@param frame the frame width, 0 for no frames
+     */
+    public void setFrameWidth(double frame) {
+        if ( frame < 0 )
+            throw new IllegalArgumentException(
+                    "Frame value must be greater than or equal to 0.");
+        m_frame = frame;
+    }
+
+    /**
+     * Gets the amount of desired framing space, in pixels, between
+     * parent rectangles and their enclosed children.
+     * @@return the frame width
+     */
+    public double getFrameWidth() {
+        return m_frame;
+    }
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        // setup
+        NodeItem root = getLayoutRoot();
+        Rectangle2D b = getLayoutBounds();
+        m_r.setRect(b.getX(), b.getY(), b.getWidth()-1, b.getHeight()-1);
+        
+        // process size values
+        computeAreas(root);
+        
+        // layout root node
+        setX(root, null, 0);
+        setY(root, null, 0);        
+        root.setBounds(0, 0, m_r.getWidth(), m_r.getHeight());
+
+        // layout the tree
+        updateArea(root, m_r);
+        layout(root, m_r);
+    }
+    
+    /**
+     * Compute the pixel areas of nodes based on their size values.
+     */
+    private void computeAreas(NodeItem root) {
+        int leafCount = 0;
+        
+        // ensure area data column exists
+        Graph g = (Graph)m_vis.getGroup(m_group);
+        TupleSet nodes = g.getNodes();
+        nodes.addColumns(AREA_SCHEMA);
+        
+        // reset all sizes to zero
+        Iterator iter = new TreeNodeIterator(root);
+        while ( iter.hasNext() ) {
+            NodeItem n = (NodeItem)iter.next();
+            n.setDouble(AREA, 0);
+        }
+        
+        // set raw sizes, compute leaf count
+        iter = new TreeNodeIterator(root, false);
+        while ( iter.hasNext() ) {
+            NodeItem n = (NodeItem)iter.next();
+            double area = 0;
+            if ( n.getChildCount() == 0 ) {
+            	area = n.getSize();
+            	++leafCount;
+            } else if ( n.isExpanded() ) {
+            	NodeItem c = (NodeItem)n.getFirstChild();
+            	for (; c!=null; c = (NodeItem)c.getNextSibling()) {
+            		area += c.getDouble(AREA);
+            		++leafCount;
+            	}
+            }
+            n.setDouble(AREA, area);
+            
+        }
+        
+        // scale sizes by display area factor
+        Rectangle2D b = getLayoutBounds();
+        double area = (b.getWidth()-1)*(b.getHeight()-1);
+        double scale = area/root.getDouble(AREA);
+        iter = new TreeNodeIterator(root);
+        while ( iter.hasNext() ) {
+            NodeItem n = (NodeItem)iter.next();
+            n.setDouble(AREA, n.getDouble(AREA)*scale);
+        }
+    }
+    
+    /**
+     * Compute the tree map layout.
+     */
+    private void layout(NodeItem p, Rectangle2D r) {
+        // create sorted list of children
+        Iterator childIter = p.children();
+        while ( childIter.hasNext() )
+            m_kids.add(childIter.next());
+        Collections.sort(m_kids, s_cmp);
+        
+        // do squarified layout of siblings
+        double w = Math.min(r.getWidth(),r.getHeight());
+        squarify(m_kids, m_row, w, r); 
+        m_kids.clear(); // clear m_kids
+        
+        // recurse
+        childIter = p.children();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            if ( c.getChildCount() > 0 && c.getDouble(AREA) > 0 ) {
+                updateArea(c,r);
+                layout(c, r);
+            }
+        }
+    }
+    
+    private void updateArea(NodeItem n, Rectangle2D r) {
+        Rectangle2D b = n.getBounds();
+        if ( m_frame == 0.0 ) {
+            // if no framing, simply update bounding rectangle
+            r.setRect(b);
+            return;
+        }
+        
+        // compute area loss due to frame
+        double dA = 2*m_frame*(b.getWidth()+b.getHeight()-2*m_frame);
+        double A = n.getDouble(AREA) - dA;
+        
+        // compute renormalization factor
+        double s = 0;
+        Iterator childIter = n.children();
+        while ( childIter.hasNext() )
+            s += ((NodeItem)childIter.next()).getDouble(AREA);
+        double t = A/s;
+        
+        // re-normalize children areas
+        childIter = n.children();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            c.setDouble(AREA, c.getDouble(AREA)*t);
+        }
+        
+        // set bounding rectangle and return
+        r.setRect(b.getX()+m_frame,       b.getY()+m_frame, 
+                  b.getWidth()-2*m_frame, b.getHeight()-2*m_frame);
+        return;
+    }
+    
+    private void squarify(List c, List row, double w, Rectangle2D r) {
+        double worst = Double.MAX_VALUE, nworst;
+        int len;
+        
+        while ( (len=c.size()) > 0 ) {
+            // add item to the row list, ignore if negative area
+            VisualItem item = (VisualItem) c.get(len-1);
+            double a = item.getDouble(AREA);
+            if (a <= 0.0) {
+                c.remove(len-1);
+                continue;
+            }
+            row.add(item);
+            
+            nworst = worst(row, w);
+            if ( nworst <= worst ) {
+                c.remove(len-1);
+                worst = nworst;
+            } else {
+                row.remove(row.size()-1); // remove the latest addition
+                r = layoutRow(row, w, r); // layout the current row
+                w = Math.min(r.getWidth(),r.getHeight()); // recompute w
+                row.clear(); // clear the row
+                worst = Double.MAX_VALUE;
+            }
+        }
+        if ( row.size() > 0 ) {
+            r = layoutRow(row, w, r); // layout the current row
+            row.clear(); // clear the row
+        }
+    }
+
+    private double worst(List rlist, double w) {
+        double rmax = Double.MIN_VALUE, rmin = Double.MAX_VALUE, s = 0.0;
+        Iterator iter = rlist.iterator();
+        while ( iter.hasNext() ) {
+            double r = ((VisualItem)iter.next()).getDouble(AREA);
+            rmin = Math.min(rmin, r);
+            rmax = Math.max(rmax, r);
+            s += r;
+        }
+        s = s*s; w = w*w;
+        return Math.max(w*rmax/s, s/(w*rmin));
+    }
+    
+    private Rectangle2D layoutRow(List row, double w, Rectangle2D r) {        
+        double s = 0; // sum of row areas
+        Iterator rowIter = row.iterator();
+        while ( rowIter.hasNext() )
+            s += ((VisualItem)rowIter.next()).getDouble(AREA);
+        double x = r.getX(), y = r.getY(), d = 0;
+        double h = w==0 ? 0 : s/w;
+        boolean horiz = (w == r.getWidth());
+        
+        // set node positions and dimensions
+        rowIter = row.iterator();
+        while ( rowIter.hasNext() ) {
+            NodeItem n = (NodeItem)rowIter.next();
+            NodeItem p = (NodeItem)n.getParent();
+            if ( horiz ) {
+                setX(n, p, x+d);
+                setY(n, p, y);
+            } else {
+                setX(n, p, x);
+                setY(n, p, y+d);
+            }
+            double nw = n.getDouble(AREA)/h;
+            if ( horiz ) {
+                setNodeDimensions(n,nw,h);
+                d += nw;
+            } else {
+                setNodeDimensions(n,h,nw);
+                d += nw;
+            }
+        }
+        // update space available in rectangle r
+        if ( horiz )
+            r.setRect(x,y+h,r.getWidth(),r.getHeight()-h);
+        else
+            r.setRect(x+h,y,r.getWidth()-h,r.getHeight());
+        return r;
+    }
+    
+    private void setNodeDimensions(NodeItem n, double w, double h) {
+        n.setBounds(n.getX(), n.getY(), w, h);
+    }
+    
+} // end of class SquarifiedTreeMapLayout
+@
+
+
+2.5.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a13 1
+import prefuse.visual.EdgeItem;
+d26 3
+a28 3
+ * This particular algorithm is taken from Bruls, D.M., C. Huizing, and
+ * J.J. van Wijk, "Squarified Treemaps" In <i>Data Visualization 2000,
+ * Proceedings of the Joint Eurographics and IEEE TCVG Sumposium on
+d34 1
+a34 1
+ * For more information on TreeMaps in general, see
+d50 6
+a55 6
+
+    private static Comparator<VisualItem<?>> s_cmp = new Comparator<VisualItem<?>>() {
+        public int compare(VisualItem<?> o1, VisualItem<?> o2) {
+            double s1 = o1.getDouble(AREA);
+            double s2 = o2.getDouble(AREA);
+            return s1>s2 ? 1 : s1<s2 ? -1 : 0;
+d58 4
+a61 4
+    private final List<NodeItem<?,?>> m_kids = new ArrayList<NodeItem<?,?>>();
+    private final List<NodeItem<?,?>> m_row  = new ArrayList<NodeItem<?,?>>();
+    private final Rectangle2D m_r  = new Rectangle2D.Double();
+
+d63 1
+a63 1
+
+d72 1
+a72 1
+
+d84 1
+a84 1
+
+d94 2
+a95 2
+        if ( frame < 0 ) {
+			throw new IllegalArgumentException(
+a96 1
+		}
+d108 1
+a108 1
+
+d112 1
+a112 2
+    @@Override
+	public void run(double frac) {
+d114 1
+a114 1
+        NodeItem<?,?> root = getLayoutRoot();
+d117 1
+a117 1
+
+d120 1
+a120 1
+
+d123 1
+a123 1
+        setY(root, null, 0);
+d130 1
+a130 1
+
+d134 1
+a134 1
+    private void computeAreas(NodeItem<?,?> root) {
+d136 1
+a136 1
+
+d138 2
+a139 2
+        Graph<?,? extends NodeItem<?,?>,? extends EdgeItem<?,?>> g = (Graph<?,? extends NodeItem<?,?>,? extends EdgeItem<?,?>>)m_vis.getGroup(m_group);
+        TupleSet<? extends NodeItem<?,?>> nodes = g.getNodes();
+d141 1
+a141 1
+
+d143 1
+a143 1
+        Iterator<NodeItem<?,?>> iter = new TreeNodeIterator<NodeItem<?,?>>(root);
+d145 1
+a145 1
+            NodeItem<?,?> n = iter.next();
+d148 1
+a148 2
+
+
+d150 1
+a150 1
+        iter = new TreeNodeIterator<NodeItem<?,?>>( root, false);
+d152 1
+a152 1
+            NodeItem<?,?> n = iter.next();
+d154 1
+a154 2
+            List<NodeItem<?,?>> children = (List<NodeItem<?,?>>) (Object) n.children();
+            if ( children.isEmpty()) {
+d158 2
+a159 2
+            	NodeItem<?,?> c = children.get(0);
+            	for (; c!=null; c = c.getNextSibling()) {
+d165 1
+d167 1
+a167 1
+
+d172 1
+a172 1
+        iter = new TreeNodeIterator<NodeItem<?,?>>(root);
+d174 1
+a174 1
+            NodeItem<?,?> n = iter.next();
+d178 1
+a178 1
+
+d182 1
+a182 1
+    private void layout(NodeItem<?,?> p, Rectangle2D r) {
+d184 3
+a186 3
+    	for(NodeItem<?,?> c : p.children()) {
+			m_kids.add(c);
+		}
+d188 1
+a188 1
+
+d191 1
+a191 1
+        squarify(m_kids, m_row, w, r);
+d193 1
+a193 1
+
+d195 4
+a198 2
+    	for(NodeItem<?,?> c : p.children()) {
+            if ( !c.children().isEmpty() ) {
+d204 2
+a205 2
+
+    private void updateArea(NodeItem<?,?> n, Rectangle2D r) {
+d212 1
+a212 1
+
+d216 1
+a216 1
+
+d219 3
+a221 3
+    	for(NodeItem<?,?> c : n.children()) {
+			s += c.getDouble(AREA);
+		}
+d223 1
+a223 1
+
+d225 3
+a227 1
+    	for(NodeItem<?,?> c : n.children()) {
+d230 1
+a230 1
+
+d232 1
+a232 1
+        r.setRect(b.getX()+m_frame,       b.getY()+m_frame,
+d236 2
+a237 2
+
+    private void squarify(List<NodeItem<?,?>> c, List<NodeItem<?,?>> row, double w, Rectangle2D r) {
+d240 1
+a240 1
+
+d243 1
+a243 1
+        	NodeItem<?,?> item = c.get(len-1);
+d250 1
+a250 1
+
+d269 1
+a269 1
+    private double worst(List<NodeItem<?,?>> rlist, double w) {
+d271 3
+a273 2
+        for ( NodeItem<?,?> n : rlist) {
+            double r = n.getDouble(AREA);
+d281 2
+a282 2
+
+    private Rectangle2D layoutRow(List<NodeItem<?,?>> row, double w, Rectangle2D r) {
+d284 3
+a286 3
+        for ( NodeItem<?,?> n : row) {
+			s += n.getDouble(AREA);
+		}
+d289 2
+a290 2
+        boolean horiz = w == r.getWidth();
+
+d292 4
+a295 2
+        for ( NodeItem<?,?> n : row) {
+        	NodeItem<?,?> p = n.getParent();
+d313 4
+a316 5
+        if ( horiz ) {
+			r.setRect(x,y+h,r.getWidth(),r.getHeight()-h);
+		} else {
+			r.setRect(x+h,y,r.getWidth()-h,r.getHeight());
+		}
+d319 2
+a320 2
+
+    private void setNodeDimensions(NodeItem<?,?> n, double w, double h) {
+d323 1
+a323 1
+
+@
+
+
+2.5.4.2
+log
+@Minor change to the way tree iterators work
+@
+text
+@a11 2
+import prefuse.data.tree.DeclarativeTree;
+import prefuse.data.tree.NodeBasedDeclarativeTree;
+a13 1
+import prefuse.data.util.TreeNodeIterator.TraversalMode;
+d137 1
+a137 1
+    private void computeAreas(final NodeItem<?,?> root) {
+d146 1
+a146 1
+        Iterator<NodeItem<?,?>> iter = new TreeNodeIterator(root);
+d154 1
+a154 1
+        iter = new TreeNodeIterator( root, TraversalMode.POST_ORDER);
+d176 1
+a176 1
+        iter = new TreeNodeIterator(root);
+@
+
+
+2.5.4.3
+log
+@removed unused imports
+@
+text
+@d12 2
+@
+
+
+2.4
+log
+@Fixed non-unit area scaling  and negative area bugs, using fixes by acox.
+@
+text
+@d150 1
+a150 1
+        iter = new TreeNodeIterator(root);
+d153 1
+d155 8
+a162 6
+                double sz = n.getSize();
+                n.setDouble(AREA, sz);
+                NodeItem p = (NodeItem)n.getParent();
+                for (; p!=null; p=(NodeItem)p.getParent())
+                    p.setDouble(AREA, sz + p.getDouble(AREA));
+                ++leafCount;
+d164 2
+d198 1
+a198 1
+            if ( c.getChildCount() > 0 ) {
+@
+
+
+2.3
+log
+@Added getter/setter methods for the frame width
+@
+text
+@d166 1
+a166 1
+        double scale = area/leafCount;
+d237 9
+a245 1
+            row.add(c.get(len-1));
+@
+
+
+2.2
+log
+@Layout no longer makes non-leaf nodes non-interactive
+@
+text
+@d76 1
+a76 1
+     * @@param frame the amount of desired framing space, in pixels, between
+d82 15
+d99 9
+@
+
+
+2.1
+log
+@Fixed node framing bug
+@
+text
+@d133 1
+a133 1
+                for (; p!=null; p=(NodeItem)p.getParent()) {
+a134 2
+                    p.setInteractive(false);
+                }
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@a2 1
+import java.awt.Dimension;
+d10 1
+d12 1
+d113 4
+a116 4
+        // ensure data column exists
+        //Graph g = (Graph)m_vis.getGroup(m_group);
+        //TupleSet nodes = g.getNodes();
+        root.getTable().addColumns(AREA_SCHEMA);
+d142 2
+a143 2
+        Dimension d = m_vis.getDisplay(0).getSize();
+        double area = (d.width-1)*(d.height-1);
+d201 1
+a201 1
+            c.setSize(c.getDouble(AREA)*t);
+@
+
+
+1.1
+log
+@file SquarifiedTreeMapLayout.java was initially added on branch beta.
+@
+text
+@d1 288
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 276
+package prefuse.action.layout.graph;
+
+import java.awt.Dimension;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+
+import prefuse.data.Table;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTree;
+
+
+/**
+ * <p>
+ * TreeMap layout algorithm that optimizes for low aspect ratios 
+ * of visualized tree nodes. TreeMaps are a form of space-filling layout
+ * that represents nodes as boxes on the display, with children nodes
+ * represented as boxes placed within their parent's box.
+ * </p>
+ * <p>
+ * This particular algorithm is taken from Bruls, D.M., C. Huizing, and 
+ * J.J. van Wijk, "Squarified Treemaps" In <i>Data Visualization 2000, 
+ * Proceedings of the Joint Eurographics and IEEE TCVG Sumposium on 
+ * Visualization</i>, 2000, pp. 33-42. Available online at:
+ * <a href="http://www.win.tue.nl/~vanwijk/stm.pdf">http://www.win.tue.nl/~vanwijk/stm.pdf</a>.
+ * </p>
+ * <p>
+ * For more information on TreeMaps in general, see 
+ * <a href="http://www.cs.umd.edu/hcil/treemap-history/">http://www.cs.umd.edu/hcil/treemap-history/</a>.
+ * </p>
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class SquarifiedTreeMapLayout extends TreeLayout {
+
+	// column value in which layout stores area information
+	public static final String AREA = "_area";
+	public static final Class AREA_TYPE = double.class;
+	
+    private static Comparator s_cmp = new Comparator() {
+        public int compare(Object o1, Object o2) {
+            double s1 = ((VisualItem)o1).getDouble(AREA);
+            double s2 = ((VisualItem)o2).getDouble(AREA);
+            return ( s1>s2 ? 1 : (s1<s2 ? -1 : 0));
+        } //
+    };
+    private ArrayList m_kids = new ArrayList();
+    private ArrayList m_row  = new ArrayList();
+    private Rectangle2D m_r  = new Rectangle2D.Double();
+    
+    private double m_frame; // space between parents border and children
+    
+    /**
+     * Creates a new SquarifiedTreeMapLayout with no spacing between
+     * parent areas and their enclosed children.
+     */
+    public SquarifiedTreeMapLayout(String group) {
+        this(group, 0);
+    } //
+    
+    /**
+     * Creates a new SquarifiedTreeMapLayout with the specified spacing between
+     * parent areas and their enclosed children.
+     * @@param frame the amount of desired framing space, in pixels, between
+     * parent areas and their enclosed children.
+     */
+    public SquarifiedTreeMapLayout(String group, double frame) {
+        super(group);
+        m_frame = frame;
+    }
+    
+    /**
+     * Runs the layout algorithm.
+     */
+    public void run(double frac) {
+    	// process size values
+    	computeAreas();
+    	
+    	// setup
+        NodeItem root = getLayoutRoot();
+        Rectangle2D b = getLayoutBounds();
+        m_r.setRect(b.getX(), b.getY(), b.getWidth()-1, b.getHeight()-1);
+        
+        // layout root node
+        setX(root, null, 0);
+        setY(root, null, 0);        
+        root.setBounds(0, 0, m_r.getWidth(), m_r.getHeight());
+
+        // layout the tree
+        updateArea(root, m_r);
+        layout(root, m_r);
+    }
+    
+    private void computeAreas() {
+    	int leafCount = 0;
+    	
+    	// ensure data column exists
+    	VisualTree tree = (VisualTree)m_vis.getGroup(m_group);
+    	Table nodes = tree.getNodeTable();
+    	if ( nodes.getColumnIndex(AREA) < 0 )
+    		nodes.addColumn(AREA, double.class);
+    	
+        // reset all sizes to zero
+        Iterator iter = nodes.tuples();
+        while ( iter.hasNext() ) {
+            NodeItem n = (NodeItem)iter.next();
+            n.setDouble(0, AREA);
+        }
+        
+        // set raw sizes, compute leaf count
+        iter = nodes.tuples();
+        while ( iter.hasNext() ) {
+            NodeItem n = (NodeItem)iter.next();
+            if ( n.getChildCount() == 0 ) {
+            	double sz = n.getSize();
+            	n.setDouble(sz, AREA);
+                NodeItem p = (NodeItem)n.getParent();
+                for (; p!=null; p=(NodeItem)p.getParent()) {
+                    p.setDouble(sz + p.getDouble(AREA), AREA);
+                    p.setInteractive(false);
+                }
+                ++leafCount;
+            }
+        }
+        
+        // scale sizes by display area factor
+        Dimension d = m_vis.getDisplay(0).getSize();
+        double area = (d.width-1)*(d.height-1);
+        double scale = area/leafCount;
+        iter = nodes.tuples();
+        while ( iter.hasNext() ) {
+            NodeItem n = (NodeItem)iter.next();
+            n.setDouble(n.getDouble(AREA)*scale, AREA);
+        }
+    }
+    
+    private void layout(NodeItem p, Rectangle2D r) {
+        // create sorted list of children
+        Iterator childIter = p.getChildren();
+        while ( childIter.hasNext() )
+            m_kids.add(childIter.next());
+        Collections.sort(m_kids, s_cmp);
+        
+        // do squarified layout of siblings
+        double w = Math.min(r.getWidth(),r.getHeight());
+        squarify(m_kids, m_row, w, r); 
+        m_kids.clear(); // clear m_kids
+        
+        // recurse
+        childIter = p.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            if ( c.getChildCount() > 0 ) {
+                updateArea(c,r);
+                layout(c, r);
+            }
+        }
+    }
+    
+    private void updateArea(NodeItem n, Rectangle2D r) {
+        Rectangle2D b = n.getBounds();
+        if ( m_frame == 0.0 ) {
+            // if no framing, simply update bounding rectangle
+            r.setRect(b);
+            return;
+        }
+        
+        // compute area loss due to frame
+        double dA = 2*m_frame*(b.getWidth()+b.getHeight()-2*m_frame);
+        double A = n.getDouble(AREA) - dA;
+        
+        // compute renormalization factor
+        double s = 0;
+        Iterator childIter = n.getChildren();
+        while ( childIter.hasNext() )
+            s += ((NodeItem)childIter.next()).getDouble(AREA);
+        double t = A/s;
+        
+        // re-normalize children areas
+        childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            c.setSize(c.getDouble(AREA)*t);
+        }
+        
+        // set bounding rectangle and return
+        r.setRect(b.getX()+m_frame,       b.getY()+m_frame, 
+                  b.getWidth()-2*m_frame, b.getHeight()-2*m_frame);
+        return;
+    }
+    
+    private void squarify(List c, List row, double w, Rectangle2D r) {
+        double worst = Double.MAX_VALUE, nworst;
+        int len;
+        
+        while ( (len=c.size()) > 0 ) {
+            row.add(c.get(len-1));
+            nworst = worst(row, w);
+            if ( nworst <= worst ) {
+                c.remove(len-1);
+                worst = nworst;
+            } else {
+                row.remove(row.size()-1); // remove the latest addition
+                r = layoutRow(row, w, r); // layout the current row
+                w = Math.min(r.getWidth(),r.getHeight()); // recompute w
+                row.clear(); // clear the row
+                worst = Double.MAX_VALUE;
+            }
+        }
+        if ( row.size() > 0 ) {
+            r = layoutRow(row, w, r); // layout the current row
+            row.clear(); // clear the row
+        }
+    }
+
+    private double worst(List rlist, double w) {
+        double rmax = Double.MIN_VALUE, rmin = Double.MAX_VALUE, s = 0.0;
+        Iterator iter = rlist.iterator();
+        while ( iter.hasNext() ) {
+            double r = ((VisualItem)iter.next()).getDouble(AREA);
+            rmin = Math.min(rmin, r);
+            rmax = Math.max(rmax, r);
+            s += r;
+        }
+        s = s*s; w = w*w;
+        return Math.max(w*rmax/s, s/(w*rmin));
+    }
+    
+    private Rectangle2D layoutRow(List row, double w, Rectangle2D r) {        
+        double s = 0; // sum of row areas
+        Iterator rowIter = row.iterator();
+        while ( rowIter.hasNext() )
+            s += ((VisualItem)rowIter.next()).getDouble(AREA);
+        double x = r.getX(), y = r.getY(), d = 0;
+        double h = w==0 ? 0 : s/w;
+        boolean horiz = (w == r.getWidth());
+        
+        // set node positions and dimensions
+        rowIter = row.iterator();
+        while ( rowIter.hasNext() ) {
+            NodeItem n = (NodeItem)rowIter.next();
+            NodeItem p = (NodeItem)n.getParent();
+            if ( horiz ) {
+                setX(n, p, x+d);
+                setY(n, p, y);
+            } else {
+                setX(n, p, x);
+                setY(n, p, y+d);
+            }
+            double nw = n.getDouble(AREA)/h;
+            if ( horiz ) {
+                setNodeDimensions(n,nw,h);
+                d += nw;
+            } else {
+                setNodeDimensions(n,h,nw);
+                d += nw;
+            }
+        }
+        // update space available in rectangle r
+        if ( horiz )
+            r.setRect(x,y+h,r.getWidth(),r.getHeight()-h);
+        else
+            r.setRect(x+h,y,r.getWidth()-h,r.getHeight());
+        return r;
+    }
+    
+    private void setNodeDimensions(NodeItem n, double w, double h) {
+        n.setBounds(n.getX(), n.getY(), w, h);
+    }
+    
+} // end of class SquarifiedTreeMapLayout
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d112 1
+a112 1
+            n.setDouble(AREA, 0);
+d121 1
+a121 1
+            	n.setDouble(AREA, sz);
+d124 1
+a124 1
+                    p.setDouble(AREA, sz + p.getDouble(AREA));
+d138 1
+a138 1
+            n.setDouble(AREA, n.getDouble(AREA)*scale);
+@
+
+
+1.1.2.3
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d11 1
+a11 3
+import prefuse.data.Graph;
+import prefuse.data.Schema;
+import prefuse.data.tuple.TupleSet;
+d14 1
+d43 1
+a43 4
+	public static final Schema AREA_SCHEMA = new Schema();
+	static {
+		AREA_SCHEMA.addColumn(AREA, double.class);
+	}
+d103 4
+a106 3
+    	Graph g = (Graph)m_vis.getGroup(m_group);
+    	TupleSet nodes = g.getNodes();
+    	nodes.addColumns(AREA_SCHEMA);
+d116 1
+a116 1
+        iter = g.getSpanningTree().nodes();
+d144 1
+a144 1
+        Iterator childIter = p.children();
+d155 1
+a155 1
+        childIter = p.children();
+d179 1
+a179 1
+        Iterator childIter = n.children();
+d185 1
+a185 1
+        childIter = n.children();
+@
+
+
+1.1.2.4
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d42 7
+a48 7
+    // column value in which layout stores area information
+    public static final String AREA = "_area";
+    public static final Schema AREA_SCHEMA = new Schema();
+    static {
+        AREA_SCHEMA.addColumn(AREA, double.class);
+    }
+    
+d85 4
+a88 4
+        // process size values
+        computeAreas();
+        
+        // setup
+d104 7
+a110 7
+        int leafCount = 0;
+        
+        // ensure data column exists
+        Graph g = (Graph)m_vis.getGroup(m_group);
+        TupleSet nodes = g.getNodes();
+        nodes.addColumns(AREA_SCHEMA);
+        
+d123 2
+a124 2
+                double sz = n.getSize();
+                n.setDouble(AREA, sz);
+@
+
+
+1.1.2.5
+log
+@Lots of javadoc
+@
+text
+@d11 1
+d13 1
+a13 1
+import prefuse.data.util.TreeNodeIterator;
+d20 3
+a22 3
+ * TreeLayout instance computing a TreeMap layout that optimizes for low
+ * aspect ratios of visualized tree nodes. TreeMaps are a form of space-filling
+ * layout that represents nodes as boxes on the display, with children nodes
+d30 1
+a30 2
+ * <a href="http://www.win.tue.nl/~vanwijk/stm.pdf">
+ * http://www.win.tue.nl/~vanwijk/stm.pdf</a>.
+d34 1
+a34 2
+ * <a href="http://www.cs.umd.edu/hcil/treemap-history/">
+ * http://www.cs.umd.edu/hcil/treemap-history/</a>.
+d38 1
+a38 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d54 1
+a54 1
+        }
+a64 1
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+d68 1
+a68 1
+    }
+a74 1
+     * @@param group the data group to layout. Must resolve to a Graph instance.
+d82 1
+a82 1
+     * @@see prefuse.action.Action#run(double)
+d85 3
+a92 3
+        // process size values
+        computeAreas(root);
+        
+d103 1
+a103 4
+    /**
+     * Compute the pixel areas of nodes based on their size values.
+     */
+    private void computeAreas(NodeItem root) {
+d107 3
+a109 3
+        //Graph g = (Graph)m_vis.getGroup(m_group);
+        //TupleSet nodes = g.getNodes();
+        root.getTable().addColumns(AREA_SCHEMA);
+d112 1
+a112 1
+        Iterator iter = new TreeNodeIterator(root);
+d119 1
+a119 1
+        iter = new TreeNodeIterator(root);
+d138 1
+a138 1
+        iter = new TreeNodeIterator(root);
+a144 3
+    /**
+     * Compute the tree map layout.
+     */
+@
+
+

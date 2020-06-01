@@ -1,0 +1,117 @@
+head	1.4;
+access;
+symbols
+	alpha:1.3.0.2
+	Root_alpha:1.3
+	prefuse-alpha-20051229:1.3
+	P20050401_Alpha_PreCHI:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2006.02.11.06.38.44;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches
+	1.3.4.1;
+next	1.2;
+
+1.2
+date	2004.03.16.03.05.16;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+1.3.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.action;
+
+import edu.berkeley.guir.prefuse.ItemRegistry;
+
+/**
+ * Issues repaint requests to all displays tied to the given item registry.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class RepaintAction extends AbstractAction {
+
+    /**
+     * Calls repaint on all displays associated with the given ItemRegistry.
+     * @@see edu.berkeley.guir.prefuse.action.Action#run(edu.berkeley.guir.prefuse.ItemRegistry, double)
+     */
+    public void run(ItemRegistry registry, double frac) {
+        registry.repaint();
+    } //
+
+} // end of class RepaintAction
+@
+
+
+1.3
+log
+@Major refactor
+@
+text
+@@
+
+
+1.3.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.2
+log
+@More Javadoc updates
+@
+text
+@a2 3
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.Display;
+d18 1
+a18 4
+        Iterator iter = registry.getDisplaysRef().iterator();
+        while ( iter.hasNext() ) {
+            ((Display)iter.next()).repaint();
+        }
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d9 1
+a9 3
+ * Calls repaint on all displays tied to the given item registry
+ * 
+ * Feb 10, 2004 - jheer - Created class
+@
+

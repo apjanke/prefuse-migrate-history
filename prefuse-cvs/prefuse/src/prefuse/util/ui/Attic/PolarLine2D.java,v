@@ -1,0 +1,255 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.03.14.22.50.15;	author amarsden;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2008.03.14.22.50.15;	author amarsden;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2008.03.15.01.24.09;	author amarsden;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2008.06.16.08.42.53;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file PolarLine2D.java was initially added on branch java_1_5.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Moved the PolarLine2D class into the prefuse.util.ui package
+@
+text
+@a0 135
+/**
+ *
+ */
+package prefuse.util.ui;
+
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+public class PolarLine2D extends Line2D
+{
+    private double x;
+    private double y;
+    private double theta;
+    private double r;
+
+    public PolarLine2D( Point2D start, Point2D end )
+    {
+        setLine( start.getX(), start.getY(), end.getX(), end.getY() );
+    }
+
+    public PolarLine2D( Line2D line )
+    {
+        setLine( line.getX1(), line.getY1(), line.getX2(), line.getY2() );
+    }
+
+    public PolarLine2D( double x, double y, double r, double theta )
+    {
+        this.x     = x;
+        this.y     = y;
+        this.r     = r;
+        this.theta = theta;
+    }
+
+    public double getRadius()
+    {
+        return r;
+    }
+
+    public void setRadius( double radius )
+    {
+        this.r = radius;
+    }
+
+    public double getTheta()
+    {
+        return theta;
+    }
+
+    public void setTheta( double theta )
+    {
+        this.theta = theta;
+    }
+    
+    public void setX1(double x1) {
+    	this.x = x1;
+    }
+
+    public double getX1()
+    {
+        return x;
+    }
+
+    public void setY1(double y1) {
+    	this.y = y1;
+    }
+
+    public double getY1()
+    {
+        return y;
+    }
+
+    public Point2D getP1()
+    {
+        return new Point2D.Double( x, y );
+    }
+
+    public double getX2()
+    {
+        return x + r * Math.cos( theta );
+    }
+
+    public double getY2()
+    {
+        return y + r * Math.sin( theta );
+    }
+
+    public Point2D getP2()
+    {
+        return new Point2D.Double( getX2(), getY2() );
+    }
+
+    public void setLine( double x1, double y1, double x2, double y2 )
+    {
+        x = x1;
+        y = y1;
+        double xdiff = x2 - x1;
+        double ydiff = y2 - y1;
+        r     = Math.sqrt( xdiff * xdiff
+                           + ydiff * ydiff );
+        theta = Math.atan2( ydiff, xdiff );
+    }
+
+    public Rectangle2D getBounds2D()
+    {
+        double xt;
+        double yt;
+        double wt;
+        double ht;
+        double x2 = getX2();
+        double y2 = getY2();
+        if ( x < x2 )
+        {
+            xt = x;
+            wt = x2 - x;
+        }
+        else
+        {
+            xt = x2;
+            wt = x - x2;
+        }
+        if ( y < y2 )
+        {
+            yt = y;
+            ht = y2 - y;
+        }
+        else
+        {
+            yt = y2;
+            ht = y - y2;
+        }
+
+        return new Rectangle2D.Double( xt, yt, wt, ht );
+    }
+}@
+
+
+1.1.2.2
+log
+@documentation updates
+@
+text
+@a9 5
+/**
+ * A line defined by polar coordinates (a start position, a radius and an angle).
+ * 
+ * @@author Anton Marsden
+ */
+a16 6
+    /**
+     * Construct a new line.
+     * 
+     * @@param start the start coordinate of the line
+     * @@param end the end coordinate of the line
+     */
+a21 5
+    /**
+     * Construct a new line from an existing line.
+     * 
+     * @@param line the line to get the coordinates from.
+     */
+a26 8
+    /**
+     * Construct a new line.
+     * 
+     * @@param x the starting X coordinate
+     * @@param y the starting Y coordinate
+     * @@param r the radius (length) of the line
+     * @@param theta the angle of the line
+     */
+a34 4
+    /**
+     * 
+     * @@return the radius (length) of the line
+     */
+a39 5
+    /**
+     * Set the radius (length) of the line.
+     * 
+     * @@param radius the radius (length) of the line
+     */
+a44 3
+    /**
+     * @@return the angle of the line (in radians)
+     */
+a49 5
+    /**
+     * Set the angle of the line
+     * 
+     * @@param theta the angle of the line, in radians
+     */
+@
+
+
+1.1.2.3
+log
+@Made class serializable
+@
+text
+@a8 1
+import java.io.Serializable;
+d15 1
+a15 1
+public class PolarLine2D extends Line2D implements Serializable
+@
+
+

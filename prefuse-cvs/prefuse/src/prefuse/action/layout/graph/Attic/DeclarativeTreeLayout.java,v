@@ -1,0 +1,95 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.01.23.23.55.36;	author jogiles;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file DeclarativeTreeLayout.java was initially added on branch java_1_5.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a0 55
+package prefuse.action.layout.graph;
+
+import prefuse.action.layout.Layout;
+import prefuse.data.Graph;
+import prefuse.data.tree.DeclarativeTree;
+import prefuse.data.tuple.TupleSet;
+import prefuse.visual.EdgeItem;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+
+/**
+ * Abstract base class providing convenience methods for declarative tree layout algorithms.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public abstract class DeclarativeTreeLayout extends Layout {
+
+    private DeclarativeTree<NodeItem<?,?>,EdgeItem<?,?>> tree;
+
+    /**
+     * Create a new DeclarativeTreeLayout.
+     */
+    public DeclarativeTreeLayout() {
+        super();
+    }
+
+    /**
+     * Create a new DeclarativeTreeLayout.
+     */
+    public DeclarativeTreeLayout(String group) {
+        super(group);
+    }
+
+    // ------------------------------------------------------------------------
+
+    public DeclarativeTree<NodeItem<?, ?>, EdgeItem<?, ?>> getTree() {
+    	if(tree != null) {
+    		return tree;
+    	}
+        TupleSet<? extends VisualItem<?>> ts = m_vis.getGroup(m_group);
+        if ( ts instanceof Graph ) {
+        	DeclarativeTree<NodeItem<?, ?>, EdgeItem<?, ?>> tree = (DeclarativeTree<NodeItem<?, ?>, EdgeItem<?, ?>>) (Object) ((Graph<?, ?, ?>)ts).getSpanningTree();
+            return tree;
+        } else {
+            throw new IllegalStateException("This action's data group does " +
+                    "not resolve to a Graph instance.");
+        }
+	}
+
+	public void setTree(DeclarativeTree<NodeItem<?, ?>, EdgeItem<?, ?>> tree) {
+		this.tree = tree;
+	}
+
+}
+@
+

@@ -1,0 +1,1513 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2007.10.21.00.57.58;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.02.27.03.59.39;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.11.06.38.42;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.07.00.42.28;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state Exp;
+branches;
+next	2.2.4.2;
+
+2.2.4.2
+date	2008.02.23.01.16.16;	author amarsden;	state Exp;
+branches;
+next	2.2.4.3;
+
+2.2.4.3
+date	2008.02.26.05.02.53;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Added patch to TreeMLWriter to avoid dumping null values (Patch #1758889 from mwlinnem)
+Added patch to Display fixing pan-while-rotating bug (Patch #1770541 from trejkaz for Bug #1770531)
+Added patch to allow maximization of GraphView demo (Patch #1574233 from vocaro)
+Added patch for WheelZoomControl in TreeView demo (Patch #1574674 from vocaro)
+Updated TreeNodeIterator to support both pre-order and post-order traversal policies
+Updated SquarifiedTreeMapLayout to properly handle expanded/collapsed nodes
+@
+text
+@package prefuse.demos;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.Action;
+import prefuse.action.ActionList;
+import prefuse.action.ItemAction;
+import prefuse.action.RepaintAction;
+import prefuse.action.animate.ColorAnimator;
+import prefuse.action.animate.LocationAnimator;
+import prefuse.action.animate.QualityControlAnimator;
+import prefuse.action.animate.VisibilityAnimator;
+import prefuse.action.assignment.ColorAction;
+import prefuse.action.assignment.FontAction;
+import prefuse.action.filter.FisheyeTreeFilter;
+import prefuse.action.layout.CollapsedSubtreeLayout;
+import prefuse.action.layout.graph.NodeLinkTreeLayout;
+import prefuse.activity.SlowInSlowOutPacer;
+import prefuse.controls.ControlAdapter;
+import prefuse.controls.FocusControl;
+import prefuse.controls.PanControl;
+import prefuse.controls.WheelZoomControl;
+import prefuse.controls.ZoomControl;
+import prefuse.controls.ZoomToFitControl;
+import prefuse.data.Tree;
+import prefuse.data.Tuple;
+import prefuse.data.event.TupleSetListener;
+import prefuse.data.io.TreeMLReader;
+import prefuse.data.search.PrefixSearchTupleSet;
+import prefuse.data.tuple.TupleSet;
+import prefuse.render.DefaultRendererFactory;
+import prefuse.render.EdgeRenderer;
+import prefuse.render.AbstractShapeRenderer;
+import prefuse.render.LabelRenderer;
+import prefuse.util.ColorLib;
+import prefuse.util.FontLib;
+import prefuse.util.ui.JFastLabel;
+import prefuse.util.ui.JSearchPanel;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.InGroupPredicate;
+import prefuse.visual.sort.TreeDepthItemSorter;
+
+
+/**
+ * Demonstration of a node-link tree viewer
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class TreeView extends Display {
+
+    public static final String TREE_CHI = "/chi-ontology.xml.gz";
+    
+    private static final String tree = "tree";
+    private static final String treeNodes = "tree.nodes";
+    private static final String treeEdges = "tree.edges";
+    
+    private LabelRenderer m_nodeRenderer;
+    private EdgeRenderer m_edgeRenderer;
+    
+    private String m_label = "label";
+    private int m_orientation = Constants.ORIENT_LEFT_RIGHT;
+    
+    public TreeView(Tree t, String label) {
+        super(new Visualization());
+        m_label = label;
+
+        m_vis.add(tree, t);
+        
+        m_nodeRenderer = new LabelRenderer(m_label);
+        m_nodeRenderer.setRenderType(AbstractShapeRenderer.RENDER_TYPE_FILL);
+        m_nodeRenderer.setHorizontalAlignment(Constants.LEFT);
+        m_nodeRenderer.setRoundedCorner(8,8);
+        m_edgeRenderer = new EdgeRenderer(Constants.EDGE_TYPE_CURVE);
+        
+        DefaultRendererFactory rf = new DefaultRendererFactory(m_nodeRenderer);
+        rf.add(new InGroupPredicate(treeEdges), m_edgeRenderer);
+        m_vis.setRendererFactory(rf);
+               
+        // colors
+        ItemAction nodeColor = new NodeColorAction(treeNodes);
+        ItemAction textColor = new ColorAction(treeNodes,
+                VisualItem.TEXTCOLOR, ColorLib.rgb(0,0,0));
+        m_vis.putAction("textColor", textColor);
+        
+        ItemAction edgeColor = new ColorAction(treeEdges,
+                VisualItem.STROKECOLOR, ColorLib.rgb(200,200,200));
+        
+        // quick repaint
+        ActionList repaint = new ActionList();
+        repaint.add(nodeColor);
+        repaint.add(new RepaintAction());
+        m_vis.putAction("repaint", repaint);
+        
+        // full paint
+        ActionList fullPaint = new ActionList();
+        fullPaint.add(nodeColor);
+        m_vis.putAction("fullPaint", fullPaint);
+        
+        // animate paint change
+        ActionList animatePaint = new ActionList(400);
+        animatePaint.add(new ColorAnimator(treeNodes));
+        animatePaint.add(new RepaintAction());
+        m_vis.putAction("animatePaint", animatePaint);
+        
+        // create the tree layout action
+        NodeLinkTreeLayout treeLayout = new NodeLinkTreeLayout(tree,
+                m_orientation, 50, 0, 8);
+        treeLayout.setLayoutAnchor(new Point2D.Double(25,300));
+        m_vis.putAction("treeLayout", treeLayout);
+        
+        CollapsedSubtreeLayout subLayout = 
+            new CollapsedSubtreeLayout(tree, m_orientation);
+        m_vis.putAction("subLayout", subLayout);
+        
+        AutoPanAction autoPan = new AutoPanAction();
+        
+        // create the filtering and layout
+        ActionList filter = new ActionList();
+        filter.add(new FisheyeTreeFilter(tree, 2));
+        filter.add(new FontAction(treeNodes, FontLib.getFont("Tahoma", 16)));
+        filter.add(treeLayout);
+        filter.add(subLayout);
+        filter.add(textColor);
+        filter.add(nodeColor);
+        filter.add(edgeColor);
+        m_vis.putAction("filter", filter);
+        
+        // animated transition
+        ActionList animate = new ActionList(1000);
+        animate.setPacingFunction(new SlowInSlowOutPacer());
+        animate.add(autoPan);
+        animate.add(new QualityControlAnimator());
+        animate.add(new VisibilityAnimator(tree));
+        animate.add(new LocationAnimator(treeNodes));
+        animate.add(new ColorAnimator(treeNodes));
+        animate.add(new RepaintAction());
+        m_vis.putAction("animate", animate);
+        m_vis.alwaysRunAfter("filter", "animate");
+        
+        // create animator for orientation changes
+        ActionList orient = new ActionList(2000);
+        orient.setPacingFunction(new SlowInSlowOutPacer());
+        orient.add(autoPan);
+        orient.add(new QualityControlAnimator());
+        orient.add(new LocationAnimator(treeNodes));
+        orient.add(new RepaintAction());
+        m_vis.putAction("orient", orient);
+        
+        // ------------------------------------------------
+        
+        // initialize the display
+        setSize(700,600);
+        setItemSorter(new TreeDepthItemSorter());
+        addControlListener(new ZoomToFitControl());
+        addControlListener(new ZoomControl());
+        addControlListener(new WheelZoomControl());
+        addControlListener(new PanControl());
+        addControlListener(new FocusControl(1, "filter"));
+        
+        registerKeyboardAction(
+            new OrientAction(Constants.ORIENT_LEFT_RIGHT),
+            "left-to-right", KeyStroke.getKeyStroke("ctrl 1"), WHEN_FOCUSED);
+        registerKeyboardAction(
+            new OrientAction(Constants.ORIENT_TOP_BOTTOM),
+            "top-to-bottom", KeyStroke.getKeyStroke("ctrl 2"), WHEN_FOCUSED);
+        registerKeyboardAction(
+            new OrientAction(Constants.ORIENT_RIGHT_LEFT),
+            "right-to-left", KeyStroke.getKeyStroke("ctrl 3"), WHEN_FOCUSED);
+        registerKeyboardAction(
+            new OrientAction(Constants.ORIENT_BOTTOM_TOP),
+            "bottom-to-top", KeyStroke.getKeyStroke("ctrl 4"), WHEN_FOCUSED);
+        
+        // ------------------------------------------------
+        
+        // filter graph and perform layout
+        setOrientation(m_orientation);
+        m_vis.run("filter");
+        
+        TupleSet search = new PrefixSearchTupleSet(); 
+        m_vis.addFocusGroup(Visualization.SEARCH_ITEMS, search);
+        search.addTupleSetListener(new TupleSetListener() {
+            public void tupleSetChanged(TupleSet t, Tuple[] add, Tuple[] rem) {
+                m_vis.cancel("animatePaint");
+                m_vis.run("fullPaint");
+                m_vis.run("animatePaint");
+            }
+        });
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public void setOrientation(int orientation) {
+        NodeLinkTreeLayout rtl 
+            = (NodeLinkTreeLayout)m_vis.getAction("treeLayout");
+        CollapsedSubtreeLayout stl
+            = (CollapsedSubtreeLayout)m_vis.getAction("subLayout");
+        switch ( orientation ) {
+        case Constants.ORIENT_LEFT_RIGHT:
+            m_nodeRenderer.setHorizontalAlignment(Constants.LEFT);
+            m_edgeRenderer.setHorizontalAlignment1(Constants.RIGHT);
+            m_edgeRenderer.setHorizontalAlignment2(Constants.LEFT);
+            m_edgeRenderer.setVerticalAlignment1(Constants.CENTER);
+            m_edgeRenderer.setVerticalAlignment2(Constants.CENTER);
+            break;
+        case Constants.ORIENT_RIGHT_LEFT:
+            m_nodeRenderer.setHorizontalAlignment(Constants.RIGHT);
+            m_edgeRenderer.setHorizontalAlignment1(Constants.LEFT);
+            m_edgeRenderer.setHorizontalAlignment2(Constants.RIGHT);
+            m_edgeRenderer.setVerticalAlignment1(Constants.CENTER);
+            m_edgeRenderer.setVerticalAlignment2(Constants.CENTER);
+            break;
+        case Constants.ORIENT_TOP_BOTTOM:
+            m_nodeRenderer.setHorizontalAlignment(Constants.CENTER);
+            m_edgeRenderer.setHorizontalAlignment1(Constants.CENTER);
+            m_edgeRenderer.setHorizontalAlignment2(Constants.CENTER);
+            m_edgeRenderer.setVerticalAlignment1(Constants.BOTTOM);
+            m_edgeRenderer.setVerticalAlignment2(Constants.TOP);
+            break;
+        case Constants.ORIENT_BOTTOM_TOP:
+            m_nodeRenderer.setHorizontalAlignment(Constants.CENTER);
+            m_edgeRenderer.setHorizontalAlignment1(Constants.CENTER);
+            m_edgeRenderer.setHorizontalAlignment2(Constants.CENTER);
+            m_edgeRenderer.setVerticalAlignment1(Constants.TOP);
+            m_edgeRenderer.setVerticalAlignment2(Constants.BOTTOM);
+            break;
+        default:
+            throw new IllegalArgumentException(
+                "Unrecognized orientation value: "+orientation);
+        }
+        m_orientation = orientation;
+        rtl.setOrientation(orientation);
+        stl.setOrientation(orientation);
+    }
+    
+    public int getOrientation() {
+        return m_orientation;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public static void main(String argv[]) {
+        String infile = TREE_CHI;
+        String label = "name";
+        if ( argv.length > 1 ) {
+            infile = argv[0];
+            label = argv[1];
+        }
+        JComponent treeview = demo(infile, label);
+        
+        JFrame frame = new JFrame("p r e f u s e  |  t r e e v i e w");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setContentPane(treeview);
+        frame.pack();
+        frame.setVisible(true);
+    }
+    
+    public static JComponent demo() {
+        return demo(TREE_CHI, "name");
+    }
+    
+    public static JComponent demo(String datafile, final String label) {
+        Color BACKGROUND = Color.WHITE;
+        Color FOREGROUND = Color.BLACK;
+        
+        Tree t = null;
+        try {
+            t = (Tree)new TreeMLReader().readGraph(datafile);
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        
+        // create a new treemap
+        final TreeView tview = new TreeView(t, label);
+        tview.setBackground(BACKGROUND);
+        tview.setForeground(FOREGROUND);
+        
+        // create a search panel for the tree map
+        JSearchPanel search = new JSearchPanel(tview.getVisualization(),
+            treeNodes, Visualization.SEARCH_ITEMS, label, true, true);
+        search.setShowResultCount(true);
+        search.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
+        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+        search.setBackground(BACKGROUND);
+        search.setForeground(FOREGROUND);
+        
+        final JFastLabel title = new JFastLabel("                 ");
+        title.setPreferredSize(new Dimension(350, 20));
+        title.setVerticalAlignment(SwingConstants.BOTTOM);
+        title.setBorder(BorderFactory.createEmptyBorder(3,0,0,0));
+        title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
+        title.setBackground(BACKGROUND);
+        title.setForeground(FOREGROUND);
+        
+        tview.addControlListener(new ControlAdapter() {
+            public void itemEntered(VisualItem item, MouseEvent e) {
+                if ( item.canGetString(label) )
+                    title.setText(item.getString(label));
+            }
+            public void itemExited(VisualItem item, MouseEvent e) {
+                title.setText(null);
+            }
+        });
+        
+        Box box = new Box(BoxLayout.X_AXIS);
+        box.add(Box.createHorizontalStrut(10));
+        box.add(title);
+        box.add(Box.createHorizontalGlue());
+        box.add(search);
+        box.add(Box.createHorizontalStrut(3));
+        box.setBackground(BACKGROUND);
+        
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(BACKGROUND);
+        panel.setForeground(FOREGROUND);
+        panel.add(tview, BorderLayout.CENTER);
+        panel.add(box, BorderLayout.SOUTH);
+        return panel;
+    }
+    
+    // ------------------------------------------------------------------------
+   
+    public class OrientAction extends AbstractAction {
+        private int orientation;
+        
+        public OrientAction(int orientation) {
+            this.orientation = orientation;
+        }
+        public void actionPerformed(ActionEvent evt) {
+            setOrientation(orientation);
+            getVisualization().cancel("orient");
+            getVisualization().run("treeLayout");
+            getVisualization().run("orient");
+        }
+    }
+    
+    public class AutoPanAction extends Action {
+        private Point2D m_start = new Point2D.Double();
+        private Point2D m_end   = new Point2D.Double();
+        private Point2D m_cur   = new Point2D.Double();
+        private int     m_bias  = 150;
+        
+        public void run(double frac) {
+            TupleSet ts = m_vis.getFocusGroup(Visualization.FOCUS_ITEMS);
+            if ( ts.getTupleCount() == 0 )
+                return;
+            
+            if ( frac == 0.0 ) {
+                int xbias=0, ybias=0;
+                switch ( m_orientation ) {
+                case Constants.ORIENT_LEFT_RIGHT:
+                    xbias = m_bias;
+                    break;
+                case Constants.ORIENT_RIGHT_LEFT:
+                    xbias = -m_bias;
+                    break;
+                case Constants.ORIENT_TOP_BOTTOM:
+                    ybias = m_bias;
+                    break;
+                case Constants.ORIENT_BOTTOM_TOP:
+                    ybias = -m_bias;
+                    break;
+                }
+
+                VisualItem vi = (VisualItem)ts.tuples().next();
+                m_cur.setLocation(getWidth()/2, getHeight()/2);
+                getAbsoluteCoordinate(m_cur, m_start);
+                m_end.setLocation(vi.getX()+xbias, vi.getY()+ybias);
+            } else {
+                m_cur.setLocation(m_start.getX() + frac*(m_end.getX()-m_start.getX()),
+                                  m_start.getY() + frac*(m_end.getY()-m_start.getY()));
+                panToAbs(m_cur);
+            }
+        }
+    }
+    
+    public static class NodeColorAction extends ColorAction {
+        
+        public NodeColorAction(String group) {
+            super(group, VisualItem.FILLCOLOR);
+        }
+        
+        public int getColor(VisualItem item) {
+            if ( m_vis.isInGroup(item, Visualization.SEARCH_ITEMS) )
+                return ColorLib.rgb(255,190,190);
+            else if ( m_vis.isInGroup(item, Visualization.FOCUS_ITEMS) )
+                return ColorLib.rgb(198,229,229);
+            else if ( item.getDOI() > -1 )
+                return ColorLib.rgb(164,193,193);
+            else
+                return ColorLib.rgba(255,255,255,0);
+        }
+        
+    } // end of inner class TreeMapColorAction
+    
+    
+} // end of class TreeMap
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d21 1
+a21 1
+import prefuse.Alignment;
+a35 1
+import prefuse.action.layout.Orientation;
+d72 1
+a72 1
+
+d76 4
+a79 4
+
+    private final LabelRenderer m_nodeRenderer;
+    private final EdgeRenderer m_edgeRenderer;
+
+d81 3
+a83 3
+    private Orientation m_orientation = Orientation.LEFT_RIGHT;
+
+    public TreeView(Tree<?,?,?> t, String label) {
+d88 1
+a88 1
+
+d90 2
+a91 2
+        m_nodeRenderer.setRenderType(AbstractShapeRenderer.RenderType.FILL);
+        m_nodeRenderer.setHorizontalAlignment(Alignment.LEFT);
+d93 2
+a94 2
+        m_edgeRenderer = new EdgeRenderer(EdgeRenderer.EdgeType.CURVE);
+
+d98 1
+a98 1
+
+d104 1
+a104 1
+
+d107 1
+a107 1
+
+d113 1
+a113 1
+
+d118 1
+a118 1
+
+d124 1
+a124 1
+
+d130 2
+a131 2
+
+        CollapsedSubtreeLayout subLayout =
+d134 1
+a134 1
+
+d136 1
+a136 1
+
+d147 1
+a147 1
+
+d159 1
+a159 1
+
+d168 1
+a168 1
+
+d170 1
+a170 1
+
+d179 1
+a179 1
+
+d181 1
+a181 1
+            new OrientAction(Orientation.LEFT_RIGHT),
+d184 1
+a184 1
+            new OrientAction(Orientation.TOP_BOTTOM),
+d187 1
+a187 1
+            new OrientAction(Orientation.RIGHT_LEFT),
+d190 1
+a190 1
+            new OrientAction(Orientation.BOTTOM_TOP),
+d192 1
+a192 1
+
+d194 1
+a194 1
+
+d198 2
+a199 2
+
+        TupleSet search = new PrefixSearchTupleSet();
+d202 1
+a202 1
+            public void tupleSetChanged(TupleSet<?> t, Tuple<?>[] add, Tuple<?>[] rem) {
+d209 1
+a209 1
+
+d211 3
+a213 3
+
+    public void setOrientation(Orientation orientation) {
+        NodeLinkTreeLayout rtl
+d218 6
+a223 6
+        case LEFT_RIGHT:
+            m_nodeRenderer.setHorizontalAlignment(Alignment.LEFT);
+            m_edgeRenderer.setHorizontalAlignment1(Alignment.RIGHT);
+            m_edgeRenderer.setHorizontalAlignment2(Alignment.LEFT);
+            m_edgeRenderer.setVerticalAlignment1(Alignment.CENTER);
+            m_edgeRenderer.setVerticalAlignment2(Alignment.CENTER);
+d225 6
+a230 6
+        case RIGHT_LEFT:
+            m_nodeRenderer.setHorizontalAlignment(Alignment.RIGHT);
+            m_edgeRenderer.setHorizontalAlignment1(Alignment.LEFT);
+            m_edgeRenderer.setHorizontalAlignment2(Alignment.RIGHT);
+            m_edgeRenderer.setVerticalAlignment1(Alignment.CENTER);
+            m_edgeRenderer.setVerticalAlignment2(Alignment.CENTER);
+d232 6
+a237 6
+        case TOP_BOTTOM:
+            m_nodeRenderer.setHorizontalAlignment(Alignment.CENTER);
+            m_edgeRenderer.setHorizontalAlignment1(Alignment.CENTER);
+            m_edgeRenderer.setHorizontalAlignment2(Alignment.CENTER);
+            m_edgeRenderer.setVerticalAlignment1(Alignment.BOTTOM);
+            m_edgeRenderer.setVerticalAlignment2(Alignment.TOP);
+d239 6
+a244 6
+        case BOTTOM_TOP:
+            m_nodeRenderer.setHorizontalAlignment(Alignment.CENTER);
+            m_edgeRenderer.setHorizontalAlignment1(Alignment.CENTER);
+            m_edgeRenderer.setHorizontalAlignment2(Alignment.CENTER);
+            m_edgeRenderer.setVerticalAlignment1(Alignment.TOP);
+            m_edgeRenderer.setVerticalAlignment2(Alignment.BOTTOM);
+d254 2
+a255 2
+
+    public Orientation getOrientation() {
+d258 1
+a258 1
+
+d260 1
+a260 1
+
+d269 1
+a269 1
+
+d276 1
+a276 1
+
+d280 1
+a280 1
+
+d284 2
+a285 2
+
+        Tree<?,?,?> t = null;
+d287 1
+a287 1
+            t = (Tree<?,?,?>)new TreeMLReader().readGraph(datafile);
+d292 1
+a292 1
+
+d297 1
+a297 1
+
+d306 1
+a306 1
+
+d314 1
+a314 1
+
+d316 3
+a318 5
+            @@Override
+			public void itemEntered(VisualItem<?> item, MouseEvent e) {
+                if ( item.canGetString(label) ) {
+					title.setText(item.getString(label));
+				}
+d320 1
+a320 2
+            @@Override
+			public void itemExited(VisualItem<?> item, MouseEvent e) {
+d324 1
+a324 1
+
+d332 1
+a332 1
+
+d340 1
+a340 1
+
+d342 1
+a342 1
+
+d344 3
+a346 3
+        private final Orientation orientation;
+
+        public OrientAction(Orientation orientation) {
+d356 1
+a356 1
+
+d358 3
+a360 3
+        private final Point2D m_start = new Point2D.Double();
+        private final Point2D m_end   = new Point2D.Double();
+        private final Point2D m_cur   = new Point2D.Double();
+d362 6
+a367 8
+
+        @@Override
+		public void run(double frac) {
+            TupleSet<?> ts = m_vis.<VisualItem<?>>getFocusGroup(Visualization.FOCUS_ITEMS);
+            if ( ts.getTupleCount() == 0 ) {
+				return;
+			}
+
+d371 1
+a371 1
+                case LEFT_RIGHT:
+d374 1
+a374 1
+                case RIGHT_LEFT:
+d377 1
+a377 1
+                case TOP_BOTTOM:
+d380 1
+a380 1
+                case BOTTOM_TOP:
+d385 1
+a385 1
+                VisualItem<?> vi = (VisualItem<?>)ts.tuples().iterator().next();
+d396 1
+a396 1
+
+d398 1
+a398 1
+
+d402 10
+a411 12
+
+        @@Override
+		public int getColor(VisualItem<?> item) {
+            if ( m_vis.isInGroup(item, Visualization.SEARCH_ITEMS) ) {
+				return ColorLib.rgb(255,190,190);
+			} else if ( m_vis.isInGroup(item, Visualization.FOCUS_ITEMS) ) {
+				return ColorLib.rgb(198,229,229);
+			} else if ( item.getDOI() > -1 ) {
+				return ColorLib.rgb(164,193,193);
+			} else {
+				return ColorLib.rgba(255,255,255,0);
+			}
+d413 1
+a413 1
+
+d415 2
+a416 2
+
+
+@
+
+
+2.2.4.2
+log
+@New feature: scroll bars for Displays
+@
+text
+@a17 1
+import javax.swing.JScrollBar;
+a56 1
+import prefuse.util.ui.DisplayScrollBar;
+a336 5
+        JPanel scrollableView = new JPanel(new BorderLayout());
+        scrollableView.add(tview, BorderLayout.CENTER);
+        scrollableView.add(new DisplayScrollBar(tview, JScrollBar.HORIZONTAL), BorderLayout.SOUTH);
+        scrollableView.add(new DisplayScrollBar(tview, JScrollBar.VERTICAL), BorderLayout.EAST);
+        
+d340 1
+a340 1
+        panel.add(scrollableView, BorderLayout.CENTER);
+@
+
+
+2.2.4.3
+log
+@Moved RenderType outside of AbstractShapeRenderer (it is now a top level enum)
+@
+text
+@d54 1
+a55 1
+import prefuse.render.RenderType;
+d93 1
+a93 1
+        m_nodeRenderer.setRenderType(RenderType.FILL);
+@
+
+
+2.1
+log
+@Updated demos to simplify external creation of demos from client code.
+@
+text
+@d41 1
+d176 1
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d275 4
+@
+
+
+1.1
+log
+@file TreeView.java was initially added on branch beta.
+@
+text
+@d1 411
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 463
+package prefuse.demos;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
+
+import prefuse.Constants;
+import prefuse.Display;
+import prefuse.Visualization;
+import prefuse.action.Action;
+import prefuse.action.ActionList;
+import prefuse.action.ItemAction;
+import prefuse.action.RepaintAction;
+import prefuse.action.animate.ColorAnimator;
+import prefuse.action.animate.LocationAnimator;
+import prefuse.action.animate.QualityControlAnimator;
+import prefuse.action.animate.VisibilityAnimator;
+import prefuse.action.assignment.ColorFunction;
+import prefuse.action.assignment.FontFunction;
+import prefuse.action.filter.FisheyeTreeFilter;
+import prefuse.action.layout.CollapsedSubtreeLayout;
+import prefuse.action.layout.graph.ReingoldTilfordLayout;
+import prefuse.activity.SlowInSlowOutPacer;
+import prefuse.controls.ControlAdapter;
+import prefuse.controls.FocusControl;
+import prefuse.controls.PanControl;
+import prefuse.controls.ZoomControl;
+import prefuse.controls.ZoomToFitControl;
+import prefuse.data.Tree;
+import prefuse.data.event.TupleSetListener;
+import prefuse.data.io.TreeMLReader;
+import prefuse.data.search.PrefixSearchTupleSet;
+import prefuse.data.tuple.Tuple;
+import prefuse.data.tuple.TupleSet;
+import prefuse.render.DefaultRendererFactory;
+import prefuse.render.EdgeRenderer;
+import prefuse.render.ShapeRenderer;
+import prefuse.render.TextItemRenderer;
+import prefuse.util.ColorLib;
+import prefuse.util.FontLib;
+import prefuse.util.ui.JFastLabel;
+import prefuse.util.ui.JSearchPanel;
+import prefuse.util.ui.UILib;
+import prefuse.visual.VisualItem;
+import prefuse.visual.expression.InGroupPredicate;
+import prefuse.visual.sort.TreeDepthItemSorter;
+
+
+/**
+ * Demonstration of a node-link tree viewer
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class TreeView extends Display {
+
+    public static final String TREE_CHI = "/chi-ontology.xml.gz";
+    
+    private static final String tree = "tree";
+    private static final String treeNodes = "tree.nodes";
+    private static final String treeEdges = "tree.edges";
+    
+    private TextItemRenderer m_nodeRenderer;
+    private EdgeRenderer m_edgeRenderer;
+    
+    private String m_label = "label";
+    private int m_orientation = Constants.LEFT_TO_RIGHT;
+    
+    public TreeView(Tree t, String label) {
+        super(new Visualization());
+        m_label = label;
+
+        m_vis.add(tree, t);
+        
+        m_nodeRenderer = new TextItemRenderer(m_label);
+        m_nodeRenderer.setRenderType(ShapeRenderer.RENDER_TYPE_FILL);
+        m_nodeRenderer.setHorizontalAlignment(Constants.LEFT);
+        m_nodeRenderer.setRoundedCorner(8,8);
+        m_edgeRenderer = new EdgeRenderer(Constants.EDGE_TYPE_CURVE);
+        
+        DefaultRendererFactory rf = new DefaultRendererFactory(m_nodeRenderer);
+        rf.add(new InGroupPredicate(treeEdges), m_edgeRenderer);
+        m_vis.setRendererFactory(rf);
+               
+        // colors
+        ItemAction nodeColor = new NodeColorFunction(treeNodes);
+        ItemAction textColor = new ColorFunction(treeNodes,
+                VisualItem.TEXTCOLOR, ColorLib.rgb(0,0,0));
+        m_vis.putAction("textColor", textColor);
+        
+        ItemAction edgeColor = new ColorFunction(treeEdges,
+                VisualItem.STROKECOLOR, ColorLib.rgb(200,200,200));
+        
+        // quick repaint
+        ActionList repaint = new ActionList();
+        repaint.add(nodeColor);
+        repaint.add(new RepaintAction());
+        m_vis.putAction("repaint", repaint);
+        
+        // full paint
+        ActionList fullPaint = new ActionList();
+        fullPaint.add(nodeColor);
+        m_vis.putAction("fullPaint", fullPaint);
+        
+        // animate paint change
+        ActionList animatePaint = new ActionList(400);
+        animatePaint.add(new ColorAnimator(treeNodes));
+        animatePaint.add(new RepaintAction());
+        m_vis.putAction("animatePaint", animatePaint);
+        
+        // create the tree layout action
+        ReingoldTilfordLayout treeLayout = new ReingoldTilfordLayout(tree,
+                m_orientation, 50, 0, 8);
+        treeLayout.setLayoutAnchor(new Point2D.Double(25,300));
+        m_vis.putAction("treeLayout", treeLayout);
+        
+        CollapsedSubtreeLayout subLayout = 
+            new CollapsedSubtreeLayout(tree, m_orientation);
+        m_vis.putAction("subLayout", subLayout);
+        
+        AutoPanAction autoPan = new AutoPanAction();
+        
+        // create the filtering and layout
+        ActionList filter = new ActionList();
+        filter.add(new FisheyeTreeFilter(tree, 2));
+        filter.add(new FontFunction(treeNodes, FontLib.getFont("Tahoma", 16)));
+        filter.add(treeLayout);
+        filter.add(subLayout);
+        filter.add(textColor);
+        filter.add(nodeColor);
+        filter.add(edgeColor);
+        m_vis.putAction("filter", filter);
+        
+        // animated transition
+        ActionList animate = new ActionList(1000);
+        animate.setPacingFunction(new SlowInSlowOutPacer());
+        animate.add(autoPan);
+        animate.add(new QualityControlAnimator());
+        animate.add(new VisibilityAnimator(tree));
+        animate.add(new LocationAnimator(treeNodes));
+        animate.add(new ColorAnimator(treeNodes));
+        animate.add(new RepaintAction());
+        m_vis.putAction("animate", animate);
+        m_vis.alwaysRunAfter("filter", "animate");
+        
+        // create animator for orientation changes
+        ActionList orient = new ActionList(2000);
+        orient.setPacingFunction(new SlowInSlowOutPacer());
+        orient.add(autoPan);
+        animate.add(new QualityControlAnimator());
+        orient.add(new LocationAnimator(treeNodes));
+        orient.add(new RepaintAction());
+        m_vis.putAction("orient", orient);
+        
+        // ------------------------------------------------
+        
+        // initialize the display
+        setSize(700,600);
+        setItemSorter(new TreeDepthItemSorter());
+        addControlListener(new ZoomToFitControl());
+        addControlListener(new ZoomControl());
+        addControlListener(new PanControl());
+        addControlListener(new FocusControl("filter"));
+        
+        registerKeyboardAction(
+            new OrientAction(Constants.LEFT_TO_RIGHT),
+            "left-to-right", KeyStroke.getKeyStroke("ctrl 1"), WHEN_FOCUSED);
+        registerKeyboardAction(
+            new OrientAction(Constants.TOP_TO_BOTTOM),
+            "top-to-bottom", KeyStroke.getKeyStroke("ctrl 2"), WHEN_FOCUSED);
+        registerKeyboardAction(
+            new OrientAction(Constants.RIGHT_TO_LEFT),
+            "right-to-left", KeyStroke.getKeyStroke("ctrl 3"), WHEN_FOCUSED);
+        registerKeyboardAction(
+            new OrientAction(Constants.BOTTOM_TO_TOP),
+            "bottom-to-top", KeyStroke.getKeyStroke("ctrl 4"), WHEN_FOCUSED);
+        
+        // ------------------------------------------------
+        
+        // filter graph and perform layout
+        setOrientation(m_orientation);
+        m_vis.run("filter");
+        
+        TupleSet search = new PrefixSearchTupleSet(); 
+        m_vis.addFocusGroup(Visualization.SEARCH_ITEMS, search);
+        search.addTupleSetListener(new TupleSetListener() {
+            public void tupleSetChanged(TupleSet t, Tuple[] add, Tuple[] rem) {
+                m_vis.cancel("animatePaint");
+                m_vis.run("fullPaint");
+                m_vis.run("animatePaint");
+            }
+        });
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public void setOrientation(int orientation) {
+        ReingoldTilfordLayout rtl 
+            = (ReingoldTilfordLayout)m_vis.getAction("treeLayout");
+        CollapsedSubtreeLayout stl
+            = (CollapsedSubtreeLayout)m_vis.getAction("subLayout");
+        switch ( orientation ) {
+        case Constants.LEFT_TO_RIGHT:
+            m_nodeRenderer.setHorizontalAlignment(Constants.LEFT);
+            m_edgeRenderer.setHorizontalAlignment1(Constants.RIGHT);
+            m_edgeRenderer.setHorizontalAlignment2(Constants.LEFT);
+            m_edgeRenderer.setVerticalAlignment1(Constants.CENTER);
+            m_edgeRenderer.setVerticalAlignment2(Constants.CENTER);
+            break;
+        case Constants.RIGHT_TO_LEFT:
+            m_nodeRenderer.setHorizontalAlignment(Constants.RIGHT);
+            m_edgeRenderer.setHorizontalAlignment1(Constants.LEFT);
+            m_edgeRenderer.setHorizontalAlignment2(Constants.RIGHT);
+            m_edgeRenderer.setVerticalAlignment1(Constants.CENTER);
+            m_edgeRenderer.setVerticalAlignment2(Constants.CENTER);
+            break;
+        case Constants.TOP_TO_BOTTOM:
+            m_nodeRenderer.setHorizontalAlignment(Constants.CENTER);
+            m_edgeRenderer.setHorizontalAlignment1(Constants.CENTER);
+            m_edgeRenderer.setHorizontalAlignment2(Constants.CENTER);
+            m_edgeRenderer.setVerticalAlignment1(Constants.BOTTOM);
+            m_edgeRenderer.setVerticalAlignment2(Constants.TOP);
+            break;
+        case Constants.BOTTOM_TO_TOP:
+            m_nodeRenderer.setHorizontalAlignment(Constants.CENTER);
+            m_edgeRenderer.setHorizontalAlignment1(Constants.CENTER);
+            m_edgeRenderer.setHorizontalAlignment2(Constants.CENTER);
+            m_edgeRenderer.setVerticalAlignment1(Constants.TOP);
+            m_edgeRenderer.setVerticalAlignment2(Constants.BOTTOM);
+            break;
+        default:
+            throw new IllegalArgumentException(
+                "Unrecognized orientation value: "+orientation);
+        }
+        m_orientation = orientation;
+        rtl.setOrientation(orientation);
+        stl.setOrientation(orientation);
+    }
+    
+    public int getOrientation() {
+        return m_orientation;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public static void main(String argv[]) {
+        String infile = TREE_CHI;
+        if ( argv.length > 0 )
+            infile = argv[0];
+        
+        UILib.setPlatformLookAndFeel();
+        Color BACKGROUND = Color.WHITE;
+        Color FOREGROUND = Color.BLACK;
+        
+        Tree t = null;
+        try {
+            t = (Tree)new TreeMLReader().readGraph(infile);
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        
+        // create a new treemap
+        final String label = "name";
+        final TreeView tview = new TreeView(t, label);
+        tview.setBackground(BACKGROUND);
+        tview.setForeground(FOREGROUND);
+        
+        // create a search panel for the tree map
+        JSearchPanel search = new JSearchPanel(tview.getVisualization(),
+            treeNodes, Visualization.SEARCH_ITEMS, label, true, true);
+        search.setShowResultCount(true);
+        search.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
+        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+        search.setBackground(BACKGROUND);
+        search.setForeground(FOREGROUND);
+        
+        final JFastLabel title = new JFastLabel("                 ");
+        title.setPreferredSize(new Dimension(350, 20));
+        title.setVerticalAlignment(SwingConstants.BOTTOM);
+        title.setBorder(BorderFactory.createEmptyBorder(3,0,0,0));
+        title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
+        title.setBackground(BACKGROUND);
+        title.setForeground(FOREGROUND);
+        
+        tview.addControlListener(new ControlAdapter() {
+            public void itemEntered(VisualItem item, MouseEvent e) {
+                if ( item.canGetString(label) )
+                    title.setText(item.getString(label));
+            }
+            public void itemExited(VisualItem item, MouseEvent e) {
+                title.setText(null);
+            }
+        });
+        
+        Box box = new Box(BoxLayout.X_AXIS);
+        box.add(Box.createHorizontalStrut(10));
+        box.add(title);
+        box.add(Box.createHorizontalGlue());
+        box.add(search);
+        box.add(Box.createHorizontalStrut(3));
+        box.setBackground(BACKGROUND);
+        
+        JFrame frame = new JFrame("p r e f u s e  |  t r e e v i e w");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().setBackground(BACKGROUND);
+        frame.getContentPane().setForeground(FOREGROUND);
+        frame.getContentPane().add(tview, BorderLayout.CENTER);
+        frame.getContentPane().add(box, BorderLayout.SOUTH);
+        frame.pack();
+        frame.setVisible(true);
+    }
+    
+    public static JFrame demo(String datafile, final String label) {
+        Color BACKGROUND = Color.WHITE;
+        Color FOREGROUND = Color.BLACK;
+        
+        Tree t = null;
+        try {
+            t = (Tree)new TreeMLReader().readGraph(datafile);
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        
+        // create a new treemap
+        final TreeView tview = new TreeView(t, label);
+        tview.setBackground(BACKGROUND);
+        tview.setForeground(FOREGROUND);
+        
+        // create a search panel for the tree map
+        JSearchPanel search = new JSearchPanel(tview.getVisualization(),
+            treeNodes, Visualization.SEARCH_ITEMS, label, true, true);
+        search.setShowResultCount(true);
+        search.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
+        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+        search.setBackground(BACKGROUND);
+        search.setForeground(FOREGROUND);
+        
+        final JFastLabel title = new JFastLabel("                 ");
+        title.setPreferredSize(new Dimension(350, 20));
+        title.setVerticalAlignment(SwingConstants.BOTTOM);
+        title.setBorder(BorderFactory.createEmptyBorder(3,0,0,0));
+        title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
+        title.setBackground(BACKGROUND);
+        title.setForeground(FOREGROUND);
+        
+        tview.addControlListener(new ControlAdapter() {
+            public void itemEntered(VisualItem item, MouseEvent e) {
+                if ( item.canGetString(label) )
+                    title.setText(item.getString(label));
+            }
+            public void itemExited(VisualItem item, MouseEvent e) {
+                title.setText(null);
+            }
+        });
+        
+        Box box = new Box(BoxLayout.X_AXIS);
+        box.add(Box.createHorizontalStrut(10));
+        box.add(title);
+        box.add(Box.createHorizontalGlue());
+        box.add(search);
+        box.add(Box.createHorizontalStrut(3));
+        box.setBackground(BACKGROUND);
+        
+        JFrame frame = new JFrame("p r e f u s e  |  t r e e v i e w");
+        frame.getContentPane().setBackground(BACKGROUND);
+        frame.getContentPane().setForeground(FOREGROUND);
+        frame.getContentPane().add(tview, BorderLayout.CENTER);
+        frame.getContentPane().add(box, BorderLayout.SOUTH);
+        frame.pack();
+        return frame;
+    }
+    
+    // ------------------------------------------------------------------------
+   
+    public class OrientAction extends AbstractAction {
+        private int orientation;
+        
+        public OrientAction(int orientation) {
+            this.orientation = orientation;
+        }
+        public void actionPerformed(ActionEvent evt) {
+            setOrientation(orientation);
+            getVisualization().cancel("orient");
+            getVisualization().run("treeLayout");
+            getVisualization().run("orient");
+        }
+    }
+    
+    public class AutoPanAction extends Action {
+        private Point2D m_start = new Point2D.Double();
+        private Point2D m_end   = new Point2D.Double();
+        private Point2D m_cur   = new Point2D.Double();
+        private int     m_bias  = 150;
+        
+        public void run(double frac) {
+            TupleSet ts = m_vis.getFocusGroup(Visualization.FOCUS_ITEMS);
+            if ( ts.getTupleCount() == 0 )
+                return;
+            
+            if ( frac == 0.0 ) {
+                int xbias=0, ybias=0;
+                switch ( m_orientation ) {
+                case Constants.LEFT_TO_RIGHT:
+                    xbias = m_bias;
+                    break;
+                case Constants.RIGHT_TO_LEFT:
+                    xbias = -m_bias;
+                    break;
+                case Constants.TOP_TO_BOTTOM:
+                    ybias = m_bias;
+                    break;
+                case Constants.BOTTOM_TO_TOP:
+                    ybias = -m_bias;
+                    break;
+                }
+
+                VisualItem vi = (VisualItem)ts.tuples().next();
+                m_cur.setLocation(getWidth()/2, getHeight()/2);
+                getAbsoluteCoordinate(m_cur, m_start);
+                m_end.setLocation(vi.getX()+xbias, vi.getY()+ybias);
+            } else {
+                m_cur.setLocation(m_start.getX() + frac*(m_end.getX()-m_start.getX()),
+                                  m_start.getY() + frac*(m_end.getY()-m_start.getY()));
+                panToAbs(m_cur);
+            }
+        }
+    }
+    
+    public static class NodeColorFunction extends ColorFunction {
+        
+        public NodeColorFunction(String group) {
+            super(group, VisualItem.FILLCOLOR);
+        }
+        
+        public int getColor(VisualItem item) {
+            if ( m_vis.isInGroup(item, Visualization.SEARCH_ITEMS) )
+                return ColorLib.rgb(255,190,190);
+            else if ( m_vis.isInGroup(item, Visualization.FOCUS_ITEMS) )
+                return ColorLib.rgb(198,229,229);
+            else if ( item.getDOI() > -1 )
+                return ColorLib.rgb(164,193,193);
+            else
+                return ColorLib.rgba(255,255,255,0);
+        }
+        
+    } // end of inner class TreeMapColorFunction
+    
+    
+} // end of class TreeMap
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d79 1
+a79 1
+    private int m_orientation = Constants.ORIENT_LEFT_RIGHT;
+d162 1
+a162 1
+        orient.add(new QualityControlAnimator());
+d175 1
+a175 1
+        addControlListener(new FocusControl(1, "filter"));
+d178 1
+a178 1
+            new OrientAction(Constants.ORIENT_LEFT_RIGHT),
+d181 1
+a181 1
+            new OrientAction(Constants.ORIENT_TOP_BOTTOM),
+d184 1
+a184 1
+            new OrientAction(Constants.ORIENT_RIGHT_LEFT),
+d187 1
+a187 1
+            new OrientAction(Constants.ORIENT_BOTTOM_TOP),
+d215 1
+a215 1
+        case Constants.ORIENT_LEFT_RIGHT:
+d222 1
+a222 1
+        case Constants.ORIENT_RIGHT_LEFT:
+d229 1
+a229 1
+        case Constants.ORIENT_TOP_BOTTOM:
+d236 1
+a236 1
+        case Constants.ORIENT_BOTTOM_TOP:
+d417 1
+a417 1
+                case Constants.ORIENT_LEFT_RIGHT:
+d420 1
+a420 1
+                case Constants.ORIENT_RIGHT_LEFT:
+d423 1
+a423 1
+                case Constants.ORIENT_TOP_BOTTOM:
+d426 1
+a426 1
+                case Constants.ORIENT_BOTTOM_TOP:
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@d34 1
+a34 1
+import prefuse.action.layout.graph.NodeLinkTreeLayout;
+d124 1
+a124 1
+        NodeLinkTreeLayout treeLayout = new NodeLinkTreeLayout(tree,
+d210 2
+a211 2
+        NodeLinkTreeLayout rtl 
+            = (NodeLinkTreeLayout)m_vis.getAction("treeLayout");
+@
+
+
+1.1.2.4
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d65 1
+a65 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.5
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a14 1
+import javax.swing.JComponent;
+a15 1
+import javax.swing.JPanel;
+d30 2
+a31 2
+import prefuse.action.assignment.ColorAction;
+import prefuse.action.assignment.FontAction;
+a41 1
+import prefuse.data.Tuple;
+d45 1
+d55 1
+d98 2
+a99 2
+        ItemAction nodeColor = new NodeColorAction(treeNodes);
+        ItemAction textColor = new ColorAction(treeNodes,
+d103 1
+a103 1
+        ItemAction edgeColor = new ColorAction(treeEdges,
+d137 2
+a138 2
+        filter.add(new FisheyeTreeFilter(tree, 1));
+        filter.add(new FontAction(treeNodes, FontLib.getFont("Tahoma", 16)));
+d260 1
+a260 2
+        String label = "name";
+        if ( argv.length > 1 ) {
+d262 11
+a272 1
+            label = argv[1];
+d274 41
+a314 1
+        JComponent treeview = demo(infile, label);
+d318 4
+a321 1
+        frame.setContentPane(treeview);
+d326 1
+a326 1
+    public static JComponent demo(String datafile, final String label) {
+d378 7
+a384 6
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(BACKGROUND);
+        panel.setForeground(FOREGROUND);
+        panel.add(tview, BorderLayout.CENTER);
+        panel.add(box, BorderLayout.SOUTH);
+        return panel;
+d443 1
+a443 1
+    public static class NodeColorAction extends ColorAction {
+d445 1
+a445 1
+        public NodeColorAction(String group) {
+d460 1
+a460 1
+    } // end of inner class TreeMapColorAction
+@
+
+
+1.1.2.6
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d51 2
+a52 2
+import prefuse.render.AbstractShapeRenderer;
+import prefuse.render.LabelRenderer;
+d76 1
+a76 1
+    private LabelRenderer m_nodeRenderer;
+d88 2
+a89 2
+        m_nodeRenderer = new LabelRenderer(m_label);
+        m_nodeRenderer.setRenderType(AbstractShapeRenderer.RENDER_TYPE_FILL);
+d138 1
+a138 1
+        filter.add(new FisheyeTreeFilter(tree, 2));
+@
+
+

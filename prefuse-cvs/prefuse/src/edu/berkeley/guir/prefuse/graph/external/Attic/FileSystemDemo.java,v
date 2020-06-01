@@ -1,0 +1,505 @@
+head	1.10;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.10
+date	2004.03.25.04.35.38;	author jheer;	state dead;
+branches;
+next	1.9;
+
+1.9
+date	2004.03.24.01.57.41;	author jheer;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.03.23.03.54.56;	author jheer;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.03.16.03.05.17;	author jheer;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.03.15.03.33.30;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.12.17.40.59;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.12.01.53.44;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.11.19.11.13;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.10.16.56.27;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.09.03.49.10;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.10
+log
+@A whole lot of update
+@
+text
+@package edu.berkeley.guir.prefuse.graph.external;
+
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Paint;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.util.Iterator;
+
+import javax.swing.JFrame;
+
+import edu.berkeley.guir.prefuse.Display;
+import edu.berkeley.guir.prefuse.EdgeItem;
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.NodeItem;
+import edu.berkeley.guir.prefuse.action.AbstractAction;
+import edu.berkeley.guir.prefuse.action.RepaintAction;
+import edu.berkeley.guir.prefuse.action.assignment.ColorFunction;
+import edu.berkeley.guir.prefuse.action.filter.FisheyeGraphFilter;
+import edu.berkeley.guir.prefuse.action.filter.TreeEdgeFilter;
+import edu.berkeley.guir.prefuse.activity.ActionList;
+import edu.berkeley.guir.prefuse.event.ControlAdapter;
+import edu.berkeley.guir.prefuse.event.FocusEvent;
+import edu.berkeley.guir.prefuse.event.FocusListener;
+import edu.berkeley.guir.prefuse.graph.DefaultTree;
+import edu.berkeley.guir.prefuse.graph.Entity;
+import edu.berkeley.guir.prefuse.graph.Node;
+import edu.berkeley.guir.prefuse.graph.Tree;
+import edu.berkeley.guir.prefuse.graph.TreeNode;
+import edu.berkeley.guir.prefuse.graph.event.GraphLoaderListener;
+import edu.berkeley.guir.prefuse.render.DefaultEdgeRenderer;
+import edu.berkeley.guir.prefuse.render.DefaultRendererFactory;
+import edu.berkeley.guir.prefuse.render.TextItemRenderer;
+import edu.berkeley.guir.prefusex.controls.DragControl;
+import edu.berkeley.guir.prefusex.controls.FocusControl;
+import edu.berkeley.guir.prefusex.controls.NeighborHighlightControl;
+import edu.berkeley.guir.prefusex.controls.PanControl;
+import edu.berkeley.guir.prefusex.controls.ZoomControl;
+import edu.berkeley.guir.prefusex.force.DragForce;
+import edu.berkeley.guir.prefusex.force.ForceSimulator;
+import edu.berkeley.guir.prefusex.force.NBodyForce;
+import edu.berkeley.guir.prefusex.force.SpringForce;
+import edu.berkeley.guir.prefusex.layout.ForceDirectedLayout;
+
+/**
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class FileSystemDemo extends JFrame {
+
+    private ItemRegistry   registry;
+    private ActionList forces, filter;
+    private FileSystemLoader loader;
+    
+    public static void main(String[] argv) {
+        new FileSystemDemo();
+    } //
+    
+    public FileSystemDemo() {
+        super("File System Demo");
+        
+        Tree t = new DefaultTree();
+        registry = new ItemRegistry(t);
+        
+        loader = new FileSystemLoader(registry);
+        Node root = loader.loadNode(GraphLoader.LOAD_CHILDREN, 
+                                    null, new File("."));
+        t.setRoot((TreeNode)root);
+        
+        loader.addGraphLoaderListener(new GraphLoaderListener() {
+            int unloaded = 0;
+            public void entityLoaded(GraphLoader loader, Entity e) {
+                forces.cancel();
+                filter.runNow();
+                forces.runNow();
+            } //
+            public void entityUnloaded(GraphLoader loader, Entity e) {
+                System.out.println((++unloaded)+" unloaded - "+e);
+                forces.cancel();
+                filter.runNow();
+                forces.runNow();
+            } //
+        });
+        
+        ForceSimulator fsim = new ForceSimulator();
+        fsim.addForce(new NBodyForce(-0.4f, 0.9f));
+        fsim.addForce(new SpringForce(5E-5f, 150f));
+        fsim.addForce(new DragForce(-0.005f));
+        
+        TextItemRenderer    nodeRenderer = new TextItemRenderer();
+        nodeRenderer.setRenderType(TextItemRenderer.RENDER_TYPE_FILL);
+        nodeRenderer.setRoundedCorner(8,8);
+        nodeRenderer.setTextAttributeName("label");
+        DefaultEdgeRenderer edgeRenderer = new DefaultEdgeRenderer();    
+        registry.setRendererFactory(new DefaultRendererFactory(
+                nodeRenderer, edgeRenderer, null));
+        
+        filter = new ActionList(registry);
+        filter.add(new FisheyeGraphFilter(-3));
+        filter.add(new TreeEdgeFilter());
+        
+        forces = new ActionList(registry,-1,20);
+        forces.add(new AbstractAction() {
+            public void run(ItemRegistry registry, double frac) {
+                Iterator iter = registry.getNodeItems();
+                while ( iter.hasNext() ) {
+                    NodeItem item = (NodeItem)iter.next();
+                    if ( item.isFocus() )
+                        item.setFixed(true);
+                }
+            } //
+        });
+        forces.add(new ForceDirectedLayout(fsim, false) {
+            protected float getSpringLength(NodeItem n1, NodeItem n2) {
+                if (n1.getEdgeCount() == 1 || n2.getEdgeCount() == 1)
+                    return 75.f;
+                double doi = Math.max(n1.getDOI(), n2.getDOI());
+                return 200.f/Math.abs((float)doi-1);
+            } //
+        });
+        forces.add(new DemoColorFunction());
+        forces.add(new RepaintAction());
+        
+        Display display = new Display();
+        display.setItemRegistry(registry);
+        display.setSize(800,700);
+        display.pan(350,350);
+        display.addControlListener(new FocusControl(2));
+        display.addControlListener(new NeighborHighlightControl());
+        display.addControlListener(new DragControl(false));
+        display.addControlListener(new MouseOverControl());
+        display.addControlListener(new PanControl(false));
+        display.addControlListener(new ZoomControl(false));
+        registry.getDefaultFocusSet().addFocusListener(new FocusListener() {
+            public void focusChanged(FocusEvent e) {
+                NodeItem n = registry.getNodeItem((Node)e.getFirstRemoved());
+                if ( n != null ) n.setFixed(false);
+                filter.runNow();
+            } //
+        });
+        registry.getDefaultFocusSet().set(root);
+        
+        
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        getContentPane().add(display);
+        pack();
+        setVisible(true);
+        
+        // wait until graphics are available
+        while ( display.getGraphics() == null );
+        filter.runNow();
+        forces.runNow();
+    }
+    
+    public class DemoColorFunction extends ColorFunction {
+        private Color pastelRed = new Color(255,125,125);
+        private Color pastelOrange = new Color(255,200,125);
+        private Color lightGray = new Color(220,220,255);
+        public Paint getColor(VisualItem item) {
+            if ( item instanceof EdgeItem ) {
+                Boolean h = (Boolean)item.getVizAttribute("highlight");
+                if ( h != null && h.booleanValue() )
+                    return pastelOrange;
+                else
+                    return Color.LIGHT_GRAY;
+            } else {
+                return Color.BLACK;
+            }
+        } //
+        public Paint getFillColor(VisualItem item) {
+            Boolean h = (Boolean)item.getVizAttribute("highlight");
+            if ( h != null && h.booleanValue() )
+                return pastelOrange;
+            else if ( item instanceof NodeItem ) {
+                if ( item.isFixed() )
+                    return pastelRed;
+                else
+                    return lightGray;
+            } else {
+                return Color.BLACK;
+            }
+        } //        
+    } // end of inner class DemoColorFunction
+    
+    /**
+     * Tags and fixes the node under the mouse pointer.
+     */
+    public class MouseOverControl extends ControlAdapter {
+        
+        private boolean wasFixed = false;
+        
+        public void itemEntered(VisualItem item, MouseEvent e) {
+            ((Display)e.getSource()).setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            wasFixed = item.isFixed();
+            item.setFixed(true);
+        } //
+        
+        public void itemExited(VisualItem item, MouseEvent e) {
+            ((Display)e.getSource()).setCursor(Cursor.getDefaultCursor());
+            item.setFixed(wasFixed);
+        } //
+        
+        public void itemReleased(VisualItem item, MouseEvent e) {
+            item.setFixed(wasFixed);
+        } //
+        
+    } // end of inner class FocusControl
+    
+} // end of class FileSystemDemo
+@
+
+
+1.9
+log
+@New filters added plus more
+@
+text
+@@
+
+
+1.8
+log
+@Major refactor
+@
+text
+@a17 2
+import edu.berkeley.guir.prefuse.action.ColorFunction;
+import edu.berkeley.guir.prefuse.action.FisheyeGraphFilter;
+d19 4
+a22 2
+import edu.berkeley.guir.prefuse.action.TreeEdgeFilter;
+import edu.berkeley.guir.prefuse.activity.ActionPipeline;
+d54 1
+a54 1
+    private ActionPipeline forces, filter;
+d100 1
+a100 1
+        filter = new ActionPipeline(registry);
+d104 1
+a104 1
+        forces = new ActionPipeline(registry,-1,20);
+@
+
+
+1.7
+log
+@More Javadoc updates
+@
+text
+@d14 1
+a14 1
+import edu.berkeley.guir.prefuse.GraphItem;
+a22 1
+import edu.berkeley.guir.prefuse.activity.ActivityManager;
+d76 2
+a77 2
+                ActivityManager.scheduleNow(filter);
+                ActivityManager.scheduleNow(forces);
+d82 2
+a83 2
+                ActivityManager.scheduleNow(filter);
+                ActivityManager.scheduleNow(forces);
+d127 1
+a127 1
+        display.setRegistry(registry);
+d140 1
+a140 1
+                ActivityManager.scheduleNow(filter);
+d153 2
+a154 2
+        ActivityManager.scheduleNow(filter);
+        ActivityManager.scheduleNow(forces);
+d161 1
+a161 1
+        public Paint getColor(GraphItem item) {
+d172 1
+a172 1
+        public Paint getFillColor(GraphItem item) {
+d194 1
+a194 1
+        public void itemEntered(GraphItem item, MouseEvent e) {
+d200 1
+a200 1
+        public void itemExited(GraphItem item, MouseEvent e) {
+d205 1
+a205 1
+        public void itemReleased(GraphItem item, MouseEvent e) {
+@
+
+
+1.6
+log
+@Updated Javadoc
+@
+text
+@d93 2
+a94 5
+        TextItemRenderer    nodeRenderer = new TextItemRenderer() {
+            protected int getRenderType() {
+                return RENDER_TYPE_FILL; 
+            } //
+        };
+@
+
+
+1.5
+log
+@More work on external entities
+@
+text
+@d39 2
+a40 2
+import edu.berkeley.guir.prefusex.controls.PanHandler;
+import edu.berkeley.guir.prefusex.controls.ZoomHandler;
+d121 1
+a121 1
+                if (n1.getNumNeighbors() == 1 || n2.getNumNeighbors() == 1)
+d138 2
+a139 2
+        display.addControlListener(new PanHandler(false));
+        display.addControlListener(new ZoomHandler(false));
+@
+
+
+1.4
+log
+@More work on external nodes
+@
+text
+@d8 1
+d17 1
+a19 1
+import edu.berkeley.guir.prefuse.action.GraphEdgeFilter;
+d21 1
+d27 1
+a28 2
+import edu.berkeley.guir.prefuse.graph.DefaultGraph;
+import edu.berkeley.guir.prefuse.graph.Graph;
+d30 2
+d65 2
+a66 2
+        Graph g = new DefaultGraph();
+        registry = new ItemRegistry(g);
+d69 1
+a69 1
+        Node root = loader.loadNode(GraphLoader.LOAD_NEIGHBORS, 
+d71 1
+d74 1
+d76 3
+a78 1
+                ActivityManager.schedule(filter);
+d81 4
+a84 1
+                ActivityManager.schedule(filter);
+d90 1
+a90 1
+        fsim.addForce(new SpringForce(1E-5f, 150f));
+d105 2
+a106 2
+        filter.add(new FisheyeGraphFilter(-2));
+        filter.add(new GraphEdgeFilter());
+d109 10
+d121 2
+d142 2
+d196 2
+d200 1
+d206 1
+a206 1
+            item.setFixed(false);
+d210 1
+a210 1
+            item.setFixed(false);
+@
+
+
+1.3
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@d28 1
+d66 2
+a67 1
+        ExternalNode root = loader.loadNode(null, new File("."));
+@
+
+
+1.2
+log
+@Continued work on graph data structures
+@
+text
+@d26 2
+a27 2
+import edu.berkeley.guir.prefuse.graph.Node;
+import edu.berkeley.guir.prefuse.graph.SimpleGraph;
+d61 1
+a61 1
+        SimpleGraph g = new SimpleGraph();
+d68 1
+a68 2
+            public void entityLoaded(Entity e) {
+                //System.out.println("entityLoaded: " + e);
+d71 1
+a71 1
+            public void entityUnloaded(Entity e) {
+a117 1
+                Node node = (Node)e.getFirstAdded();
+@
+
+
+1.1
+log
+@Initial commit of preliminary external data source classes
+@
+text
+@d65 1
+a65 3
+        ExternalNode root = loader.buildNode(new File("."));
+        root.setLoader(loader);
+        g.addNode(root);
+d79 1
+a79 1
+        fsim.addForce(new SpringForce(4E-5f, 75f));
+d94 1
+a94 2
+        //filter.add(new GraphNodeFilter());
+        filter.add(new FisheyeGraphFilter(-1));
+d98 6
+a103 1
+        forces.add(new ForceDirectedLayout(fsim, false));
+d109 1
+a109 1
+        display.setSize(700,700);
+@
+

@@ -1,0 +1,212 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action.animate;
+
+import prefuse.action.ItemAction;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Animator that linearly interpolates between two positions. This
+ * is useful for performing animated transitions.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class LocationAnimator extends ItemAction {
+
+    /**
+     * Create a new LocationAnimator that processes all data groups.
+     */
+    public LocationAnimator() {
+        super();
+    }   
+    
+    /**
+     * Create a new LocationAnimator that processes the specified group.
+     * @@param group the data group to process.
+     */
+    public LocationAnimator(String group) {
+        super(group);
+    }
+
+    /**
+     * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+     */
+    public void process(VisualItem item, double frac) {
+        double sx = item.getStartX();
+        double sy = item.getStartY();
+        item.setX(sx + frac*(item.getEndX()-sx));
+        item.setY(sy + frac*(item.getEndY()-sy));
+    }
+
+} // end of class LocationAnimator
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d10 1
+a10 1
+ *
+d20 2
+a21 2
+    }
+
+d33 1
+a33 2
+    @@Override
+	public void process(VisualItem<?> item, double frac) {
+@
+
+
+1.1
+log
+@file LocationAnimator.java was initially added on branch beta.
+@
+text
+@d1 40
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 31
+package prefuse.action.animate;
+
+import prefuse.action.ItemAction;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * This class linearly interpolates between two positions. This
+ * is useful for performing animated transitions.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class LocationAnimator extends ItemAction {
+
+    public LocationAnimator() {
+        super();
+    }    
+    
+	public LocationAnimator(String group) {
+        super(group);
+    }
+
+    public void process(VisualItem item, double frac) {
+        double sx = item.getStartX();
+        double sy = item.getStartY();
+        item.setX(sx + frac*(item.getEndX()-sx));
+        item.setY(sy + frac*(item.getEndY()-sy));
+	}
+
+} // end of class LocationAnimator
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d20 1
+a20 1
+    public LocationAnimator(String group) {
+d29 1
+a29 1
+    }
+@
+
+
+1.1.2.3
+log
+@Lots of javadoc
+@
+text
+@d8 1
+a8 1
+ * Animator that linearly interpolates between two positions. This
+d11 2
+a12 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a15 3
+    /**
+     * Create a new LocationAnimator that processes all data groups.
+     */
+d18 1
+a18 1
+    }   
+a19 4
+    /**
+     * Create a new LocationAnimator that processes the specified group.
+     * @@param group the data group to process.
+     */
+a23 3
+    /**
+     * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+     */
+@
+
+

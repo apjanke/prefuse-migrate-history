@@ -1,0 +1,556 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.17;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.24.02.31.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.24.09.04.26;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.01.30.09.08.04;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	1.1.2.7;
+
+1.1.2.7
+date	2006.02.09.05.12.45;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file ShapeItemRenderer.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 207
+package prefuse.render;
+
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.visual.VisualItem;
+
+/**
+ * A default implementation of a node renderer that draws itself as a circle.
+ * 
+ * @@author alann
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ShapeItemRenderer extends ShapeRenderer {
+
+    public static final String SHAPE = "_shape";
+    public static final int SHAPE_NONE       = 0;
+    public static final int SHAPE_RECTANGLE  = 1;
+    public static final int SHAPE_ELLIPSE    = 2;
+    public static final int SHAPE_TRIANGLE   = 3;
+    public static final int SHAPE_STAR       = 4;
+    public static final int SHAPE_HEXAGON    = 5;
+    public static final int SHAPE_DIAMOND    = 6;
+    public static final int SHAPE_COUNT      = 7;
+    
+    private int m_baseSize = 10;
+    private int m_defaultShape = SHAPE_RECTANGLE;
+    
+    private Ellipse2D   m_ellipse = new Ellipse2D.Double();
+    private Rectangle2D m_rect = new Rectangle2D.Double();
+    private GeneralPath m_path = new GeneralPath();
+
+    /**
+     * Creates a new ShapeItemRenderer with default base size of 10 pixels.
+     */
+    public ShapeItemRenderer() {
+    }
+    
+    /**
+     * Creates a new ShapeItemRenderer with given base size.
+     * @@param size the base size in pixels
+     */
+    public ShapeItemRenderer(int size) {
+       setBaseSize(size);
+    }
+    
+    /**
+     * Creates a new ShapeItemRenderer with given base size and default shape.
+     * @@param size the base size in pixels
+     * @@param shape the default shape
+     */
+    public ShapeItemRenderer(int size, int shape) {
+       setBaseSize(size);
+       setDefaultShape(shape);
+    }
+    
+    /**
+     * Sets the base size, in pixels, for shapes drawn by this renderer. The
+     * base size is width and height values used when a VisualItem's size
+     * value is 1.
+     * @@param size the base size in pixels
+     */
+    public void setBaseSize(int size) {
+        m_baseSize = size;
+    }
+    
+    /**
+     * Returns the base size, in pixels, for shapes drawn by this renderer.
+     * @@return the base size in pixels
+     */
+    public int getBaseSize() {
+        return m_baseSize;
+    }
+
+    /**
+     * Sets the code for the default shape used by the renderer. This is the
+     * shape used for all items that do not have a specific shape property set.
+     * @@param shape the default shape code
+     */
+    public void setDefaultShape(int shape) {
+        if ( shape < 0 || shape >= SHAPE_COUNT )
+            throw new IllegalArgumentException("Unknown shape type.");
+        m_defaultShape = shape;
+    }
+    
+    /**
+     * Returns the code for the default shape used by the renderer. This is the
+     * shape used for all items that do not have a specific shape property set.
+     * @@return the default shape code
+     */
+    public int getDefaultShape() {
+        return m_defaultShape;
+    }
+    
+	/**
+	 * @@see prefuse.render.ShapeRenderer#getRawShape(prefuse.visual.VisualItem)
+	 */
+    protected Shape getRawShape(VisualItem item) {
+        int stype = m_defaultShape;
+        
+        if ( item.canGetInt(SHAPE) ) {
+            stype = item.getInt(SHAPE);
+        }
+        double x = item.getX();
+        if ( Double.isNaN(x) || Double.isInfinite(x) )
+            x = 0;
+        double y = item.getY();
+        if ( Double.isNaN(y) || Double.isInfinite(y) )
+            y = 0;
+        double width = m_baseSize*item.getSize2D();
+        
+        // Center the shape around the specified x and y
+        if ( width > 1 ) {
+            x = x-width/2;
+            y = y-width/2;
+        }
+        
+        switch ( stype ) {
+        case SHAPE_NONE:
+            return null;
+        case SHAPE_RECTANGLE:
+            return rectangle(x, y, width, width);
+        case SHAPE_ELLIPSE:
+            return ellipse(x, y, width, width);
+        case SHAPE_TRIANGLE:
+            return triangle((float)x, (float)y, (float)width);
+        case SHAPE_STAR:
+            return star((float)x, (float)y, (float)width);
+        case SHAPE_HEXAGON:
+            return hexagon((float)x, (float)y, (float)width);
+        case SHAPE_DIAMOND:
+            return diamond((float)x, (float)y, (float)width);
+        default:
+            throw new IllegalStateException("Unknown shape type: "+stype);
+        }
+    }
+
+    public Shape rectangle(double x, double y, double width, double height) {
+        m_rect.setFrame(x, y, width, height);
+        return m_rect;
+    }
+
+    public Shape ellipse(double x, double y, double width, double height) {
+        m_ellipse.setFrame(x, y, width, height);
+        return m_ellipse;
+    }
+    
+    public Shape triangle(float x, float y, float height) {
+        m_path.reset();
+        m_path.moveTo(x,y+height);
+        m_path.lineTo(x+height/2, y);
+        m_path.lineTo(x+height, (y+height));
+        m_path.closePath();
+        return m_path;
+    }
+
+    public Shape star(float x, float y, float height) {
+        float s = (float)(height/(2*Math.sin(Math.toRadians(54))));
+        float shortSide = (float)(height/(2*Math.tan(Math.toRadians(54))));
+        float mediumSide = (float)(s*Math.sin(Math.toRadians(18)));
+        float longSide = (float)(s*Math.cos(Math.toRadians(18)));
+        float innerLongSide = (float)(s/(2*Math.cos(Math.toRadians(36))));
+        float innerShortSide = innerLongSide*(float)Math.sin(Math.toRadians(36));
+        float innerMediumSide = innerLongSide*(float)Math.cos(Math.toRadians(36));
+
+        m_path.reset();
+        m_path.moveTo(x, y+shortSide);            
+        m_path.lineTo((x+innerLongSide),(y+shortSide));
+        m_path.lineTo((x+height/2),y);
+        m_path.lineTo((x+height-innerLongSide),(y+shortSide));
+        m_path.lineTo((x+height),(y+shortSide));
+        m_path.lineTo((x+height-innerMediumSide),(y+shortSide+innerShortSide));        
+        m_path.lineTo((x+height-mediumSide),(y+height));
+        m_path.lineTo((x+height/2),(y+shortSide+longSide-innerShortSide));
+        m_path.lineTo((x+mediumSide),(y+height));
+        m_path.lineTo((x+innerMediumSide),(y+shortSide+innerShortSide));
+        m_path.closePath();
+        return m_path;
+    }
+
+    public Shape hexagon(float x, float y, float height) {
+        double width = (Math.sqrt(3)*height/2);  
+
+        m_path.reset();
+        m_path.moveTo(x,(float)(y+0.5*height));
+        m_path.lineTo((float)(x+0.5*width/Math.sqrt(3)),y);
+        m_path.lineTo((float)(x+1.5*width/Math.sqrt(3)),y);
+        m_path.lineTo((float)(x+2*width/Math.sqrt(3)), (y+0.5f*height));
+        m_path.lineTo((float)(x+1.5*width/Math.sqrt(3)),(y+height));
+        m_path.lineTo((float)(x+0.5*width/Math.sqrt(3)),(y+height));
+        m_path.closePath();      
+        return m_path;
+    }
+
+    public Shape diamond(float x, float y, float height) {
+        m_path.reset();
+        m_path.moveTo(x,(y+0.5f*height));
+        m_path.lineTo((x+0.5f*height),y);
+        m_path.lineTo((x+height),(y+0.5f*height));
+        m_path.lineTo((x+0.5f*height),(y+height));
+        m_path.closePath();
+        return m_path;
+    }
+    
+} // end of class ShapeItemRenderer
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d97 3
+a99 3
+    /**
+     * @@see prefuse.render.ShapeRenderer#getRawShape(prefuse.visual.VisualItem)
+     */
+@
+
+
+1.1.2.3
+log
+@Removed automatic 2D interpretation of size field.
+@
+text
+@d112 1
+a112 1
+        double width = m_baseSize*item.getSize();
+@
+
+
+1.1.2.4
+log
+@Added expanded selection of shapes.
+@
+text
+@d19 8
+a26 12
+    public static final int SHAPE_NONE           = 0;
+    public static final int SHAPE_RECTANGLE      = 1;
+    public static final int SHAPE_ELLIPSE        = 2;
+    public static final int SHAPE_DIAMOND        = 3;
+    public static final int SHAPE_CROSS          = 4;
+    public static final int SHAPE_STAR           = 5;
+    public static final int SHAPE_TRIANGLE_UP    = 6;
+    public static final int SHAPE_TRIANGLE_DOWN  = 7;
+    public static final int SHAPE_TRIANGLE_LEFT  = 8;
+    public static final int SHAPE_TRIANGLE_RIGHT = 9;
+    public static final int SHAPE_HEXAGON        = 10;
+    public static final int SHAPE_COUNT          = 11;
+d127 2
+a128 10
+        case SHAPE_TRIANGLE_UP:
+            return triangle_up((float)x, (float)y, (float)width);
+        case SHAPE_TRIANGLE_DOWN:
+            return triangle_down((float)x, (float)y, (float)width);
+        case SHAPE_TRIANGLE_LEFT:
+            return triangle_left((float)x, (float)y, (float)width);
+        case SHAPE_TRIANGLE_RIGHT:
+            return triangle_right((float)x, (float)y, (float)width);
+        case SHAPE_CROSS:
+            return cross((float)x, (float)y, (float)width);
+d150 1
+a150 1
+    public Shape triangle_up(float x, float y, float height) {
+a157 46
+    
+    public Shape triangle_down(float x, float y, float height) {
+        m_path.reset();
+        m_path.moveTo(x,y);
+        m_path.lineTo(x+height, y);
+        m_path.lineTo(x+height/2, (y+height));
+        m_path.closePath();
+        return m_path;
+    }
+    
+    public Shape triangle_left(float x, float y, float height) {
+        m_path.reset();
+        m_path.moveTo(x+height, y);
+        m_path.lineTo(x+height, y+height);
+        m_path.lineTo(x, y+height/2);
+        m_path.closePath();
+        return m_path;
+    }
+    
+    public Shape triangle_right(float x, float y, float height) {
+        m_path.reset();
+        m_path.moveTo(x,y+height);
+        m_path.lineTo(x+height, y+height/2);
+        m_path.lineTo(x, y);
+        m_path.closePath();
+        return m_path;
+    }
+    
+    public Shape cross(float x, float y, float height) {
+        float h14 = 3*height/8, h34 = 5*height/8;
+        m_path.reset();
+        m_path.moveTo(x+h14, y);
+        m_path.lineTo(x+h34, y);
+        m_path.lineTo(x+h34, y+h14);
+        m_path.lineTo(x+height, y+h14);
+        m_path.lineTo(x+height, y+h34);
+        m_path.lineTo(x+h34, y+h34);
+        m_path.lineTo(x+h34, y+height);
+        m_path.lineTo(x+h14, y+height);
+        m_path.lineTo(x+h14, y+h34);
+        m_path.lineTo(x, y+h34);
+        m_path.lineTo(x, y+h14);
+        m_path.lineTo(x+h14, y+h14);
+        m_path.closePath();
+        return m_path;
+    }
+d184 2
+a185 2
+        float width = height/2;  
+        
+d187 6
+a192 6
+        m_path.moveTo(x,            y+0.5f*height);
+        m_path.lineTo(x+0.5f*width, y);
+        m_path.lineTo(x+1.5f*width, y);
+        m_path.lineTo(x+2.0f*width, y+0.5f*height);
+        m_path.lineTo(x+1.5f*width, y+height);
+        m_path.lineTo(x+0.5f*width, y+height);
+@
+
+
+1.1.2.5
+log
+@Much more javadoc
+@
+text
+@d11 1
+a11 2
+ * Renderer for drawing simple shapes. This class provides a number of built-in
+ * shapes, selected by an integer value retrieved from a VisualItem.
+d13 2
+a14 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a17 3
+    /**
+     * The default data value from which shape selections are read.
+     */
+a18 1
+    /** No shape. Do not draw */
+a19 1
+    /** Rectangle/Square shape */
+a20 1
+    /** Ellipse/Circle shape */
+a21 1
+    /** Diamond shape */
+a22 1
+    /** Cross shape */
+a23 1
+    /** Star shape */
+a24 1
+    /** Up-pointing triangle shape */
+a25 1
+    /** Down-pointing triangle shape */
+a26 1
+    /** Left-pointing triangle shape */
+a27 1
+    /** Right-pointing triangle shape */
+a28 1
+    /** Hexagon shape */
+a29 1
+    /** The number of recognized shape types */
+d65 2
+a66 3
+     * base size is the width and height value used when a VisualItem's size
+     * value is 1. The base size is scaled by the item's size value to arrive
+     * at the final scale used for rendering.
+a151 3
+    /**
+     * Returns a rectangle of the given dimenisions.
+     */
+a156 3
+    /**
+     * Returns an ellipse of the given dimenisions.
+     */
+a161 3
+    /**
+     * Returns a up-pointing triangle of the given dimenisions.
+     */
+a170 3
+    /**
+     * Returns a down-pointing triangle of the given dimenisions.
+     */
+a179 3
+    /**
+     * Returns a left-pointing triangle of the given dimenisions.
+     */
+a188 3
+    /**
+     * Returns a right-pointing triangle of the given dimenisions.
+     */
+a197 3
+    /**
+     * Returns a cross shape of the given dimenisions.
+     */
+a216 3
+    /**
+     * Returns a star shape of the given dimenisions.
+     */
+a240 3
+    /**
+     * Returns a hexagon shape of the given dimenisions.
+     */
+a254 3
+    /**
+     * Returns a diamond shape of the given dimenisions.
+     */
+@
+
+
+1.1.2.6
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a7 1
+import prefuse.Constants;
+d18 29
+d48 1
+d69 10
+d96 20
+d121 5
+a125 1
+        int stype = item.getShape();
+d141 1
+a141 1
+        case Constants.SHAPE_NONE:
+d143 1
+a143 1
+        case Constants.SHAPE_RECTANGLE:
+d145 1
+a145 1
+        case Constants.SHAPE_ELLIPSE:
+d147 1
+a147 1
+        case Constants.SHAPE_TRIANGLE_UP:
+d149 1
+a149 1
+        case Constants.SHAPE_TRIANGLE_DOWN:
+d151 1
+a151 1
+        case Constants.SHAPE_TRIANGLE_LEFT:
+d153 1
+a153 1
+        case Constants.SHAPE_TRIANGLE_RIGHT:
+d155 1
+a155 1
+        case Constants.SHAPE_CROSS:
+d157 1
+a157 1
+        case Constants.SHAPE_STAR:
+d159 1
+a159 1
+        case Constants.SHAPE_HEXAGON:
+d161 1
+a161 1
+        case Constants.SHAPE_DIAMOND:
+@
+
+
+1.1.2.7
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@@
+
+

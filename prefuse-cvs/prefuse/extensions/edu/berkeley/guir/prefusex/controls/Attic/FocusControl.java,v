@@ -1,0 +1,601 @@
+head	1.15;
+access;
+symbols
+	alpha:1.14.0.2
+	Root_alpha:1.14
+	prefuse-alpha-20051229:1.14
+	P20050401_Alpha_PreCHI:1.14;
+locks; strict;
+comment	@# @;
+
+
+1.15
+date	2006.02.11.06.38.43;	author jheer;	state dead;
+branches;
+next	1.14;
+
+1.14
+date	2005.03.23.02.39.41;	author jheer;	state Exp;
+branches
+	1.14.4.1;
+next	1.13;
+
+1.13
+date	2005.01.14.23.11.52;	author jheer;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2005.01.11.06.58.13;	author jheer;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2005.01.07.02.20.08;	author jheer;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2005.01.05.02.35.38;	author jheer;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2004.12.26.01.10.59;	author jheer;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.08.24.18.39.50;	author tha_jackl;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.04.15.00.35.16;	author jheer;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.04.10.20.54.44;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.25.04.35.38;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.23.03.55.41;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.15.03.33.27;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.09.03.44.07;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.46;	author jheer;	state Exp;
+branches;
+next	;
+
+1.14.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.15
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefusex.controls;
+
+import java.awt.Cursor;
+import java.awt.event.MouseEvent;
+
+import javax.swing.SwingUtilities;
+
+import edu.berkeley.guir.prefuse.Display;
+import edu.berkeley.guir.prefuse.FocusManager;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.NodeItem;
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.activity.Activity;
+import edu.berkeley.guir.prefuse.event.ControlAdapter;
+import edu.berkeley.guir.prefuse.focus.FocusSet;
+import edu.berkeley.guir.prefuse.graph.Entity;
+
+/**
+ * Sets the current focus (according to the ItemRegistry's default focus
+ * set) in response to mouse actions. This does not necessarily cause the
+ * display to change. For this functionality, use a 
+ * {@@link edu.berkeley.guir.prefuse.event.FocusListener FocusListener} 
+ * to drive display updates when the focus changes.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class FocusControl extends ControlAdapter {
+
+    private Object focusSetKey = FocusManager.DEFAULT_KEY;
+    protected int ccount;
+    protected Class[] itemTypes = new Class[] { NodeItem.class };
+    protected Activity activity = null;
+    protected Entity curFocus = null;
+    
+    /**
+     * Creates a new FocusControl that changes the focus to another item
+     * when that item is clicked once.
+     */
+    public FocusControl() {
+        this(1);
+    } //
+    
+    /**
+     * Creates a new FocusControl that changes the focus to another item
+     * when that item is clicked once.
+     * @@param act an activity run to upon focus change 
+     */
+    public FocusControl(Activity act) {
+        this(1);
+        activity = act;
+    } //
+    
+    /**
+     * Creates a new FocusControl that changes the focus when an item is 
+     * clicked the specified number of times. A click value of zero indicates
+     * that the focus should be changed in response to mouse-over events.
+     * @@param clicks the number of clicks needed to switch the focus.
+     */
+    public FocusControl(int clicks) {
+        ccount = clicks;
+    } //
+    
+    /**
+     * Creates a new FocusControl that changes the focus when an item is 
+     * clicked the specified number of times. A click value of zero indicates
+     * that the focus should be changed in response to mouse-over events.
+     * @@param clicks the number of clicks needed to switch the focus.
+     * @@param act an activity run to upon focus change 
+     */
+    public FocusControl(int clicks, Activity act) {
+        ccount = clicks;
+        activity = act;
+    } //
+    
+    /**
+     * Creates a new FocusControl that changes the focus when an item is 
+     * clicked the specified number of times. A click value of zero indicates
+     * that the focus should be changed in response to mouse-over events.
+     * @@param clicks the number of clicks needed to switch the focus.
+     * @@param types the VisualItem classes that eligible for focus status
+     */
+    public FocusControl(int clicks, Class[] types) {
+        ccount = clicks;
+        setFocusItemTypes(types);
+    } //
+    
+    /**
+     * Creates a new FocusControl that changes the focus when an item is 
+     * clicked the specified number of times. A click value of zero indicates
+     * that the focus should be changed in response to mouse-over events.
+     * @@param clicks the number of clicks needed to switch the focus.
+     * @@param focusSetKey the key corresponding to the focus set to use
+     */
+    public FocusControl(int clicks, Object focusSetKey) {
+        ccount = clicks;
+        this.focusSetKey = focusSetKey;
+    } //
+    
+    /**
+     * Creates a new FocusControl that changes the focus when an item is 
+     * clicked the specified number of times. A click value of zero indicates
+     * that the focus should be changed in response to mouse-over events.
+     * @@param clicks the number of clicks needed to switch the focus.
+     * @@param act an activity run to upon focus change 
+     * @@param focusSetKey the key corresponding to the focus set to use
+     */
+    public FocusControl(int clicks, Activity act, Object focusSetKey) {
+        ccount = clicks;
+        activity = act;
+        this.focusSetKey = focusSetKey;
+    } //
+    
+    /**
+     * Creates a new FocusControl that changes the focus when an item is 
+     * clicked the specified number of times. A click value of zero indicates
+     * that the focus should be changed in response to mouse-over events.
+     * @@param clicks the number of clicks needed to switch the focus.
+     * @@param focusSetKey the key corresponding to the focus set to use
+     * @@param types the VisualItem classes that eligible for focus status
+     */
+    public FocusControl(int clicks, Object focusSetKey, Class[] types) {
+        ccount = clicks;
+        this.focusSetKey = focusSetKey;
+        setFocusItemTypes(types);
+    } //
+    
+    public void setFocusItemTypes(Class[] types) {
+        for ( int i=0; i<types.length; i++ ) {
+            if ( !isVisualItem(types[i]) ) {
+                throw new IllegalArgumentException("All types must be of type VisualItem");
+            }
+        }
+        itemTypes = (Class[])types.clone();
+    } //
+    
+    protected boolean isVisualItem(Class c) {
+        while ( c != null && !VisualItem.class.equals(c) ) {
+            c = c.getSuperclass();
+        }
+        return (c != null);
+    } //
+    
+    protected boolean isAllowedType(VisualItem item) {
+        for ( int i=0; i<itemTypes.length; i++ ) {
+            if ( itemTypes[i].isInstance(item) ) {
+                return true;
+            }
+        }
+        return false;
+    } //
+    
+    public void itemEntered(VisualItem item, MouseEvent e) {
+        if ( isAllowedType(item) ) {
+            Display d = (Display)e.getSource();
+            d.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            if ( ccount == 0 ) {
+        		curFocus = item.getEntity();
+        		ItemRegistry registry = item.getItemRegistry();
+        		synchronized ( registry ) {
+	        		FocusManager fm = registry.getFocusManager();
+	        		FocusSet fs = fm.getFocusSet(focusSetKey);
+	        		fs.set(item.getEntity());
+	        		registry.touch(item.getItemClass());
+        		}
+        		runActivity();
+            }
+        }
+    } //
+    
+    public void itemExited(VisualItem item, MouseEvent e) {
+        if ( isAllowedType(item) ) {
+            Display d = (Display)e.getSource();
+            d.setCursor(Cursor.getDefaultCursor());
+            if ( ccount == 0 ) {
+            	curFocus = null;
+                ItemRegistry registry = item.getItemRegistry();
+                if ( registry != null ) {
+                    synchronized ( registry ) {
+	                    FocusManager fm = registry.getFocusManager();
+	                    FocusSet fs = fm.getFocusSet(focusSetKey);
+	                    fs.remove(item.getEntity());
+	                    registry.touch(item.getItemClass());
+                    }
+                }
+                runActivity();
+            }
+        }
+    } //
+    
+    public void itemClicked(VisualItem item, MouseEvent e) {
+        if ( isAllowedType(item) && ccount > 0 && 
+             SwingUtilities.isLeftMouseButton(e)    && 
+             e.getClickCount() == ccount )
+        {
+        	Entity focus = item.getEntity();
+        	if ( focus != curFocus ) {
+	            ItemRegistry registry = item.getItemRegistry();
+	            synchronized ( registry ) {
+		            FocusManager fm = registry.getFocusManager();
+		            FocusSet fs = fm.getFocusSet(focusSetKey);
+		            
+		            boolean ctrl = e.isControlDown();
+		            if ( !ctrl ) {
+		                curFocus = focus;
+		                fs.set(focus);
+		            } else if ( fs.contains(focus) ) {
+		                fs.remove(focus);
+		            } else {
+		                fs.add(focus);
+		            }
+		            registry.touch(item.getItemClass());
+	            }
+	            runActivity();
+        	}
+        }
+    } //
+    
+    private void runActivity() {
+        if ( activity != null ) {
+            activity.runNow();
+        }
+    } //
+    
+} // end of class FocusControl
+@
+
+
+1.14
+log
+@Control updates
+@
+text
+@@
+
+
+1.14.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.13
+log
+@Added additional constructor
+@
+text
+@d160 6
+a165 4
+        		FocusManager fm = registry.getFocusManager();
+        		FocusSet fs = fm.getFocusSet(focusSetKey);
+        		fs.set(item.getEntity());
+        		registry.touch(item.getItemClass());
+d178 8
+a185 4
+                FocusManager fm = registry.getFocusManager();
+                FocusSet fs = fm.getFocusSet(focusSetKey);
+                fs.remove(item.getEntity());
+                registry.touch(item.getItemClass());
+a197 1
+        		curFocus = focus;
+d199 15
+a213 4
+	            FocusManager fm = registry.getFocusManager();
+	            FocusSet fs = fm.getFocusSet(focusSetKey);
+	            fs.set(item.getEntity());
+	            registry.touch(item.getItemClass());
+@
+
+
+1.12
+log
+@Added safeguards against triggering update with unchanged focus
+@
+text
+@d105 14
+@
+
+
+1.11
+log
+@Added activity to run on focus update
+@
+text
+@d16 1
+d34 1
+d144 7
+a150 6
+                ItemRegistry registry = item.getItemRegistry();
+                FocusManager fm = registry.getFocusManager();
+                FocusSet fs = fm.getFocusSet(focusSetKey);
+                fs.set(item.getEntity());
+                registry.touch(item.getItemClass());
+                runActivity();
+d160 1
+d176 10
+a185 6
+            ItemRegistry registry = item.getItemRegistry();
+            FocusManager fm = registry.getFocusManager();
+            FocusSet fs = fm.getFocusSet(focusSetKey);
+            fs.set(item.getEntity());
+            registry.touch(item.getItemClass());
+            runActivity();
+@
+
+
+1.10
+log
+@Created new package for FocusSet implementations
+@
+text
+@d13 1
+d32 1
+d43 10
+d67 12
+d147 1
+a147 1
+                
+d162 1
+d177 7
+@
+
+
+1.9
+log
+@Added support for multiple item types
+@
+text
+@d14 1
+a14 1
+import edu.berkeley.guir.prefuse.util.FocusSet;
+@
+
+
+1.8
+log
+@Visibility changed from private to protected
+@
+text
+@d30 1
+d55 12
+d74 39
+d114 1
+a114 1
+        if ( item instanceof NodeItem ) {
+d129 1
+a129 1
+        if ( item instanceof NodeItem ) {
+d143 1
+a143 1
+        if ( item instanceof NodeItem && ccount > 0 && 
+@
+
+
+1.7
+log
+@Application-driven updates
+@
+text
+@d29 1
+a29 1
+    private int ccount;
+d42 1
+a42 1
+     * that the focus shoudl be changed in response to mouse-over events.
+d52 1
+a52 1
+     * that the focus shoudl be changed in response to mouse-over events.
+@
+
+
+1.6
+log
+@Added support to control for different focus sets
+@
+text
+@d10 1
+d66 2
+a67 1
+                FocusManager fm = item.getItemRegistry().getFocusManager();
+d70 2
+d81 2
+a82 1
+                FocusManager fm = item.getItemRegistry().getFocusManager();
+d85 1
+d95 2
+a96 1
+            FocusManager fm = item.getItemRegistry().getFocusManager();
+d99 1
+@
+
+
+1.5
+log
+@A whole lot of update
+@
+text
+@d9 1
+a9 1
+import edu.berkeley.guir.prefuse.ItemRegistry;
+d13 1
+d27 1
+d48 12
+d65 3
+a67 2
+                ItemRegistry registry = item.getItemRegistry();
+                registry.getDefaultFocusSet().set(item.getEntity());
+d76 5
+d89 3
+a91 2
+            ItemRegistry registry = item.getItemRegistry();
+            registry.getDefaultFocusSet().set(item.getEntity());
+@
+
+
+1.4
+log
+@Major refactor
+@
+text
+@d16 1
+a16 1
+ * set) when an item is clicked. This does not necessarily cause the
+d38 2
+a39 1
+     * clicked the specified number of times.
+d50 4
+d65 3
+a67 2
+        if ( item instanceof NodeItem && SwingUtilities.isLeftMouseButton(e) 
+                && e.getClickCount() == ccount )
+@
+
+
+1.3
+log
+@Updated Javadoc
+@
+text
+@a8 1
+import edu.berkeley.guir.prefuse.GraphItem;
+d10 2
+d45 5
+a49 3
+    public void itemEntered(GraphItem item, MouseEvent e) {
+        Display d = (Display)e.getSource();
+        d.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+d52 5
+a56 3
+    public void itemExited(GraphItem item, MouseEvent e) {
+        Display d = (Display)e.getSource();
+        d.setCursor(Cursor.getDefaultCursor());
+d59 4
+a62 2
+    public void itemClicked(GraphItem item, MouseEvent e) {
+        if ( SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == ccount ) {
+@
+
+
+1.2
+log
+@Added click count parameter
+@
+text
+@a10 2
+import edu.berkeley.guir.prefuse.activity.Activity;
+import edu.berkeley.guir.prefuse.activity.ActivityManager;
+d15 4
+a18 1
+ * set) when an item is clicked.
+a25 1
+    private Activity update = null;
+d27 4
+d35 5
+a43 4
+    public FocusControl(Activity update) {
+        this.update = update;
+    } //
+    
+a57 2
+            if ( update != null )
+                ActivityManager.scheduleNow(update);
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d24 1
+d28 5
+d50 1
+a50 1
+        if ( SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1 ) {
+@
+

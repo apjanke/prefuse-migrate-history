@@ -1,0 +1,235 @@
+head	1.5;
+access;
+symbols
+	alpha:1.4.0.2
+	Root_alpha:1.4
+	prefuse-alpha-20051229:1.4
+	P20050401_Alpha_PreCHI:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2006.02.12.18.23.42;	author jheer;	state dead;
+branches;
+next	1.4;
+
+1.4
+date	2005.10.27.23.51.03;	author jheer;	state Exp;
+branches
+	1.4.4.1;
+next	1.3;
+
+1.3
+date	2004.03.23.19.34.05;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.11.19.11.14;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.09.59;	author jheer;	state Exp;
+branches;
+next	;
+
+1.4.4.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.5
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.graph.io;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
+import edu.berkeley.guir.prefuse.graph.DefaultEdge;
+import edu.berkeley.guir.prefuse.graph.DefaultTree;
+import edu.berkeley.guir.prefuse.graph.DefaultTreeNode;
+import edu.berkeley.guir.prefuse.graph.Tree;
+import edu.berkeley.guir.prefuse.graph.TreeNode;
+
+/**
+ * Reads in tree-structured data in the TreeML, XML-based format.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class TreeMLTreeReader extends AbstractTreeReader {
+
+	/**
+	 * @@see edu.berkeley.guir.prefuse.graph.io.TreeReader#loadTree(java.io.InputStream)
+	 */
+	public Tree loadTree(InputStream is) throws IOException {
+		try {		
+			TreeMLHandler    handler   = new TreeMLHandler();
+			SAXParserFactory factory   = SAXParserFactory.newInstance();
+			SAXParser        saxParser = factory.newSAXParser();
+			saxParser.parse(is, handler);
+			return handler.getTree();
+		} catch ( SAXException se ) {
+			se.printStackTrace();
+		} catch ( ParserConfigurationException pce ) {
+			pce.printStackTrace();
+		} 
+		return null;
+	} //
+
+	/**
+	 * Helper class that performs XML parsing of graph files using
+	 * SAX (the Simple API for XML).
+	 */
+	public class TreeMLHandler extends DefaultHandler {
+		
+		public static final String TREE   = "tree";
+		public static final String BRANCH = "branch";
+		public static final String LEAF   = "leaf";
+		public static final String ATTR   = "attribute";
+		public static final String NAME   = "name";
+		public static final String VALUE  = "value";
+		
+		private Tree m_tree = null;
+		private TreeNode m_root = null;
+		private TreeNode m_activeNode = null;
+		
+		public void startDocument() {
+			m_tree = null;
+		} //
+		
+		public void endDocument() {
+			// construct tree
+			m_tree = new DefaultTree(m_root);
+		} //
+		
+		public void endElement(String namespaceURI, String localName, String qName) {
+			if ( qName.equals(BRANCH) || qName.equals(LEAF) ) {
+				m_activeNode = m_activeNode.getParent();
+			}
+		} //
+		
+		public void startElement(String namespaceURI, String localName, String qName, Attributes atts) {			
+			if ( qName.equals(BRANCH) || qName.equals(LEAF) ) {
+				// parse a node element
+				TreeNode n;
+				if ( m_activeNode == null ) {
+					n = new DefaultTreeNode();
+					m_root = n;
+				} else {
+					n = new DefaultTreeNode();
+                    m_activeNode.addChild(new DefaultEdge(m_activeNode,n));
+				}
+				m_activeNode = n;
+			} else if ( qName.equals(ATTR) ) {
+				// parse an attribute
+				parseAttribute(atts);
+			}
+		} //
+		
+		protected void parseAttribute(Attributes atts) {
+			String alName, name = null, value = null;
+			for ( int i = 0; i < atts.getLength(); i++ ) {
+				alName = atts.getQName(i);
+				if ( alName.equals(NAME) ) {
+					name = atts.getValue(i);
+				} else if ( alName.equals(VALUE) ) {
+					value = atts.getValue(i);
+				}
+			}
+			if ( name == null || value == null ) {
+				System.err.println("Attribute under-specified");
+				return;
+			}
+
+			m_activeNode.setAttribute(name, value);
+		} //
+		
+		public Tree getTree() {
+			return m_tree;
+		} //
+		
+	} // end of inner class TreeMLHandler
+	
+} // end of class TreeMLTReeReader
+@
+
+
+1.4
+log
+@Removed unnecesary code.
+@
+text
+@@
+
+
+1.4.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.3
+log
+@More Javadoc updates
+@
+text
+@a61 3
+		private boolean m_directed = false;
+		
+		private boolean inNode, inEdge;
+@
+
+
+1.2
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@d21 1
+a21 2
+ * 
+ * Jul 22, 2003 - jheer - Created class
+d24 1
+a24 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@d14 3
+d73 1
+a73 1
+			m_tree = new Tree(m_root);
+d87 1
+a87 1
+					n = new TreeNode();
+d90 2
+a91 1
+					n = new TreeNode(m_activeNode);
+@
+

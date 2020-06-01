@@ -1,0 +1,768 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2006.01.09.23.21.43;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.09.23.21.43;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.48;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.ui;
+
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
+
+import prefuse.data.Graph;
+import prefuse.data.Node;
+import prefuse.data.Tree;
+import prefuse.data.event.EventConstants;
+import prefuse.data.event.GraphListener;
+import prefuse.util.StringLib;
+import prefuse.util.collections.CopyOnWriteArrayList;
+import prefuse.visual.VisualTree;
+
+/**
+ * Swing component that displays a prefuse Tree instance in a Swing
+ * JTree component. Graph instances can also be displayed by first
+ * getting a Tree instance with the
+ * {@@link prefuse.data.Graph#getSpanningTree()} method.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ * @@see javax.swing.JTree
+ */
+public class JPrefuseTree extends JTree {
+
+    private Tree m_tree;
+    private String m_field;
+    
+    /**
+     * Create a new JPrefuseTree.
+     * @@param t the Tree to display
+     * @@param labelField the data field used to privde labels
+     */
+    public JPrefuseTree(Tree t, String labelField) {
+        super();
+        m_tree = t;
+        m_field = labelField;
+        
+        PrefuseTreeModel model = new PrefuseTreeModel();
+        super.setModel(model);
+        m_tree.addGraphModelListener(model);
+    }
+    
+    /**
+     * Return the backing Tree instance.
+     * @@return the backing Tree
+     */
+    public Tree getTree() {
+        return m_tree;
+    }
+    
+    /**
+     * Returns a String label for Node instances by looking up the
+     * label data field specified in the constructor of this class.
+     * @@see javax.swing.JTree#convertValueToText(java.lang.Object, boolean, boolean, boolean, int, boolean)
+     */
+    public String convertValueToText(Object value, boolean selected,
+            boolean expanded, boolean leaf, int row, boolean hasFocus)
+    {
+        if ( value == null )
+            return "";
+        
+        if ( value instanceof Node ) {
+            Object o = ((Node)value).get(m_field);
+            if ( o.getClass().isArray() ) {
+                return StringLib.getArrayString(o);
+            } else {
+                return o.toString();
+            }
+        } else {
+            return value.toString();
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * TreeModel implementation that provides an adapter to a backing prefuse
+     * Tree instance.
+     */
+    public class PrefuseTreeModel implements TreeModel, GraphListener {
+
+        private CopyOnWriteArrayList m_listeners = new CopyOnWriteArrayList();
+        
+        /**
+         * @@see javax.swing.tree.TreeModel#getRoot()
+         */
+        public Object getRoot() {
+            return m_tree.getRoot();
+        }
+
+        /**
+         * @@see javax.swing.tree.TreeModel#getChild(java.lang.Object, int)
+         */
+        public Object getChild(Object node, int idx) {
+            Node c = ((Node)node).getChild(idx);
+            if ( c == null ) {
+                throw new IllegalArgumentException("Index out of range: "+idx);
+            }
+            return c;
+        }
+
+        /**
+         * @@see javax.swing.tree.TreeModel#getChildCount(java.lang.Object)
+         */
+        public int getChildCount(Object node) {
+            return ((Node)node).getChildCount();
+        }
+
+        /**
+         * @@see javax.swing.tree.TreeModel#isLeaf(java.lang.Object)
+         */
+        public boolean isLeaf(Object node) {
+            return ((Node)node).getChildCount() == 0;
+        }
+
+        /**
+         * @@see javax.swing.tree.TreeModel#valueForPathChanged(javax.swing.tree.TreePath, java.lang.Object)
+         */
+        public void valueForPathChanged(TreePath path, Object newValue) {
+            // do nothing?
+        }
+
+        /**
+         * @@see javax.swing.tree.TreeModel#getIndexOfChild(java.lang.Object, java.lang.Object)
+         */
+        public int getIndexOfChild(Object parent, Object child) {
+            return ((Node)parent).getChildIndex(((Node)child));
+        }
+
+        /**
+         * @@see javax.swing.tree.TreeModel#addTreeModelListener(javax.swing.event.TreeModelListener)
+         */
+        public void addTreeModelListener(TreeModelListener tml) {
+            if ( !m_listeners.contains(tml) )
+                m_listeners.add(tml);
+        }
+
+        /**
+         * @@see javax.swing.tree.TreeModel#removeTreeModelListener(javax.swing.event.TreeModelListener)
+         */
+        public void removeTreeModelListener(TreeModelListener tml) {
+            m_listeners.remove(tml);
+        }
+
+        /**
+         * @@see prefuse.data.event.GraphListener#graphChanged(prefuse.data.Graph, java.lang.String, int, int, int, int)
+         */
+        public void graphChanged(Graph g, String table, int start, int end,
+                                 int col, int type)
+        {
+            if ( m_listeners == null || m_listeners.size() == 0 )
+                return; // nothing to do
+            
+            boolean nodeTable = table.equals(Graph.NODES);
+            if ( type != EventConstants.UPDATE && nodeTable )
+                return;
+            else if ( type == EventConstants.UPDATE && !nodeTable )
+                return;
+            
+            for ( int row = start; row <= end; ++row ) {
+                // create the event
+                Node n = null;
+                if ( nodeTable )
+                    n = g.getNode(row);
+                else
+                    n = g.getEdge(row).getTargetNode();
+                Object[] path = new Object[n.getDepth()+1];
+                for ( int i=path.length; --i>=0; n=n.getParent() ) {
+                    path[i] = n;
+                }
+                TreeModelEvent e = new TreeModelEvent(this, path);
+                
+                // fire it
+                Object[] lstnrs = m_listeners.getArray();
+                for ( int i=0; i<lstnrs.length; ++i ) {
+                    TreeModelListener tml = (TreeModelListener)lstnrs[i];
+                    
+                    switch ( type ) {
+                    case EventConstants.INSERT:
+                        tml.treeNodesInserted(e);
+                        break;
+                    case EventConstants.DELETE:
+                        tml.treeNodesRemoved(e);
+                        break;
+                    case EventConstants.UPDATE:
+                        tml.treeNodesChanged(e);
+                    }
+                }
+            }
+        }
+                
+    } // end of inner class PrefuseTreeModel
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Create a new window displaying the contents of the input Tree as
+     * a Swing JTree.
+     * @@param t the Tree instance to display
+     * @@param labelField the data field to use for labeling nodes
+     * @@return a reference to the JFrame holding the tree view
+     */
+    public static JFrame showTreeWindow(Tree t, String labelField) {
+        JPrefuseTree tree = new JPrefuseTree(t, labelField);
+        String title = t.toString();
+        if ( t instanceof VisualTree ) {
+            title = ((VisualTree)t).getGroup() + " " + title;
+        }
+        JFrame frame = new JFrame(title);
+        frame.getContentPane().add(new JScrollPane(tree));
+        frame.pack();
+        frame.setVisible(true);
+        return frame;
+    }
+    
+} // end of class JPrefuseTree
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a2 2
+import java.util.concurrent.CopyOnWriteArrayList;
+
+d17 1
+d25 1
+a25 1
+ *
+d31 3
+a33 3
+    private final Tree m_tree;
+    private final String m_field;
+
+d43 1
+a43 1
+
+d48 1
+a48 1
+
+d56 1
+a56 1
+
+d62 1
+a62 2
+    @@Override
+	public String convertValueToText(Object value, boolean selected,
+d65 3
+a67 4
+        if ( value == null ) {
+			return "";
+		}
+
+d79 1
+a79 1
+
+d81 1
+a81 1
+
+d88 2
+a89 2
+        private final CopyOnWriteArrayList<TreeModelListener> m_listeners = new CopyOnWriteArrayList<TreeModelListener>();
+
+d101 5
+a105 1
+            return ((Node<?,?>)node).children().get(idx);
+d112 1
+a112 1
+            return ((Node<?,?>)node).children().size();
+d119 1
+a119 1
+            return ((Node<?,?>)node).children().isEmpty();
+d133 1
+a133 1
+            return ((Node)parent).children().indexOf(((Node)child));
+d140 2
+a141 3
+            if ( !m_listeners.contains(tml) ) {
+				m_listeners.add(tml);
+			}
+d157 3
+a159 4
+            if ( m_listeners == null || m_listeners.size() == 0 ) {
+				return; // nothing to do
+			}
+
+d161 5
+a165 6
+            if ( type != EventConstants.UPDATE && nodeTable ) {
+				return;
+			} else if ( type == EventConstants.UPDATE && !nodeTable ) {
+				return;
+			}
+
+d169 4
+a172 5
+                if ( nodeTable ) {
+					n = g.getNode(row);
+				} else {
+					n = g.getEdge(row).getTargetNode();
+				}
+d178 1
+a178 1
+
+d180 4
+a183 1
+                for(TreeModelListener l : m_listeners) {
+d186 1
+a186 1
+                        l.treeNodesInserted(e);
+d189 1
+a189 1
+                        l.treeNodesRemoved(e);
+d192 1
+a192 1
+                        l.treeNodesChanged(e);
+d197 1
+a197 1
+
+d199 1
+a199 1
+
+d201 1
+a201 1
+
+d221 1
+a221 1
+
+@
+
+
+1.1
+log
+@file JPrefuseTree.java was initially added on branch beta.
+@
+text
+@d1 222
+@
+
+
+1.1.2.1
+log
+@Added JPrefuseTree, adapter to Swing Tree widget
+@
+text
+@a0 180
+package prefuse.util.ui;
+
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
+
+import prefuse.data.Graph;
+import prefuse.data.Tree;
+import prefuse.data.event.EventConstants;
+import prefuse.data.event.GraphListener;
+import prefuse.data.tuple.TreeNode;
+import prefuse.util.StringLib;
+import prefuse.util.collections.CopyOnWriteArrayList;
+import prefuse.visual.VisualTree;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ * @@see javax.swing.JTree
+ */
+public class JPrefuseTree extends JTree {
+
+    private Tree m_tree;
+    private String m_field;
+    
+    public JPrefuseTree(Tree t, String labelField) {
+        super();
+        m_tree = t;
+        m_field = labelField;
+        
+        PrefuseTreeModel model = new PrefuseTreeModel();
+        super.setModel(model);
+        m_tree.addGraphModelListener(model);
+    }
+    
+    public Tree getTree() {
+        return m_tree;
+    }
+    
+    public String convertValueToText(Object value, boolean selected,
+            boolean expanded, boolean leaf, int row, boolean hasFocus)
+    {
+        if ( value == null )
+            return "";
+        
+        if ( value instanceof TreeNode ) {
+            Object o = ((TreeNode)value).get(m_field);
+            if ( o.getClass().isArray() ) {
+                return StringLib.getArrayString(o);
+            } else {
+                return o.toString();
+            }
+        } else {
+            return value.toString();
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public class PrefuseTreeModel implements TreeModel, GraphListener {
+
+        private CopyOnWriteArrayList m_listeners = new CopyOnWriteArrayList();
+        
+        public Object getRoot() {
+            return m_tree.getRoot();
+        }
+
+        public Object getChild(Object node, int idx) {
+            TreeNode n = (TreeNode)node;
+            int count = n.getChildCount();
+            if ( idx < 0 || idx >= count ) {
+                throw new IllegalArgumentException("Index out of range: "+idx);
+            }
+            TreeNode c = n.getFirstChild();
+            for ( int i=0; ; ++i, c = c.getNextSibling() ) {
+                if ( i == idx )
+                    return c;
+            }
+        }
+
+        public int getChildCount(Object node) {
+            return ((TreeNode)node).getChildCount();
+        }
+
+        public boolean isLeaf(Object node) {
+            return ((TreeNode)node).getChildCount() == 0;
+        }
+
+        public void valueForPathChanged(TreePath path, Object newValue) {
+        }
+
+        public int getIndexOfChild(Object parent, Object child) {
+            TreeNode p = (TreeNode)parent;
+            TreeNode c = (TreeNode)child;
+            TreeNode x=p.getFirstChild();
+            for ( int i=0; x!=null; ++i, x=x.getNextSibling() ) {
+                if ( c == x ) return i;
+            }
+            return -1;
+        }
+
+        public void addTreeModelListener(TreeModelListener tml) {
+            if ( !m_listeners.contains(tml) )
+                m_listeners.add(tml);
+        }
+
+        public void removeTreeModelListener(TreeModelListener tml) {
+            m_listeners.remove(tml);
+        }
+
+        public void graphChanged(Graph g, String table, int start, int end, int col, int type)
+        {
+            if ( m_listeners == null || m_listeners.size() == 0 )
+                return; // nothing to do
+            
+            boolean nodeTable = table.equals(Graph.NODE_TABLE);
+            if ( type != EventConstants.UPDATE && nodeTable )
+                return;
+            else if ( type == EventConstants.UPDATE && !nodeTable )
+                return;
+            
+            for ( int row = start; row <= end; ++row ) {
+                // create the event
+                TreeNode n = null;
+                if ( nodeTable )
+                    n = (TreeNode)g.getNode(row);
+                else
+                    n = (TreeNode)g.getEdge(row).getTargetNode();
+                Object[] path = new Object[n.getDepth()];
+                for ( int i=path.length-1; --i>=0; ++i, n=n.getParent() ) {
+                    path[i] = n;
+                }
+                TreeModelEvent e = new TreeModelEvent(this, path);
+                
+                // fire it
+                Object[] lstnrs = m_listeners.getArray();
+                for ( int i=0; i<lstnrs.length; ++i ) {
+                    TreeModelListener tml = (TreeModelListener)lstnrs[i];
+                    
+                    switch ( type ) {
+                    case EventConstants.INSERT:
+                        tml.treeNodesInserted(e);
+                        break;
+                    case EventConstants.DELETE:
+                        tml.treeNodesRemoved(e);
+                        break;
+                    case EventConstants.UPDATE:
+                        tml.treeNodesChanged(e);
+                    }
+                }
+            }
+        }
+                
+    } // end of inner class PrefuseTreeModel
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Create a new window displaying the contents of the input Tree as
+     * a Swing JTree.
+     * @@param t the Tree instance to display
+     * @@return a reference to the JFrame holding the tree view
+     */
+    public static JFrame showTreeWindow(Tree t, String labelField) {
+        JPrefuseTree tree = new JPrefuseTree(t, labelField);
+        String title = t.toString();
+        if ( t instanceof VisualTree ) {
+            title = ((VisualTree)t).getGroup() + " " + title;
+        }
+        JFrame frame = new JFrame(title);
+        frame.getContentPane().add(new JScrollPane(tree));
+        frame.pack();
+        frame.setVisible(true);
+        return frame;
+    }
+    
+} // end of class JPrefuseTree
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d15 1
+a15 1
+import prefuse.data.tuple.Node;
+d49 2
+a50 2
+        if ( value instanceof Node ) {
+            Object o = ((Node)value).get(m_field);
+d72 3
+a74 2
+            Node c = ((Node)node).getChild(idx);
+            if ( c == null ) {
+d77 5
+a81 1
+            return c;
+d85 1
+a85 1
+            return ((Node)node).getChildCount();
+d89 1
+a89 1
+            return ((Node)node).getChildCount() == 0;
+a92 1
+        	// do nothing?
+d96 7
+a102 1
+            return ((Node)parent).getChildIndex(((Node)child));
+d119 1
+a119 1
+            boolean nodeTable = table.equals(Graph.NODES);
+d127 1
+a127 1
+            	Node n = null;
+d129 1
+a129 1
+                    n = g.getNode(row);
+d131 3
+a133 3
+                    n = g.getEdge(row).getTargetNode();
+                Object[] path = new Object[n.getDepth()+1];
+                for ( int i=path.length; --i>=0; n=n.getParent() ) {
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d88 1
+a88 1
+            // do nothing?
+d117 1
+a117 1
+                Node n = null;
+@
+
+
+1.1.2.4
+log
+@Much more javadoc
+@
+text
+@d21 1
+a21 6
+ * Swing component that displays a prefuse Tree instance in a Swing
+ * JTree component. Graph instances can also be displayed by first
+ * getting a Tree instance with the
+ * {@@link prefuse.data.Graph#getSpanningTree()} method.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a28 5
+    /**
+     * Create a new JPrefuseTree.
+     * @@param t the Tree to display
+     * @@param labelField the data field used to privde labels
+     */
+a38 4
+    /**
+     * Return the backing Tree instance.
+     * @@return the backing Tree
+     */
+a42 5
+    /**
+     * Returns a String label for Node instances by looking up the
+     * label data field specified in the constructor of this class.
+     * @@see javax.swing.JTree#convertValueToText(java.lang.Object, boolean, boolean, boolean, int, boolean)
+     */
+a62 4
+    /**
+     * TreeModel implementation that provides an adapter to a backing prefuse
+     * Tree instance.
+     */
+a66 3
+        /**
+         * @@see javax.swing.tree.TreeModel#getRoot()
+         */
+a70 3
+        /**
+         * @@see javax.swing.tree.TreeModel#getChild(java.lang.Object, int)
+         */
+a78 3
+        /**
+         * @@see javax.swing.tree.TreeModel#getChildCount(java.lang.Object)
+         */
+a82 3
+        /**
+         * @@see javax.swing.tree.TreeModel#isLeaf(java.lang.Object)
+         */
+a86 3
+        /**
+         * @@see javax.swing.tree.TreeModel#valueForPathChanged(javax.swing.tree.TreePath, java.lang.Object)
+         */
+a90 3
+        /**
+         * @@see javax.swing.tree.TreeModel#getIndexOfChild(java.lang.Object, java.lang.Object)
+         */
+a94 3
+        /**
+         * @@see javax.swing.tree.TreeModel#addTreeModelListener(javax.swing.event.TreeModelListener)
+         */
+a99 3
+        /**
+         * @@see javax.swing.tree.TreeModel#removeTreeModelListener(javax.swing.event.TreeModelListener)
+         */
+d104 1
+a104 5
+        /**
+         * @@see prefuse.data.event.GraphListener#graphChanged(prefuse.data.Graph, java.lang.String, int, int, int, int)
+         */
+        public void graphChanged(Graph g, String table, int start, int end,
+                                 int col, int type)
+a154 1
+     * @@param labelField the data field to use for labeling nodes
+@
+
+
+1.1.2.5
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a11 1
+import prefuse.data.Node;
+d15 1
+@
+
+

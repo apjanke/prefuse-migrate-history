@@ -1,0 +1,417 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.04.14.06.57.11;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.47;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.08;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.46;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Added filtered iteration of members to AggregateItem
+Added member-based aggregate lookup to AggregateItemTable
+@
+text
+@/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.visual.tuple;
+
+import java.util.Iterator;
+
+import prefuse.data.Graph;
+import prefuse.data.Table;
+import prefuse.data.expression.Predicate;
+import prefuse.data.util.FilterIterator;
+import prefuse.visual.AggregateItem;
+import prefuse.visual.AggregateTable;
+import prefuse.visual.VisualItem;
+
+/**
+ * AggregateItem implementation that uses data values from a backing
+ * AggregateTable.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class TableAggregateItem extends TableVisualItem 
+    implements AggregateItem
+{   
+    /**
+     * Initialize a new TableAggregateItem for the given table and row. This
+     * method is used by the appropriate TupleManager instance, and should not
+     * be called directly by client code, unless by a client-supplied custom
+     * TupleManager.
+     * @@param table the data Table
+     * @@param graph ignored by this class
+     * @@param row the table row index
+     */
+    protected void init(Table table, Graph graph, int row) {
+        m_table = table;
+        m_row = m_table.isValidRow(row) ? row : -1;
+    }
+
+    /**
+     * @@see prefuse.visual.AggregateItem#getAggregateSize()
+     */
+    public int getAggregateSize() {
+        return ((AggregateTable)m_table).getAggregateSize(m_row);
+    }
+
+    /**
+     * @@see prefuse.visual.AggregateItem#containsItem(prefuse.visual.VisualItem)
+     */
+    public boolean containsItem(VisualItem item) {
+        return ((AggregateTable)m_table).aggregateContains(m_row, item);
+    }
+
+    /**
+     * @@see prefuse.visual.AggregateItem#addItem(prefuse.visual.VisualItem)
+     */
+    public void addItem(VisualItem item) {
+        ((AggregateTable)m_table).addToAggregate(m_row, item);
+    }
+
+    /**
+     * @@see prefuse.visual.AggregateItem#removeItem(prefuse.visual.VisualItem)
+     */
+    public void removeItem(VisualItem item) {
+        ((AggregateTable)m_table).removeFromAggregate(m_row, item);
+    }
+
+    /**
+     * @@see prefuse.visual.AggregateItem#removeAllItems()
+     */
+    public void removeAllItems() {
+        ((AggregateTable)m_table).removeAllFromAggregate(m_row);
+    }
+
+    /**
+     * @@see prefuse.visual.AggregateItem#items()
+     */
+    public Iterator items() {
+        return ((AggregateTable)m_table).aggregatedTuples(m_row);
+    }
+    
+    /**
+     * @@see prefuse.visual.AggregateItem#items()
+     */
+    public Iterator items(Predicate filter) {
+        return new FilterIterator(
+            ((AggregateTable)m_table).aggregatedTuples(m_row), filter);
+    }
+
+} // end of class TableAggregateItem
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d7 2
+d12 1
+a12 1
+import prefuse.data.util.FilterIterable;
+d20 1
+a20 1
+ *
+d23 3
+a25 3
+public class TableAggregateItem <V extends VisualItem<?>> extends TableVisualItem<TableAggregateItem<V>>
+    implements AggregateItem<TableAggregateItem<V>, V>
+{
+d35 1
+a35 2
+    @@Override
+	public void init(Table table, Graph graph, int row) {
+d50 1
+a50 1
+    public boolean containsItem(VisualItem<?> item) {
+d57 1
+a57 1
+    public void addItem(V item) {
+d64 1
+a64 1
+    public void removeItem(VisualItem<?> item) {
+d78 2
+a79 2
+    public Iterable<V> items() {
+        return ((AggregateTable<TableAggregateItem<V>,V>)m_table).aggregatedTuples(m_row);
+d81 1
+a81 1
+
+d85 3
+a87 3
+    public Iterable<V> items(Predicate filter) {
+        return new FilterIterable<V>(
+            ((AggregateTable<TableAggregateItem<V>,V>)m_table).aggregatedTuples(m_row), filter);
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d11 2
+d81 8
+@
+
+
+1.1
+log
+@file TableAggregateItem.java was initially added on branch beta.
+@
+text
+@d1 80
+@
+
+
+1.1.2.1
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a0 67
+/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.visual.tuple;
+
+import java.util.Iterator;
+
+import prefuse.data.Table;
+import prefuse.visual.AggregateItem;
+import prefuse.visual.AggregateTable;
+import prefuse.visual.VisualItem;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class TableAggregateItem extends TableVisualItem 
+	implements AggregateItem
+{
+
+	public TableAggregateItem(Table table, int row) {
+		super(table, row);
+	}
+
+	/**
+	 * @@see prefuse.visual.AggregateItem#getAggregateSize()
+	 */
+	public int getAggregateSize() {
+		return ((AggregateTable)m_table).getAggregateSize(m_row);
+	}
+
+	/**
+	 * @@see prefuse.visual.AggregateItem#containsItem(prefuse.visual.VisualItem)
+	 */
+	public boolean containsItem(VisualItem item) {
+		return ((AggregateTable)m_table).aggregateContains(m_row, item);
+	}
+
+	/**
+	 * @@see prefuse.visual.AggregateItem#addItem(prefuse.visual.VisualItem)
+	 */
+	public void addItem(VisualItem item) {
+		((AggregateTable)m_table).addToAggregate(m_row, item);
+	}
+
+	/**
+	 * @@see prefuse.visual.AggregateItem#removeItem(prefuse.visual.VisualItem)
+	 */
+	public void removeItem(VisualItem item) {
+		((AggregateTable)m_table).removeFromAggregate(m_row, item);
+	}
+
+	/**
+	 * @@see prefuse.visual.AggregateItem#removeAllItems()
+	 */
+	public void removeAllItems() {
+		((AggregateTable)m_table).removeAllFromAggregate(m_row);
+	}
+
+	/**
+	 * @@see prefuse.visual.AggregateItem#items()
+	 */
+	public Iterator items() {
+		return ((AggregateTable)m_table).aggregatedTuples(m_row);
+	}
+
+} // end of class TableAggregateItem
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d18 1
+a18 1
+    implements AggregateItem
+d21 45
+a65 45
+    public TableAggregateItem(Table table, int row) {
+        super(table, row);
+    }
+
+    /**
+     * @@see prefuse.visual.AggregateItem#getAggregateSize()
+     */
+    public int getAggregateSize() {
+        return ((AggregateTable)m_table).getAggregateSize(m_row);
+    }
+
+    /**
+     * @@see prefuse.visual.AggregateItem#containsItem(prefuse.visual.VisualItem)
+     */
+    public boolean containsItem(VisualItem item) {
+        return ((AggregateTable)m_table).aggregateContains(m_row, item);
+    }
+
+    /**
+     * @@see prefuse.visual.AggregateItem#addItem(prefuse.visual.VisualItem)
+     */
+    public void addItem(VisualItem item) {
+        ((AggregateTable)m_table).addToAggregate(m_row, item);
+    }
+
+    /**
+     * @@see prefuse.visual.AggregateItem#removeItem(prefuse.visual.VisualItem)
+     */
+    public void removeItem(VisualItem item) {
+        ((AggregateTable)m_table).removeFromAggregate(m_row, item);
+    }
+
+    /**
+     * @@see prefuse.visual.AggregateItem#removeAllItems()
+     */
+    public void removeAllItems() {
+        ((AggregateTable)m_table).removeAllFromAggregate(m_row);
+    }
+
+    /**
+     * @@see prefuse.visual.AggregateItem#items()
+     */
+    public Iterator items() {
+        return ((AggregateTable)m_table).aggregatedTuples(m_row);
+    }
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@d15 1
+a15 4
+ * AggregateItem implementation that uses data values from a backing
+ * AggregateTable.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a20 8
+    /**
+     * Create a new TableAggregateItem for the given table and row. This method
+     * is used by the appropriate TupleManager instance, and should not be
+     * called directly by client code, unless by a client-supplied custom
+     * TupleManager.
+     * @@param table the data Table
+     * @@param row the table row index
+     */
+@
+
+
+1.1.2.4
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@a8 1
+import prefuse.data.Graph;
+d22 2
+a23 1
+{   
+d25 3
+a27 3
+     * Initialize a new TableAggregateItem for the given table and row. This
+     * method is used by the appropriate TupleManager instance, and should not
+     * be called directly by client code, unless by a client-supplied custom
+a29 1
+     * @@param graph ignored by this class
+d32 2
+a33 3
+    protected void init(Table table, Graph graph, int row) {
+        m_table = table;
+        m_row = m_table.isValidRow(row) ? row : -1;
+@
+
+

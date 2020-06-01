@@ -1,0 +1,74 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0
+	alpha:1.1.0.2
+	Root_alpha:1.1
+	prefuse-alpha-20051229:1.1
+	P20050401_Alpha_PreCHI:1.1;
+locks; strict;
+comment	@# @;
+expand	@b@;
+
+
+2.0
+date	2006.02.11.06.38.40;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.01.20.54.27;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@#!/bin/sh
+
+# prefuse build script
+
+echo "building prefuse..."
+
+
+if [ "$JAVA_HOME" = "" ] ; then
+    echo "... BUILD FAILED"
+    echo " The JAVA_HOME environment variable was not found."
+    echo " Please set the environment variable JAVA_HOME to the location"
+    echo " of your preferred Java installation."
+    exit 1
+fi
+
+LOCALCLASSPATH=$JAVA_HOME/lib/tools.jar:./lib/ant.jar
+ANT_HOME=./lib
+
+echo ... using classpath $CLASSPATH:$LOCALCLASSPATH
+echo
+
+echo Starting Ant...
+echo
+
+$JAVA_HOME/bin/java -Dant.home=$ANT_HOME -classpath $LOCALCLASSPATH:$CLASSPATH org.apache.tools.ant.Main $*
+@
+
+
+1.1
+log
+@Added build.xml and related scripts/jar
+@
+text
+@@
+

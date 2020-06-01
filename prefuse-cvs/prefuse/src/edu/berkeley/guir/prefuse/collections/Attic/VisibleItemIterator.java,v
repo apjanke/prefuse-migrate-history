@@ -1,0 +1,169 @@
+head	1.4;
+access;
+symbols
+	alpha:1.3.0.2
+	Root_alpha:1.3
+	prefuse-alpha-20051229:1.3
+	P20050401_Alpha_PreCHI:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2006.02.11.06.38.46;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.23.19.34.05;	author jheer;	state Exp;
+branches
+	1.3.4.1;
+next	1.2;
+
+1.2
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.10.12;	author jheer;	state Exp;
+branches;
+next	;
+
+1.3.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.collections;
+
+import java.util.Iterator;
+import java.util.List;
+
+import edu.berkeley.guir.prefuse.VisualItem;
+
+/**
+ * Provides an iterator over only the currently visible items in a graph.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class VisibleItemIterator implements Iterator {
+
+	private Iterator  m_iter;
+	private VisualItem m_item;
+
+	/**
+	 * Constructor
+	 * @@param items the list of VisualItems over which to iterate
+	 * @@param reverse if true, will traverse list in reverse order
+	 */
+	public VisibleItemIterator(List items, boolean reverse) {
+		if ( items.isEmpty() ) {
+			m_item = null;
+		} else {
+			m_iter = ( reverse ? new ReverseListIterator(items) : items.iterator() );
+			while ( m_iter.hasNext() && !(m_item=(VisualItem)m_iter.next()).isVisible() );
+			if ( !m_item.isVisible() ) {
+				m_item = null;
+			}
+		}
+	} //
+
+	/**
+	 * @@see java.util.Iterator#hasNext()
+	 */
+	public boolean hasNext() {
+		return m_item != null;
+	} //
+
+	/**
+	 * @@see java.util.Iterator#next()
+	 */
+	public Object next() {
+		if ( m_item != null ) {
+			VisualItem retval = m_item;
+			while ( m_iter.hasNext() && !(m_item=(VisualItem)m_iter.next()).isVisible() );
+			if ( !m_iter.hasNext() && (m_item == retval || !m_item.isVisible()) ) {
+				m_item = null;
+			}
+			return retval;
+		} else {
+			throw new IllegalStateException("Iterator has no next element.");
+		} 
+	} //
+
+	/**
+	 * @@see java.util.Iterator#remove()
+	 */
+	public void remove() {
+		throw new UnsupportedOperationException("Remove not supported.");
+	} //
+
+} // end of class VisibleItemIterator
+@
+
+
+1.3
+log
+@More Javadoc updates
+@
+text
+@@
+
+
+1.3.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.2
+log
+@Major refactor
+@
+text
+@a10 2
+ * Apr 27, 2003 - jheer - Created class
+ * 
+d12 1
+a12 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@d6 1
+a6 1
+import edu.berkeley.guir.prefuse.GraphItem;
+d19 1
+a19 1
+	private GraphItem m_item;
+d23 1
+a23 1
+	 * @@param items the list of GraphItems over which to iterate
+d31 1
+a31 1
+			while ( m_iter.hasNext() && !(m_item=(GraphItem)m_iter.next()).isVisible() );
+d50 2
+a51 2
+			GraphItem retval = m_item;
+			while ( m_iter.hasNext() && !(m_item=(GraphItem)m_iter.next()).isVisible() );
+@
+

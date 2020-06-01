@@ -1,0 +1,839 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0
+	alpha:1.5.0.2
+	Root_alpha:1.5
+	prefuse-alpha-20051229:1.5
+	P20050401_Alpha_PreCHI:1.4;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.07.15.16.33.47;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.11.06.38.40;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2005.05.09.18.57.33;	author jheer;	state Exp;
+branches
+	1.5.4.1;
+next	1.4;
+
+1.4
+date	2005.01.15.01.51.25;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.01.15.01.34.27;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.23.03.53.21;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.01.20.54.27;	author jheer;	state Exp;
+branches;
+next	;
+
+1.5.4.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.5.4.2;
+
+1.5.4.2
+date	2006.01.23.22.08.48;	author jheer;	state Exp;
+branches;
+next	1.5.4.3;
+
+1.5.4.3
+date	2006.01.23.22.55.21;	author jheer;	state Exp;
+branches;
+next	1.5.4.4;
+
+1.5.4.4
+date	2006.01.24.09.06.33;	author jheer;	state Exp;
+branches;
+next	1.5.4.5;
+
+1.5.4.5
+date	2006.01.24.18.46.26;	author jheer;	state Exp;
+branches;
+next	1.5.4.6;
+
+1.5.4.6
+date	2006.02.01.19.22.44;	author jheer;	state Exp;
+branches;
+next	1.5.4.7;
+
+1.5.4.7
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	1.5.4.8;
+
+1.5.4.8
+date	2006.02.09.10.33.59;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Added ablity to override properties with a "build.properties" file.
+Added directive to create source file jar.
+Thanks to Vadim Gritsenko for the updates.
+@
+text
+@<project name="prefuse" default="usage" basedir=".">
+
+  <!-- =================================================================== -->
+  <!-- Initialization target                                               -->
+  <!-- =================================================================== -->
+  <target name="init">
+    <tstamp>
+    	<format property="year" pattern="yyyy" locale="en"/>
+    </tstamp>
+  	
+  	<property file="build.properties"/>
+    <property name="Name" value="prefuse"/>
+    <property name="name" value="prefuse"/>
+    <property name="version" value="beta"/>
+
+    <property name="build.compiler" value="modern"/>
+    <property name="debug" value="off"/>
+    <property name="optimize" value="on"/>
+    <property name="deprecation" value="on"/>
+    <property name="packages" value="prefuse.*"/>
+
+    <!-- Define the source directories -->
+    <property name="root.dir" value="./"/>
+  	<property name="data.dir" value="${root.dir}/data"/>
+  	<property name="demos.dir" value="${root.dir}/demos"/>
+    <property name="doc.dir" value="${root.dir}/doc"/>
+    <property name="lib.dir" value="${root.dir}/lib"/>
+    <property name="src.dir" value="${root.dir}/src"/>
+    <property name="test.dir" value="${root.dir}/test"/>
+
+  	<!-- Define path to required libraries -->
+  	<property name="lucene.lib" value="${root.dir}/lib/lucene-1.4.3.jar"/>
+  	
+    <!-- Define the source build directories -->
+    <property name="doc.apidocs" value="${doc.dir}/api"/>	   	
+    <property name="build.dir" value="${root.dir}/build"/>
+    <property name="build.lib" value="${root.dir}/build/lib"/>
+    <property name="build.prefuse.src" value="${root.dir}/build/prefuse/src"/>
+    <property name="build.prefuse.dest" value="${root.dir}/build/prefuse/classes"/>
+    <property name="build.demos.src" value="${root.dir}/build/demos/src"/>
+    <property name="build.demos.dest" value="${root.dir}/build/demos/classes"/>
+    
+    <!-- Define the distribution directories -->
+    <property name="dist.root" value="${root.dir}/dist"/>
+    <property name="sourcedist.dir" value="${dist.root}/${name}-${version}/"/>
+    <property name="compiledist.dir" value="${dist.root}/${name}-${version}"/>    
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Help on usage                                                       -->
+  <!-- =================================================================== -->
+  <target name="usage">
+    <echo message=""/>
+    <echo message=""/>
+    <echo message="prefuse build control"/>
+    <echo message="-------------------------------------------------------------"/>
+    <echo message=""/>
+    <echo message=" available targets are:"/>
+    <echo message=""/>
+    <echo message="   all        --> builds all the jars in ./build"/>
+    <echo message="   prefuse    --> builds the prefuse.jar file in ./build"/>
+    <echo message="   demos      --> builds the demos.jar file in ./build"/>
+    <echo message="   compiledist--> creates the compiled distribution in ./dist"/>
+    <echo message="   sourcedist --> creates the source distribution in ./dist"/>    
+    <echo message="   api        --> generates prefuse API docs in ./doc/api"/>
+    <echo message="   clean      --> restores distribution to original state"/>
+    <echo message="   usage      --> (default) displays build menu"/>
+    <echo message=""/>
+    <echo message=" See the comments inside the build.xml file for more details."/>
+    <echo message="-------------------------------------------------------------"/>
+    <echo message=""/>
+    <echo message=""/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Prepares the build directory                                        -->
+  <!-- =================================================================== -->
+  <target name="prepare" depends="init">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.lib}"/>
+
+    <copy todir="${build.lib}">
+      <fileset dir="${lib.dir}"/>
+    </copy>
+
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Prepares the prefuse source code                                    -->
+  <!-- =================================================================== -->
+  <target name="prepare-prefuse" depends="prepare">
+    <mkdir dir="${build.prefuse.src}"/>
+    <mkdir dir="${build.prefuse.dest}"/>
+   
+    <copy todir="${build.prefuse.src}">
+      <fileset dir="${src.dir}"/>
+    </copy>
+         
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Prepares the demos code                                             -->
+  <!-- =================================================================== -->
+  <target name="prepare-demos" depends="prepare">
+    <mkdir dir="${build.demos.src}"/>
+    <mkdir dir="${build.demos.dest}"/>
+
+    <copy todir="${build.demos.src}">
+      <fileset dir="${demos.dir}"/>
+    </copy>
+        
+  </target>
+
+
+  <!-- =================================================================== -->
+  <!-- Compiles the prefuse source code                                    -->
+  <!-- =================================================================== -->
+  <target name="compile-prefuse" depends="prepare-prefuse">
+    <!-- copy resource files -->
+    <copy todir="${build.prefuse.dest}">
+      <fileset dir="${build.prefuse.src}" excludes="**/*.java"/>
+    </copy>
+
+    <javac srcdir="${build.prefuse.src}"
+           destdir="${build.prefuse.dest}"
+    	       classpath="${lucene.lib}"
+           debug="${debug}"
+           deprecation="${deprecation}"
+           optimize="${optimize}"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Compiles the demos directory                                        -->
+  <!-- =================================================================== -->
+  <target name="compile-demos" depends="prepare-demos, prefuse">
+    <!-- copy resource files -->
+    <copy todir="${build.demos.dest}">
+      <fileset dir="${build.demos.src}" excludes="**/*.java"/>
+    </copy>
+  	<copy todir="${build.demos.dest}">
+  	  <fileset dir="${data.dir}"/>
+  	</copy>
+
+    <javac srcdir="${build.demos.src}"
+           destdir="${build.demos.dest}"
+		   classpath="${build.dir}/${name}.jar"
+           debug="${debug}"
+           deprecation="${deprecation}"
+           optimize="${optimize}"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Creates the prefuse.jar in ./build                                  -->
+  <!-- =================================================================== -->
+  <target name="prefuse" depends="compile-prefuse">
+    <jar jarfile="${build.dir}/${name}.jar"
+         basedir="${build.prefuse.dest}"
+         includes="**"/>
+  	<jar jarfile="${build.dir}/${name}.src.jar"
+  		 basedir="${build.prefuse.src}"
+  		 includes="**"/>
+  </target>
+	
+  <!-- =================================================================== -->
+  <!-- Creates the demos.jar in ./build                                    -->
+  <!-- =================================================================== -->
+  <target name="demos" depends="compile-demos">
+    <jar jarfile="${build.dir}/demos.jar"
+         basedir="${build.demos.dest}"
+         includes="**"/>
+  	<!--manifest="${demos.dir}/prefuse/demos/launcher/demos.manifest"-->
+  </target>
+  
+  <!-- =================================================================== -->
+  <!-- Build all jars in ./build                                           -->
+  <!-- =================================================================== -->
+  <target name="all" depends="prefuse, demos"/>
+
+  <!-- =================================================================== -->
+  <!-- Creates the API documentation in ./doc/api/                         -->
+  <!-- =================================================================== -->
+  <target name="api" depends="prepare-prefuse, prepare-demos">
+    <mkdir dir="${doc.apidocs}"/>
+    <javadoc packagenames="${packages}"
+             sourcepath="${build.prefuse.src}"
+    	     classpath="${lucene.lib}"
+             destdir="${doc.apidocs}"
+             author="true"
+             version="true"
+           	 use="true"
+	         breakiterator="yes"
+             splitindex="true"
+             noindex="false"
+             windowtitle="${Name} API Documentation"
+             doctitle="&lt;font face='Verdana,Arial,sans-serif'>the ${Name} visualization toolkit&lt;/font>"
+             overview="${build.prefuse.src}/prefuse/overview.html"
+             bottom="Copyright &#169; ${year} Regents of the University of California"             
+    />
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Replace all sequences of 4 spaces in .java files with a tab         -->
+  <!-- =================================================================== -->
+  <target name="addTabsWithLength4" depends="init">
+    <fixcrlf 
+         srcdir="${root.dir}"
+         tab="add"
+         tablength="4"
+         includes="**/*.java"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Replace all tabs in .java files with a sequence of 4 spaces         -->
+  <!-- =================================================================== -->
+  <target name="removeTabsWithLength4" depends="init">
+    <fixcrlf 
+         srcdir="${root.dir}"
+         tab="remove"
+         tablength="4"
+         includes="**/*.java"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Build source distribution in ./dist                                 -->
+  <!-- =================================================================== -->
+  <target name="sourcedist" depends="clean">
+    <mkdir dir="${dist.root}"/>
+    <mkdir dir="${sourcedist.dir}"/>
+
+    <copy todir="${sourcedist.dir}">
+      <fileset dir="${root.dir}" excludes="**/.*" />
+    </copy>
+  	<copy todir="${sourcedist.dir}">
+  		<fileset dir="${root.dir}" casesensitive="yes">
+  		  <include name=".project"/>
+  		  <include name=".classpath"/>
+  		</fileset>
+  	</copy>
+
+    <!-- Now delete what we dont want, probably a better way to do this -->
+    <delete dir="${sourcedist.dir}/dist"/>
+  	<delete dir="${sourcedist.dir}/classes"/>
+  	<delete dir="${sourcedist.dir}/build"/>
+  	<delete dir="${sourcedist.dir}/.settings"/>
+
+    <fixcrlf srcdir="${sourcedist.dir}"
+    	eol="lf" eof="remove"
+    	tablength="4" tab="remove"
+        includes="**/*.sh"
+    />
+    <zip zipfile="${dist.root}/${name}-${version}-${DSTAMP}.zip"
+         basedir="${dist.root}"
+         whenempty="create"
+    />
+  </target>
+	
+
+  <!-- =================================================================== -->
+  <!-- Build compiled distribution in ./dist                               -->
+  <!-- =================================================================== -->
+  <target name="compiledist" depends="clean, all, api">
+    <mkdir dir="${dist.root}"/>
+    <mkdir dir="${compiledist.dir}"/>
+
+    <copy todir="${compiledist.dir}">
+      <fileset dir="${root.dir}"/>
+    </copy>
+
+    <!-- Now delete what we dont want, probably a better way to do this -->
+    <delete dir="${compiledist.dir}/dist"/>
+  	<delete dir="${sourcedist.dir}/classes"/>
+    <delete dir="${compiledist.dir}/build/demos"/>
+    <delete dir="${compiledist.dir}/build/prefuse"/>
+  	<delete dir="${compiledist.dir}/build/lib"/>
+
+    <fixcrlf srcdir="${compiledist.dir}"
+       eol="lf" eof="remove"
+       includes="**/*.sh"
+    />
+
+    <zip zipfile="${dist.root}/${name}-${version}-${DSTAMP}-bin.zip"
+         basedir="${dist.root}/${name}-${version}"
+         whenempty="create"
+    />
+
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Clean restores the distribution to original state                   -->
+  <!-- =================================================================== -->
+  <target name="clean" depends="init">
+    <delete dir="${build.dir}"/>
+    <delete dir="${dist.root}"/>
+    <delete dir="${doc.apidocs}"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Fix tabs and line endings on java source files                      -->
+  <!-- =================================================================== -->
+  <target name="fixtabs" depends="init">
+  	<fixcrlf srcdir="${src.dir}" eol="lf" eof="remove"
+  		tablength="4" tab="remove" includes="**/*.java"	/>
+  	<fixcrlf srcdir="${demos.dir}" eol="lf" eof="remove"
+  		tablength="4" tab="remove" includes="**/*.java"	/>
+  	<fixcrlf srcdir="${test.dir}" eol="lf" eof="remove"
+  		tablength="4" tab="remove" includes="**/*.java"	/>
+  </target>
+	
+</project>
+
+<!-- End of file -->@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d8 1
+a8 1
+   	  <format property="year" pattern="yyyy" locale="en"/>
+d11 1
+d159 3
+@
+
+
+1.5
+log
+@Removed ext directive from the usage instructions
+@
+text
+@d7 4
+a10 1
+    <tstamp/>
+d13 1
+a13 2
+    <property name="version" value="1.0"/>
+    <property name="year" value="2004"/>
+d19 1
+a19 1
+    <property name="packages" value="edu.berkeley.guir.*"/>
+d23 2
+d28 1
+a28 2
+    <property name="ext.dir" value="${root.dir}/extensions"/>
+    <property name="demos.dir" value="${root.dir}/demos"/>
+d30 3
+a38 2
+    <property name="build.ext.src" value="${root.dir}/build/extensions/src"/>
+    <property name="build.ext.dest" value="${root.dir}/build/extensions/classes"/>
+d44 2
+a45 2
+    <property name="sourcedist.dir" value="${dist.root}/${name}-${version}/${name}-${version}"/>
+    <property name="compiledist.dir" value="${dist.root}/${name}-${version}-compiled/${name}-${version}"/>    
+d101 1
+a101 13
+  <!-- Prepares the extensions code                                        -->
+  <!-- =================================================================== -->
+  <target name="prepare-ext" depends="prepare">
+    <mkdir dir="${build.ext.src}"/>
+
+    <copy todir="${build.ext.src}">
+      <fileset dir="${ext.dir}"/>
+    </copy>
+    
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Prepares the examples code                                          -->
+d125 1
+a125 17
+           debug="${debug}"
+           deprecation="${deprecation}"
+           optimize="${optimize}"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Compiles the extensions directory                                   -->
+  <!-- =================================================================== -->
+  <target name="compile-ext" depends="compile-prefuse, prepare-ext">
+    <!-- copy resource files -->
+    <copy todir="${build.ext.dest}">
+      <fileset dir="${build.ext.src}" excludes="**/*.java"/>
+    </copy>
+
+    <javac srcdir="${build.ext.src}"
+           destdir="${build.prefuse.dest}"
+		   classpath="${build.prefuse.dest}"
+d139 3
+d154 1
+a154 1
+  <target name="prefuse" depends="compile-prefuse, compile-ext">
+d159 1
+a159 1
+
+d161 1
+a161 1
+  <!-- Creates the examples.jar in ./build                                 -->
+d167 1
+d178 1
+a178 1
+  <target name="api" depends="prepare-prefuse, prepare-ext, prepare-demos">
+d181 2
+a182 1
+             sourcepath="${build.prefuse.src};${build.ext.src};${build.demos.src}"
+d186 2
+a187 2
+             use="true"
+	     breakiterator="yes"
+d191 3
+a193 3
+             doctitle="&lt;font face='Verdana,Arial,Helvetica,Sans-Serif'>the ${Name} graph visualization toolkit&lt;/font>"
+             overview="${build.prefuse.src}/edu/berkeley/guir/prefuse/overview.html"
+             bottom="Copyright &#169; ${year} University of California, Berkeley."             
+d227 1
+a227 1
+      <fileset dir="${root.dir}"/>
+d229 6
+d238 3
+d243 3
+a245 2
+       eol="lf" eof="remove"
+       includes="**/*.sh"
+d247 2
+a248 2
+    <zip zipfile="${dist.root}/${name}-${version}.zip"
+         basedir="${dist.root}/${name}-${version}"
+a250 1
+
+d267 1
+d270 1
+a270 1
+    <delete dir="${compiledist.dir}/build/extentions"/>    
+d277 2
+a278 2
+    <zip zipfile="${dist.root}/${name}-${version}-compiled.zip"
+         basedir="${dist.root}/${name}-${version}-compiled"
+d292 13
+@
+
+
+1.5.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@d10 2
+a11 2
+    <property name="version" value="beta"/>
+    <property name="year" value="2005"/>
+d17 1
+a17 1
+    <property name="packages" value="prefuse.*"/>
+a20 2
+  	<property name="data.dir" value="${root.dir}/data"/>
+  	<property name="demos.dir" value="${root.dir}/demos"/>
+d24 1
+a26 3
+  	<!-- Define path to required libraries -->
+  	<property name="lucene.lib" value="${root.dir}/lib/lucene-1.4.3.jar"/>
+  	
+d33 2
+d40 2
+a41 2
+    <property name="sourcedist.dir" value="${dist.root}/${name}-${version}/"/>
+    <property name="compiledist.dir" value="${dist.root}/${name}-${version}"/>    
+d97 13
+a109 1
+  <!-- Prepares the demos code                                             -->
+d133 17
+a149 1
+    	       classpath="${lucene.lib}"
+a162 3
+  	<copy todir="${build.demos.dest}">
+  	  <fileset dir="${data.dir}"/>
+  	</copy>
+d175 1
+a175 1
+  <target name="prefuse" depends="compile-prefuse">
+d180 1
+a180 1
+	
+d182 1
+a182 1
+  <!-- Creates the demos.jar in ./build                                    -->
+a186 1
+    	 manifest="${demos.dir}/prefuse/demos/launcher/demos.manifest"
+d198 1
+a198 1
+  <target name="api" depends="prepare-prefuse, prepare-demos">
+d201 1
+a201 1
+             sourcepath="${build.prefuse.src};${build.extras.src};${build.demos.src}"
+d205 2
+a206 2
+           	 use="true"
+	         breakiterator="yes"
+d210 2
+a211 2
+             doctitle="&lt;font face='Verdana,Arial,Helvetica,Sans-Serif'>the ${Name} visualization toolkit&lt;/font>"
+             overview="${build.prefuse.src}/prefuse/overview.html"
+d246 1
+a246 1
+      <fileset dir="${root.dir}" excludes="**/.*" />
+a250 3
+  	<delete dir="${sourcedist.dir}/classes"/>
+  	<delete dir="${sourcedist.dir}/build"/>
+  	<delete dir="${sourcedist.dir}/.settings"/>
+d256 2
+a257 2
+    <zip zipfile="${dist.root}/${name}-${version}-${DSTAMP}.zip"
+         basedir="${dist.root}"
+d260 1
+a276 1
+  	<delete dir="${sourcedist.dir}/classes"/>
+d279 1
+a279 1
+  	<delete dir="${compiledist.dir}/build/lib"/>
+d286 2
+a287 2
+    <zip zipfile="${dist.root}/${name}-${version}-${DSTAMP}-bin.zip"
+         basedir="${dist.root}/${name}-${version}"
+a300 1
+
+@
+
+
+1.5.4.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d234 1
+a234 2
+    	eol="lf" eof="remove"
+    	tablength="4" tab="remove"
+@
+
+
+1.5.4.3
+log
+@Added fixtags target for changing tabs to spaces and fixing end of lines.
+@
+text
+@d26 1
+a26 1
+    <property name="test.dir" value="${root.dir}/test"/>
+d236 1
+a236 1
+        includes="**/*.sh"
+a283 12
+  <!-- =================================================================== -->
+  <!-- Fix tabs and line endings on java source files                      -->
+  <!-- =================================================================== -->
+  <target name="fixtabs" depends="init">
+  	<fixcrlf srcdir="${src.dir}" eol="lf" eof="remove"
+  		tablength="4" tab="remove" includes="**/*.java"	/>
+  	<fixcrlf srcdir="${demos.dir}" eol="lf" eof="remove"
+  		tablength="4" tab="remove" includes="**/*.java"	/>
+  	<fixcrlf srcdir="${test.dir}" eol="lf" eof="remove"
+  		tablength="4" tab="remove" includes="**/*.java"	/>
+  </target>
+	
+@
+
+
+1.5.4.4
+log
+@Fixed API target
+@
+text
+@d179 1
+a179 1
+             sourcepath="${build.prefuse.src}"
+d188 1
+a188 1
+             doctitle="&lt;font face='Verdana,Arial,sans-serif'>the ${Name} visualization toolkit&lt;/font>"
+d190 1
+a190 1
+             bottom="Copyright &#169; ${year} Regents of the University of California"             
+@
+
+
+1.5.4.5
+log
+@Javadoc fixes, other clean-up
+@
+text
+@d7 1
+a7 4
+    <tstamp>
+   	  <format property="year" pattern="yyyy" locale="en"/>
+    </tstamp>
+  	
+d11 1
+@
+
+
+1.5.4.6
+log
+@Javadoc'd.
+@
+text
+@a181 1
+    	     classpath="${lucene.lib}"
+@
+
+
+1.5.4.7
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d166 1
+a167 1
+  	<!--manifest="${demos.dir}/prefuse/demos/launcher/demos.manifest"-->
+@
+
+
+1.5.4.8
+log
+@Changed interaction mechanism of RotationControl
+Added documentation of expression language to ExpressionParser javadoc
+Added inclusion of edge arrows in bounds computation for EdgeRenderer
+Added integer dimensions check to LabelRenderer
+Added new readme file
+@
+text
+@a228 6
+  	<copy todir="${sourcedist.dir}">
+  		<fileset dir="${root.dir}" casesensitive="yes">
+  		  <include name=".project"/>
+  		  <include name=".classpath"/>
+  		</fileset>
+  	</copy>
+@
+
+
+1.4
+log
+@Collapsed prefuse and extensions into single jar file
+@
+text
+@a56 1
+    <echo message="   ext        --> builds the prefusex.jar file in ./build"/>
+@
+
+
+1.3
+log
+@Fixed bug in usage statement
+@
+text
+@a101 1
+    <mkdir dir="${build.ext.dest}"/>
+d142 1
+a142 1
+  <target name="compile-ext" depends="prepare-ext, prefuse">
+d149 2
+a150 2
+           destdir="${build.ext.dest}"
+		   classpath="${build.dir}/${name}.jar"
+d159 1
+a159 1
+  <target name="compile-demos" depends="prepare-demos, ext">
+d167 1
+a167 1
+		   classpath="${build.dir}/${name}x.jar;${build.dir}/${name}.jar"
+d176 1
+a176 1
+  <target name="prefuse" depends="compile-prefuse">
+a182 9
+  <!-- Creates the prefusex.jar in ./build                                 -->
+  <!-- =================================================================== -->
+  <target name="ext" depends="compile-ext">
+    <jar jarfile="${build.dir}/${name}x.jar"
+         basedir="${build.ext.dest}"
+         includes="**"/>
+  </target>
+
+  <!-- =================================================================== -->
+d194 1
+a194 1
+  <target name="all" depends="prefuse, ext, demos"/>
+@
+
+
+1.2
+log
+@Updated build file
+@
+text
+@d57 1
+a57 1
+    <echo message="   extensions --> builds the prefusex.jar file in ./build"/>
+@
+
+
+1.1
+log
+@Added build.xml and related scripts/jar
+@
+text
+@d184 1
+a184 1
+  <!-- Creates the prefuse.jar in ./build                                 -->
+d209 1
+a209 1
+  <target name="api" depends="prepare-prefuse, prepare-ext">
+d212 1
+a212 1
+             sourcepath="${build.prefuse.src};${build.ext.src}"
+d221 1
+a221 1
+             doctitle="${Name}"
+d223 1
+a223 1
+             bottom="Copyright &#169; ${year} by University of California, Berkeley."             
+@
+

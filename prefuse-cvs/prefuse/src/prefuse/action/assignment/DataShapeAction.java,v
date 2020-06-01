@@ -1,0 +1,632 @@
+head	2.4;
+access;
+symbols
+	java_1_5:2.4.0.4
+	Root_java_1_5:2.4
+	beta:2.4.0.2
+	beta-20080113:2.4
+	beta-20071021:2.4
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2006.04.10.18.53.52;	author jheer;	state Exp;
+branches
+	2.4.4.1;
+next	2.3;
+
+2.3
+date	2006.03.06.00.35.27;	author jheer;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.03.01.08.19.53;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.27.04.02.14;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.02.07.00.42.53;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.4.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	2.4.4.2;
+
+2.4.4.2
+date	2008.02.24.00.22.30;	author amarsden;	state Exp;
+branches;
+next	2.4.4.3;
+
+2.4.4.3
+date	2008.02.28.01.09.32;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Updated actions to allow cascaded rules
+@
+text
+@package prefuse.action.assignment;
+
+import java.util.Map;
+
+import prefuse.Constants;
+import prefuse.data.tuple.TupleSet;
+import prefuse.util.DataLib;
+import prefuse.visual.VisualItem;
+
+/**
+ * <p>
+ * Assignment Action that assigns shape values for a group of items based upon
+ * a data field. Shape values are simple integer codes that indicate to
+ * appropriate renderer instances what shape should be drawn. The default
+ * list of shape values is included in the {@@link prefuse.Constants} class,
+ * all beginning with the prefix <code>SHAPE</code>. Of course, clients can
+ * always create their own shape codes that are handled by a custom Renderer. 
+ * </p>
+ * 
+ * <p>The data field will be assumed to be nominal, and shapes will
+ * be assigned to unique values in the order they are encountered. Note that
+ * if the number of unique values is greater than
+ * {@@link prefuse.Constants#SHAPE_COUNT} (when no palette is given) or
+ * the length of a specified palette, then duplicate shapes will start
+ * being assigned.</p>
+ * 
+ * <p>This Action only sets the shape field of the VisualItem. For this value
+ * to have an effect, a renderer instance that takes this shape value
+ * into account must be used (e.g., {@@link prefuse.render.ShapeRenderer}).
+ * </p>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class DataShapeAction extends ShapeAction {
+    
+    protected static final int NO_SHAPE = Integer.MIN_VALUE;
+    
+    protected String m_dataField;
+    protected int[]  m_palette;
+    
+    protected Map    m_ordinalMap;
+    
+    
+    /**
+     * Create a new DataShapeAction.
+     * @@param group the data group to process
+     * @@param field the data field to base shape assignments on
+     */
+    public DataShapeAction(String group, String field) {
+        super(group, NO_SHAPE);
+        m_dataField = field;
+    }
+    
+    /**
+     * Create a new DataShapeAction.
+     * @@param group the data group to process
+     * @@param field the data field to base shape assignments on
+     * @@param palette a palette of shape values to use for the encoding.
+     * By default, shape values are assumed to be one of the integer SHAPE
+     * codes included in the {@@link prefuse.Constants} class.
+     */
+    public DataShapeAction(String group, String field, int[] palette) {
+        super(group, NO_SHAPE);
+        m_dataField = field;
+        m_palette = palette;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Returns the data field used to encode shape values.
+     * @@return the data field that is mapped to shape values
+     */
+    public String getDataField() {
+        return m_dataField;
+    }
+    
+    /**
+     * Set the data field used to encode shape values.
+     * @@param field the data field to map to shape values
+     */
+    public void setDataField(String field) {
+        m_dataField = field;
+    }
+    
+    /**
+     * This operation is not supported by the DataShapeAction type.
+     * Calling this method will result in a thrown exception.
+     * @@see prefuse.action.assignment.ShapeAction#setDefaultShape(int)
+     * @@throws UnsupportedOperationException
+     */
+    public void setDefaultShape(int defaultShape) {
+        throw new UnsupportedOperationException();
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.EncoderAction#setup()
+     */
+    protected void setup() {
+        TupleSet ts = m_vis.getGroup(m_group);
+        m_ordinalMap = DataLib.ordinalMap(ts, m_dataField);
+    }
+    
+    /**
+     * @@see prefuse.action.assignment.ShapeAction#getShape(prefuse.visual.VisualItem)
+     */
+    public int getShape(VisualItem item) {
+        // check for any cascaded rules first
+        int shape = super.getShape(item);
+        if ( shape != NO_SHAPE ) {
+            return shape;
+        }
+        
+        // otherwise perform data-driven assignment
+        Object v = item.get(m_dataField);
+        int idx = ((Integer)m_ordinalMap.get(v)).intValue();
+
+        if ( m_palette == null ) {
+            return idx % Constants.SHAPE_COUNT;
+        } else {
+            return m_palette[idx % m_palette.length];
+        }
+    }
+    
+} // end of class DataShapeAction
+@
+
+
+2.4.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d5 1
+a5 1
+import prefuse.ShapeType;
+d14 4
+a17 4
+ * appropriate renderer instances what shape should be drawn. The
+ * list of shape values is included in the {@@link prefuse.ShapeType} class.
+ * Of course, clients can always create their own shape codes that are handled
+ * by a custom Renderer. FIXME: this has changed now that ShapeType is an Enum!
+d19 1
+a19 1
+ *
+d22 5
+a26 4
+ * if the number of unique values is greater than the number of shapes (when no
+ * palette is given) or the length of a specified palette, then duplicate shapes
+ * will start being assigned.</p>
+ *
+d31 1
+a31 1
+ *
+d35 3
+a37 1
+
+d39 5
+a43 5
+    protected ShapeType[]  m_palette;
+
+    protected Map<Object,Integer>    m_ordinalMap;
+
+
+d50 1
+a50 1
+        super(group, ShapeType.NONE);
+d53 1
+a53 1
+
+d59 2
+d62 2
+a63 2
+    public DataShapeAction(String group, String field, ShapeType[] palette) {
+        super(group, ShapeType.NONE);
+d67 1
+a67 1
+
+d69 1
+a69 1
+
+d77 1
+a77 1
+
+d85 1
+a85 1
+
+d89 1
+a89 1
+     * @@see prefuse.action.assignment.ShapeAction#setDefaultShape(ShapeType)
+d92 1
+a92 1
+    public void setDefaultShape(ShapeType defaultShape) {
+d95 1
+a95 1
+
+d97 1
+a97 1
+
+d101 2
+a102 3
+    @@Override
+	protected void setup() {
+        TupleSet<? extends VisualItem<?>> ts = m_vis.getGroup(m_group);
+d105 1
+a105 1
+
+d109 1
+a109 2
+    @@Override
+	public ShapeType getShape(VisualItem<?> item) {
+d111 2
+a112 2
+    	ShapeType shape = super.getShape(item);
+        if ( shape != ShapeType.NONE ) {
+d115 1
+a115 1
+
+d118 1
+a118 1
+        int idx = m_ordinalMap.get(v);
+d121 1
+a121 2
+        	// cater for the ShapeType.UNKNOWN
+            return ShapeType.values()[idx % (ShapeType.values().length - 1) + 1];
+d126 1
+a126 1
+
+@
+
+
+2.4.4.2
+log
+@Refactored the shape work to allow for custom ShapeBuilders. VisualItem.SHAPE has been replaced with VisualItem.SHAPEBUILDER.
+@
+text
+@d5 1
+a5 2
+import prefuse.ShapeBuilder;
+import prefuse.PredefinedShape;
+d11 7
+a17 5
+ * <p>Assignment Action that assigns ShapeBuilder values to VisualItems based on a
+ * data field.</p>
+ * <p>ShapeBuilders know how to draw certain shapes. The default ShapeBuilders are
+ * in the PredefinedShape class. Of course, clients can always create their own
+ * ShapeBuilders.
+d20 1
+a20 1
+ * <p>The data field will be assumed to be of type nominal, and ShapeBuilders will
+d22 3
+a24 2
+ * if the number of unique values is greater than the the length of a specified palette
+ * then duplicate shapes will start being assigned.</p>
+d26 2
+a27 2
+ * <p>This Action only sets the shapeBuilder field of the VisualItem. For this value
+ * to have an effect, a renderer instance that takes this shapeBuilder value
+a29 2
+ * 
+ * @@see PredefinedShape
+d36 1
+a36 1
+    protected ShapeBuilder[]  m_palette;
+d42 1
+a42 1
+     * Create a new DataShapeAction
+d47 1
+a47 1
+        super(group, PredefinedShape.NONE);
+a48 1
+        m_palette = null;
+d57 2
+a58 2
+    public DataShapeAction(String group, String field, ShapeBuilder[] palette) {
+        super(group, PredefinedShape.NONE);
+d84 1
+a84 1
+     * @@see prefuse.action.assignment.ShapeAction#setDefaultShape(PredefinedShape)
+d87 1
+a87 1
+    public void setDefaultShape(ShapeBuilder defaultShape) {
+d106 1
+a106 1
+	public ShapeBuilder getShape(VisualItem<?> item) {
+d108 2
+a109 2
+    	ShapeBuilder shape = super.getShape(item);
+        if ( shape != PredefinedShape.NONE ) {
+d118 2
+a119 4
+        	// use the PredefinedShapes as the palette
+        	PredefinedShape[] shapes = PredefinedShape.values();
+        	// exclude ShapeType.NONE
+        	return shapes[idx % (shapes.length - 1) + 1];
+@
+
+
+2.4.4.3
+log
+@Documentation improvements
+@
+text
+@d28 1
+a28 1
+ *
+d85 1
+a85 1
+     * @@see prefuse.action.assignment.ShapeAction#setDefaultShape(ShapeBuilder)
+@
+
+
+2.3
+log
+@Updated encoders and AxisLayout to work with arbitrary TupleSets, not just Tables
+@
+text
+@d36 2
+d50 1
+a50 1
+        super(group);
+d63 1
+a63 1
+        super(group);
+d86 10
+d110 7
+@
+
+
+2.2
+log
+@Added new DataParser format(Object) functionality
+Added DataParser instance to AbstractColumn
+Added CSVTableWriter
+Deleted Columns class, replaced with DataLib
+Updated assignment Actions to work over arbitrary TupleSets (not just Tables)
+@
+text
+@a5 2
+import prefuse.data.Table;
+import prefuse.data.column.ColumnMetadata;
+d91 1
+a91 7
+        
+        if ( ts instanceof Table ) {
+            ColumnMetadata md = ((Table)ts).getMetadata(m_dataField);
+            m_ordinalMap = md.getOrdinalMap();
+        } else {
+            m_ordinalMap = DataLib.ordinalMap(ts.tuples(), m_dataField);
+        }
+@
+
+
+2.1
+log
+@Added new EncoderAction abstract base class.
+Updated assignment package to subclass EncoderAction.
+setup() and finish() template methods now allow delegate assignment actions to be properly initialized.
+@
+text
+@d9 1
+a92 3
+        if ( !(ts instanceof Table) )
+            return; // TODO: exception?
+        Table t = (Table)ts;
+d94 6
+a99 2
+        ColumnMetadata md = t.getMetadata(m_dataField);
+        m_ordinalMap = md.getOrdinalMap();
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d86 1
+a86 1
+
+d88 1
+a88 1
+     * @@see prefuse.action.Action#run(double)
+d90 1
+a90 1
+    public void run(double frac) {
+a97 2
+        
+        super.run(frac);
+@
+
+
+1.1
+log
+@file DataShapeAction.java was initially added on branch beta.
+@
+text
+@d1 116
+@
+
+
+1.1.2.1
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a0 116
+package prefuse.action.assignment;
+
+import java.util.Map;
+
+import prefuse.Constants;
+import prefuse.data.Table;
+import prefuse.data.column.ColumnMetadata;
+import prefuse.data.tuple.TupleSet;
+import prefuse.visual.VisualItem;
+
+/**
+ * <p>
+ * Assignment Action that assigns shape values for a group of items based upon
+ * a data field. Shape values are simple integer codes that indicate to
+ * appropriate renderer instances what shape should be drawn. The default
+ * list of shape values is included in the {@@link prefuse.Constants} class,
+ * all beginning with the prefix <code>SHAPE</code>. Of course, clients can
+ * always create their own shape codes that are handled by a custom Renderer. 
+ * </p>
+ * 
+ * <p>The data field will be assumed to be nominal, and shapes will
+ * be assigned to unique values in the order they are encountered. Note that
+ * if the number of unique values is greater than
+ * {@@link prefuse.Constants#SHAPE_COUNT} (when no palette is given) or
+ * the length of a specified palette, then duplicate shapes will start
+ * being assigned.</p>
+ * 
+ * <p>This Action only sets the shape field of the VisualItem. For this value
+ * to have an effect, a renderer instance that takes this shape value
+ * into account must be used (e.g., {@@link prefuse.render.ShapeItemRenderer}).
+ * </p>
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class DataShapeAction extends ShapeAction {
+    
+    protected String m_dataField;
+    protected int[]  m_palette;
+    
+    protected Map    m_ordinalMap;
+    
+    
+    /**
+     * Create a new DataShapeAction.
+     * @@param group the data group to process
+     * @@param field the data field to base shape assignments on
+     */
+    public DataShapeAction(String group, String field) {
+        super(group);
+        m_dataField = field;
+    }
+    
+    /**
+     * Create a new DataShapeAction.
+     * @@param group the data group to process
+     * @@param field the data field to base shape assignments on
+     * @@param palette a palette of shape values to use for the encoding.
+     * By default, shape values are assumed to be one of the integer SHAPE
+     * codes included in the {@@link prefuse.Constants} class.
+     */
+    public DataShapeAction(String group, String field, int[] palette) {
+        super(group);
+        m_dataField = field;
+        m_palette = palette;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Returns the data field used to encode shape values.
+     * @@return the data field that is mapped to shape values
+     */
+    public String getDataField() {
+        return m_dataField;
+    }
+    
+    /**
+     * Set the data field used to encode shape values.
+     * @@param field the data field to map to shape values
+     */
+    public void setDataField(String field) {
+        m_dataField = field;
+    }
+    
+    // ------------------------------------------------------------------------
+
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        TupleSet ts = m_vis.getGroup(m_group);
+        if ( !(ts instanceof Table) )
+            return; // TODO: exception?
+        Table t = (Table)ts;
+        
+        ColumnMetadata md = t.getMetadata(m_dataField);
+        m_ordinalMap = md.getOrdinalMap();
+        
+        super.run(frac);
+    }
+    
+    /**
+     * @@see prefuse.action.assignment.ShapeAction#getShape(prefuse.visual.VisualItem)
+     */
+    public int getShape(VisualItem item) {
+        Object v = item.get(m_dataField);
+        int idx = ((Integer)m_ordinalMap.get(v)).intValue();
+
+        if ( m_palette == null ) {
+            return idx % Constants.SHAPE_COUNT;
+        } else {
+            return m_palette[idx % m_palette.length];
+        }
+    }
+    
+} // end of class DataShapeAction
+@
+
+
+1.1.2.2
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d30 1
+a30 1
+ * into account must be used (e.g., {@@link prefuse.render.ShapeRenderer}).
+@
+
+

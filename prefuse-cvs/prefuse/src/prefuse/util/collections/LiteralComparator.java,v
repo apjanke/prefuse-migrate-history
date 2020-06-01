@@ -1,0 +1,147 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.07.15.18.12.21;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.02.19.01.51;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Added comparison of byte values
+@
+text
+@package prefuse.util.collections;
+
+import java.util.Comparator;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface LiteralComparator extends Comparator {
+
+    int compare(byte x1, byte x2);
+    int compare(int x1, int x2);
+    int compare(long x1, long x2);
+    int compare(float x1, float x2);
+    int compare(double x1, double x2);
+    int compare(boolean x1, boolean x2);
+    
+} // end of interface LiteralComparator
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d8 1
+a8 1
+public interface LiteralComparator extends Comparator<Object> {
+d16 1
+a16 1
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d10 1
+@
+
+
+1.1
+log
+@file LiteralComparator.java was initially added on branch beta.
+@
+text
+@d1 16
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 16
+package prefuse.util.collections;
+
+import java.util.Comparator;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public interface LiteralComparator extends Comparator {
+
+    int compare(int x1, int x2);
+    int compare(long x1, long x2);
+    int compare(float x1, float x2);
+    int compare(double x1, double x2);
+    int compare(boolean x1, boolean x2);
+    
+} // end of interface LiteralComparator
+@
+
+
+1.1.2.2
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d6 1
+a6 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

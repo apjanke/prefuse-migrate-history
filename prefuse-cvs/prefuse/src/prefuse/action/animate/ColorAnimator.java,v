@@ -1,0 +1,429 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action.animate;
+
+import prefuse.action.ItemAction;
+import prefuse.util.ColorLib;
+import prefuse.util.PrefuseLib;
+import prefuse.util.collections.CopyOnWriteArrayList;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Animator that linearly interpolates between starting and ending colors
+ * for VisualItems during an animation. By default, interpolates the three
+ * primary color fields: {@@link VisualItem#STROKECOLOR stroke color},
+ * {@@link VisualItem#FILLCOLOR fill color}, and
+ * {@@link VisualItem#TEXTCOLOR text color}.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class ColorAnimator extends ItemAction {
+
+    private static final String[] DEFAULTS = new String[] { 
+        VisualItem.STROKECOLOR, VisualItem.FILLCOLOR, 
+        VisualItem.TEXTCOLOR };
+    
+    private CopyOnWriteArrayList m_colorFields;
+    
+    /**
+     * Create a new ColorAnimator that processes all data groups.
+     */
+    public ColorAnimator() {
+        super();
+        setColorFields(DEFAULTS);
+    }
+
+    /**
+     * Create a new ColorAnimator that processes the specified group.
+     * @@param group the data group to process
+     */
+    public ColorAnimator(String group) {
+        super(group);
+        setColorFields(DEFAULTS);
+    }
+
+    /**
+     * Create a new ColorAnimator that processes the specified group and
+     * color field.
+     * @@param group the data group to process
+     * @@param field the color field to interpolate
+     */
+    public ColorAnimator(String group, String field) {
+        super(group);
+        setColorFields(new String[] {field});
+    }
+    
+    /**
+     * Create a new ColorAnimator that processes the specified group and
+     * color fields.
+     * @@param group the data group to process
+     * @@param fields the color fields to interpolate
+     */
+    public ColorAnimator(String group, String[] fields) {
+        super(group);
+        setColorFields(fields);
+    }
+    
+    /**
+     * Sets the color fields to interpolate.
+     * @@param fields the color fields to interpolate
+     */
+    public void setColorFields(String[] fields) {
+        if ( fields == null ) {
+            throw new IllegalArgumentException();
+        }
+        
+        if ( m_colorFields == null )
+            m_colorFields = new CopyOnWriteArrayList();
+        else
+            m_colorFields.clear();
+        
+        for ( int i=0; i<fields.length; ++i ) {
+            m_colorFields.add(fields[i]);
+            m_colorFields.add(PrefuseLib.getStartField(fields[i]));
+            m_colorFields.add(PrefuseLib.getEndField(fields[i]));
+        }
+    }
+    
+    /**
+     * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+     */
+    public void process(VisualItem item, double frac) {
+        if ( m_colorFields == null ) return;
+        
+        Object[] fields = m_colorFields.getArray();
+        for ( int i=0; i<fields.length; i += 3 ) {
+            String f  = (String)fields[i];
+            String sf = (String)fields[i+1];
+            String ef = (String)fields[i+2];
+            
+            int sc = item.getInt(sf), ec = item.getInt(ef);
+            int cc = ColorLib.interp(sc, ec, frac);
+            item.setInt(f, cc);
+        }
+    }
+
+} // end of class ColorAnimator
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a2 3
+import java.util.Iterator;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+d6 1
+d16 1
+a16 1
+ *
+d21 2
+a22 2
+    private static final String[] DEFAULTS = new String[] {
+        VisualItem.STROKECOLOR, VisualItem.FILLCOLOR,
+d24 3
+a26 3
+
+    private CopyOnWriteArrayList<String> m_colorFields;
+
+d54 1
+a54 1
+
+d65 1
+a65 1
+
+d74 6
+a79 7
+
+        if ( m_colorFields == null ) {
+			m_colorFields = new CopyOnWriteArrayList<String>();
+		} else {
+			m_colorFields.clear();
+		}
+
+d86 1
+a86 1
+
+d90 9
+a98 11
+    @@Override
+	public void process(VisualItem<?> item, double frac) {
+        if ( m_colorFields == null ) {
+			return;
+		}
+
+        Iterator<String> fieldIter = m_colorFields.iterator();
+        for ( int i=0; fieldIter.hasNext(); i += 3 ) {
+            String f  = fieldIter.next();
+            String sf = fieldIter.next();
+            String ef = fieldIter.next();
+@
+
+
+1.1
+log
+@file ColorAnimator.java was initially added on branch beta.
+@
+text
+@d1 105
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 82
+package prefuse.action.animate;
+
+import prefuse.action.ItemAction;
+import prefuse.util.ColorLib;
+import prefuse.util.PrefuseLib;
+import prefuse.util.collections.CopyOnWriteArrayList;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Linearly interpolates between starting and ending colors for VisualItems
+ * during an animation. Custom color interpolators can be written by 
+ * subclassing this class and overriding the 
+ * <code>getInterpolatedColor()</code> method.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ColorAnimator extends ItemAction {
+
+    private static final String[] DEFAULTS = new String[] { 
+        VisualItem.STROKECOLOR, VisualItem.FILLCOLOR, 
+        VisualItem.TEXTCOLOR };
+    
+    private CopyOnWriteArrayList m_colorFields;
+    
+    public ColorAnimator() {
+        super();
+        setColorFields(DEFAULTS);
+    }
+    
+    public ColorAnimator(String group) {
+        super(group);
+        setColorFields(DEFAULTS);
+    }
+    
+    public ColorAnimator(String group, String field) {
+        super(group);
+        setColorFields(new String[] {field});
+    }
+    
+    public ColorAnimator(String group, String[] fields) {
+        super(group);
+        setColorFields(fields);
+    }
+    
+    public void setColorFields(String[] fields) {
+        if ( fields == null ) {
+            throw new IllegalArgumentException();
+        }
+        
+        if ( m_colorFields == null )
+            m_colorFields = new CopyOnWriteArrayList();
+        else
+            m_colorFields.clear();
+        
+        for ( int i=0; i<fields.length; ++i ) {
+            m_colorFields.add(fields[i]);
+            m_colorFields.add(PrefuseLib.getStartField(fields[i]));
+            m_colorFields.add(PrefuseLib.getEndField(fields[i]));
+        }
+    }
+    
+	/**
+	 * @@see prefuse.action.Action#run(prefuse.a_old.ItemRegistry, double)
+	 */
+	public void process(VisualItem item, double frac) {
+        if ( m_colorFields == null ) return;
+        
+        Object[] fields = m_colorFields.getArray();
+        for ( int i=0; i<fields.length; i += 3 ) {
+            String f  = (String)fields[i];
+            String sf = (String)fields[i+1];
+            String ef = (String)fields[i+2];
+            
+            int sc = item.getInt(sf), ec = item.getInt(ef);
+            int cc = ColorLib.interp(sc, ec, frac);
+            item.setInt(cc, f);
+        }
+	} //
+
+} // end of class ColorAnimator
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d78 1
+a78 1
+            item.setInt(f, cc);
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d64 4
+a67 4
+    /**
+     * @@see prefuse.action.Action#run(prefuse.a_old.ItemRegistry, double)
+     */
+    public void process(VisualItem item, double frac) {
+d80 1
+a80 1
+    } //
+@
+
+
+1.1.2.4
+log
+@Lots of javadoc
+@
+text
+@d11 4
+a14 5
+ * Animator that linearly interpolates between starting and ending colors
+ * for VisualItems during an animation. By default, interpolates the three
+ * primary color fields: {@@link VisualItem#STROKECOLOR stroke color},
+ * {@@link VisualItem#FILLCOLOR fill color}, and
+ * {@@link VisualItem#TEXTCOLOR text color}.
+d16 2
+a17 1
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a>
+a26 3
+    /**
+     * Create a new ColorAnimator that processes all data groups.
+     */
+d31 1
+a31 5
+
+    /**
+     * Create a new ColorAnimator that processes the specified group.
+     * @@param group the data group to process
+     */
+d36 1
+a36 7
+
+    /**
+     * Create a new ColorAnimator that processes the specified group and
+     * color field.
+     * @@param group the data group to process
+     * @@param field the color field to interpolate
+     */
+a41 6
+    /**
+     * Create a new ColorAnimator that processes the specified group and
+     * color fields.
+     * @@param group the data group to process
+     * @@param fields the color fields to interpolate
+     */
+a46 4
+    /**
+     * Sets the color fields to interpolate.
+     * @@param fields the color fields to interpolate
+     */
+d65 1
+a65 1
+     * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+d80 1
+a80 1
+    }
+@
+
+
+1.1.2.5
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d17 1
+a17 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

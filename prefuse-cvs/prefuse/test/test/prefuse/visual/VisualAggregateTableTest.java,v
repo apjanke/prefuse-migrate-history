@@ -1,0 +1,574 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.04.14.06.57.11;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.02.27.03.59.10;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.51;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.23.22.08.48;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.23.22.08.48;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.09;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Added filtered iteration of members to AggregateItem
+Added member-based aggregate lookup to AggregateItemTable
+@
+text
+@package test.prefuse.visual;
+
+import java.util.Iterator;
+
+import junit.framework.TestCase;
+import prefuse.Visualization;
+import prefuse.visual.AggregateTable;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTable;
+import test.prefuse.data.TableTest;
+
+public class VisualAggregateTableTest extends TestCase {
+
+    private AggregateTable m_agg;
+    private VisualTable m_items;
+    
+    protected void setUp() throws Exception {
+        Visualization v = new Visualization();
+        m_items = v.addTable("items", TableTest.getTestCaseTable());
+        
+        m_agg = v.addAggregates("aggregates", VisualItem.SCHEMA);
+        m_agg.addRow();
+        m_agg.addRow();
+        
+        Iterator iter = m_items.tuples();
+        for ( int i=0, count=m_items.getRowCount(); iter.hasNext(); ++i ) {
+            VisualItem item = (VisualItem)iter.next();
+            int j = i<count/2 ? 0 : 1;
+            m_agg.addToAggregate(j, item);
+        }
+    }
+
+    protected void tearDown() throws Exception {
+        m_items = null;
+        m_agg = null;
+    }
+
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.getAggregateSize(int)'
+     */
+    public void testGetAggregateSize() {
+        int cc = m_items.getRowCount();
+        int s1 = cc/2, s2 = cc-s1;
+        assertEquals(s1, m_agg.getAggregateSize(0));
+        assertEquals(s2, m_agg.getAggregateSize(1));
+    }
+
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.addToAggregate(int, Tuple)'
+     */
+    public void testAddToAggregate() {
+        VisualItem t = m_items.getItem(0);
+        int size = m_agg.getAggregateSize(1);
+        assertFalse(m_agg.aggregateContains(1, t));
+        m_agg.addToAggregate(1, t);
+        assertTrue(m_agg.aggregateContains(1, t));
+        assertEquals(size+1, m_agg.getAggregateSize(1));
+    }
+
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.removeFromAggregate(int, Tuple)'
+     */
+    public void testRemoveFromAggregate() {
+        int s = m_agg.getAggregateSize(0);
+        
+        assertTrue(m_agg.aggregateContains(0, m_items.getItem(0)));
+        m_agg.removeFromAggregate(0, m_items.getItem(0));
+        assertFalse(m_agg.aggregateContains(0, m_items.getItem(0)));
+        assertEquals(--s, m_agg.getAggregateSize(0));
+        
+        assertTrue(m_agg.aggregateContains(0, m_items.getItem(1)));
+        m_agg.removeFromAggregate(0, m_items.getItem(1));
+        assertFalse(m_agg.aggregateContains(0, m_items.getItem(1)));
+        assertEquals(--s, m_agg.getAggregateSize(0));
+    }
+
+    public void testRemoveFromAggregateUnderIteration() {
+        int s = m_agg.getAggregateSize(0);
+        Iterator iter = m_agg.aggregatedTuples(0);
+        while ( iter.hasNext() ) {
+            VisualItem t = (VisualItem)iter.next();
+            assertTrue(m_agg.aggregateContains(0, t));
+            m_agg.removeFromAggregate(0, t);
+            assertEquals(--s, m_agg.getAggregateSize(0));
+            assertFalse(m_agg.aggregateContains(0, t));
+        }
+    }
+    
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.removeAllFromAggregate(int)'
+     */
+    public void testRemoveAllFromAggregate() {
+        m_agg.removeAllFromAggregate(0);
+        m_agg.removeAllFromAggregate(1);
+        assertEquals(0, m_agg.getAggregateSize(0));
+        assertEquals(0, m_agg.getAggregateSize(1));
+    }
+
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.aggregateContains(int, Tuple)'
+     */
+    public void testAggregateContains() {
+        VisualItem vi0 = m_items.getItem(0);
+        VisualItem vi1 = m_items.getItem(m_items.getRowCount()-1);
+        assertTrue(m_agg.aggregateContains(0, vi0));
+        assertTrue(m_agg.aggregateContains(1, vi1));
+    }
+
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.aggregatedTuples(int)'
+     */
+    public void testAggregatedTuples() {
+        int s = m_agg.getAggregateSize(0);
+        Iterator iter = m_agg.aggregatedTuples(0);
+        int count = 0;
+        for ( ; iter.hasNext(); ++count ) {
+            VisualItem t = (VisualItem)iter.next();
+            assertTrue(m_agg.aggregateContains(0, t));
+        }
+        assertEquals(s, count);
+    }
+    
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.getAggregates(Tuple)'
+     */
+    public void testGetAggregates() {
+        for ( int i=0; i<2; ++i ) {
+            Iterator iter = m_agg.aggregatedTuples(0);
+            while ( iter.hasNext() ) {
+                VisualItem t = (VisualItem)iter.next();
+                Iterator aggr = m_agg.getAggregates(t);
+                assertEquals(m_agg.getTuple(0), aggr.next());
+            }
+        }
+    }
+
+}
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d16 2
+a17 3
+
+    @@Override
+	protected void setUp() throws Exception {
+d20 1
+a20 1
+
+d24 2
+a25 2
+
+        Iterator iter = m_items.tuples().iterator();
+d33 1
+a33 2
+    @@Override
+	protected void tearDown() throws Exception {
+d65 1
+a65 1
+
+d70 1
+a70 1
+
+d79 1
+a79 1
+        Iterator iter = m_agg.aggregatedTuples(0).iterator();
+d88 1
+a88 1
+
+d114 1
+a114 1
+        Iterator iter = m_agg.aggregatedTuples(0).iterator();
+d122 1
+a122 1
+
+d128 1
+a128 1
+            Iterator iter = m_agg.aggregatedTuples(0).iterator();
+d131 1
+a131 1
+                Iterator aggr = m_agg.getAggregates(t).iterator();
+@
+
+
+2.1
+log
+@Fixes and test cases for Visualizations and VisualItems.
+Revisited reset, removeGroup, getSourceData, and getSourceTuple.
+Added getSourceXXX methods to VisualItem
+Added new test cases
+@
+text
+@d122 14
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d21 1
+a21 1
+        m_agg = v.addAggregates("aggregates", null);
+@
+
+
+1.1
+log
+@file VisualAggregateTableTest.java was initially added on branch beta.
+@
+text
+@d1 123
+@
+
+
+1.1.2.1
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a0 124
+package test.prefuse.visual;
+
+import java.util.Iterator;
+
+import junit.framework.TestCase;
+import prefuse.Visualization;
+import prefuse.data.tuple.Tuple;
+import prefuse.visual.AggregateTable;
+import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTable;
+import test.prefuse.data.TableTest;
+
+public class VisualAggregateTableTest extends TestCase {
+
+	private AggregateTable m_agg;
+	private VisualTable m_items;
+	
+	protected void setUp() throws Exception {
+		Visualization v = new Visualization();
+		m_items = v.addTable("items", TableTest.getTestCaseTable());
+		
+		m_agg = v.addAggregates("aggregates", null);
+		m_agg.addRow();
+		m_agg.addRow();
+		
+		Iterator iter = m_items.tuples();
+		for ( int i=0, count=m_items.getRowCount(); iter.hasNext(); ++i ) {
+			VisualItem item = (VisualItem)iter.next();
+			int j = i<count/2 ? 0 : 1;
+			m_agg.addToAggregate(j, item);
+		}
+	}
+
+	protected void tearDown() throws Exception {
+		m_items = null;
+		m_agg = null;
+	}
+
+	/*
+	 * Test method for 'prefuse.data.tuple.AggregateTable.getAggregateSize(int)'
+	 */
+	public void testGetAggregateSize() {
+		int cc = m_items.getRowCount();
+		int s1 = cc/2, s2 = cc-s1;
+		assertEquals(s1, m_agg.getAggregateSize(0));
+		assertEquals(s2, m_agg.getAggregateSize(1));
+	}
+
+	/*
+	 * Test method for 'prefuse.data.tuple.AggregateTable.addToAggregate(int, Tuple)'
+	 */
+	public void testAddToAggregate() {
+		Tuple t = m_items.getItem(0);
+		int size = m_agg.getAggregateSize(1);
+		assertFalse(m_agg.aggregateContains(1, t));
+		m_agg.addToAggregate(1, t);
+		assertTrue(m_agg.aggregateContains(1, t));
+		assertEquals(size+1, m_agg.getAggregateSize(1));
+	}
+
+	/*
+	 * Test method for 'prefuse.data.tuple.AggregateTable.removeFromAggregate(int, Tuple)'
+	 */
+	public void testRemoveFromAggregate() {
+		int s = m_agg.getAggregateSize(0);
+		
+		assertTrue(m_agg.aggregateContains(0, m_items.getTuple(0)));
+		m_agg.removeFromAggregate(0, m_items.getTuple(0));
+		assertFalse(m_agg.aggregateContains(0, m_items.getTuple(0)));
+		assertEquals(--s, m_agg.getAggregateSize(0));
+		
+		assertTrue(m_agg.aggregateContains(0, m_items.getTuple(1)));
+		m_agg.removeFromAggregate(0, m_items.getTuple(1));
+		assertFalse(m_agg.aggregateContains(0, m_items.getTuple(1)));
+		assertEquals(--s, m_agg.getAggregateSize(0));
+	}
+
+	public void testRemoveFromAggregateUnderIteration() {
+		int s = m_agg.getAggregateSize(0);
+		Iterator iter = m_agg.aggregatedTuples(0);
+		while ( iter.hasNext() ) {
+			Tuple t = (Tuple)iter.next();
+			assertTrue(m_agg.aggregateContains(0, t));
+			m_agg.removeFromAggregate(0, t);
+			assertEquals(--s, m_agg.getAggregateSize(0));
+			assertFalse(m_agg.aggregateContains(0, t));
+		}
+	}
+	
+	/*
+	 * Test method for 'prefuse.data.tuple.AggregateTable.removeAllFromAggregate(int)'
+	 */
+	public void testRemoveAllFromAggregate() {
+		m_agg.removeAllFromAggregate(0);
+		m_agg.removeAllFromAggregate(1);
+		assertEquals(0, m_agg.getAggregateSize(0));
+		assertEquals(0, m_agg.getAggregateSize(1));
+	}
+
+	/*
+	 * Test method for 'prefuse.data.tuple.AggregateTable.aggregateContains(int, Tuple)'
+	 */
+	public void testAggregateContains() {
+		VisualItem vi0 = m_items.getItem(0);
+		VisualItem vi1 = m_items.getItem(m_items.getRowCount()-1);
+		assertTrue(m_agg.aggregateContains(0, vi0));
+		assertTrue(m_agg.aggregateContains(1, vi1));
+	}
+
+	/*
+	 * Test method for 'prefuse.data.tuple.AggregateTable.aggregatedTuples(int)'
+	 */
+	public void testAggregatedTuples() {
+		int s = m_agg.getAggregateSize(0);
+		Iterator iter = m_agg.aggregatedTuples(0);
+		int count = 0;
+		for ( ; iter.hasNext(); ++count ) {
+			Tuple t = (Tuple)iter.next();
+			assertTrue(m_agg.aggregateContains(0, t));
+		}
+		assertEquals(s, count);
+	}
+
+}
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d15 108
+a122 108
+    private AggregateTable m_agg;
+    private VisualTable m_items;
+    
+    protected void setUp() throws Exception {
+        Visualization v = new Visualization();
+        m_items = v.addTable("items", TableTest.getTestCaseTable());
+        
+        m_agg = v.addAggregates("aggregates", null);
+        m_agg.addRow();
+        m_agg.addRow();
+        
+        Iterator iter = m_items.tuples();
+        for ( int i=0, count=m_items.getRowCount(); iter.hasNext(); ++i ) {
+            VisualItem item = (VisualItem)iter.next();
+            int j = i<count/2 ? 0 : 1;
+            m_agg.addToAggregate(j, item);
+        }
+    }
+
+    protected void tearDown() throws Exception {
+        m_items = null;
+        m_agg = null;
+    }
+
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.getAggregateSize(int)'
+     */
+    public void testGetAggregateSize() {
+        int cc = m_items.getRowCount();
+        int s1 = cc/2, s2 = cc-s1;
+        assertEquals(s1, m_agg.getAggregateSize(0));
+        assertEquals(s2, m_agg.getAggregateSize(1));
+    }
+
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.addToAggregate(int, Tuple)'
+     */
+    public void testAddToAggregate() {
+        Tuple t = m_items.getItem(0);
+        int size = m_agg.getAggregateSize(1);
+        assertFalse(m_agg.aggregateContains(1, t));
+        m_agg.addToAggregate(1, t);
+        assertTrue(m_agg.aggregateContains(1, t));
+        assertEquals(size+1, m_agg.getAggregateSize(1));
+    }
+
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.removeFromAggregate(int, Tuple)'
+     */
+    public void testRemoveFromAggregate() {
+        int s = m_agg.getAggregateSize(0);
+        
+        assertTrue(m_agg.aggregateContains(0, m_items.getTuple(0)));
+        m_agg.removeFromAggregate(0, m_items.getTuple(0));
+        assertFalse(m_agg.aggregateContains(0, m_items.getTuple(0)));
+        assertEquals(--s, m_agg.getAggregateSize(0));
+        
+        assertTrue(m_agg.aggregateContains(0, m_items.getTuple(1)));
+        m_agg.removeFromAggregate(0, m_items.getTuple(1));
+        assertFalse(m_agg.aggregateContains(0, m_items.getTuple(1)));
+        assertEquals(--s, m_agg.getAggregateSize(0));
+    }
+
+    public void testRemoveFromAggregateUnderIteration() {
+        int s = m_agg.getAggregateSize(0);
+        Iterator iter = m_agg.aggregatedTuples(0);
+        while ( iter.hasNext() ) {
+            Tuple t = (Tuple)iter.next();
+            assertTrue(m_agg.aggregateContains(0, t));
+            m_agg.removeFromAggregate(0, t);
+            assertEquals(--s, m_agg.getAggregateSize(0));
+            assertFalse(m_agg.aggregateContains(0, t));
+        }
+    }
+    
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.removeAllFromAggregate(int)'
+     */
+    public void testRemoveAllFromAggregate() {
+        m_agg.removeAllFromAggregate(0);
+        m_agg.removeAllFromAggregate(1);
+        assertEquals(0, m_agg.getAggregateSize(0));
+        assertEquals(0, m_agg.getAggregateSize(1));
+    }
+
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.aggregateContains(int, Tuple)'
+     */
+    public void testAggregateContains() {
+        VisualItem vi0 = m_items.getItem(0);
+        VisualItem vi1 = m_items.getItem(m_items.getRowCount()-1);
+        assertTrue(m_agg.aggregateContains(0, vi0));
+        assertTrue(m_agg.aggregateContains(1, vi1));
+    }
+
+    /*
+     * Test method for 'prefuse.data.tuple.AggregateTable.aggregatedTuples(int)'
+     */
+    public void testAggregatedTuples() {
+        int s = m_agg.getAggregateSize(0);
+        Iterator iter = m_agg.aggregatedTuples(0);
+        int count = 0;
+        for ( ; iter.hasNext(); ++count ) {
+            Tuple t = (Tuple)iter.next();
+            assertTrue(m_agg.aggregateContains(0, t));
+        }
+        assertEquals(s, count);
+    }
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@d7 1
+d53 1
+a53 1
+        VisualItem t = m_items.getItem(0);
+d67 3
+a69 3
+        assertTrue(m_agg.aggregateContains(0, m_items.getItem(0)));
+        m_agg.removeFromAggregate(0, m_items.getItem(0));
+        assertFalse(m_agg.aggregateContains(0, m_items.getItem(0)));
+d72 3
+a74 3
+        assertTrue(m_agg.aggregateContains(0, m_items.getItem(1)));
+        m_agg.removeFromAggregate(0, m_items.getItem(1));
+        assertFalse(m_agg.aggregateContains(0, m_items.getItem(1)));
+d82 1
+a82 1
+            VisualItem t = (VisualItem)iter.next();
+d118 1
+a118 1
+            VisualItem t = (VisualItem)iter.next();
+@
+
+

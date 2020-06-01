@@ -1,0 +1,751 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.04.14.06.55.34;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.30.09.08.06;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Added DateColumn type
+@
+text
+@package prefuse.util;
+
+import java.lang.reflect.Constructor;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+
+/**
+ * Library routines for dealing with times and time spans. All time values
+ * are given as long values, indicating the number of milliseconds since
+ * the epoch (January 1, 1970). This is the same time format returned
+ * by the {@@link java.lang.System#currentTimeMillis()} method.
+ * 
+ * @@author jeffrey heer
+ */
+public class TimeLib {
+
+    /** Represents a millenium, 1000 years. */
+    public static final int MILLENIUM = -1000;
+    /** Represents a century, 100 years */
+    public static final int CENTURY   = -100;
+    /** Represents a decade, 10 years */
+    public static final int DECADE    = -10;
+    
+    private static final double SECOND_MILLIS    = 1000;
+    private static final double MINUTE_MILLIS    = SECOND_MILLIS*60;
+    private static final double HOUR_MILLIS      = MINUTE_MILLIS*60;
+    private static final double DAY_MILLIS       = HOUR_MILLIS * 24.0015;
+    private static final double WEEK_MILLIS      = DAY_MILLIS * 7;
+    private static final double MONTH_MILLIS     = DAY_MILLIS * 30.43675;
+    private static final double YEAR_MILLIS      = WEEK_MILLIS * 52.2;
+    private static final double DECADE_MILLIS    = YEAR_MILLIS * 10;
+    private static final double CENTURY_MILLIS   = DECADE_MILLIS * 10;
+    private static final double MILLENIUM_MILLIS = CENTURY_MILLIS * 10;
+    
+    private static final int[] CALENDAR_FIELDS = {
+        Calendar.YEAR, Calendar.MONTH, Calendar.DATE, Calendar.HOUR_OF_DAY,
+        Calendar.MINUTE, Calendar.SECOND, Calendar.MILLISECOND    
+    };
+    
+    private TimeLib() {
+        // prevent instantiation
+    }
+    
+    /**
+     * Get the number of time units between the two given timestamps.
+     * @@param t0 the first timestamp (as a long)
+     * @@param t1 the second timestamp (as a long)
+     * @@param field the time unit to use, one of the {@@link java.util.Calendar}
+     * fields, or one of the extended fields provided by this class
+     * (MILLENIUM, CENTURY, or DECADE).
+     * @@return the number of time units between the two timestamps
+     */
+    public static int getUnitsBetween(long t0, long t1, int field) {
+        boolean negative = false;
+        if ( t1 < t0 ) {
+            long tmp = t1; t1 = t0; t0 = tmp; // swap
+            negative = true;
+        }
+        GregorianCalendar gc1 = new GregorianCalendar();
+        GregorianCalendar gc2 = new GregorianCalendar();
+        gc1.setTimeInMillis(t0);
+        gc2.setTimeInMillis(t1);
+        
+        // add 2 units less than the estimate to 1st date,
+        // then serially add units till we exceed 2nd date
+        int est = estimateUnitsBetween(t0, t1, field);
+        boolean multiYear = isMultiYear(field);
+        if ( multiYear ) {
+            gc1.add(Calendar.YEAR, -field*(est-2));
+            est = -field*est;
+        } else {
+            gc1.add(field, est-2);
+        }
+        int f = multiYear ? Calendar.YEAR : field;
+        int inc = multiYear ? -field : 1;
+        for( int i=est-inc; ; i+=inc ) {
+            gc1.add(f, inc);
+            if( gc1.after(gc2) ) {
+                return negative ? inc-i : i-inc;
+            }
+        }
+    }
+    
+    /**
+     * Based on code posted at
+     *  http://forum.java.sun.com/thread.jspa?threadID=488676&messageID=2292012
+     */
+    private static int estimateUnitsBetween(long t0, long t1, int field) {
+        long d = t1-t0;
+        switch (field) {
+        case Calendar.MILLISECOND:
+            return (int)d; // this could be very inaccurate. TODO: use long instead of int?
+        case Calendar.SECOND:
+            return (int)(d / SECOND_MILLIS + .5);
+        case Calendar.MINUTE:
+            return (int)(d / MINUTE_MILLIS + .5);
+        case Calendar.HOUR_OF_DAY:
+        case Calendar.HOUR:
+            return (int)(d / HOUR_MILLIS + .5);
+        case Calendar.DAY_OF_WEEK_IN_MONTH :
+        case Calendar.DAY_OF_MONTH :
+        // case Calendar.DATE : // codes to same int as DAY_OF_MONTH
+            return (int) (d / DAY_MILLIS + .5);
+        case Calendar.WEEK_OF_YEAR :
+            return (int) (d / WEEK_MILLIS + .5);
+        case Calendar.MONTH :
+            return (int) (d / MONTH_MILLIS + .5);
+        case Calendar.YEAR :
+            return (int) (d / YEAR_MILLIS + .5);
+        case DECADE:
+            return (int) (d / DECADE_MILLIS + .5);
+        case CENTURY:
+            return (int) (d / CENTURY_MILLIS + .5);
+        case MILLENIUM:
+            return (int) (d / MILLENIUM_MILLIS + .5);
+        default:
+            return 0;
+        }
+    }
+        
+    /**
+     * Increment a calendar by a given number of time units.
+     * @@param c the calendar to increment
+     * @@param field the time unit to increment, one of the
+     * {@@link java.util.Calendar} fields, or one of the extended fields
+     * provided by this class (MILLENIUM, CENTURY, or DECADE).
+     * @@param val the number of time units to increment by
+     */
+    public static void increment(Calendar c, int field, int val) {
+        if ( isMultiYear(field) ) {
+            c.add(Calendar.YEAR, -field*val);
+        } else {
+            c.add(field, val);
+        }
+    }
+    
+    /**
+     * Get the value of the given time field for a Calendar. Just like the
+     * {@@link java.util.Calendar#get(int)} method, but include support for
+     * the extended fields provided by this class (MILLENIUM, CENTURY, or
+     * DECADE).
+     * @@param c the Calendar
+     * @@param field the time field
+     * @@return the value of the time field for the given calendar
+     */
+    public static int get(Calendar c, int field) {
+        if ( isMultiYear(field) ) {
+            int y = c.get(Calendar.YEAR);
+            return -field * (y/-field);
+        } else {
+            return c.get(field);
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Date Access
+    
+    /**
+     * Get the timestamp for the given year, month, and, day.
+     * @@param c a Calendar to use to help compute the result. The state of the
+     * Calendar will be overwritten.
+     * @@param year the year to look up
+     * @@param month the month to look up (months start at 0==January)
+     * @@param day the day to look up
+     * @@return the timestamp for the given date
+     */
+    public static long getDate(Calendar c, int year, int month, int day) {
+        c.clear(Calendar.MILLISECOND);
+        c.set(year, month, day, 0, 0, 0);
+        return c.getTimeInMillis();
+    }
+
+    /**
+     * Get a timestamp for the given hour, minute, and second. The date will
+     * be assumed to be January 1, 1970.
+     * @@param c a Calendar to use to help compute the result. The state of the
+     * Calendar will be overwritten.
+     * @@param hour the hour, on a 24 hour clock
+     * @@param minute the minute value
+     * @@param second the seconds value
+     * @@return the timestamp for the given date
+     */
+    public static long getTime(Calendar c, int hour, int minute, int second) {
+        c.clear(Calendar.MILLISECOND);
+        c.set(1970, 0, 1, hour, minute, second);
+        return c.getTimeInMillis();
+    }
+    
+    /**
+     * Get a new Date instance of the specified subclass and given long value.
+     * @@param type the concrete subclass of the Date instance, must be an
+     * instance of subclass of java.util.Date
+     * @@param d the date/time value as a long
+     * @@return the new Date instance, or null if the class type is not valid
+     */
+    public static Date getDate(Class type, long d) {
+        try {
+            Constructor c = type.getConstructor(new Class[] {long.class});
+            return (Date)c.newInstance(new Object[] {new Long(d)});
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Date Normalization
+    
+    /**
+     * Get the timestamp resulting from clearing (setting to zero) all time
+     * values less than or equal to that of the given field. For example,
+     * clearing to {@@link Calendar#HOUR} will floor the time to nearest
+     * hour which occurred before or at the given time (e.g., 1:32
+     * --> 1:30).
+     * @@param t the reference time
+     * @@param c a Calendar instance used to help compute the value, the
+     * state of the Calendar will be overwritten.
+     * @@param field the time field to clear to, one of the
+     * {@@link java.util.Calendar} fields, or one of the extended fields
+     * provided by this class (MILLENIUM, CENTURY, or DECADE).
+     * @@return the cleared time
+     */
+    public static long getClearedTime(long t, Calendar c, int field) {
+        c.setTimeInMillis(t);
+        TimeLib.clearTo(c, field);
+        return c.getTimeInMillis();
+    }
+    
+    /**
+     * Clear the given calendar, setting to zero all time
+     * values less than or equal to that of the given field. For example,
+     * clearing to {@@link Calendar#HOUR} will floor the time to nearest
+     * hour which occurred before or at the given time (e.g., 1:32
+     * --> 1:30).
+     * @@param c the Calendar to clear
+     * @@param field the time field to clear to, one of the
+     * {@@link java.util.Calendar} fields, or one of the extended fields
+     * provided by this class (MILLENIUM, CENTURY, or DECADE).
+     * @@return the original Calendar reference, now set to the cleared time
+     */
+    public static Calendar clearTo(Calendar c, int field) {
+        int i = CALENDAR_FIELDS.length-1;
+        for ( ; i>=1 && field != CALENDAR_FIELDS[i]; i-- ) {
+            int val = (CALENDAR_FIELDS[i]==Calendar.DATE?1:0);
+            c.set(CALENDAR_FIELDS[i],val);
+        }
+        if ( isMultiYear(field) ) {
+            int y = c.get(Calendar.YEAR);
+            y = -field * (y/-field);
+            c.set(Calendar.YEAR, y);
+        }
+        return c;
+    }
+    
+    /**
+     * Indicates if a field value indicates a timespan greater than one
+     * year. These multi-year spans are the extended fields introduced by
+     * this class (MILLENIUM, CENTURY, and DECADE).
+     * @@param field the time field
+     * @@return true if the field is multi-year, false otherwise
+     */
+    public static boolean isMultiYear(int field) {
+        return ( field == DECADE || field == CENTURY || field == MILLENIUM );
+    }
+    
+} // end of class TimeLib
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d13 1
+a13 1
+ *
+d24 1
+a24 1
+
+d35 1
+a35 1
+
+d38 1
+a38 1
+        Calendar.MINUTE, Calendar.SECOND, Calendar.MILLISECOND
+d40 1
+a40 1
+
+d44 1
+a44 1
+
+d64 1
+a64 1
+
+d84 1
+a84 1
+
+d121 1
+a121 1
+
+d137 1
+a137 1
+
+d150 1
+a150 1
+            return -field * y/-field;
+d155 1
+a155 1
+
+d158 1
+a158 1
+
+d189 1
+a189 1
+
+d197 1
+a197 1
+    public static Date getDate(Class<? extends Date> type, long d) {
+d199 2
+a200 2
+            Constructor<? extends Date> c = type.getConstructor(new Class[] {long.class});
+            return c.newInstance(new Object[] {new Long(d)});
+d206 1
+a206 1
+
+d209 1
+a209 1
+
+d229 1
+a229 1
+
+d245 1
+a245 1
+            int val = CALENDAR_FIELDS[i]==Calendar.DATE?1:0;
+d250 1
+a250 1
+            y = -field * y/-field;
+d255 1
+a255 1
+
+d264 1
+a264 1
+        return field == DECADE || field == CENTURY || field == MILLENIUM;
+d266 1
+a266 1
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d3 1
+d5 1
+d190 17
+@
+
+
+1.1
+log
+@file TimeLib.java was initially added on branch beta.
+@
+text
+@d1 248
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 151
+package prefuse.util;
+
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
+/**
+ * TimeUtil
+ * 
+ * Created on May 18, 2005
+ * @@version 1.0
+ * @@author jheer
+ */
+public class TimeLib {
+
+    public static final int MILLENIUM = -1000;
+    public static final int CENTURY   = -100;
+    public static final int DECADE    = -10;
+    
+    private static final double SECOND_MILLIS    = 1000;
+    private static final double MINUTE_MILLIS    = SECOND_MILLIS*60;
+    private static final double HOUR_MILLIS      = MINUTE_MILLIS*60;
+    private static final double DAY_MILLIS       = HOUR_MILLIS * 24.0015;
+    private static final double WEEK_MILLIS      = DAY_MILLIS * 7;
+    private static final double MONTH_MILLIS     = DAY_MILLIS * 30.43675;
+    private static final double YEAR_MILLIS      = WEEK_MILLIS * 52.2;
+    private static final double DECADE_MILLIS    = YEAR_MILLIS * 10;
+    private static final double CENTURY_MILLIS   = DECADE_MILLIS * 10;
+    private static final double MILLENIUM_MILLIS = CENTURY_MILLIS * 10;
+    
+    private static final int[] CALENDAR_FIELDS = {
+        Calendar.YEAR, Calendar.MONTH, Calendar.DATE, Calendar.HOUR_OF_DAY,
+        Calendar.MINUTE, Calendar.SECOND, Calendar.MILLISECOND    
+    };
+    
+    private TimeLib() {
+        // prevent instantiation
+    }
+    
+    public static int getUnitsBetween(long t0, long t1, int field) {
+        boolean negative = false;
+        if ( t1 < t0 ) {
+            long tmp = t1; t1 = t0; t0 = tmp; // swap
+            negative = true;
+        }
+        GregorianCalendar gc1 = new GregorianCalendar();
+        GregorianCalendar gc2 = new GregorianCalendar();
+        gc1.setTimeInMillis(t0);
+        gc2.setTimeInMillis(t1);
+        
+        // add 2 units less than the estimate to 1st date,
+        // then serially add units till we exceed 2nd date
+        int est = estimateUnitsBetween(t0, t1, field);
+        boolean multiYear = isMultiYear(field);
+        if ( multiYear ) {
+            gc1.add(Calendar.YEAR, -field*(est-2));
+            est = -field*est;
+        } else {
+            gc1.add(field, est-2);
+        }
+        int f = multiYear ? Calendar.YEAR : field;
+        int inc = multiYear ? -field : 1;
+        for( int i=est-inc; ; i+=inc ) {
+            gc1.add(f, inc);
+            if( gc1.after(gc2) ) {
+                return negative ? inc-i : i-inc;
+            }
+        }
+    }
+    
+    /**
+     * Based on code posted at
+     *  http://forum.java.sun.com/thread.jspa?threadID=488676&messageID=2292012
+     */
+    private static int estimateUnitsBetween(long t0, long t1, int field) {
+        long d = t1-t0;
+        switch (field) {
+        case Calendar.MILLISECOND:
+            return (int)d; // this could be very inaccurate. TODO: use long instead of int?
+        case Calendar.SECOND:
+            return (int)(d / SECOND_MILLIS + .5);
+        case Calendar.MINUTE:
+            return (int)(d / MINUTE_MILLIS + .5);
+        case Calendar.HOUR_OF_DAY:
+        case Calendar.HOUR:
+            return (int)(d / HOUR_MILLIS + .5);
+        case Calendar.DAY_OF_WEEK_IN_MONTH :
+        case Calendar.DAY_OF_MONTH :
+        // case Calendar.DATE : // codes to same int as DAY_OF_MONTH
+            return (int) (d / DAY_MILLIS + .5);
+        case Calendar.WEEK_OF_YEAR :
+            return (int) (d / WEEK_MILLIS + .5);
+        case Calendar.MONTH :
+            return (int) (d / MONTH_MILLIS + .5);
+        case Calendar.YEAR :
+            return (int) (d / YEAR_MILLIS + .5);
+        case DECADE:
+            return (int) (d / DECADE_MILLIS + .5);
+        case CENTURY:
+            return (int) (d / CENTURY_MILLIS + .5);
+        case MILLENIUM:
+            return (int) (d / MILLENIUM_MILLIS + .5);
+        default:
+            return 0;
+        }
+    }
+        
+    public static void increment(Calendar c, int field, int val) {
+        if ( isMultiYear(field) ) {
+            c.add(Calendar.YEAR, -field*val);
+        } else {
+            c.add(field, val);
+        }
+    }
+    
+    public static int get(Calendar c, int field) {
+        if ( isMultiYear(field) ) {
+            int y = c.get(Calendar.YEAR);
+            return -field * (y/-field);
+        } else {
+            return c.get(field);
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Date Normalization
+    
+    public static long getClearedTime(long t, Calendar c, int field) {
+        c.setTimeInMillis(t);
+        TimeLib.clearTo(c, field);
+        return c.getTimeInMillis();
+    }
+    
+    public static Calendar clearTo(Calendar c, int field) {
+        int i = CALENDAR_FIELDS.length-1;
+        for ( ; i>=1 && field != CALENDAR_FIELDS[i]; i-- ) {
+            int val = (CALENDAR_FIELDS[i]==Calendar.DATE?1:0);
+            c.set(CALENDAR_FIELDS[i],val);
+        }
+        if ( isMultiYear(field) ) {
+            int y = c.get(Calendar.YEAR);
+            y = -field * (y/-field);
+            c.set(Calendar.YEAR, y);
+        }
+        return c;
+    }
+    
+    public static boolean isMultiYear(int field) {
+        return ( field == DECADE || field == CENTURY || field == MILLENIUM );
+    }
+    
+} // end of class TimeLib
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@a124 15
+    // Date Access
+    
+    public static long getDate(Calendar c, int year, int month, int day) {
+    	c.clear(Calendar.MILLISECOND);
+    	c.set(year, month, day, 0, 0, 0);
+    	return c.getTimeInMillis();
+    }
+    
+    public static long getTime(Calendar c, int hour, int minute, int second) {
+    	c.clear(Calendar.MILLISECOND);
+    	c.set(1970, 0, 1, hour, minute, second);
+    	return c.getTimeInMillis();
+    }
+    
+    // ------------------------------------------------------------------------
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d128 3
+a130 3
+        c.clear(Calendar.MILLISECOND);
+        c.set(year, month, day, 0, 0, 0);
+        return c.getTimeInMillis();
+d134 3
+a136 3
+        c.clear(Calendar.MILLISECOND);
+        c.set(1970, 0, 1, hour, minute, second);
+        return c.getTimeInMillis();
+@
+
+
+1.1.2.4
+log
+@Much more javadoc
+@
+text
+@d7 1
+a7 4
+ * Library routines for dealing with times and time spans. All time values
+ * are given as long values, indicating the number of milliseconds since
+ * the epoch (January 1, 1970). This is the same time format returned
+ * by the {@@link java.lang.System#currentTimeMillis()} method.
+d9 3
+a11 1
+ * @@author jeffrey heer
+a14 1
+    /** Represents a millenium, 1000 years. */
+a15 1
+    /** Represents a century, 100 years */
+a16 1
+    /** Represents a decade, 10 years */
+a38 9
+    /**
+     * Get the number of time units between the two given timestamps.
+     * @@param t0 the first timestamp (as a long)
+     * @@param t1 the second timestamp (as a long)
+     * @@param field the time unit to use, one of the {@@link java.util.Calendar}
+     * fields, or one of the extended fields provided by this class
+     * (MILLENIUM, CENTURY, or DECADE).
+     * @@return the number of time units between the two timestamps
+     */
+a106 8
+    /**
+     * Increment a calendar by a given number of time units.
+     * @@param c the calendar to increment
+     * @@param field the time unit to increment, one of the
+     * {@@link java.util.Calendar} fields, or one of the extended fields
+     * provided by this class (MILLENIUM, CENTURY, or DECADE).
+     * @@param val the number of time units to increment by
+     */
+a114 9
+    /**
+     * Get the value of the given time field for a Calendar. Just like the
+     * {@@link java.util.Calendar#get(int)} method, but include support for
+     * the extended fields provided by this class (MILLENIUM, CENTURY, or
+     * DECADE).
+     * @@param c the Calendar
+     * @@param field the time field
+     * @@return the value of the time field for the given calendar
+     */
+a126 9
+    /**
+     * Get the timestamp for the given year, month, and, day.
+     * @@param c a Calendar to use to help compute the result. The state of the
+     * Calendar will be overwritten.
+     * @@param year the year to look up
+     * @@param month the month to look up (months start at 0==January)
+     * @@param day the day to look up
+     * @@return the timestamp for the given date
+     */
+d132 1
+a132 11
+
+    /**
+     * Get a timestamp for the given hour, minute, and second. The date will
+     * be assumed to be January 1, 1970.
+     * @@param c a Calendar to use to help compute the result. The state of the
+     * Calendar will be overwritten.
+     * @@param hour the hour, on a 24 hour clock
+     * @@param minute the minute value
+     * @@param second the seconds value
+     * @@return the timestamp for the given date
+     */
+a141 14
+    /**
+     * Get the timestamp resulting from clearing (setting to zero) all time
+     * values less than or equal to that of the given field. For example,
+     * clearing to {@@link Calendar#HOUR} will floor the time to nearest
+     * hour which occurred before or at the given time (e.g., 1:32
+     * --> 1:30).
+     * @@param t the reference time
+     * @@param c a Calendar instance used to help compute the value, the
+     * state of the Calendar will be overwritten.
+     * @@param field the time field to clear to, one of the
+     * {@@link java.util.Calendar} fields, or one of the extended fields
+     * provided by this class (MILLENIUM, CENTURY, or DECADE).
+     * @@return the cleared time
+     */
+a147 12
+    /**
+     * Clear the given calendar, setting to zero all time
+     * values less than or equal to that of the given field. For example,
+     * clearing to {@@link Calendar#HOUR} will floor the time to nearest
+     * hour which occurred before or at the given time (e.g., 1:32
+     * --> 1:30).
+     * @@param c the Calendar to clear
+     * @@param field the time field to clear to, one of the
+     * {@@link java.util.Calendar} fields, or one of the extended fields
+     * provided by this class (MILLENIUM, CENTURY, or DECADE).
+     * @@return the original Calendar reference, now set to the cleared time
+     */
+a161 7
+    /**
+     * Indicates if a field value indicates a timespan greater than one
+     * year. These multi-year spans are the extended fields introduced by
+     * this class (MILLENIUM, CENTURY, and DECADE).
+     * @@param field the time field
+     * @@return true if the field is multi-year, false otherwise
+     */
+@
+
+

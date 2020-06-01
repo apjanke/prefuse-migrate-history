@@ -1,0 +1,132 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.08;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.02.19.01.52;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file AggregateItemTupleManager.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a0 24
+package prefuse.visual.tuple;
+
+import prefuse.data.tuple.TableTuple;
+import prefuse.data.tuple.TupleManager;
+import prefuse.visual.VisualTable;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class AggregateItemTupleManager extends TupleManager {
+    
+    public AggregateItemTupleManager() {
+        super();
+    }
+    
+    public AggregateItemTupleManager(VisualTable t) {
+        super(t);
+    }
+    
+    protected TableTuple newTuple(int row) {
+        return new TableAggregateItem(m_table, row);
+    }
+
+} // end of class AggregateItemTupleManager@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d24 1
+a24 1
+} // end of class AggregateItemTupleManager
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@a7 2
+ * TupleManager for AggregateItem instances.
+ * 
+a11 3
+    /**
+     * Create a new AggregateItemTupleManager
+     */
+a15 4
+    /**
+     * Create a new AggregateItemTupleManager
+     * @@param t the backing table
+     */
+a19 3
+    /**
+     * @@see prefuse.data.tuple.TupleManager#newTuple(int)
+     */
+@
+
+
+1.1.2.4
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@@
+
+

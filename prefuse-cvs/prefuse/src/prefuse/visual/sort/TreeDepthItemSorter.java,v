@@ -1,0 +1,360 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.03.24.17.39.37;	author jheer;	state Exp;
+branches
+	2.2.4.1;
+next	2.1;
+
+2.1
+date	2006.03.08.19.14.00;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.47;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.09;	author jheer;	state Exp;
+branches;
+next	;
+
+2.2.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Improved sorting scores
+@
+text
+@package prefuse.visual.sort;
+
+import prefuse.Visualization;
+import prefuse.visual.AggregateItem;
+import prefuse.visual.DecoratorItem;
+import prefuse.visual.EdgeItem;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+
+/**
+ * ItemSorter that sorts items by tree depths. By default items deeper
+ * in the tree are given lower scores, so that parent nodes are drawn
+ * on top of child nodes. This ordering can be reversed using the
+ * appropriate constructor arguments.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class TreeDepthItemSorter extends ItemSorter {
+
+    protected static final int AGGREGATE = 0;
+    protected static final int EDGE      = 1;
+    protected static final int ITEM      = 2;
+    protected static final int NODE      = 3;
+    protected static final int DECORATOR = 4;
+    
+    private int m_childrenAbove;
+    private int m_hover;
+    private int m_highlight;
+    private int m_depth;
+    
+    /**
+     * Create a new TreeDepthItemSorter that orders nodes such that parents
+     * are placed above their children.
+     */
+    public TreeDepthItemSorter() {
+        this(false);
+    }
+    
+    /**
+     * Create a new TreeDepthItemSorter with the given sort ordering by depth.
+     * @@param childrenAbove true if children should be ordered above their
+     * parents, false if parents should be ordered above their children.
+     */
+    public TreeDepthItemSorter(boolean childrenAbove) {
+        if ( childrenAbove ) {
+            m_childrenAbove = 1;
+            m_hover = 13;
+            m_highlight = 12;
+            m_depth = 14;
+        } else {
+            m_childrenAbove = -1;
+            m_hover = 24;
+            m_highlight = 23;
+            m_depth = 12;
+        }
+    }
+    
+    /**
+     * Score items similarly to {@@link ItemSorter}, but additionally
+     * ranks items based on their tree depth.
+     * @@see prefuse.visual.sort.ItemSorter#score(prefuse.visual.VisualItem)
+     */
+    public int score(VisualItem item) {
+        int type = ITEM;
+        if ( item instanceof EdgeItem ) {
+            type = EDGE;
+        } else if ( item instanceof AggregateItem ) {
+            type = AGGREGATE;
+        } else if ( item instanceof DecoratorItem ) {
+            type = DECORATOR;
+        }
+        
+        int score = (1<<(25+type));
+        if ( item instanceof NodeItem ) {
+            int depth = ((NodeItem)item).getDepth();
+            score += m_childrenAbove*(depth<<m_depth);
+        }
+        if ( item.isHover() ) {
+            score += (1<<m_hover);
+        }
+        if ( item.isHighlighted() ) {
+            score += (1<<m_highlight);
+        }
+        if ( item.isInGroup(Visualization.FOCUS_ITEMS) ) {
+            score += (1<<11);
+        }
+        if ( item.isInGroup(Visualization.SEARCH_ITEMS) ) {
+            score += (1<<10);
+        }
+
+        return score;
+//        int score = 0;
+//        if ( item.isHover() ) {
+//            score += (1<<m_hover);
+//        }
+//        if ( item.isHighlighted() ) {
+//            score += (1<<m_highlight);
+//        }
+//        if ( item instanceof NodeItem ) {
+//            score += (1<<27); // nodes before edges
+//            score += m_childrenAbove*(((NodeItem)item).getDepth()<<m_depth);
+//        }
+//        if ( item.isInGroup(Visualization.FOCUS_ITEMS) ) {
+//            score += (1<<11);
+//        }
+//        if ( item.isInGroup(Visualization.SEARCH_ITEMS) ) {
+//            score += (1<<10);
+//        }
+//        if ( item instanceof DecoratorItem ) {
+//            score += (1<<9);
+//        }
+//        return score;
+    }
+
+} // end of class TreeDepthItemSorter
+@
+
+
+2.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d15 1
+a15 1
+ *
+d25 1
+a25 1
+
+d30 1
+a30 1
+
+d38 1
+a38 1
+
+d57 1
+a57 1
+
+d63 1
+a63 2
+    @@Override
+	public int score(VisualItem<?> item) {
+d72 2
+a73 2
+
+        int score = 1<<25+type;
+d75 1
+a75 1
+            int depth = ((NodeItem<?,?>)item).getDepth();
+d79 1
+a79 1
+            score += 1<<m_hover;
+d82 1
+a82 1
+            score += 1<<m_highlight;
+d85 1
+a85 1
+            score += 1<<11;
+d88 1
+a88 1
+            score += 1<<10;
+d92 21
+d115 1
+a115 1
+}
+@
+
+
+2.1
+log
+@Sorter can now sort by tree depth in either direction
+@
+text
+@d4 1
+d6 1
+d20 6
+d52 2
+a53 2
+            m_hover = 29;
+            m_highlight = 28;
+d64 14
+a77 1
+        int score = 0;
+a83 4
+        if ( item instanceof NodeItem ) {
+            score += (1<<27); // nodes before edges
+            score += m_childrenAbove*(((NodeItem)item).getDepth()<<m_depth);
+        }
+d90 1
+a90 3
+        if ( item instanceof DecoratorItem ) {
+            score += (1<<9);
+        }
+d92 21
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d9 4
+a12 2
+ * ItemSorter that sorts items by tree depths, items higher in the
+ * tree are given higher scores that items with greater depth levels.
+d18 32
+d52 1
+a52 2
+     * ranks items based on their tree depth, scoring items with
+     * lower tree depth higher.
+d58 1
+a58 1
+            score += (1<<29);
+d61 1
+a61 1
+            score += (1<<28);
+d65 1
+a65 1
+            score -= (((NodeItem)item).getDepth()<<12);
+@
+
+
+1.1
+log
+@file TreeDepthItemSorter.java was initially added on branch beta.
+@
+text
+@d1 46
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 37
+package prefuse.visual.sort;
+
+import prefuse.Visualization;
+import prefuse.visual.DecoratorItem;
+import prefuse.visual.NodeItem;
+import prefuse.visual.VisualItem;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class TreeDepthItemSorter extends ItemSorter {
+
+    public int score(VisualItem item) {
+        int score = 0;
+        if ( item.isHover() ) {
+            score += (1<<29);
+        }
+        if ( item.isHighlighted() ) {
+            score += (1<<28);
+        }
+        if ( item instanceof NodeItem ) {
+            score += (1<<27); // nodes before edges
+            score -= (((NodeItem)item).getDepth()<<12);
+        }
+        if ( item.isInGroup(Visualization.FOCUS_ITEMS) ) {
+            score += (1<<11);
+        }
+        if ( item.isInGroup(Visualization.SEARCH_ITEMS) ) {
+            score += (1<<10);
+        }
+        if ( item instanceof DecoratorItem ) {
+            score += (1<<9);
+        }
+        return score;
+    }
+
+} // end of class TreeDepthItemSorter
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d9 1
+a9 4
+ * ItemSorter that sorts items by tree depths, items higher in the
+ * tree are given higher scores that items with greater depth levels.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a12 6
+    /**
+     * Score items similarly to {@@link ItemSorter}, but additionally
+     * ranks items based on their tree depth, scoring items with
+     * lower tree depth higher.
+     * @@see prefuse.visual.sort.ItemSorter#score(prefuse.visual.VisualItem)
+     */
+@
+
+

@@ -1,0 +1,937 @@
+head	1.12;
+access;
+symbols
+	alpha:1.11.0.2
+	Root_alpha:1.11
+	prefuse-alpha-20051229:1.11
+	P20050401_Alpha_PreCHI:1.11;
+locks; strict;
+comment	@# @;
+
+
+1.12
+date	2006.02.11.06.38.42;	author jheer;	state dead;
+branches;
+next	1.11;
+
+1.11
+date	2005.01.14.23.13.04;	author jheer;	state Exp;
+branches
+	1.11.4.1;
+next	1.10;
+
+1.10
+date	2004.03.25.04.35.38;	author jheer;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2004.03.24.01.57.26;	author jheer;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2004.03.23.04.00.10;	author jheer;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2004.03.15.03.33.29;	author jheer;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2004.03.11.19.11.13;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.08.21.41.27;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.08.21.31.50;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.08.20.05.51;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.03.08.11.05;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.46;	author jheer;	state Exp;
+branches;
+next	;
+
+1.11.4.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.12
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.demos;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Paint;
+
+import javax.swing.JFrame;
+
+import edu.berkeley.guir.prefuse.AggregateItem;
+import edu.berkeley.guir.prefuse.Display;
+import edu.berkeley.guir.prefuse.EdgeItem;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.NodeItem;
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.action.RepaintAction;
+import edu.berkeley.guir.prefuse.action.animate.ColorAnimator;
+import edu.berkeley.guir.prefuse.action.animate.LocationAnimator;
+import edu.berkeley.guir.prefuse.action.assignment.ColorFunction;
+import edu.berkeley.guir.prefuse.action.filter.WindowedTreeFilter;
+import edu.berkeley.guir.prefuse.activity.ActionList;
+import edu.berkeley.guir.prefuse.activity.SlowInSlowOutPacer;
+import edu.berkeley.guir.prefuse.collections.DOIItemComparator;
+import edu.berkeley.guir.prefuse.graph.Tree;
+import edu.berkeley.guir.prefuse.graph.io.HDirTreeReader;
+import edu.berkeley.guir.prefuse.graph.io.TreeReader;
+import edu.berkeley.guir.prefuse.render.DefaultEdgeRenderer;
+import edu.berkeley.guir.prefuse.render.DefaultNodeRenderer;
+import edu.berkeley.guir.prefuse.render.Renderer;
+import edu.berkeley.guir.prefuse.render.RendererFactory;
+import edu.berkeley.guir.prefuse.render.TextItemRenderer;
+import edu.berkeley.guir.prefuse.util.ColorMap;
+import edu.berkeley.guir.prefuse.util.StringAbbreviator;
+import edu.berkeley.guir.prefusex.controls.FocusControl;
+import edu.berkeley.guir.prefusex.controls.NeighborHighlightControl;
+import edu.berkeley.guir.prefusex.controls.PanControl;
+import edu.berkeley.guir.prefusex.controls.SubtreeDragControl;
+import edu.berkeley.guir.prefusex.controls.ZoomControl;
+import edu.berkeley.guir.prefusex.layout.BalloonTreeLayout;
+
+/**
+ * Visualizes a tree structure using a balloon tree layout.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class BalloonGraphDemo extends JFrame {
+
+	public static final String TREE_CHI = "../prefuse/etc/chitest.hdir";
+    
+	public static void main(String argv[]) {
+	    String datafile = TREE_CHI;
+	    if ( argv.length > 0 ) {
+	        datafile = argv[0];
+	    }
+	    new BalloonGraphDemo(datafile);
+	} //
+	
+    public BalloonGraphDemo(String inputFile) {
+        super("BalloonTree Demo");
+		try {
+			// load graph
+			TreeReader tr = new HDirTreeReader();
+			Tree tree = tr.loadTree(inputFile);
+			
+			// create display and filter
+            ItemRegistry registry = new ItemRegistry(tree);
+            registry.setItemComparator(new DOIItemComparator());
+            Display display = new Display();
+
+			// initialize renderers
+			TextItemRenderer nodeRenderer = new TextItemRenderer();
+			nodeRenderer.setMaxTextWidth(75);
+			nodeRenderer.setAbbrevType(StringAbbreviator.NAME);
+            nodeRenderer.setRoundedCorner(8,8);
+			
+			Renderer nodeRenderer2 = new DefaultNodeRenderer();
+			Renderer edgeRenderer = new DefaultEdgeRenderer();
+			
+			registry.setRendererFactory(new DemoRendererFactory(
+				nodeRenderer, nodeRenderer2, edgeRenderer));
+			
+            // initialize action lists
+			ActionList filter = new ActionList(registry);
+            filter.add(new WindowedTreeFilter(-4,true));
+            filter.add(new BalloonTreeLayout());
+            filter.add(new DemoColorFunction(4));
+            
+            ActionList update = new ActionList(registry);
+            update.add(new DemoColorFunction(4));
+            update.add(new RepaintAction());
+            
+            ActionList animate = new ActionList(registry, 1500, 20);
+            animate.setPacingFunction(new SlowInSlowOutPacer());
+            animate.add(new LocationAnimator());
+            animate.add(new ColorAnimator());
+            animate.add(new RepaintAction());
+            animate.alwaysRunAfter(filter);
+            
+            // initialize display
+            display.setItemRegistry(registry);
+            display.setSize(700,700);
+            display.setBackground(Color.WHITE);
+            display.addControlListener(new FocusControl(filter));
+            display.addControlListener(new SubtreeDragControl());
+            display.addControlListener(new PanControl());
+            display.addControlListener(new ZoomControl());
+            display.addControlListener(new NeighborHighlightControl(update));
+            
+			// create and display application window
+			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			getContentPane().add(display, BorderLayout.CENTER);
+			pack();
+			setVisible(true);
+			
+			// run filter and perform initial animation
+            filter.runNow();
+		} catch ( Exception e ) {
+			e.printStackTrace();
+		}	
+	} //
+	
+    /**
+     * A RendererFactory instance that assigns node renderers of varying size
+     * in response to a node's depth in the tree.
+     */
+    public class DemoRendererFactory implements RendererFactory {
+        private Renderer nodeRenderer1;
+        private Renderer nodeRenderer2;
+        private Renderer edgeRenderer;
+        public DemoRendererFactory(Renderer nr1, Renderer nr2, Renderer er) {
+            nodeRenderer1 = nr1;
+            nodeRenderer2 = nr2;
+            edgeRenderer = er;
+        } //
+        public Renderer getRenderer(VisualItem item) {
+            if ( item instanceof NodeItem ) {
+                int d = ((NodeItem)item).getDepth();
+                if ( d > 1 ) {
+                    int r = (d == 2 ? 5 : 1);
+                    ((DefaultNodeRenderer)nodeRenderer2).setRadius(r);
+                    return nodeRenderer2;
+                } else {
+                    return nodeRenderer1;
+                }
+            } else if ( item instanceof EdgeItem ) {
+                return edgeRenderer;
+            } else {
+                return null;
+            }
+        } //
+    } // end of inner class DemoRendererFactory
+	
+    public class DemoColorFunction extends ColorFunction {
+        private Color graphEdgeColor = Color.LIGHT_GRAY;
+        private Color highlightColor = Color.BLUE;
+        private ColorMap cmap; 
+        
+        public DemoColorFunction(int thresh) {
+            cmap = new ColorMap(
+                ColorMap.getInterpolatedMap(Color.RED, Color.BLACK),0,thresh);
+        } //
+        
+        public Paint getFillColor(VisualItem item) {
+            if ( item instanceof NodeItem ) {
+                return Color.WHITE;
+            } else if ( item instanceof AggregateItem ) {
+                return Color.LIGHT_GRAY;
+            } else if ( item instanceof EdgeItem ) {
+                return getColor(item);
+            } else {
+                return Color.BLACK;
+            }
+        } //
+        
+        public Paint getColor(VisualItem item) {
+            if ( item.isHighlighted() ) {
+                return Color.BLUE;
+            } else if (item instanceof NodeItem) {
+                int d = ((NodeItem)item).getDepth();
+                return cmap.getColor(d);
+            } else if (item instanceof EdgeItem) {
+                EdgeItem e = (EdgeItem) item;
+                if ( e.isTreeEdge() ) {
+                    int d, d1, d2;
+                    d1 = ((NodeItem)e.getFirstNode()).getDepth();
+                    d2 = ((NodeItem)e.getSecondNode()).getDepth();
+                    d = Math.max(d1, d2);
+                    return cmap.getColor(d);
+                } else {
+                    return graphEdgeColor;
+                }
+            } else {
+                return Color.BLACK;
+            }
+        } //
+    } // end of inner class DemoColorFunction
+
+} // end of classs RadialGraphDemo
+@
+
+
+1.11
+log
+@Some facelifts and updates to the prefuse demos
+@
+text
+@@
+
+
+1.11.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.10
+log
+@A whole lot of update
+@
+text
+@a4 2
+import java.awt.Font;
+import java.awt.FontMetrics;
+a22 3
+import edu.berkeley.guir.prefuse.event.FocusEvent;
+import edu.berkeley.guir.prefuse.event.FocusListener;
+import edu.berkeley.guir.prefuse.graph.Node;
+d46 1
+a46 1
+public class BalloonGraphDemo {
+a48 8
+
+	public static final String nameField = "label";
+		
+	public static ItemRegistry registry;
+	public static Tree tree;
+	public static Display display;
+    public static WindowedTreeFilter feye;
+    public static ActionList filter, update, animate;
+d50 10
+a59 3
+    private static Font frameCountFont = new Font("SansSerif", Font.PLAIN, 14);
+		
+	public static void main(String[] args) {
+a61 1
+			String inputFile = TREE_CHI;
+d63 1
+a63 1
+			tree = tr.loadTree(inputFile);
+d66 1
+a66 1
+            registry = new ItemRegistry(tree);
+d68 1
+a68 1
+            display = new Display();
+d71 7
+a77 31
+			Renderer nodeRenderer = new TextItemRenderer() {
+				private int maxWidth = 75;
+				private StringAbbreviator abbrev = 
+					new StringAbbreviator(null, null);
+					
+				protected String getText(VisualItem item) {
+					String s = item.getAttribute(m_labelName);
+					Font font = item.getFont();
+					if ( font == null ) { font = m_font; }
+					FontMetrics fm = DEFAULT_GRAPHICS.getFontMetrics(font);
+					if ( fm.stringWidth(s) > maxWidth ) {
+						s = abbrev.abbreviate(s, 
+							StringAbbreviator.NAME, 
+							fm, maxWidth);			
+					}
+					return s;
+				} //
+			};
+            Renderer nodeRenderer2 = new DefaultNodeRenderer();
+			Renderer edgeRenderer = new DefaultEdgeRenderer() {
+				protected int getLineWidth(VisualItem item) {
+					String w = item.getAttribute("weight");
+					if ( w != null ) {
+						try {
+							return Integer.parseInt(w);
+						} catch ( Exception e ) {}
+					}
+					return m_width;
+				} //
+			};
+            ((TextItemRenderer)nodeRenderer).setRoundedCorner(8,8);
+a78 1
+			// initialize item registry
+d83 2
+a84 3
+            filter  = new ActionList(registry);
+            //filter.add((feye=new FisheyeTreeFilter(-4)));
+            filter.add((feye=new WindowedTreeFilter(-4)));
+d88 1
+a88 1
+            update = new ActionList(registry);
+d92 1
+a92 1
+            animate = new ActionList(registry, 1500, 20);
+d97 1
+d103 1
+a103 1
+            display.addControlListener(new FocusControl());
+a107 14
+            			
+			// set up initial focus and focus listener
+            registry.getDefaultFocusSet().addFocusListener(new FocusListener() {
+                public void focusChanged(FocusEvent e) {
+                    if ( update.isScheduled() )
+                        update.cancel();
+                    Node node = (Node)e.getFirstAdded();
+                    if ( node != null ) {
+                        feye.setTreeRoot(node);
+                        filter.runNow();
+                        animate.runNow();                    
+                    }
+                } //
+            });
+d110 4
+a113 5
+			JFrame frame = new JFrame("BalloonTree");
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			frame.getContentPane().add(display, BorderLayout.CENTER);
+			frame.pack();
+			frame.setVisible(true);
+a116 1
+            animate.runNow();
+d122 5
+a126 2
+	
+    static class DemoRendererFactory implements RendererFactory {
+d153 1
+a153 1
+    static public class DemoColorFunction extends ColorFunction {
+@
+
+
+1.9
+log
+@New filters added plus more
+@
+text
+@d18 2
+d21 1
+a21 3
+import edu.berkeley.guir.prefuse.action.filter.FisheyeTreeFilter;
+import edu.berkeley.guir.prefuse.action.interpolate.ColorInterpolator;
+import edu.berkeley.guir.prefuse.action.interpolate.LinearInterpolator;
+d27 1
+a27 1
+import edu.berkeley.guir.prefuse.graph.GraphLib;
+a28 1
+import edu.berkeley.guir.prefuse.graph.TreeNode;
+d60 1
+a60 1
+    public static FisheyeTreeFilter feye;
+d87 1
+a87 1
+					FontMetrics fm = m_g.getFontMetrics(font);
+d116 2
+a117 1
+            filter.add((feye=new FisheyeTreeFilter(-4)));
+d127 2
+a128 2
+            animate.add(new LinearInterpolator());
+            animate.add(new ColorInterpolator());
+d146 1
+a146 1
+                    TreeNode node = (TreeNode)e.getFirstAdded();
+d148 1
+a148 3
+                        NodeItem item = registry.getNodeItem(node);
+                        Tree t = GraphLib.breadthFirstTree(item);
+                        registry.setFilteredGraph(t);
+d221 1
+a221 2
+            Boolean hl = (Boolean)item.getVizAttribute("highlight");
+            if ( hl != null && hl.booleanValue() ) {
+@
+
+
+1.8
+log
+@Major refactor
+@
+text
+@a4 1
+import java.awt.Dimension;
+a6 1
+import java.awt.Graphics2D;
+a16 5
+import edu.berkeley.guir.prefuse.action.ColorFunction;
+import edu.berkeley.guir.prefuse.action.ColorInterpolator;
+import edu.berkeley.guir.prefuse.action.FisheyeTreeFilter;
+import edu.berkeley.guir.prefuse.action.GraphEdgeFilter;
+import edu.berkeley.guir.prefuse.action.LinearInterpolator;
+d18 5
+a22 2
+import edu.berkeley.guir.prefuse.action.TreeEdgeFilter;
+import edu.berkeley.guir.prefuse.activity.ActionPipeline;
+d61 2
+a62 2
+    public static ActionPipeline filter, update, animate;
+    //public static ActionPipeline pipeline, animate, animate2;
+d76 1
+a76 1
+            display = new DemoDisplay();
+d115 3
+a117 4
+            // initialize action pipelines
+            filter  = new ActionPipeline(registry);
+            filter.add(new FisheyeTreeFilter(-4));
+            filter.add(new TreeEdgeFilter());
+a118 1
+            filter.add(new GraphEdgeFilter());
+d121 1
+a121 1
+            update = new ActionPipeline(registry);
+d125 1
+a125 1
+            animate = new ActionPipeline(registry, 1500, 20);
+d147 4
+a150 3
+                    if ( node != null && !node.equals(tree.getRoot()) ) {                           
+                        tree = GraphLib.breadthFirstTree(node);
+                        registry.setGraph(tree);
+a155 1
+            registry.getDefaultFocusSet().set(tree.getRoot());
+a198 42
+    
+	static class DemoDisplay extends Display {
+		private Color ringColor = Color.LIGHT_GRAY;
+		private int prevInc = -1;
+		private int nextInc = -1;
+		private int inc;
+		
+		protected void prePaint(Graphics2D g) {
+            Dimension d = getSize();
+            String fr = String.valueOf(frameRate) + "00";
+            fr = fr.substring(0,fr.indexOf(".")+3);
+            String s = "frame rate: " + fr + "fps";
+            FontMetrics fm = g.getFontMetrics(frameCountFont);
+            int h = fm.getHeight();
+            int w = fm.stringWidth(s);
+            g.setFont(frameCountFont);
+            g.setColor(Color.BLACK);
+            g.drawString(s, d.width-w-10, 5+h);
+//			if ( layout == null ) return;
+//			double animFrac = m_pipeline.getDoubleAttribute(AnimationManager.ATTR_ANIM_FRAC);
+//			animFrac = ( animFrac >= 1.0 ? 1.0 : animFrac );
+//			if ( animFrac == 0.0 ) {				
+//				nextInc = layout.getRadiusIncrement();
+//				if ( prevInc == -1 ) { prevInc = nextInc; }
+//			}
+//			
+//			Dimension d = this.getSize();
+//			inc = prevInc + (int)Math.round(animFrac * (nextInc - prevInc));
+//			if ( inc < 1 ) { return; }
+//			int w2  = d.width/2;
+//			int h2  = d.height/2;
+//			int hyp = (int)Math.round(Math.sqrt(w2*w2+h2*h2));
+//			g.setColor(ringColor);
+//			for ( int r = inc; r < hyp; r += inc ) {
+//				g.drawOval(w2-r, h2-r, 2*r, 2*r);
+//			}
+//			if ( animFrac == 1.0 ) {
+//				prevInc = nextInc;
+//			}
+		} //
+
+	} // end of inner class DemoDisplay
+@
+
+
+1.7
+log
+@Updated Javadoc
+@
+text
+@a15 1
+import edu.berkeley.guir.prefuse.GraphItem;
+d18 1
+a26 1
+import edu.berkeley.guir.prefuse.activity.ActivityManager;
+d31 1
+a32 1
+import edu.berkeley.guir.prefuse.graph.TreeLib;
+a42 1
+import edu.berkeley.guir.prefusex.layout.BalloonTreeLayout;
+d48 1
+d88 1
+a88 1
+				protected String getText(GraphItem item) {
+d103 1
+a103 1
+				protected int getLineWidth(GraphItem item) {
+d138 1
+a138 1
+            display.setRegistry(registry);
+d154 1
+a154 1
+                        tree = TreeLib.breadthFirstTree(node);
+d156 2
+a157 2
+                        ActivityManager.scheduleNow(filter);
+                        ActivityManager.scheduleNow(animate);                      
+d170 3
+a172 5
+			// because awt doesn't always give us 
+			// our graphics context right away...
+			while ( display.getGraphics() == null );
+            ActivityManager.scheduleNow(filter);
+            ActivityManager.scheduleNow(animate);
+d188 1
+a188 1
+        public Renderer getRenderer(GraphItem item) {
+d258 1
+a258 1
+        public Paint getFillColor(GraphItem item) {
+d270 1
+a270 1
+        public Paint getColor(GraphItem item) {
+d281 2
+a282 2
+                    d1 = e.getFirstNode().getDepth();
+                    d2 = e.getSecondNode().getDepth();
+@
+
+
+1.6
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@d47 1
+a47 1
+import edu.berkeley.guir.prefusex.controls.PanHandler;
+d49 1
+a49 1
+import edu.berkeley.guir.prefusex.controls.ZoomHandler;
+d144 2
+a145 2
+            display.addControlListener(new PanHandler());
+            display.addControlListener(new ZoomHandler());
+@
+
+
+1.5
+log
+@Added SubtreeDragControl
+@
+text
+@a31 1
+import edu.berkeley.guir.prefuse.graph.Edge;
+d282 1
+a282 2
+                Edge edge = (Edge) registry.getEntity(e);
+                if (edge.isTreeEdge()) {
+@
+
+
+1.4
+log
+@Moved garbage collection into abstract Filter
+@
+text
+@a45 1
+import edu.berkeley.guir.prefusex.controls.DragControl;
+d49 1
+d144 1
+a144 1
+            display.addControlListener(new DragControl());
+@
+
+
+1.3
+log
+@Javadoc update and fixes
+@
+text
+@a4 1
+import java.awt.Cursor;
+a9 4
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.util.Iterator;
+d22 1
+a22 1
+import edu.berkeley.guir.prefuse.action.GarbageCollector;
+d30 2
+a31 1
+import edu.berkeley.guir.prefuse.event.ControlAdapter;
+d34 1
+d43 1
+d46 3
+d67 2
+a68 1
+    public static ActionPipeline pipeline, animate, animate2;
+d121 2
+a122 13
+			// initialize display
+			DemoController controller = new DemoController(); 
+			display.setRegistry(registry);
+			display.setSize(700,700);
+			display.setBackground(Color.WHITE);
+            display.setFont(new Font("SansSerif",Font.PLAIN,10));
+            display.getTextEditor().addKeyListener(controller);
+			display.addControlListener(controller);
+            display.addControlListener(new PanHandler());
+            display.addControlListener(new ZoomHandler());
+			
+			// initialize filter
+            ActionPipeline filter  = new ActionPipeline(registry);
+a123 1
+            filter.add(new GarbageCollector(ItemRegistry.DEFAULT_NODE_CLASS));
+a124 1
+            filter.add(new GarbageCollector(ItemRegistry.DEFAULT_EDGE_CLASS));
+d126 7
+a132 2
+            filter.add(new DemoColorFunction());
+   
+d139 25
+a163 3
+            animate2 = new ActionPipeline(registry, 500, 20);
+            animate2.add(new LinearInterpolator());
+            animate2.add(new RepaintAction());
+a164 6
+            //filter.setNextActivity(animate);
+            pipeline = filter;
+
+			// set initial focus
+			registry.getDefaultFocusSet().set(tree.getRoot());			
+
+a165 2
+
+			
+d175 2
+a176 1
+			runPipeline();
+a180 5
+    
+    public static void runPipeline() {
+        ActivityManager.scheduleNow(pipeline);
+        ActivityManager.scheduleNow(animate);
+    } //
+a181 84
+	static class DemoController extends ControlAdapter implements KeyListener {
+		private Color highlightColor = new Color(150,150,255);
+		public void itemEntered(GraphItem item, MouseEvent e) {
+			if ( item instanceof NodeItem ) {
+				e.getComponent().setCursor(
+                    Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+				
+				TreeNode n = (TreeNode)registry.getEntity(item);
+				Iterator iter = n.getNeighbors();
+				while ( iter.hasNext() ) {
+					TreeNode c = (TreeNode)iter.next();
+					EdgeItem eitem = registry.getEdgeItem(n.getEdge(c));
+					if ( eitem != null && eitem.isVisible() ) {
+						eitem.setColor(highlightColor);
+						eitem.setFillColor(highlightColor);
+						display.drawItem(eitem);	
+					}
+				}
+				iter = n.getNeighbors();
+				while ( iter.hasNext() ) {
+					TreeNode c = (TreeNode)iter.next();
+					NodeItem citem = registry.getNodeItem(c);
+					if ( citem != null && citem.isVisible() ) {
+						citem.setColor(Color.BLUE);
+						display.drawItem(citem);
+					}
+				}				
+				item.setColor(Color.RED);
+				display.drawItem(item);
+				display.repaintImmediate();
+				//container.setToolTipText(item.getAttribute(nameField));
+				//container.showToolTip((int)item.getX()+10,(int)item.getY()+10);
+			}
+		} //
+		public void itemExited(GraphItem item, MouseEvent e) {
+			if ( item instanceof NodeItem ) {
+				e.getComponent().setCursor(Cursor.getDefaultCursor());
+				
+				//container.hideToolTip();
+				TreeNode n = (TreeNode)registry.getEntity(item);
+				Iterator iter = n.getNeighbors();
+				while ( iter.hasNext() ) {
+					TreeNode c = (TreeNode)iter.next();
+					EdgeItem eitem = registry.getEdgeItem(n.getEdge(c));
+					if ( eitem != null && eitem.isVisible() ) {
+						eitem.setColor(eitem.getEndColor());
+						eitem.setFillColor(eitem.getEndFillColor());	
+					}					
+					NodeItem citem = registry.getNodeItem(c);
+					if ( citem != null && citem.isVisible() ) {
+						citem.setColor(citem.getEndColor());
+					}
+				}
+				item.setColor(item.getEndColor());
+				display.repaint();
+			}
+		} //
+		public void itemClicked(GraphItem item, MouseEvent e) {
+			int cc = e.getClickCount();
+			if ( item instanceof NodeItem ) {
+				if ( cc == 1 ) {
+					TreeNode node = (TreeNode)registry.getEntity(item);
+                    if ( node != null && !node.equals(tree.getRoot()) ) {                           
+                        tree.switchRoot(node);						
+						registry.getDefaultFocusSet().set(node);
+						runPipeline();						
+					}
+				} else if ( cc == 2 ) {
+					display.editText(item, nameField);
+				}
+			}
+		} //
+
+		public void keyPressed(KeyEvent e) {
+		} //
+		public void keyReleased(KeyEvent e) {
+			if ( e.getKeyCode() == KeyEvent.VK_ENTER ) {
+				display.stopEditing();
+				runPipeline();
+			}
+		} //
+		public void keyTyped(KeyEvent e) {
+		} //
+	} // end of inner class DemoController
+d252 46
+a297 59
+    static class DemoColorFunction extends ColorFunction {
+	    private int  thresh = 3;
+	    private Color graphEdgeColor = Color.LIGHT_GRAY; //new Color(150,150,255);
+	    private Color nodeColors[];
+	   	private Color edgeColors[];
+	   
+	   	public DemoColorFunction() {
+	   		nodeColors = new Color[thresh];
+	   	    edgeColors = new Color[thresh];
+	   	    for ( int i = 0; i < thresh; i++ ) {
+	   	    	double frac = i / ((double)thresh);
+	   	    	nodeColors[i] = calcIntermediateColor(Color.RED, Color.BLACK, frac);
+	   	    	edgeColors[i] = calcIntermediateColor(Color.RED, Color.BLACK, frac);
+	   	    }
+	   	} //
+	   
+	   	public Paint getFillColor(GraphItem item) {
+	   		if ( item instanceof NodeItem ) {
+	   			return Color.WHITE;
+	   		} else if ( item instanceof AggregateItem ) {
+	   			return Color.LIGHT_GRAY;
+	   		} else if ( item instanceof EdgeItem ) {
+	   			return getColor(item);
+	   		} else {
+	   			return Color.BLACK;
+	   		}
+	   	} //
+	   
+		public Paint getColor(GraphItem item) {
+			if (item instanceof NodeItem) {
+				//int doi = (int)(-1 * ((NodeItem) item).getDOI());
+                int doi = ((NodeItem)item).getDepth();
+				if (doi > thresh - 1) {
+					doi = thresh - 1;
+				}
+				return nodeColors[doi];
+			} else if (item instanceof EdgeItem) {
+				EdgeItem e = (EdgeItem) item;
+				Edge edge = (Edge) registry.getEntity(e);
+				if (edge.isTreeEdge()) {
+					int doi, doi1, doi2;
+                    doi1 = e.getFirstNode().getDepth();
+                    doi2 = e.getSecondNode().getDepth();
+                    doi = Math.max(doi1, doi2);
+					//doi1 = (int)e.getFirstNode().getDOI();
+					//doi2 = (int)e.getSecondNode().getDOI();
+					//doi = -1 * (doi1 < doi2 ? doi1 : doi2);
+					if (doi > thresh - 1) {
+						doi = thresh - 1;
+					}
+					return edgeColors[doi];
+				} else {
+					return graphEdgeColor;
+				}
+			} else {
+				return Color.BLACK;
+			}
+		} //
+   } // end of inner class DemoColorFunction
+@
+
+
+1.2
+log
+@Added javadoc documentation
+@
+text
+@a13 2
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+a23 1
+import edu.berkeley.guir.prefuse.PrefuseContainer;
+a66 1
+	public static PrefuseContainer container;
+d124 2
+d156 1
+a156 4
+			container = new PrefuseContainer(display);
+			container.setFont(new Font("SansSerif",Font.PLAIN,10));
+			container.setBackground(Color.WHITE);
+			container.getTextEditor().addKeyListener(controller);
+d159 2
+a160 6
+			frame.addWindowListener(new WindowAdapter() {
+				public void windowClosing(WindowEvent e) {
+					System.exit(0);
+				}
+			});
+			frame.getContentPane().add(container, BorderLayout.CENTER);
+d246 1
+a246 1
+					container.editText(item, nameField);
+d255 1
+a255 1
+				container.stopEditing();
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d55 1
+a55 3
+ * Prefuse Demo Application
+ * 
+ * Apr 25, 2003 - jheer - Created class
+d58 1
+a58 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+@
+

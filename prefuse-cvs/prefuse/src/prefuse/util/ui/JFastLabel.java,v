@@ -1,0 +1,457 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.04.05.17.07.57;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Added anti-aliasing support to JFastLabel
+@
+text
+@package prefuse.util.ui;
+
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.RenderingHints;
+
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+
+/**
+ * Swing component that acts much like a JLabel, but does not revalidate
+ * its bounds when updated, making it much faster but suitable only for
+ * use in situations where the initial bounds are sufficient.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class JFastLabel extends JComponent {
+
+    private String m_text;
+    private int m_valign = SwingConstants.TOP;
+    private int m_halign = SwingConstants.LEFT;
+    private int m_fheight = -1;
+    private boolean m_quality = false;
+    
+    /**
+     * Create a new JFastLabel with no text.
+     */
+    public JFastLabel() {
+        this(null);
+    }
+    
+    /**
+     * Create a new JFastLabel with the given text.
+     * @@param text the label text.
+     */
+    public JFastLabel(String text) {
+        m_text = text;
+        setFont(getFont());
+    }
+
+    /**
+     * Get the label text.
+     * @@return the label text
+     */
+    public String getText() {
+        return m_text;
+    }
+
+    /**
+     * Set the label text
+     * @@param text the label text to set
+     */
+    public void setText(String text) {
+        this.m_text = text;
+        repaint();
+    }
+    
+    /**
+     * @@see java.awt.Component#setFont(java.awt.Font)
+     */
+    public void setFont(Font f) {
+        super.setFont(f);
+        m_fheight = -1;
+    }
+    
+    /**
+     * Set the vertical alignment.
+     * @@param align the vertical alignment
+     * @@see javax.swing.SwingConstants
+     */
+    public void setVerticalAlignment(int align) {
+        m_valign = align;
+        m_fheight = -1;
+    }
+    
+    /**
+     * Set the horizontal alignment.
+     * @@param align the horizontal alignment
+     * @@see javax.swing.SwingConstants
+     */
+    public void setHorizontalAlignment(int align) {
+        m_halign = align;
+    }
+    
+    /**
+     * Get the quality level of this label. High quality results in
+     * anti-aliased rendering.
+     * @@return true for high quality, false otherwise
+     */
+    public boolean getHighQuality() {
+        return m_quality;
+    }
+    
+    /**
+     * Set the quality level of this label. High quality results in
+     * anti-aliased rendering.
+     * @@param b true for high quality, false otherwise
+     */
+    public void setHighQuality(boolean b) {
+        m_quality = b;
+    }
+    
+    /**
+     * @@see javax.swing.JComponent#paintComponent(java.awt.Graphics)
+     */
+    public void paintComponent(Graphics g) {
+        Insets ins = getInsets();
+        int w = getWidth()-ins.left-ins.right;
+        int h = getHeight()-ins.top-ins.bottom;
+        if ( m_fheight == -1 ) {
+            FontMetrics fm = g.getFontMetrics(getFont());
+            if ( m_valign == SwingConstants.BOTTOM )
+                m_fheight = fm.getDescent();
+            else if ( m_valign == SwingConstants.TOP )
+                m_fheight = fm.getAscent();
+        }
+        g.setColor(getBackground());
+        g.fillRect(ins.left,ins.top,w,h);
+        
+        if ( m_text == null )
+            return;
+        
+        g.setFont(getFont());
+        g.setColor(getForeground());
+        if ( m_valign == SwingConstants.BOTTOM ) {
+            h = h-m_fheight-ins.bottom;
+        } else {
+            h = ins.top+m_fheight;
+        }
+        
+        switch ( m_halign ) {
+        case SwingConstants.RIGHT: {
+            FontMetrics fm = g.getFontMetrics(getFont());
+            w = w-ins.right-fm.stringWidth(m_text);
+            break;
+        } case SwingConstants.CENTER: {
+            FontMetrics fm = g.getFontMetrics(getFont());
+            w = ins.left + w/2 - fm.stringWidth(m_text)/2;
+            break;
+        } default:
+            w = ins.left;
+        }
+        if ( m_quality ) {
+            ((Graphics2D)g).setRenderingHint(
+                    RenderingHints.KEY_TEXT_ANTIALIASING,
+                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        }
+        g.drawString(m_text, w, h); 
+    }
+    
+} // end of class JFastLabel
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d17 1
+a17 1
+ *
+d27 1
+a27 1
+
+d34 1
+a34 1
+
+d60 1
+a60 1
+
+d64 1
+a64 2
+    @@Override
+	public void setFont(Font f) {
+d68 1
+a68 1
+
+d78 1
+a78 1
+
+d87 1
+a87 1
+
+d96 1
+a96 1
+
+d105 1
+a105 1
+
+d109 1
+a109 2
+    @@Override
+	public void paintComponent(Graphics g) {
+d115 4
+a118 5
+            if ( m_valign == SwingConstants.BOTTOM ) {
+				m_fheight = fm.getDescent();
+			} else if ( m_valign == SwingConstants.TOP ) {
+				m_fheight = fm.getAscent();
+			}
+d122 4
+a125 5
+
+        if ( m_text == null ) {
+			return;
+		}
+
+d133 1
+a133 1
+
+d151 1
+a151 1
+        g.drawString(m_text, w, h);
+d153 1
+a153 1
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d6 1
+d8 1
+d26 1
+d89 18
+d146 5
+@
+
+
+1.1
+log
+@file JFastLabel.java was initially added on branch beta.
+@
+text
+@d1 128
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 93
+package prefuse.util.ui;
+
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Insets;
+
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class JFastLabel extends JComponent {
+
+    private String m_text;
+    private int m_valign = SwingConstants.TOP;
+    private int m_halign = SwingConstants.LEFT;
+    private int m_fheight = -1;
+    
+    public JFastLabel() {
+        this(null);
+    }
+    
+    public JFastLabel(String text) {
+        m_text = text;
+        setFont(getFont());
+    }
+
+    public String getText() {
+        return m_text;
+    }
+
+    public void setText(String text) {
+        this.m_text = text;
+        repaint();
+    }
+    
+    public void setFont(Font f) {
+        super.setFont(f);
+        m_fheight = -1;
+    }
+    
+    public void setVerticalAlignment(int align) {
+        m_valign = align;
+        m_fheight = -1;
+    }
+    
+    public void setHorizontalAlignment(int align) {
+        m_halign = align;
+    }
+    
+    public void paintComponent(Graphics g) {
+        Insets ins = getInsets();
+        int w = getWidth()-ins.left-ins.right;
+        int h = getHeight()-ins.top-ins.bottom;
+        if ( m_fheight == -1 ) {
+            FontMetrics fm = g.getFontMetrics(getFont());
+            if ( m_valign == SwingConstants.BOTTOM )
+                m_fheight = fm.getDescent();
+            else if ( m_valign == SwingConstants.TOP )
+                m_fheight = fm.getAscent();
+        }
+        g.setColor(getBackground());
+        g.fillRect(ins.left,ins.top,w,h);
+        
+        if ( m_text == null )
+            return;
+        
+        g.setFont(getFont());
+        g.setColor(getForeground());
+        if ( m_valign == SwingConstants.BOTTOM ) {
+            h = h-m_fheight-ins.bottom;
+        } else {
+            h = ins.top+m_fheight;
+        }
+        
+        switch ( m_halign ) {
+        case SwingConstants.RIGHT: {
+            FontMetrics fm = g.getFontMetrics(getFont());
+            w = w-ins.right-fm.stringWidth(m_text);
+            break;
+        } case SwingConstants.CENTER: {
+            FontMetrics fm = g.getFontMetrics(getFont());
+            w = ins.left + w/2 - fm.stringWidth(m_text)/2;
+            break;
+        } default:
+            w = ins.left;
+        }
+        g.drawString(m_text, w, h); 
+    }
+    
+} // end of class JFastLabel
+@
+
+
+1.1.2.2
+log
+@Much more javadoc
+@
+text
+@d12 1
+a12 5
+ * Swing component that acts much like a JLabel, but does not revalidate
+ * its bounds when updated, making it much faster but suitable only for
+ * use in situations where the initial bounds are sufficient.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a20 3
+    /**
+     * Create a new JFastLabel with no text.
+     */
+a24 4
+    /**
+     * Create a new JFastLabel with the given text.
+     * @@param text the label text.
+     */
+a29 4
+    /**
+     * Get the label text.
+     * @@return the label text
+     */
+a33 4
+    /**
+     * Set the label text
+     * @@param text the label text to set
+     */
+a38 3
+    /**
+     * @@see java.awt.Component#setFont(java.awt.Font)
+     */
+a43 5
+    /**
+     * Set the vertical alignment.
+     * @@param align the vertical alignment
+     * @@see javax.swing.SwingConstants
+     */
+a48 5
+    /**
+     * Set the horizontal alignment.
+     * @@param align the horizontal alignment
+     * @@see javax.swing.SwingConstants
+     */
+a52 3
+    /**
+     * @@see javax.swing.JComponent#paintComponent(java.awt.Graphics)
+     */
+@
+
+

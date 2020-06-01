@@ -1,0 +1,118 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.03.10.09.20.31;	author amarsden;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2008.03.10.09.20.31;	author amarsden;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2008.04.14.05.08.50;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file ObjectPair.java was initially added on branch java_1_5.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Minor tweaks to edge layouts
+@
+text
+@a0 50
+/**
+ * 
+ */
+package prefuse.util;
+
+
+/**
+ * TODO: add some documentation
+ * 
+ * @@author Anton Marsden
+ */
+public class ObjectPair<O>
+{
+    private final O a;
+    private final O b;
+
+    public ObjectPair( O a, O b )
+    {
+        this.a = a;
+        this.b = b;
+    }
+    
+    public O getA() {
+    	return a;
+    }
+
+    public O getB() {
+    	return b;
+    }
+    
+
+    public boolean equals( Object other )
+    {
+        if ( this == other )
+        {
+            return true;
+        }
+        if ( !( other instanceof ObjectPair ) )
+        {
+            return false;
+        }
+        ObjectPair o = (ObjectPair) other;
+        return a.equals(o.a) && b.equals(o.b) || a.equals(o.b) && b.equals(o.a);
+    }
+
+    public int hashCode()
+    {
+        return a.hashCode() ^ b.hashCode();
+    }
+}@
+
+
+1.1.2.2
+log
+@a little bit of documentation
+@
+text
+@d2 1
+a2 1
+ *
+d8 2
+a9 4
+ * Represents a pair of objects where the pair order does not matter.
+ *
+ * TODO: add some more documentation.
+ *
+d22 1
+a22 1
+
+d30 1
+a30 1
+
+@
+
+

@@ -1,0 +1,133 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.24.09.07.09;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.24.18.46.25;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@<body>
+<p>Interfaces and modules for rendering VisualItems into a graphics context.
+{@@link prefuse.render.Renderer} instances are responsible for drawing
+items, computing item bounds, and determining if a point lies within or 
+without an item.
+{@@link prefuse.render.RendererFactory} instances, on the other hand, are
+used to determine which Renderer should be used for a given VisualItem.</p>
+</body>@
+
+
+1.1
+log
+@file package.html was initially added on branch beta.
+@
+text
+@d1 8
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 7
+<body>
+The render package contains interfaces and modules for rendering VisualItems
+into a graphics context. Renderer instances are responsible for drawing items, 
+computing item bounds, and determining if a point lies within or without an item.
+RendererFactory instances, on the other hand, are used to determine which
+Renderer should be used for a given VisualItem.
+</body>@
+
+
+1.1.2.2
+log
+@Added javadoc overview and package text.
+@
+text
+@d2 5
+a6 5
+<p>Interfaces and modules for rendering VisualItems into a graphics context.
+{@@link Renderer} instances are responsible for drawing items, computing item
+bounds, and determining if a point lies within or without an item.
+{@@link RendererFactory} instances, on the other hand, are used to determine which
+Renderer should be used for a given VisualItem.</p>
+@
+
+
+1.1.2.3
+log
+@Javadoc fixes, other clean-up
+@
+text
+@d3 4
+a6 5
+{@@link prefuse.data.render.Renderer} instances are responsible for drawing
+items, computing item bounds, and determining if a point lies within or 
+without an item.
+{@@link prefuse.data.render.RendererFactory} instances, on the other hand, are
+used to determine which Renderer should be used for a given VisualItem.</p>
+@
+
+
+1.1.2.4
+log
+@Javadoc'd.
+@
+text
+@d3 1
+a3 1
+{@@link prefuse.render.Renderer} instances are responsible for drawing
+d6 1
+a6 1
+{@@link prefuse.render.RendererFactory} instances, on the other hand, are
+@
+
+

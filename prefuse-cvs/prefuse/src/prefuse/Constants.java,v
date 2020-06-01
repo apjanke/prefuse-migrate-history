@@ -1,0 +1,542 @@
+head	2.4;
+access;
+symbols
+	java_1_5:2.4.0.4
+	Root_java_1_5:2.4
+	beta:2.4.0.2
+	beta-20080113:2.4
+	beta-20071021:2.4
+	beta-20060220:2.2
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.4
+date	2006.03.24.17.32.46;	author jheer;	state Exp;
+branches
+	2.4.4.1;
+next	2.3;
+
+2.3
+date	2006.03.06.00.36.52;	author jheer;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.02.20.10.20.30;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.18.23.42.24;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.22.08.48;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.27.09.05.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.02.19.01.53;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.4.4.1
+date	2008.01.23.23.55.42;	author jogiles;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.4
+log
+@Added new layout constants for use by axis labels
+@
+text
+@package prefuse;
+
+/**
+ * Constants used throughout the prefuse toolkit.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface Constants {
+
+    /** A left-to-right layout orientation */
+    public static final int ORIENT_LEFT_RIGHT = 0;
+    /** A right-to-left layout orientation */
+    public static final int ORIENT_RIGHT_LEFT = 1;
+    /** A top-to-bottom layout orientation */
+    public static final int ORIENT_TOP_BOTTOM = 2;
+    /** A bottom-to-top layout orientation */
+    public static final int ORIENT_BOTTOM_TOP = 3;
+    /** A centered layout orientation */
+    public static final int ORIENT_CENTER     = 4;
+    /** The total number of orientation values */
+    public static final int ORIENTATION_COUNT = 5;
+    
+    /** A left alignment */
+    public static final int LEFT   = 0;
+    /** A right alignment */
+    public static final int RIGHT  = 1;
+    /** A center alignment */
+    public static final int CENTER = 2;
+    /** A bottom alignment */
+    public static final int BOTTOM = 3;
+    /** A top alignment */
+    public static final int TOP    = 4;
+    
+    /** A left alignment, outside of bounds */
+    public static final int FAR_LEFT = 5;
+    /** A right alignment, outside of bounds */
+    public static final int FAR_RIGHT = 6;
+    /** A bottom alignment, outside of bounds */
+    public static final int FAR_BOTTOM = 7;
+    /** A top alignment, outside of bounds */
+    public static final int FAR_TOP = 8;
+    
+    /** A straight-line edge type */
+    public static final int EDGE_TYPE_LINE  = 0;
+    /** A curved-line edge type */
+    public static final int EDGE_TYPE_CURVE = 1;
+    /** The total number of edge type values */
+    public static final int EDGE_TYPE_COUNT = 2;
+    
+    /** No arrows on edges */
+    public static final int EDGE_ARROW_NONE = 0;
+    /** Arrows on edges pointing from source to target */
+    public static final int EDGE_ARROW_FORWARD = 1;
+    /** Arrows on edges pointing from target to source */
+    public static final int EDGE_ARROW_REVERSE = 2;
+    /** The total number of edge arrow type values */
+    public static final int EDGE_ARROW_COUNT = 3;
+    
+    /** Use straight-lines for polygon edges */
+    public static final int POLY_TYPE_LINE  = EDGE_TYPE_LINE;
+    /** Use curved-lines for polygon edges */
+    public static final int POLY_TYPE_CURVE = EDGE_TYPE_CURVE;
+    /** Use curved-lines for polygon edges, 
+     * but use straight lines for zero-slope edges */
+    public static final int POLY_TYPE_STACK = 2;
+    /** The total number of polygon type values */
+    public static final int POLY_TYPE_COUNT = 3;
+    
+    /** A linear scale */
+    public static final int LINEAR_SCALE   = 0;
+    /** A logarithmic (base 10) scale */
+    public static final int LOG_SCALE      = 1;
+    /** A square root scale */
+    public static final int SQRT_SCALE     = 2;
+    /** A quantile scale, based on the underlying distribution */
+    public static final int QUANTILE_SCALE = 3;
+    /** The total number of scale type values */
+    public static final int SCALE_COUNT    = 4;
+    
+    /** An unknown data type */
+    public static final int UNKNOWN = -1;
+    /** A nominal (categorical) data type */
+    public static final int NOMINAL = 0;
+    /** An ordinal (ordered) data type */
+    public static final int ORDINAL = 1;
+    /** A numerical (quantitative) data type */
+    public static final int NUMERICAL = 2;
+    /** The total number of data type values */
+    public static final int DATATYPE_COUNT = 3;
+    
+    /** Indicates the horizontal (X) axis */
+    public static final int X_AXIS = 0;
+    /** Indicates the vertical (Y) axis */
+    public static final int Y_AXIS = 1;
+    /** The total number of axis type values */
+    public static final int AXIS_COUNT = 2;
+    
+    public static final int NODE_TRAVERSAL = 0;
+    public static final int EDGE_TRAVERSAL = 1;
+    public static final int NODE_AND_EDGE_TRAVERSAL = 2;
+    /** The total number of traversal type values */
+    public static final int TRAVERSAL_COUNT = 3;
+    
+    /** Indicates a continuous (non-discrete) spectrum */
+    public static final int CONTINUOUS = -1;
+    
+    /** The absolute minimum degree-of-interest (DOI) value */
+    public static final double MINIMUM_DOI = -Double.MAX_VALUE;
+    
+    /** No shape. Draw nothing. */
+    public static final int SHAPE_NONE           = -1;
+    /** Rectangle/Square shape */
+    public static final int SHAPE_RECTANGLE      = 0;
+    /** Ellipse/Circle shape */
+    public static final int SHAPE_ELLIPSE        = 1;
+    /** Diamond shape */
+    public static final int SHAPE_DIAMOND        = 2;
+    /** Cross shape */
+    public static final int SHAPE_CROSS          = 3;
+    /** Star shape */
+    public static final int SHAPE_STAR           = 4;
+    /** Up-pointing triangle shape */
+    public static final int SHAPE_TRIANGLE_UP    = 5;
+    /** Down-pointing triangle shape */
+    public static final int SHAPE_TRIANGLE_DOWN  = 6;
+    /** Left-pointing triangle shape */
+    public static final int SHAPE_TRIANGLE_LEFT  = 7;
+    /** Right-pointing triangle shape */
+    public static final int SHAPE_TRIANGLE_RIGHT = 8;
+    /** Hexagon shape */
+    public static final int SHAPE_HEXAGON        = 9;
+    /** The number of recognized shape types */
+    public static final int SHAPE_COUNT          = 10;
+    
+} // end of interface Constants
+@
+
+
+2.4.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@@
+
+
+2.3
+log
+@Fixed a numbering conflict between horizontal and vertical positioning constants
+@
+text
+@d34 9
+@
+
+
+2.2
+log
+@Little Javadoc fixes
+@
+text
+@d30 1
+a30 1
+    public static final int BOTTOM = 1;
+d32 1
+a32 1
+    public static final int TOP    = 0;
+@
+
+
+2.1
+log
+@Added quantile scale for statistics-driven binning of data values
+@
+text
+@d66 1
+a66 1
+    /** A qunatile scale, based on the underlying distribution */
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d61 1
+a61 1
+    public static final int LINEAR_SCALE = 0;
+d63 1
+a63 1
+    public static final int LOG_SCALE    = 1;
+d65 3
+a67 1
+    public static final int SQRT_SCALE   = 2;
+d69 1
+a69 1
+    public static final int SCALE_COUNT  = 3;
+@
+
+
+1.1
+log
+@file Constants.java was initially added on branch beta.
+@
+text
+@d1 124
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 52
+package prefuse;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public interface Constants {
+
+    public static final int LEFT_TO_RIGHT = 0;
+    public static final int RIGHT_TO_LEFT = 1;
+    public static final int TOP_TO_BOTTOM = 2;
+    public static final int BOTTOM_TO_TOP = 3;
+    public static final int ORIENTATION_COUNT = 4;
+    
+    public static final int LEFT   = 0;
+    public static final int RIGHT  = 1;
+    public static final int CENTER = 2;
+    public static final int BOTTOM = 1;
+    public static final int TOP    = 0;
+    
+    public static final int EDGE_TYPE_LINE  = 0;
+    public static final int EDGE_TYPE_CURVE = 1;
+    
+    public static final int POLY_TYPE_LINE  = EDGE_TYPE_LINE;
+    public static final int POLY_TYPE_CURVE = EDGE_TYPE_CURVE;
+    public static final int POLY_TYPE_STACK = 2;
+    public static final int POLY_TYPE_COUNT = 3;
+    
+    public static final int LINEAR_SCALE = 0;
+    public static final int LOG_SCALE    = 1;
+    public static final int SQRT_SCALE   = 2;
+    public static final int SCALE_COUNT  = 3;
+    
+    public static final int UNKNOWN = -1;
+    public static final int NOMINAL = 0;
+    public static final int ORDINAL = 1;
+    public static final int NUMERICAL = 2;
+    public static final int DATATYPE_COUNT = 3;
+    
+    public static final int X_AXIS = 0;
+    public static final int Y_AXIS = 1;
+    public static final int AXIS_COUNT = 2;
+    
+    public static final int NODE_TRAVERSAL = 0;
+    public static final int EDGE_TRAVERSAL = 1;
+    public static final int NODE_AND_EDGE_TRAVERSAL = 2;
+    public static final int TRAVERSAL_COUNT = 3;
+    
+    public static final int CONTINUOUS = -1;
+    
+    public static final double MINIMUM_DOI = -Double.MAX_VALUE;
+    
+}
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@a21 6
+    public static final int EDGE_TYPE_COUNT = 2;
+    
+    public static final int EDGE_ARROW_NONE = 0;
+    public static final int EDGE_ARROW_FORWARD = 1;
+    public static final int EDGE_ARROW_REVERSE = 2;
+    public static final int EDGE_ARROW_COUNT = 3;
+@
+
+
+1.1.2.3
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d8 5
+a12 6
+    public static final int ORIENT_LEFT_RIGHT = 0;
+    public static final int ORIENT_RIGHT_LEFT = 1;
+    public static final int ORIENT_TOP_BOTTOM = 2;
+    public static final int ORIENT_BOTTOM_TOP = 3;
+    public static final int ORIENT_CENTER     = 4;
+    public static final int ORIENTATION_COUNT = 5;
+@
+
+
+1.1.2.4
+log
+@Lots of javadoc
+@
+text
+@a3 2
+ * Constants used throughout the prefuse toolkit.
+ * 
+a7 1
+    /** A left-to-right layout orientation */
+a8 1
+    /** A right-to-left layout orientation */
+a9 1
+    /** A top-to-bottom layout orientation */
+a10 1
+    /** A bottom-to-top layout orientation */
+a11 1
+    /** A centered layout orientation */
+a12 1
+    /** The total number of orientation values */
+a14 1
+    /** A left alignment */
+a15 1
+    /** A right alignment */
+a16 1
+    /** A center alignment */
+a17 1
+    /** A bottom alignment */
+a18 1
+    /** A top alignment */
+a20 1
+    /** A straight-line edge type */
+a21 1
+    /** A curved-line edge type */
+a22 1
+    /** The total number of edge type values */
+a24 1
+    /** No arrows on edges */
+a25 1
+    /** Arrows on edges pointing from source to target */
+a26 1
+    /** Arrows on edges pointing from target to source */
+a27 1
+    /** The total number of edge arrow type values */
+a29 1
+    /** Use straight-lines for polygon edges */
+a30 1
+    /** Use curved-lines for polygon edges */
+a31 2
+    /** Use curved-lines for polygon edges, 
+     * but use straight lines for zero-slope edges */
+a32 1
+    /** The total number of polygon type values */
+a34 1
+    /** A linear scale */
+a35 1
+    /** A logarithmic (base 10) scale */
+a36 1
+    /** A square root scale */
+a37 1
+    /** The total number of scale type values */
+a39 1
+    /** An unknown data type */
+a40 1
+    /** A nominal (categorical) data type */
+a41 1
+    /** An ordinal (ordered) data type */
+a42 1
+    /** A numerical (quantitative) data type */
+a43 1
+    /** The total number of data type values */
+a45 1
+    /** Indicates the horizontal (X) axis */
+a46 1
+    /** Indicates the vertical (Y) axis */
+a47 1
+    /** The total number of axis type values */
+a52 1
+    /** The total number of traversal type values */
+a54 1
+    /** Indicates a continuous (non-discrete) spectrum */
+a56 1
+    /** The absolute minimum degree-of-interest (DOI) value */
+d59 1
+a59 1
+} // end of interface Constants
+@
+
+
+1.1.2.5
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d6 1
+a6 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.6
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a98 25
+    /** No shape. Draw nothing. */
+    public static final int SHAPE_NONE           = -1;
+    /** Rectangle/Square shape */
+    public static final int SHAPE_RECTANGLE      = 0;
+    /** Ellipse/Circle shape */
+    public static final int SHAPE_ELLIPSE        = 1;
+    /** Diamond shape */
+    public static final int SHAPE_DIAMOND        = 2;
+    /** Cross shape */
+    public static final int SHAPE_CROSS          = 3;
+    /** Star shape */
+    public static final int SHAPE_STAR           = 4;
+    /** Up-pointing triangle shape */
+    public static final int SHAPE_TRIANGLE_UP    = 5;
+    /** Down-pointing triangle shape */
+    public static final int SHAPE_TRIANGLE_DOWN  = 6;
+    /** Left-pointing triangle shape */
+    public static final int SHAPE_TRIANGLE_LEFT  = 7;
+    /** Right-pointing triangle shape */
+    public static final int SHAPE_TRIANGLE_RIGHT = 8;
+    /** Hexagon shape */
+    public static final int SHAPE_HEXAGON        = 9;
+    /** The number of recognized shape types */
+    public static final int SHAPE_COUNT          = 10;
+    
+@
+
+

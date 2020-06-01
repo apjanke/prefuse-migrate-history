@@ -1,0 +1,555 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.24.02.32.36;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action.distortion;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+
+import prefuse.action.layout.Layout;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Abstract base class providing a structure for space-distortion techniques.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public abstract class Distortion extends Layout {
+
+    private Point2D m_tmp = new Point2D.Double();
+    protected boolean m_distortSize = true;
+    protected boolean m_distortX = true;
+    protected boolean m_distortY = true;
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Create a new Distortion instance.
+     */
+    public Distortion() {
+        super();
+    }
+
+    /**
+     * Create a new Distortion instance that processes the given data group.
+     * @@param group the data group processed by this Distortion instance
+     */
+    public Distortion(String group) {
+        super(group);
+    }
+    
+    // ------------------------------------------------------------------------
+
+    /**
+     * Controls whether item sizes are distorted along with the item locations.
+     * @@param s true to distort size, false to distort positions only
+     */
+    public void setSizeDistorted(boolean s) {
+        m_distortSize = s;
+    }
+    
+    /**
+     * Indicates whether the item sizes are distorted along with the item
+     * locations.
+     * @@return true if item sizes are distorted by this action, false otherwise
+     */
+    public boolean isSizeDistorted() {
+        return m_distortSize;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        Rectangle2D bounds = getLayoutBounds();
+        Point2D anchor = correct(m_anchor, bounds);
+        
+        final Iterator iter = getVisualization().visibleItems(m_group);
+        
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            if ( item.isFixed() ) continue;
+            
+            // reset distorted values
+            // TODO - make this play nice with animation?
+            item.setX(item.getEndX());
+            item.setY(item.getEndY());
+            item.setSize(item.getEndSize());
+            
+            // compute distortion if we have a distortion focus
+            if ( anchor != null ) {
+                Rectangle2D bbox = item.getBounds();
+                double x = item.getX();
+                double y = item.getY();
+                
+                // position distortion
+                if ( m_distortX )
+                    item.setX(x=distortX(x, anchor, bounds));
+                if ( m_distortY )
+                    item.setY(y=distortY(y, anchor, bounds));
+                
+                // size distortion
+                if ( m_distortSize ) {
+                    double sz = distortSize(bbox, x, y, anchor, bounds);
+                    item.setSize(sz*item.getSize());
+                }
+            }
+        }
+    }
+    
+    /**
+     * Corrects the anchor position, such that if the anchor is outside the
+     * layout bounds, the anchor is adjusted to be the nearest point on the
+     * edge of the bounds.
+     * @@param anchor the un-corrected anchor point
+     * @@param bounds the layout bounds
+     * @@return the corrected anchor point
+     */
+    protected Point2D correct(Point2D anchor, Rectangle2D bounds) {
+        if ( anchor == null ) return anchor;
+        double x = anchor.getX(), y = anchor.getY();
+        double x1 = bounds.getMinX(), y1 = bounds.getMinY();
+        double x2 = bounds.getMaxX(), y2 = bounds.getMaxY();
+        x = (x < x1 ? x1 : (x > x2 ? x2 : x));
+        y = (y < y1 ? y1 : (y > y2 ? y2 : y));
+        
+        m_tmp.setLocation(x,y);
+        return m_tmp;
+    }
+    
+    /**
+     * Distorts an item's x-coordinate.
+     * @@param x the undistorted x coordinate
+     * @@param anchor the anchor or focus point of the display
+     * @@param bounds the layout bounds
+     * @@return the distorted x-coordinate
+     */
+    protected abstract double distortX(double x, Point2D anchor, Rectangle2D bounds);
+
+    /**
+     * Distorts an item's y-coordinate.
+     * @@param y the undistorted y coordinate
+     * @@param anchor the anchor or focus point of the display
+     * @@param bounds the layout bounds
+     * @@return the distorted y-coordinate
+     */
+    protected abstract double distortY(double y, Point2D anchor, Rectangle2D bounds);
+    
+    /**
+     * Returns the scaling factor by which to transform the size of an item.
+     * @@param bbox the bounding box of the undistorted item
+     * @@param x the x-coordinate of the distorted item
+     * @@param y the y-coordinate of the distorted item
+     * @@param anchor the anchor or focus point of the display
+     * @@param bounds the layout bounds
+     * @@return the scaling factor by which to change the size
+     */
+    protected abstract double distortSize(Rectangle2D bbox, double x, double y, 
+            Point2D anchor, Rectangle2D bounds);
+
+} // end of abstract class Distortion
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d5 2
+d19 1
+a19 1
+    private final Point2D m_tmp = new Point2D.Double();
+d23 1
+a23 1
+
+d25 1
+a25 1
+
+d40 1
+a40 1
+
+d50 1
+a50 1
+
+d59 1
+a59 1
+
+d61 1
+a61 1
+
+d65 1
+a65 2
+    @@Override
+	public void run(double frac) {
+d68 7
+a74 6
+
+        for(VisualItem<?> item :  getVisualization().visibleItems(m_group)) {
+            if ( item.isFixed() ) {
+				continue;
+			}
+
+d80 1
+a80 1
+
+d86 1
+a86 1
+
+d88 5
+a92 7
+                if ( m_distortX ) {
+					item.setX(x=distortX(x, anchor, bounds));
+				}
+                if ( m_distortY ) {
+					item.setY(y=distortY(y, anchor, bounds));
+				}
+
+d101 1
+a101 1
+
+d111 1
+a111 3
+        if ( anchor == null ) {
+			return anchor;
+		}
+d115 3
+a117 3
+        x = x < x1 ? x1 : x > x2 ? x2 : x;
+        y = y < y1 ? y1 : y > y2 ? y2 : y;
+
+d121 1
+a121 1
+
+d139 1
+a139 1
+
+d149 1
+a149 1
+    protected abstract double distortSize(Rectangle2D bbox, double x, double y,
+@
+
+
+1.1
+log
+@file Distortion.java was initially added on branch beta.
+@
+text
+@d1 152
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 143
+package prefuse.action.distortion;
+
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+
+import prefuse.action.layout.Layout;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Abstract class providing skeletal implementation for space-distortion
+ * techniques.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public abstract class Distortion extends Layout {
+
+    private Point2D m_tmp = new Point2D.Double();
+    protected boolean m_distortSize = true;
+    protected boolean m_distortX = true;
+    protected boolean m_distortY = true;
+    
+    // ------------------------------------------------------------------------
+    
+    public Distortion() {
+        super();
+    }
+    
+    public Distortion(String group) {
+        super(group);
+    }
+    
+    // ------------------------------------------------------------------------
+
+    /**
+     * Controls whether item sizes are distorted 
+     * along with the item locations.
+     * @@param s true to distort size, false to distort positions only
+     */
+    public void setSizeDistorted(boolean s) {
+        m_distortSize = s;
+    } //
+    
+    /**
+     * Indicates whether the item sizes are distorted 
+     * along with the item locations.
+     * @@return true if item sizes are distorted by this action, false otherwise
+     */
+    public boolean isSizeDistorted() {
+        return m_distortSize;
+    } //
+    
+    // ------------------------------------------------------------------------
+    
+    public void run(double frac) {
+        Rectangle2D bounds = getLayoutBounds();
+        Point2D anchor = correct(getLayoutAnchor(), bounds);
+        
+        final Iterator iter = getVisualization().visibleItems(m_group);
+        
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            if ( item.isFixed() ) continue;
+            
+            // reset distorted values
+            // TODO - make this play nice with animation
+            //item.getLocation().setLocation(item.getEndLocation());
+            //item.setSize(item.getEndSize());
+            
+            // compute distortion if we have a distortion focus
+            if ( anchor != null ) {
+                Rectangle2D bbox = item.getBounds();
+                double x = item.getX();
+                double y = item.getY();
+                
+                // position distortion
+                if ( m_distortX )
+                    item.setX(distortX(x, anchor, bounds));
+                if ( m_distortY )
+                    item.setY(distortY(y, anchor, bounds));
+                
+                // size distortion
+                if ( m_distortSize ) {
+                    double sz = distortSize(bbox, x, y, anchor, bounds);
+                    item.setSize(sz*item.getSize());
+                }
+            }
+        }
+    } //
+    
+    /**
+     * Corrects the anchor position, such that if the anchor is outside the
+     * layout bounds, the anchor is adjusted to be the nearest point on the
+     * edge of the bounds.
+     * @@param anchor the un-corrected anchor point
+     * @@param bounds the layout bounds
+     * @@return the corrected anchor point
+     */
+    protected Point2D correct(Point2D anchor, Rectangle2D bounds) {
+        if ( anchor == null ) return anchor;
+        double x = anchor.getX(), y = anchor.getY();
+        double x1 = bounds.getMinX(), y1 = bounds.getMinY();
+        double x2 = bounds.getMaxX(), y2 = bounds.getMaxY();
+        x = (x < x1 ? x1 : (x > x2 ? x2 : x));
+        y = (y < y1 ? y1 : (y > y2 ? y2 : y));
+        
+        m_tmp.setLocation(x,y);
+        return m_tmp;
+    }
+    
+    /**
+     * Distorts an item's x-coordinate.
+     * @@param x the undistorted x coordinate
+     * @@param anchor the anchor or focus point of the display
+     * @@param bounds the layout bounds
+     * @@return the distorted x-coordinate
+     */
+    protected abstract double distortX(double x, Point2D anchor, Rectangle2D bounds);
+
+    /**
+     * Distorts an item's y-coordinate.
+     * @@param y the undistorted y coordinate
+     * @@param anchor the anchor or focus point of the display
+     * @@param bounds the layout bounds
+     * @@return the distorted y-coordinate
+     */
+    protected abstract double distortY(double y, Point2D anchor, Rectangle2D bounds);
+    
+    /**
+     * Returns the scaling factor by which to transform the size of an 
+     * undistorted item to a distorted item.
+     * @@param bbox the bounding box of the undistorted item
+     * @@param pf the location of the distorted item
+     * @@param anchor the anchor or focus point of the display
+     * @@param bounds the layout bounds
+     * @@return the scaling factor by which to change the size
+     */
+    protected abstract double distortSize(Rectangle2D bbox, double x, double y, 
+            Point2D anchor, Rectangle2D bounds);
+
+} // end of abstract class Distortion@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d143 1
+a143 1
+} // end of abstract class Distortion
+@
+
+
+1.1.2.3
+log
+@Updated distortion mechanisms
+@
+text
+@d44 1
+a44 1
+    }
+d53 1
+a53 1
+    }
+d59 1
+a59 1
+        Point2D anchor = correct(m_anchor, bounds);
+d68 3
+a70 4
+            // TODO - make this play nice with animation?
+            item.setX(item.getEndX());
+            item.setY(item.getEndY());
+            item.setSize(item.getEndSize());
+d80 1
+a80 1
+                    item.setX(x=distortX(x, anchor, bounds));
+d82 1
+a82 1
+                    item.setY(y=distortY(y, anchor, bounds));
+d91 1
+a91 1
+    }
+@
+
+
+1.1.2.4
+log
+@Lots of javadoc
+@
+text
+@d12 2
+a13 1
+ * Abstract base class providing a structure for space-distortion techniques.
+d16 1
+a16 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a26 3
+    /**
+     * Create a new Distortion instance.
+     */
+d30 1
+a30 5
+
+    /**
+     * Create a new Distortion instance that processes the given data group.
+     * @@param group the data group processed by this Distortion instance
+     */
+d38 2
+a39 1
+     * Controls whether item sizes are distorted along with the item locations.
+d47 2
+a48 2
+     * Indicates whether the item sizes are distorted along with the item
+     * locations.
+a56 3
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+d133 2
+a134 1
+     * Returns the scaling factor by which to transform the size of an item.
+@
+
+
+1.1.2.5
+log
+@Javadoc'd.
+@
+text
+@d143 1
+a143 2
+     * @@param x the x-coordinate of the distorted item
+     * @@param y the y-coordinate of the distorted item
+@
+
+

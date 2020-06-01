@@ -1,0 +1,125 @@
+head	1.4;
+access;
+symbols
+	alpha:1.3.0.2
+	Root_alpha:1.3
+	prefuse-alpha-20051229:1.3
+	P20050401_Alpha_PreCHI:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2006.02.11.06.38.44;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches
+	1.3.4.1;
+next	1.2;
+
+1.2
+date	2004.03.16.03.05.16;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+1.3.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.action;
+
+import edu.berkeley.guir.prefuse.ItemRegistry;
+
+/**
+ * Interface which every graph processing action must provide. 
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public interface Action {
+    
+    /**
+     * Runs this action, performing desired graph processing
+     * @@param registry the ItemRegistry housing the VisualItems to process
+     * @@param frac a fraction indicating the current progress of this
+     *  action if it persists over time. For actions that are only run once,
+     *  a value of 0 is used.
+     */
+    public void run(ItemRegistry registry, double frac);
+    
+    /**
+     * Indicates if this action is currently enabled.
+     * @@return true if this action is enabled, false otherwise.
+     */
+    public boolean isEnabled();
+    
+    /**
+     * Determines if this Action is enabled or disabled.
+     * @@param s true to enable the Action, false to disable it.
+     */
+    public void setEnabled(boolean s);
+
+} // end of interface Action
+@
+
+
+1.3
+log
+@Major refactor
+@
+text
+@@
+
+
+1.3.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.2
+log
+@More Javadoc updates
+@
+text
+@d15 1
+a15 1
+     * @@param registry the ItemRegistry housing the GraphItems to process
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d6 1
+a6 2
+ * 
+ * Feb 6, 2004 - jheer - Created class
+d13 7
+d21 5
+d27 5
+@
+

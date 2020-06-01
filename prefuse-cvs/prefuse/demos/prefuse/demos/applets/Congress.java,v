@@ -1,0 +1,131 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.11.06.38.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2006.02.09.05.12.45;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.demos.applets;
+
+import prefuse.data.Table;
+import prefuse.data.io.DelimitedTextTableReader;
+import prefuse.util.ui.JPrefuseApplet;
+
+
+public class Congress extends JPrefuseApplet {
+
+    public void init() {
+        // load the data
+        Table t = null;
+        try {
+            t = new DelimitedTextTableReader().readTable("/fec.txt");
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        this.getContentPane().add(new prefuse.demos.Congress(t));
+    }
+    
+} // end of class Congress
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d10 1
+a10 2
+    @@Override
+	public void init() {
+d21 1
+a21 1
+
+@
+
+
+1.1
+log
+@file Congress.java was initially added on branch beta.
+@
+text
+@d1 22
+@
+
+
+1.1.2.1
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@a0 22
+package prefuse.demos.applets;
+
+import prefuse.data.Table;
+import prefuse.data.io.DelimitedTextTableReader;
+import prefuse.util.ui.JPrefuseApplet;
+
+
+public class Congress extends JPrefuseApplet {
+
+    public void init() {
+        // load the data
+        Table t = null;
+        try {
+            t = new DelimitedTextTableReader().readTable("/fec.txt");
+        } catch ( Exception e ) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        this.getContentPane().add(new prefuse.demos.Congress(t));
+    }
+    
+} // end of class Congress
+@
+

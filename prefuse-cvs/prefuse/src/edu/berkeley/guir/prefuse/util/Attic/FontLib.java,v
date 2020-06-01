@@ -1,0 +1,131 @@
+head	1.3;
+access;
+symbols
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.12.18.23.42;	author jheer;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2005.03.23.02.41.24;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.13.32;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.util;
+
+import java.awt.Font;
+import java.util.HashMap;
+
+/**
+ * Maintains a cache of fonts and other useful font computation
+ * routines.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class FontLib {
+
+    private static final HashMap fontMap = new HashMap();
+    private static int misses = 0;
+    private static int lookups = 0;
+    
+    public static Font getFont(String name, int style, double size) {
+        int isize = (int)Math.floor(size);
+        return getFont(name, style, isize);
+    } //
+    
+    public static Font getFont(String name, int style, int size) {
+        Integer key = new Integer((name.hashCode()<<8)+(size<<2)+style);
+        Font f = null;
+        if ( (f=(Font)fontMap.get(key)) == null ) {
+            f = new Font(name, style, size);
+            fontMap.put(key, f);
+            misses++;
+        }
+        lookups++;
+        return f;
+    } //
+    
+    public static int getCacheMissCount() {
+        return misses;
+    } //
+    
+    public static int getCacheLookupCount() {
+        return lookups;
+    } //
+    
+    public static void clearCache() {
+        fontMap.clear();
+    } //
+    
+    public static Font getIntermediateFont(Font f1, Font f2, double frac) {
+        String name;
+        int size, style;
+        if ( frac < 0.5 ) {
+            name  = f1.getName();
+            style = f1.getStyle();
+        } else {
+            name  = f2.getName();
+            style = f2.getStyle();
+        }
+        size = (int)Math.round(frac*f2.getSize()+(1-frac)*f1.getSize());
+        return getFont(name,style,size);
+    } //
+    
+} // end of class FontLib
+@
+
+
+1.2
+log
+@Utility updates
+@
+text
+@@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.1
+log
+@Major refactor
+@
+text
+@d19 5
+@
+

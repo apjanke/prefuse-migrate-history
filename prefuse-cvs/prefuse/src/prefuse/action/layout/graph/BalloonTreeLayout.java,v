@@ -1,0 +1,866 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.07.15.21.55.22;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Fixed BalloonTreeLayout constructor bug that ignoring parameter assignment.
+@
+text
+@package prefuse.action.layout.graph;
+
+import java.awt.geom.Point2D;
+import java.util.Iterator;
+
+import prefuse.data.Graph;
+import prefuse.data.Schema;
+import prefuse.data.tuple.TupleSet;
+import prefuse.visual.NodeItem;
+
+
+/**
+ * <p>Layout that computes a circular "balloon-tree" layout of a tree.
+ * This layout places children nodes radially around their parents, and is
+ * equivalent to a top-down flattened view of a ConeTree.</p>
+ * 
+ * <p>The algorithm used is that of G. Melançon and I. Herman from their
+ * research paper Circular Drawings of Rooted Trees, Reports of the Centre for 
+ * Mathematics and Computer Sciences, Report Number INS–9817, 1998.</p>
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class BalloonTreeLayout extends TreeLayout {
+
+    private int m_minRadius = 2;
+    
+    /**
+     * Create a new BalloonTreeLayout
+     * @@param group the data group to layout. Must resolve to a Graph
+     * or Tree instance.
+     */
+    public BalloonTreeLayout(String group) {
+        this(group, 2);
+    }
+
+    /**
+     * Create a new BalloonTreeLayout
+     * @@param group the data group to layout. Must resolve to a Graph
+     * or Tree instance.
+     * @@param minRadius the minimum radius to use for a layout circle
+     */
+    public BalloonTreeLayout(String group, int minRadius) {
+        super(group);
+        m_minRadius = minRadius;
+    }
+
+    /**
+     * Get the minimum radius used for a layout circle.
+     * @@return the minimum layout radius
+     */
+    public int getMinRadius() {
+        return m_minRadius;
+    }
+    
+    /**
+     * Set the minimum radius used for a layout circle.
+     * @@param minRadius the minimum layout radius
+     */
+    public void setMinRadius(int minRadius) {
+        m_minRadius = minRadius;
+    }
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        Graph g = (Graph)m_vis.getGroup(m_group);
+        initSchema(g.getNodes());
+        
+        Point2D anchor = getLayoutAnchor();
+        NodeItem n = getLayoutRoot();
+        layout(n,anchor.getX(),anchor.getY());
+    }
+    
+    private void layout(NodeItem n, double x, double y) {
+        firstWalk(n);
+        secondWalk(n,null,x,y,1,0);
+    }
+    
+    private void firstWalk(NodeItem n) {
+        Params np = getParams(n);
+        np.d = 0;
+        double s = 0;
+        Iterator childIter = n.children();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            if ( !c.isVisible() ) continue;
+            firstWalk(c);
+            Params cp = getParams(c);
+            np.d = Math.max(np.d,cp.r);
+            cp.a = Math.atan(((double)cp.r)/(np.d+cp.r));
+            s += cp.a;
+        }
+        adjustChildren(np, s);
+        setRadius(np);
+    }
+    
+    private void adjustChildren(Params np, double s) {
+        if ( s > Math.PI ) {
+            np.c = Math.PI/s;
+            np.f = 0;
+        } else {
+            np.c = 1;
+            np.f = Math.PI - s;
+        }
+    }
+    
+    private void setRadius(Params np) {
+        np.r = Math.max(np.d,m_minRadius) + 2*np.d;
+    }
+    
+/*
+    private void setRadius(NodeItem n, ParamBlock np) {
+        int numChildren = n.getChildCount();
+        double p  = Math.PI;
+        double fs = (numChildren==0 ? 0 : np.f/numChildren);
+        double pr = 0;
+        double bx = 0, by = 0;
+        Iterator childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            ParamBlock cp = getParams(c);
+            p += pr + cp.a + fs;
+            bx += (cp.r)*Math.cos(p);
+            by += (cp.r)*Math.sin(p);
+            pr = cp.a;
+        }
+        if ( numChildren != 0 ) {
+            bx /= numChildren;
+            by /= numChildren;
+        }
+        np.rx = -bx;
+        np.ry = -by;
+        
+        p = Math.PI;
+        pr = 0;
+        np.r = 0;
+        childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            ParamBlock cp = getParams(c);
+            p += pr + cp.a + fs;
+            double x = cp.r*Math.cos(p)-bx;
+            double y = cp.r*Math.sin(p)-by;
+            double d = Math.sqrt(x*x+y*y) + cp.r;
+            np.r = Math.max(np.r, (int)Math.round(d));
+            pr = cp.a;
+        }
+        if ( np.r == 0 )
+            np.r = m_minRadius + 2*np.d;
+    } //
+ 
+    private void secondWalk2(NodeItem n, NodeItem r, 
+            double x, double y, double l, double t)
+    {
+        ParamBlock np = getParams(n);
+        double cost = Math.cos(t);
+        double sint = Math.sin(t);
+        double nx = x + l*(np.rx*cost-np.ry*sint);
+        double ny = y + l*(np.rx*sint+np.ry*cost);
+        setLocation(n,r,nx,ny);
+        double dd = l*np.d;
+        double p  = Math.PI;
+        double fs = np.f / (n.getChildCount()+1);
+        double pr = 0;
+        Iterator childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            ParamBlock cp = getParams(c);
+            double aa = np.c * cp.a;
+            double rr = np.d * Math.tan(aa)/(1-Math.tan(aa));
+            p += pr + aa + fs;
+            double xx = (l*rr+dd)*Math.cos(p)+np.rx;
+            double yy = (l*rr+dd)*Math.sin(p)+np.ry;
+            double x2 = xx*cost - yy*sint;
+            double y2 = xx*sint + yy*cost;
+            pr = aa;
+            secondWalk2(c, n, x+x2, y+y2, l*rr/cp.r, p);
+        }
+    } //
+*/
+    
+    private void secondWalk(NodeItem n, NodeItem r,
+            double x, double y, double l, double t)
+    {
+        setX(n, r, x);
+        setY(n, r, y);
+        
+        Params np = getParams(n);
+        int numChildren = 0;
+        Iterator childIter = n.children();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            if ( c.isVisible() ) ++numChildren;
+        }
+        double dd = l*np.d;
+        double p  = t + Math.PI;
+        double fs = (numChildren==0 ? 0 : np.f/numChildren);
+        double pr = 0;
+        childIter = n.children();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            if ( !c.isVisible() ) continue;
+            Params cp = getParams(c);
+            double aa = np.c * cp.a;
+            double rr = np.d * Math.tan(aa)/(1-Math.tan(aa));
+            p += pr + aa + fs;
+            double xx = (l*rr+dd)*Math.cos(p);
+            double yy = (l*rr+dd)*Math.sin(p);
+            pr = aa;
+            secondWalk(c, n, x+xx, y+yy, l*np.c/*l*rr/cp.r*/, p);
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Parameters
+    
+    /**
+     * The data field in which the parameters used by this layout are stored.
+     */
+    public static final String PARAMS = "_balloonTreeLayoutParams";
+    /**
+     * The schema for the parameters used by this layout.
+     */
+    public static final Schema PARAMS_SCHEMA = new Schema();
+    static {
+        PARAMS_SCHEMA.addColumn(PARAMS, Params.class);
+    }
+    
+    private void initSchema(TupleSet ts) {
+        try {
+            ts.addColumns(PARAMS_SCHEMA);
+        } catch ( IllegalArgumentException iae ) {}
+    }
+    
+    private Params getParams(NodeItem n) {
+        Params np = (Params)n.get(PARAMS);
+        if ( np == null ) {
+            np = new Params();
+            n.set(PARAMS, np);
+        }
+        return np;
+    }
+    
+    /**
+     * Wrapper class holding parameters used for each node in this layout.
+     */
+    public static class Params {
+        public int d;
+        public int r;
+        public double rx, ry;
+        public double a;
+        public double c;
+        public double f;
+    }
+
+} // end of class BalloonTreeLayout
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d4 1
+d16 1
+a16 1
+ *
+d18 1
+a18 1
+ * research paper Circular Drawings of Rooted Trees, Reports of the Centre for
+d26 1
+a26 1
+
+d54 1
+a54 1
+
+d62 1
+a62 1
+
+d66 2
+a67 3
+    @@Override
+	public void run(double frac) {
+        Graph<?,?,?> g = (Graph<?,?,?>)m_vis.getGroup(m_group);
+d69 1
+a69 1
+
+d71 1
+a71 1
+        NodeItem<?,?> n = getLayoutRoot();
+d74 2
+a75 2
+
+    private void layout(NodeItem<?,?> n, double x, double y) {
+d79 2
+a80 2
+
+    private void firstWalk(NodeItem<?,?> n) {
+d84 4
+a87 4
+        for(NodeItem<?,?> c : n.children()) {
+            if ( !c.isVisible() ) {
+				continue;
+			}
+d91 1
+a91 1
+            cp.a = Math.atan((double)cp.r/(np.d+cp.r));
+d97 1
+a97 1
+
+d107 1
+a107 1
+
+d111 1
+a111 1
+
+d134 1
+a134 1
+
+d152 2
+a153 2
+
+    private void secondWalk2(NodeItem n, NodeItem r,
+d182 2
+a183 2
+
+    private void secondWalk(NodeItem<?,?> n, NodeItem<?,?> r,
+d188 1
+a188 1
+
+d191 4
+a194 4
+        for(NodeItem<?,?> c : n.children()) {
+            if ( c.isVisible() ) {
+				++numChildren;
+			}
+d198 1
+a198 1
+        double fs = numChildren==0 ? 0 : np.f/numChildren;
+d200 4
+a203 4
+        for(NodeItem<?,?> c : n.children()) {
+            if ( !c.isVisible() ) {
+				continue;
+			}
+d214 1
+a214 1
+
+d217 1
+a217 1
+
+d229 2
+a230 2
+
+    private void initSchema(TupleSet<?> ts) {
+d235 2
+a236 2
+
+    private Params getParams(NodeItem<?,?> n) {
+d244 1
+a244 1
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d44 1
+a44 1
+        m_minRadius = 2;
+@
+
+
+1.1
+log
+@file BalloonTreeLayout.java was initially added on branch beta.
+@
+text
+@d1 257
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 223
+package prefuse.action.layout.graph;
+
+import java.awt.geom.Point2D;
+import java.util.Iterator;
+
+import prefuse.data.Schema;
+import prefuse.data.Table;
+import prefuse.data.Tree;
+import prefuse.visual.NodeItem;
+
+
+/**
+ * <p>Calculates a BalloonTree layout of a tree. This layout places children
+ * nodes radially around their parents, and is equivalent to a 2D view of
+ * a ConeTree.</p>
+ * 
+ * <p>This is an implementation of the algorithm presented in G. Melançon and 
+ * I. Herman, Circular Drawings of Rooted Trees, Reports of the Centre for 
+ * Mathematics and Computer Sciences, Report Number INS–9817, 1998.
+ * </p>
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class BalloonTreeLayout extends TreeLayout {
+
+    private int m_minRadius = 2;
+    
+    public BalloonTreeLayout() {
+        this(2);
+    } //
+    
+    public BalloonTreeLayout(int minRadius) {
+        m_minRadius = 2;
+    } //
+    
+    /**
+     * @@see prefuse.action.Action#run(prefuse.a_old.ItemRegistry, double)
+     */
+    public void run(double frac) {
+        Tree t = (Tree)m_vis.getGroup(m_group);
+        initSchema(t.getNodeTable());
+        
+        Point2D anchor = getLayoutAnchor();
+        NodeItem n = getLayoutRoot();
+        layout(n,anchor.getX(),anchor.getY());
+    } //
+    
+    public int getMinRadius() {
+        return m_minRadius;
+    } //
+    
+    public void setMinRadius(int minRadius) {
+        m_minRadius = minRadius;
+    } //
+    
+    public void layout(NodeItem n, double x, double y) {
+        firstWalk(n);
+        secondWalk(n,null,x,y,1,0);
+    } //
+    
+    private void firstWalk(NodeItem n) {
+        Params np = getParams(n);
+        np.d = 0;
+        double s = 0;
+        Iterator childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            firstWalk(c);
+            Params cp = getParams(c);
+            np.d = Math.max(np.d,cp.r);
+            cp.a = Math.atan(((double)cp.r)/(np.d+cp.r));
+            s += cp.a;
+        }
+        adjustChildren(np, s);
+        setRadius(np);
+    } //
+    
+    private void adjustChildren(Params np, double s) {
+        if ( s > Math.PI ) {
+            np.c = Math.PI/s;
+            np.f = 0;
+        } else {
+            np.c = 1;
+            np.f = Math.PI - s;
+        }
+    } //
+    
+    private void setRadius(Params np) {
+        np.r = Math.max(np.d,m_minRadius) + 2*np.d;
+    } //
+    
+/*
+    private void setRadius(NodeItem n, ParamBlock np) {
+        int numChildren = n.getChildCount();
+        double p  = Math.PI;
+        double fs = (numChildren==0 ? 0 : np.f/numChildren);
+        double pr = 0;
+        double bx = 0, by = 0;
+        Iterator childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            ParamBlock cp = getParams(c);
+            p += pr + cp.a + fs;
+            bx += (cp.r)*Math.cos(p);
+            by += (cp.r)*Math.sin(p);
+            pr = cp.a;
+        }
+        if ( numChildren != 0 ) {
+            bx /= numChildren;
+            by /= numChildren;
+        }
+        np.rx = -bx;
+        np.ry = -by;
+        
+        p = Math.PI;
+        pr = 0;
+        np.r = 0;
+        childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            ParamBlock cp = getParams(c);
+            p += pr + cp.a + fs;
+            double x = cp.r*Math.cos(p)-bx;
+            double y = cp.r*Math.sin(p)-by;
+            double d = Math.sqrt(x*x+y*y) + cp.r;
+            np.r = Math.max(np.r, (int)Math.round(d));
+            pr = cp.a;
+        }
+        if ( np.r == 0 )
+            np.r = m_minRadius + 2*np.d;
+    } //
+ 
+    private void secondWalk2(NodeItem n, NodeItem r, 
+            double x, double y, double l, double t)
+    {
+        ParamBlock np = getParams(n);
+        double cost = Math.cos(t);
+        double sint = Math.sin(t);
+        double nx = x + l*(np.rx*cost-np.ry*sint);
+        double ny = y + l*(np.rx*sint+np.ry*cost);
+        setLocation(n,r,nx,ny);
+        double dd = l*np.d;
+        double p  = Math.PI;
+        double fs = np.f / (n.getChildCount()+1);
+        double pr = 0;
+        Iterator childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            ParamBlock cp = getParams(c);
+            double aa = np.c * cp.a;
+            double rr = np.d * Math.tan(aa)/(1-Math.tan(aa));
+            p += pr + aa + fs;
+            double xx = (l*rr+dd)*Math.cos(p)+np.rx;
+            double yy = (l*rr+dd)*Math.sin(p)+np.ry;
+            double x2 = xx*cost - yy*sint;
+            double y2 = xx*sint + yy*cost;
+            pr = aa;
+            secondWalk2(c, n, x+x2, y+y2, l*rr/cp.r, p);
+        }
+    } //
+*/
+    
+    private void secondWalk(NodeItem n, NodeItem r,
+            double x, double y, double l, double t)
+    {
+        setX(n, r, x);
+        setY(n, r, y);
+        
+        Params np = getParams(n);
+        int numChildren = n.getChildCount();
+        double dd = l*np.d;
+        double p  = t + Math.PI;
+        double fs = (numChildren==0 ? 0 : np.f/numChildren);
+        double pr = 0;
+        Iterator childIter = n.getChildren();
+        while ( childIter.hasNext() ) {
+            NodeItem c = (NodeItem)childIter.next();
+            Params cp = getParams(c);
+            double aa = np.c * cp.a;
+            double rr = np.d * Math.tan(aa)/(1-Math.tan(aa));
+            p += pr + aa + fs;
+            double xx = (l*rr+dd)*Math.cos(p);
+            double yy = (l*rr+dd)*Math.sin(p);
+            pr = aa;
+            secondWalk(c, n, x+xx, y+yy, l*np.c/*l*rr/cp.r*/, p);
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Parameters
+    
+    public static final String PARAMS = "_balloonTreeLayoutParams";
+    public static final Schema PARAMS_SCHEMA = new Schema();
+    static {
+        PARAMS_SCHEMA.addColumn(PARAMS, Params.class);
+    }
+    
+    private void initSchema(Table t) {
+        // make sure we have parameter items to work with
+        if ( t.getColumnIndex(PARAMS) == -1 )
+            t.addColumns(PARAMS_SCHEMA);
+    }
+    
+    private Params getParams(NodeItem n) {
+        Params np = (Params)n.get(PARAMS);
+        if ( np == null ) {
+            np = new Params();
+            n.set(np, PARAMS);
+        }
+        return np;
+    }
+    
+    public static class Params {
+        public int d;
+        public int r;
+        public double rx, ry;
+        public double a;
+        public double c;
+        public double f;
+    }
+
+} // end of class BalloonTreeLayout
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@d209 1
+a209 1
+            n.set(PARAMS, np);
+@
+
+
+1.1.2.3
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a5 1
+import prefuse.data.Graph;
+d7 2
+a8 1
+import prefuse.data.tuple.TupleSet;
+d29 2
+a30 2
+    public BalloonTreeLayout(String group) {
+        this(group, 2);
+d33 1
+a33 2
+    public BalloonTreeLayout(String group, int minRadius) {
+    	super(group);
+d41 2
+a42 2
+        Graph g = (Graph)m_vis.getGroup(m_group);
+        initSchema(g.getNodes());
+d66 1
+a66 1
+        Iterator childIter = n.children();
+a68 1
+            if ( !c.isVisible() ) continue;
+d171 1
+a171 6
+        int numChildren = 0;
+        Iterator childIter = n.children();
+        while ( childIter.hasNext() ) {
+        	NodeItem c = (NodeItem)childIter.next();
+            if ( c.isVisible() ) ++numChildren;
+        }
+d176 1
+a176 1
+        childIter = n.children();
+a178 1
+            if ( !c.isVisible() ) continue;
+d199 4
+a202 4
+    private void initSchema(TupleSet ts) {
+    	try {
+    		ts.addColumns(PARAMS_SCHEMA);
+    	} catch ( IllegalArgumentException iae ) {}
+@
+
+
+1.1.2.4
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d34 1
+a34 1
+        super(group);
+d176 1
+a176 1
+            NodeItem c = (NodeItem)childIter.next();
+d208 3
+a210 3
+        try {
+            ts.addColumns(PARAMS_SCHEMA);
+        } catch ( IllegalArgumentException iae ) {}
+@
+
+
+1.1.2.5
+log
+@Lots of javadoc
+@
+text
+@d13 3
+a15 3
+ * <p>Layout that computes a circular "balloon-tree" layout of a tree.
+ * This layout places children nodes radially around their parents, and is
+ * equivalent to a top-down flattened view of a ConeTree.</p>
+d17 4
+a20 3
+ * <p>The algorithm used is that of G. Melançon and I. Herman from their
+ * research paper Circular Drawings of Rooted Trees, Reports of the Centre for 
+ * Mathematics and Computer Sciences, Report Number INS–9817, 1998.</p>
+d22 2
+a23 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a28 5
+    /**
+     * Create a new BalloonTreeLayout
+     * @@param group the data group to layout. Must resolve to a Graph
+     * or Tree instance.
+     */
+d31 2
+a32 8
+    }
+
+    /**
+     * Create a new BalloonTreeLayout
+     * @@param group the data group to layout. Must resolve to a Graph
+     * or Tree instance.
+     * @@param minRadius the minimum radius to use for a layout circle
+     */
+d36 1
+a36 9
+    }
+
+    /**
+     * Get the minimum radius used for a layout circle.
+     * @@return the minimum layout radius
+     */
+    public int getMinRadius() {
+        return m_minRadius;
+    }
+d39 1
+a39 9
+     * Set the minimum radius used for a layout circle.
+     * @@param minRadius the minimum layout radius
+     */
+    public void setMinRadius(int minRadius) {
+        m_minRadius = minRadius;
+    }
+    
+    /**
+     * @@see prefuse.action.Action#run(double)
+d48 9
+a56 1
+    }
+d58 1
+a58 1
+    private void layout(NodeItem n, double x, double y) {
+d61 1
+a61 1
+    }
+d79 1
+a79 1
+    }
+d89 1
+a89 1
+    }
+d93 1
+a93 1
+    }
+a200 3
+    /**
+     * The data field in which the parameters used by this layout are stored.
+     */
+a201 3
+    /**
+     * The schema for the parameters used by this layout.
+     */
+a221 3
+    /**
+     * Wrapper class holding parameters used for each node in this layout.
+     */
+@
+
+

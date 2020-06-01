@@ -1,0 +1,866 @@
+head	2.6;
+access;
+symbols
+	java_1_5:2.6.0.4
+	Root_java_1_5:2.6
+	beta:2.6.0.2
+	beta-20080113:2.6
+	beta-20071021:2.6
+	beta-20060220:2.1
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.6
+date	2007.10.21.21.36.04;	author jheer;	state Exp;
+branches
+	2.6.4.1;
+next	2.5;
+
+2.5
+date	2006.07.15.23.00.04;	author jheer;	state Exp;
+branches;
+next	2.4;
+
+2.4
+date	2006.07.15.18.09.09;	author jheer;	state Exp;
+branches;
+next	2.3;
+
+2.3
+date	2006.03.24.17.37.12;	author jheer;	state Exp;
+branches;
+next	2.2;
+
+2.2
+date	2006.03.22.16.33.29;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.17.18.08.28;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.04;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.09.05.12.45;	author jheer;	state Exp;
+branches;
+next	;
+
+2.6.4.1
+date	2008.01.23.23.55.44;	author jogiles;	state Exp;
+branches;
+next	2.6.4.2;
+
+2.6.4.2
+date	2008.02.28.01.09.32;	author amarsden;	state Exp;
+branches;
+next	2.6.4.3;
+
+2.6.4.3
+date	2008.03.03.05.19.17;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.6
+log
+@Added root node checks to TreeNodeIterator to avoid iteration errors
+Updated IOLib to support relative file paths (Bug #1775875 from anonymous)
+Updated JRangeSlider to support drags from arrow buttons (Bug #1747778 from colincombe)
+Updated ExpressionParser to avoid long parse bug (Bug #1741759)
+Updated TupleManager to expand tuple list in face of valid rows from CascadedTable instances (Bug #1741106)
+Added checks for min==max condition in NumberRangeModel (Bug #1731911)
+Added patch to Activity and ActivityManager to avoid deadlock on Activity.cancel() (Bug #1708926 fix from joperry)
+Fixed javadoc example for DefaultRendererFactory (Bug #1674371 from cab938)
+Fixed ENDPOLYGON field in VisualItem (Bug #1554408 from dimerman)
+Fixed FisheyeMenu demo to avoid deadlock (Bug #1672798)
+Updated Tree.getDepth to return -1 if node is valid (in the node table) but not in tree (fix from joperry)
+Added Display.reset method to release used memory from an idle, unused Display instance
+Added Graph.removeAllGraphListeners() method
+Added Table.removeAllTableListeners() method
+Added isAsynchronous / setAsynchronous methods to ImageFactory
+Updated Visualization.invalidate to invalidate just the group specified (it incorrectly was invalidating all groups)
+Updated ActivityManager._schedule to call notifyAll when an already scheduled item is re-scheduled
+@
+text
+@package prefuse.render;
+
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.Constants;
+import prefuse.util.ColorLib;
+import prefuse.util.GraphicsLib;
+import prefuse.visual.VisualItem;
+
+/**
+ * Renderer for drawing an axis tick mark and label.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ * @@author jgood
+ */
+public class AxisRenderer extends AbstractShapeRenderer {
+
+    private Line2D      m_line = new Line2D.Double();
+    private Rectangle2D m_box  = new Rectangle2D.Double();
+    
+    private int m_xalign;
+    private int m_yalign;
+    private int m_ascent;
+    
+    /**
+     * Create a new AxisRenderer. By default, axis labels are drawn along the
+     * left edge and underneath the tick marks.
+     */
+    public AxisRenderer() {
+        this(Constants.LEFT, Constants.BOTTOM);
+    }
+    
+    /**
+     * Create a new AxisRenderer.
+     * @@param xalign the horizontal alignment for the axis label. One of
+     * {@@link prefuse.Constants#LEFT}, {@@link prefuse.Constants#RIGHT},
+     * or {@@link prefuse.Constants#CENTER}.
+     * @@param yalign the vertical alignment for the axis label. One of
+     * {@@link prefuse.Constants#TOP}, {@@link prefuse.Constants#BOTTOM},
+     * or {@@link prefuse.Constants#CENTER}.
+     */
+    public AxisRenderer(int xalign, int yalign) {
+        m_xalign = xalign;
+        m_yalign = yalign;
+    }
+    
+    /**
+     * Set the horizontal alignment of axis labels.
+     * @@param xalign the horizontal alignment for the axis label. One of
+     * {@@link prefuse.Constants#LEFT}, {@@link prefuse.Constants#RIGHT},
+     * or {@@link prefuse.Constants#CENTER}.
+     */
+    public void setHorizontalAlignment(int xalign) {
+        m_xalign = xalign;
+    }
+    
+    /**
+     * Set the vertical alignment of axis labels.
+     * @@param yalign the vertical alignment for the axis label. One of
+     * {@@link prefuse.Constants#TOP}, {@@link prefuse.Constants#BOTTOM},
+     * or {@@link prefuse.Constants#CENTER}.
+     */
+    public void setVerticalAlignment(int yalign) {
+        m_yalign = yalign;
+    }
+    
+    /**
+     * @@see prefuse.render.AbstractShapeRenderer#getRawShape(prefuse.visual.VisualItem)
+     */
+    protected Shape getRawShape(VisualItem item) {
+        double x1 = item.getDouble(VisualItem.X);
+        double y1 = item.getDouble(VisualItem.Y);
+        double x2 = item.getDouble(VisualItem.X2);
+        double y2 = item.getDouble(VisualItem.Y2);
+        m_line.setLine(x1,y1,x2,y2);
+        
+        if ( !item.canGetString(VisualItem.LABEL) )
+            return m_line;
+        
+        String label = item.getString(VisualItem.LABEL);
+        if ( label == null ) return m_line;
+        
+        FontMetrics fm = DEFAULT_GRAPHICS.getFontMetrics(item.getFont());
+        m_ascent = fm.getAscent();
+        int h = fm.getHeight();
+        int w = fm.stringWidth(label);
+        
+        double tx, ty;
+        
+        // get text x-coord
+        switch ( m_xalign ) {
+        case Constants.FAR_RIGHT:
+            tx = x2 + 2;
+            break;
+        case Constants.FAR_LEFT:
+            tx = x1 - w - 2;
+            break;
+        case Constants.CENTER:
+            tx = x1 + (x2-x1)/2 - w/2;
+            break;
+        case Constants.RIGHT:
+            tx = x2 - w;
+            break;
+        case Constants.LEFT:
+        default:
+            tx = x1;
+        }
+        // get text y-coord
+        switch ( m_yalign ) {
+        case Constants.FAR_TOP:
+            ty = y1-h;
+            break;
+        case Constants.FAR_BOTTOM:
+            ty = y2;
+            break;
+        case Constants.CENTER:
+            ty = y1 + (y2-y1)/2 - h/2;
+            break;
+        case Constants.TOP:
+            ty = y1;
+            break;
+        case Constants.BOTTOM:
+        default:
+            ty = y2-h; 
+        }
+        m_box.setFrame(tx,ty,w,h);
+        return m_box;
+    }
+    
+    /**
+     * @@see prefuse.render.Renderer#render(java.awt.Graphics2D, prefuse.visual.VisualItem)
+     */
+    public void render(Graphics2D g, VisualItem item) { 
+    	Shape s = getShape(item); 
+    	GraphicsLib.paint(g, item, m_line, getStroke(item), getRenderType(item)); 
+    	 
+    	// check if we have a text label, if so, render it 
+    	if ( item.canGetString(VisualItem.LABEL) ) { 
+	    	float x = (float)m_box.getMinX(); 
+	    	float y = (float)m_box.getMinY() + m_ascent; 
+	    	 
+	    	// draw label background 
+	    	GraphicsLib.paint(g, item, s, null, RENDER_TYPE_FILL); 
+	    	 
+	    	String str = item.getString(VisualItem.LABEL); 
+	    	AffineTransform origTransform = g.getTransform();
+	    	AffineTransform transform = this.getTransform(item);
+	    	if ( transform != null ) g.setTransform(transform);
+	    		
+	    	g.setFont(item.getFont()); 
+	    	g.setColor(ColorLib.getColor(item.getTextColor())); 
+	    	g.drawString(str, x, y);
+	    		
+	    	if ( transform != null ) g.setTransform(origTransform); 
+    	}
+	}
+
+    /**
+     * @@see prefuse.render.Renderer#locatePoint(java.awt.geom.Point2D, prefuse.visual.VisualItem)
+     */
+    public boolean locatePoint(Point2D p, VisualItem item) {
+        Shape s = getShape(item);
+        if ( s == null ) {
+            return false;
+        } else if ( s == m_box && m_box.contains(p) ) {
+            return true;
+        } else {
+            double width = Math.max(2, item.getSize());
+            double halfWidth = width/2.0;
+            return s.intersects(p.getX()-halfWidth,
+                                p.getY()-halfWidth,
+                                width,width);
+        }
+    }
+
+    /**
+     * @@see prefuse.render.Renderer#setBounds(prefuse.visual.VisualItem)
+     */
+    public void setBounds(VisualItem item) {
+        if ( !m_manageBounds ) return;
+        Shape shape = getShape(item);
+        if ( shape == null ) {
+            item.setBounds(item.getX(), item.getY(), 0, 0);
+        } else if ( shape == m_line ) {
+            GraphicsLib.setBounds(item, shape, getStroke(item));
+        } else {
+            m_box.add(m_line.getX1(),m_line.getY1());
+            m_box.add(m_line.getX2(),m_line.getY2());
+            item.setBounds(m_box.getMinX(), m_box.getMinY(),
+                           m_box.getWidth(), m_box.getHeight());
+        }
+    }
+    
+} // end of class AxisRenderer
+@
+
+
+2.6.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d11 1
+a11 1
+import prefuse.Alignment;
+d18 1
+a18 1
+ *
+d20 1
+d24 5
+a28 5
+    private final Line2D      m_line = new Line2D.Double();
+    private final Rectangle2D m_box  = new Rectangle2D.Double();
+
+    private Alignment m_xalign;
+    private Alignment m_yalign;
+d30 1
+a30 1
+
+d36 1
+a36 1
+        this(Alignment.LEFT, Alignment.BOTTOM);
+d38 1
+a38 1
+
+d42 2
+a43 2
+     * {@@link Alignment#LEFT}, {@@link Alignment#RIGHT},
+     * or {@@link Alignment#CENTER}.
+d45 2
+a46 2
+     * {@@link Alignment#TOP}, {@@link Alignment#BOTTOM},
+     * or {@@link Alignment#CENTER}.
+d48 1
+a48 1
+    public AxisRenderer(Alignment xalign, Alignment yalign) {
+d52 1
+a52 1
+
+d56 2
+a57 2
+     * {@@link Alignment#LEFT}, {@@link Alignment#RIGHT},
+     * or {@@link Alignment#CENTER}.
+d59 1
+a59 1
+    public void setHorizontalAlignment(Alignment xalign) {
+d62 1
+a62 1
+
+d66 2
+a67 2
+     * {@@link Alignment#TOP}, {@@link Alignment#BOTTOM},
+     * or {@@link Alignment#CENTER}.
+d69 1
+a69 1
+    public void setVerticalAlignment(Alignment yalign) {
+d72 1
+a72 1
+
+d76 1
+a76 2
+    @@Override
+	protected Shape getRawShape(VisualItem<?> item) {
+d82 4
+a85 5
+
+        if ( !item.canGetString(VisualItem.LABEL) ) {
+			return m_line;
+		}
+
+d87 2
+a88 4
+        if ( label == null ) {
+			return m_line;
+		}
+
+d93 1
+a93 1
+
+d95 1
+a95 1
+
+d98 1
+a98 1
+        case FAR_RIGHT:
+d101 1
+a101 1
+        case FAR_LEFT:
+d104 1
+a104 1
+        case CENTER:
+d107 1
+a107 1
+        case RIGHT:
+d110 1
+a110 1
+        case LEFT:
+d116 1
+a116 1
+        case FAR_TOP:
+d119 1
+a119 1
+        case FAR_BOTTOM:
+d122 1
+a122 1
+        case CENTER:
+d125 1
+a125 1
+        case TOP:
+d128 1
+a128 1
+        case BOTTOM:
+d130 1
+a130 1
+            ty = y2-h;
+d135 1
+a135 1
+
+d139 13
+a151 14
+    @@Override
+    public void render(Graphics2D g, VisualItem<?> item) {
+    	Shape s = getShape(item);
+    	GraphicsLib.paint(g, item, m_line, getStroke(item), getRenderType(item));
+
+    	// check if we have a text label, if so, render it
+    	if ( item.canGetString(VisualItem.LABEL) ) {
+	    	float x = (float)m_box.getMinX();
+	    	float y = (float)m_box.getMinY() + m_ascent;
+
+	    	// draw label background
+	    	GraphicsLib.paint(g, item, s, null, RenderType.FILL);
+
+	    	String str = item.getString(VisualItem.LABEL);
+d155 3
+a157 3
+
+	    	g.setFont(item.getFont());
+	    	g.setColor(ColorLib.getColor(item.getTextColor()));
+d159 2
+a160 2
+
+	    	if ( transform != null ) g.setTransform(origTransform);
+d167 1
+a167 2
+    @@Override
+	public boolean locatePoint(Point2D p, VisualItem<?> item) {
+d185 2
+a186 6
+    @@Override
+	public void calculateBounds(VisualItem<?> item, Rectangle2D bounds) {
+        if ( !m_manageBounds ) {
+        	bounds.setRect(item.getX(), item.getY(), 0, 0);
+			return;
+		}
+d189 1
+a189 1
+        	bounds.setRect(item.getX(), item.getY(), 0, 0);
+d191 1
+a191 1
+            GraphicsLib.calculateBounds(item, shape, getStroke(item), bounds);
+d195 2
+a196 2
+        	bounds.setRect(m_box.getMinX(), m_box.getMinY(), m_box.getWidth(), m_box.getHeight());
+			return;
+d199 1
+a199 1
+
+@
+
+
+2.6.4.2
+log
+@Documentation improvements
+@
+text
+@d188 1
+a188 1
+     * @@see prefuse.render.Renderer#calculateBounds(VisualItem,Rectangle2D)
+@
+
+
+2.6.4.3
+log
+@GraphicsLib is no longer aware of VisualItem. The Renderers now provide the necessary information to GraphicsLib
+@
+text
+@a2 1
+import java.awt.Color;
+d145 1
+a145 5
+
+    	Color strokeColor = ColorLib.getColor(item.getStrokeColor());
+        Color fillColor = ColorLib.getColor(item.getFillColor());
+
+    	GraphicsLib.paint(g, strokeColor, fillColor, m_line, getStroke(item), getRenderType(item));
+d153 1
+a153 1
+	    	GraphicsLib.paint(g, strokeColor, fillColor, s, null, RenderType.FILL);
+d200 1
+a200 1
+            GraphicsLib.calculateBounds(shape, getStroke(item), bounds);
+@
+
+
+2.5
+log
+@Minor javadoc fixes
+@
+text
+@d6 1
+d20 1
+d139 24
+a162 18
+    public void render(Graphics2D g, VisualItem item) {
+        Shape s = getShape(item);
+        GraphicsLib.paint(g, item, m_line, getStroke(item), getRenderType(item));
+        
+        // check if we have a text label, if so, render it
+        if ( s == m_box ) {
+            float x = (float)m_box.getMinX();
+            float y = (float)m_box.getMinY() + m_ascent;
+            
+            // draw label background
+            GraphicsLib.paint(g, item, s, null, RENDER_TYPE_FILL);
+            
+            String str = item.getString(VisualItem.LABEL);
+            g.setFont(item.getFont());
+            g.setColor(ColorLib.getColor(item.getTextColor()));
+            g.drawString(str, x, y);
+        }
+    }
+@
+
+
+2.4
+log
+@Added methods for setting alignment
+@
+text
+@a65 1
+     * @@param yalign
+@
+
+
+2.3
+log
+@Added new axis layout constants. Labels can now have a background fill color.
+@
+text
+@d52 21
+@
+
+
+2.2
+log
+@Fixed layout bug for centered y-alignment
+@
+text
+@d76 6
+d94 6
+d104 1
+a104 1
+            ty = y1-h;
+d108 1
+a108 1
+            ty = y2; 
+d126 3
+a129 1
+            
+@
+
+
+2.1
+log
+@Added "stroke" visual property for configuring line drawing.
+EdgeRenderer now draws directed edges (more) correctly, and allow parameterization of the arrow head size.
+@
+text
+@d89 1
+a89 1
+            ty = y1 + (y2-y1)/2 - h;
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d107 1
+a107 1
+        GraphicsLib.paint(g, item, m_line, getRenderType(item));
+d145 2
+a146 2
+        Shape s = getShape(item);
+        if ( s == null ) {
+d148 2
+a149 2
+        } else if ( s == m_line ) {
+            GraphicsLib.setBounds(item, s, getStroke(item));
+@
+
+
+1.1
+log
+@file AxisRenderer.java was initially added on branch beta.
+@
+text
+@d1 158
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 134
+package prefuse.render;
+
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Shape;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+
+import prefuse.Constants;
+import prefuse.util.ColorLib;
+import prefuse.util.GeometryLib;
+import prefuse.visual.VisualItem;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class AxisRenderer extends ShapeRenderer {
+
+    private Line2D      m_line = new Line2D.Double();
+    private Rectangle2D m_box  = new Rectangle2D.Double();
+    
+    private int m_xalign;
+    private int m_yalign;
+    private int m_ascent;
+    
+    public AxisRenderer() {
+        this(Constants.LEFT, Constants.BOTTOM);
+    }
+    
+    public AxisRenderer(int xalign, int yalign) {
+        m_xalign = xalign;
+        m_yalign = yalign;
+    }
+    
+    /**
+     * @@see prefuse.render.ShapeRenderer#getRawShape(prefuse.visual.VisualItem)
+     */
+    protected Shape getRawShape(VisualItem item) {
+        double x1 = item.getDouble(VisualItem.X);
+        double y1 = item.getDouble(VisualItem.Y);
+        double x2 = item.getDouble(VisualItem.X2);
+        double y2 = item.getDouble(VisualItem.Y2);
+        m_line.setLine(x1,y1,x2,y2);
+        
+        if ( !item.canGetString(VisualItem.LABEL) )
+            return m_line;
+        
+        String label = item.getString(VisualItem.LABEL);
+        if ( label == null ) return m_line;
+        
+        FontMetrics fm = DEFAULT_GRAPHICS.getFontMetrics(item.getFont());
+        m_ascent = fm.getAscent();
+        int h = fm.getHeight();
+        int w = fm.stringWidth(label);
+        
+        double tx, ty;
+        
+        // get text x-coord
+        switch ( m_xalign ) {
+        case Constants.CENTER:
+            tx = x1 + (x2-x1)/2 - w/2;
+            break;
+        case Constants.RIGHT:
+            tx = x2 - w;
+            break;
+        case Constants.LEFT:
+        default:
+            tx = x1;
+        }
+        // get text y-coord
+        switch ( m_yalign ) {
+        case Constants.CENTER:
+            ty = y1 + (y2-y1)/2 - h;
+            break;
+        case Constants.TOP:
+            ty = y1-h;
+            break;
+        case Constants.BOTTOM:
+        default:
+            ty = y2; 
+        }
+        m_box.setFrame(tx,ty,w,h);
+        return m_box;
+    }
+    
+    public void render(Graphics2D g, VisualItem item) {
+        Shape s = getShape(item);
+        GeometryLib.paint(g, item, m_line, getRenderType(item));
+        
+        // check if we have a text label, if so, render it
+        if ( s == m_box ) {
+            float x = (float)m_box.getMinX();
+            float y = (float)m_box.getMinY() + m_ascent;
+            
+            String str = item.getString(VisualItem.LABEL);
+            
+            g.setFont(item.getFont());
+            g.setColor(ColorLib.getColor(item.getTextColor()));
+            g.drawString(str, x, y);
+        }
+    }
+
+    public boolean locatePoint(Point2D p, VisualItem item) {
+        Shape s = getShape(item);
+        if ( s == null ) {
+            return false;
+        } else if ( s == m_box && m_box.contains(p) ) {
+            return true;
+        } else {
+            double width = Math.max(2, item.getSize());
+            double halfWidth = width/2.0;
+            return s.intersects(p.getX()-halfWidth,
+                                p.getY()-halfWidth,
+                                width,width);
+        }
+    }
+
+    public void setBounds(VisualItem item) {
+        if ( !m_manageBounds ) return;
+        Shape s = getShape(item);
+        if ( s == null ) {
+            item.setBounds(item.getX(), item.getY(), 0, 0);
+        } else if ( s == m_line ) {
+            GeometryLib.setBounds(item, s, getStroke(item));
+        } else {
+            m_box.add(m_line.getX1(),m_line.getY1());
+            m_box.add(m_line.getX2(),m_line.getY2());
+            item.setBounds(m_box.getMinX(), m_box.getMinY(),
+                           m_box.getWidth(), m_box.getHeight());
+        }
+    }
+    
+} // end of class AxisLabelRenderer
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d12 1
+a12 1
+import prefuse.util.GraphicsLib;
+d89 1
+a89 1
+        GraphicsLib.paint(g, item, m_line, getRenderType(item));
+d125 1
+a125 1
+            GraphicsLib.setBounds(item, s, getStroke(item));
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@d16 1
+a16 3
+ * Renderer for drawing an axis tick mark and label.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a26 4
+    /**
+     * Create a new AxisRenderer. By default, axis labels are drawn along the
+     * left edge and underneath the tick marks.
+     */
+a30 9
+    /**
+     * Create a new AxisRenderer.
+     * @@param xalign the horizontal alignment for the axis label. One of
+     * {@@link prefuse.Constants#LEFT}, {@@link prefuse.Constants#RIGHT},
+     * or {@@link prefuse.Constants#CENTER}.
+     * @@param yalign the vertical alignment for the axis label. One of
+     * {@@link prefuse.Constants#TOP}, {@@link prefuse.Constants#BOTTOM},
+     * or {@@link prefuse.Constants#CENTER}.
+     */
+a86 3
+    /**
+     * @@see prefuse.render.Renderer#render(java.awt.Graphics2D, prefuse.visual.VisualItem)
+     */
+a103 3
+    /**
+     * @@see prefuse.render.Renderer#locatePoint(java.awt.geom.Point2D, prefuse.visual.VisualItem)
+     */
+a118 3
+    /**
+     * @@see prefuse.render.Renderer#setBounds(prefuse.visual.VisualItem)
+     */
+d134 1
+a134 1
+} // end of class AxisRenderer
+@
+
+
+1.1.2.4
+log
+@Various pre-release edits
+Added RadialGraphView
+Added new applets
+Renamed ShapeRenderer to AbstractShapeRenderer
+Renamed ShapeItemRenderer to ShapeRenderer
+Merged TextItemRenderer and ImageItemRenderer into LabelRenderer
+Removed demo launcher (and commented line in build.xml), will reintroduce demo launcher later
+@
+text
+@d20 1
+a20 1
+public class AxisRenderer extends AbstractShapeRenderer {
+d52 1
+a52 1
+     * @@see prefuse.render.AbstractShapeRenderer#getRawShape(prefuse.visual.VisualItem)
+@
+
+

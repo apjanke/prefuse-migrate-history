@@ -1,0 +1,48 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.01.21.02.36.15;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.01.21.02.35.10;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Initial commit
+@
+text
+@<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/mysql-connector-java-3.0.10-stable-bin.jar"/>
+	<classpathentry kind="src" path="/prefuse"/>
+	<classpathentry kind="src" path="/prefuse-extras"/>
+	<classpathentry kind="output" path="classes"/>
+</classpath>
+@
+
+
+1.1
+log
+@Initial commit
+@
+text
+@a6 1
+	<classpathentry kind="lib" path="lib/colt.jar"/>
+@
+

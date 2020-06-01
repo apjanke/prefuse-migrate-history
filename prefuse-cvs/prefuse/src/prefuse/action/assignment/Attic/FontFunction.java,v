@@ -1,0 +1,238 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.07.00.42.53;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file FontFunction.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 60
+package prefuse.action.assignment;
+
+import java.awt.Font;
+
+import prefuse.action.ItemAction;
+import prefuse.util.FontLib;
+import prefuse.visual.VisualItem;
+
+
+/**
+ * Simple <code>FontFunction</code> that blindly returns a null 
+ * <code>Font</code> for all items. Subclasses should override the 
+ * <code>getFont()</code> method to provide custom Font assignment
+ * for VisualItems.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class FontFunction extends ItemAction {
+
+    protected Font defaultFont = FontLib.getFont("SansSerif",Font.PLAIN,10);
+    
+    public FontFunction() {
+        super();
+    }
+    
+    public FontFunction(String group) {
+        super(group);
+    }
+    
+    public FontFunction(String group, Font defaultFont) {
+        super(group);
+        this.defaultFont = defaultFont;
+    }
+    
+    // ------------------------------------------------------------------------
+    
+	public void setDefaultFont(Font f) {
+	    defaultFont = f;
+	} //
+	
+    public void process(VisualItem item, double frac) {
+        Font f = getFont(item);
+        Font o = item.getFont();
+        item.setStartFont(o);
+        item.setEndFont(f);
+        item.setFont(f);
+    }
+    
+	/**
+	 * Returns the Font to use for a given VisualItem. Subclasses should
+	 * override this method to perform customized font assignment.
+	 * @@param item the VisualItem for which to get the Font
+	 * @@return the Font for the given item
+	 */
+	public Font getFont(VisualItem item) {
+		return defaultFont;
+	} //
+
+} // end of class FontFunction
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d16 2
+a17 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+d40 1
+a40 1
+	}
+d58 1
+a58 1
+	}
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d37 4
+a40 4
+    public void setDefaultFont(Font f) {
+        defaultFont = f;
+    }
+    
+d49 9
+a57 9
+    /**
+     * Returns the Font to use for a given VisualItem. Subclasses should
+     * override this method to perform customized font assignment.
+     * @@param item the VisualItem for which to get the Font
+     * @@return the Font for the given item
+     */
+    public Font getFont(VisualItem item) {
+        return defaultFont;
+    }
+@
+
+
+1.1.2.4
+log
+@Lots of javadoc
+@
+text
+@d11 4
+a14 1
+ * Assignment Action that sets the Font to be used by VisualItems.
+a21 3
+    /**
+     * Create a new FontFunction that processes all data groups.
+     */
+a25 4
+    /**
+     * Create a new FontFunction that processes the specified group.
+     * @@param group the data group to process
+     */
+a29 5
+    /**
+     * Create a new FontFunction that processes the specified group.
+     * @@param group the data group to process
+     * @@param defaultFont the default Font to assign
+     */
+a36 4
+    /**
+     * Set the default font to be assigned to VisualItems.
+     * @@param f the default font to use
+     */
+a40 3
+    /**
+     * @@see prefuse.action.ItemAction#process(prefuse.visual.VisualItem, double)
+     */
+@
+
+
+1.1.2.5
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d13 1
+a13 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+
+1.1.2.6
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@@
+
+

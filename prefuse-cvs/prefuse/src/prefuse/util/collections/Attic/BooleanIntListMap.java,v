@@ -1,0 +1,490 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.23.07.18;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file BooleanIntListMap.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 407
+package prefuse.util.collections;
+
+import java.util.Comparator;
+import java.util.ConcurrentModificationException;
+import java.util.NoSuchElementException;
+
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ * TODO: finish implementation of this class
+ */
+public class BooleanIntListMap implements BooleanIntSortedMap {
+
+    private int[] m_true;
+    private int[] m_false;
+    private int m_tsize, m_fsize;
+    private int m_tptr, m_fptr;
+    private boolean m_lo;
+    
+    private LiteralComparator m_cmp;
+    
+    public BooleanIntListMap() {
+        this(null);
+    }
+    
+    public BooleanIntListMap(LiteralComparator cmp) {
+        this.m_cmp = cmp==null ? DefaultLiteralComparator.getInstance() : cmp;
+        m_lo = m_cmp.compare(false, true) > 0;
+        m_true = new int[5];
+        m_false = new int[5];
+        m_tsize = m_fsize = 0;
+        m_tptr = m_fptr = 0;
+    }
+    
+    /**
+     * @@see prefuse.util.collections.BooleanIntSortedMap#firstKey()
+     */
+    public boolean firstKey() {
+        return m_lo
+            ? ( m_tsize > 0 )
+            : ( m_fsize > 0 ? false : (m_tsize > 0) );
+    }
+
+    /**
+     * @@see prefuse.util.collections.BooleanIntSortedMap#lastKey()
+     */
+    public boolean lastKey() {
+        return m_lo
+            ? ( m_fsize > 0 ? false : (m_tsize > 0) )
+            : ( m_tsize > 0 );
+    }
+
+    /**
+     * @@see prefuse.util.collections.BooleanIntSortedMap#containsKey(boolean)
+     */
+    public boolean containsKey(boolean key) {
+        return key ? (m_tsize > 0) : (m_fsize > 0); 
+    }
+
+    public int getMinimum() {
+        if ( m_lo ) {
+            if ( m_tsize > 0 ) return m_true[0];
+            if ( m_fsize > 0 ) return m_false[0];
+        } else {
+            if ( m_fsize > 0 ) return m_false[0];
+            if ( m_tsize > 0 ) return m_true[0];
+        }
+        return Integer.MIN_VALUE;
+    }
+    
+    public int getMaximum() {
+        if ( m_lo ) {
+            if ( m_fsize > 0 ) return m_false[0];
+            if ( m_tsize > 0 ) return m_true[0];
+        } else {
+            if ( m_tsize > 0 ) return m_true[0];
+            if ( m_fsize > 0 ) return m_false[0];
+        }
+        return Integer.MIN_VALUE;
+    }
+    
+    public int getMedian() {
+        if ( m_lo ) {
+            if ( m_tsize > 0 ) return m_true[m_tptr-1];
+            if ( m_fsize > 0 ) return m_false[m_fptr-1];
+        } else {
+            if ( m_fsize > 0 ) return m_false[m_fptr-1];
+            if ( m_tsize > 0 ) return m_true[m_tptr-1];
+        }
+        return Integer.MIN_VALUE;
+    }
+    
+    public int getUniqueCount() {
+        int count = 0;
+        if ( m_fsize > 0 ) ++count;
+        if ( m_tsize > 0 ) ++count;
+        return count;
+    }
+    
+    /**
+     * @@see prefuse.util.collections.BooleanIntSortedMap#valueRangeIterator(boolean, boolean, boolean, boolean)
+     */
+    public IntIterator valueRangeIterator(boolean fromKey, boolean fromInc,
+            boolean toKey, boolean toInc)
+    {
+        int[] v1 = fromKey ? m_true : m_false;
+        int[] v2 = fromKey ? m_false : m_true;
+        
+        if ( fromKey != toKey ) {
+            int sz1 = fromInc ? (fromKey ? m_tsize : m_fsize) : 0;
+            int sz2 = toInc ? (toKey ? m_tsize : m_fsize) : 0;
+            return new ValueIterator(v1, sz1, v2, sz2);
+        } else {
+            int sz1 = fromInc || toInc ? (fromKey ? m_tsize : m_fsize) : 0;
+            return new ValueIterator(v1, sz1, v2, 0);
+        }
+    }
+
+    /**
+     * @@see prefuse.util.collections.BooleanIntSortedMap#keyIterator()
+     */
+    public LiteralIterator keyIterator() {
+        if ( !m_lo ) {
+            return new KeyIterator(false, m_fsize, true, m_tsize);
+        } else {
+            return new KeyIterator(true, m_tsize, false, m_fsize);
+        }
+    }
+
+    /**
+     * @@see prefuse.util.collections.BooleanIntSortedMap#keyRangeIterator(boolean, boolean, boolean, boolean)
+     */
+    public LiteralIterator keyRangeIterator(boolean fromKey, boolean fromInc,
+            boolean toKey, boolean toInc)
+    {
+        if ( fromKey != toKey ) {
+            int sz1 = fromInc ? (fromKey ? m_tsize : m_fsize) : 0;
+            int sz2 = toInc ? (toKey ? m_tsize : m_fsize) : 0;
+            return new KeyIterator(fromKey, sz1, toKey, sz2);
+        } else {
+            int sz1 = fromInc || toInc ? (fromKey ? m_tsize : m_fsize) : 0;
+            return new KeyIterator(fromKey, sz1, !fromKey, 0);
+        }
+    }
+
+    /**
+     * @@see prefuse.util.collections.BooleanIntSortedMap#get(boolean)
+     */
+    public int get(boolean key) {
+        int[] vals = key ? m_true : m_false;
+        int size = key ? m_tsize : m_fsize;
+        return ( size > 0 ? vals[0] : Integer.MIN_VALUE );
+    }
+
+    /**
+     * @@see prefuse.util.collections.BooleanIntSortedMap#remove(boolean)
+     */
+    public int remove(boolean key) {
+        if ( key ) {
+            if ( m_tsize == 0 ) return Integer.MIN_VALUE;
+            return m_true[--m_tptr];
+        } else {
+            if ( m_fsize == 0 ) return Integer.MIN_VALUE;
+            return m_false[--m_fptr];
+        }
+    }
+
+    /**
+     * @@see prefuse.util.collections.BooleanIntSortedMap#remove(boolean, int)
+     */
+    public int remove(boolean key, int value) {
+        int size, ptr, vals[];
+        if ( key ) {
+            vals = m_true;
+            size = m_tsize;
+            ptr = m_tptr;
+        } else {
+            vals = m_false;
+            size = m_fsize;
+            ptr = m_fptr;
+        }
+        
+        for ( int i=0; i<size; ++i ) {
+            if ( vals[i] == value ) {
+                vals[i] = Integer.MIN_VALUE;
+                if ( i == ptr ) {
+                    --ptr;
+                    if ( key ) --m_tptr; else --m_fptr;
+                }
+                if ( key ) --m_tsize; else --m_fsize;
+                condense(vals, --size, ptr);
+                return value;
+            }
+        }
+        
+        return Integer.MIN_VALUE;
+    }
+    
+    /**
+     * @@see prefuse.util.collections.BooleanIntSortedMap#put(boolean, int)
+     */
+    public int put(boolean key, int value) {
+        if ( key ) {
+            if ( m_tsize >= m_true.length ) {
+                m_true = resize(m_true, m_tptr, m_tptr+1);
+            }
+            ++m_tsize;
+            m_true[m_tptr++] = value;
+            condense(m_true, m_tsize, m_tptr);
+        } else {
+            if ( m_fsize >= m_false.length ) {
+                m_false = resize(m_false, m_fptr, m_fptr+1);
+            }
+            ++m_fsize;
+            m_false[m_fptr++] = value;
+            condense(m_false, m_fsize, m_fptr);
+        }
+        
+        return Integer.MIN_VALUE;
+    }
+    
+    private int[] resize(int[] array, int size, int min) {
+        int capacity = Math.max((3*array.length)/2 + 1, min);
+        int[] values = new int[capacity];
+        System.arraycopy(array, 0, values, 0, size);
+        return values;
+    }
+
+    private void condense(int[] vals, int size, int ptr) {
+        if ( vals == m_true ) {
+            System.out.println(size+"\t"+ptr+"\t"+(ptr/size));
+            if ( size == 9820 ) {
+                System.err.println("stop");
+                // compute "actual" size
+                int sz = 0;
+                for ( int i=0; i<ptr; ++i ) {
+                    if ( vals[i] >= 0 )
+                        ++sz;
+                }
+                System.err.println(sz);
+            }
+        }
+        
+        if ( ptr/size < 2 ) return;
+        
+        int j = 0;
+        boolean mark = false;
+        for ( int i=0; i<ptr; ++i ) {
+            if ( vals[i] == Integer.MIN_VALUE && !mark ) {
+                j = i;
+                mark = true;
+            } else if ( mark ) {
+                vals[j++] = vals[i];
+                vals[i] = Integer.MIN_VALUE;
+            }
+        }
+        ptr = size;
+    }
+    
+    /**
+     * @@see prefuse.util.collections.IntSortedMap#isAllowDuplicates()
+     */
+    public boolean isAllowDuplicates() {
+        return true;
+    }
+
+    /**
+     * @@see prefuse.util.collections.IntSortedMap#size()
+     */
+    public int size() {
+        return m_tsize + m_fsize;
+    }
+
+    /**
+     * @@see prefuse.util.collections.IntSortedMap#isEmpty()
+     */
+    public boolean isEmpty() {
+        return m_tsize > 0 || m_fsize > 0;
+    }
+
+    /**
+     * @@see prefuse.util.collections.IntSortedMap#comparator()
+     */
+    public Comparator comparator() {
+        return m_cmp;
+    }
+
+    /**
+     * @@see prefuse.util.collections.IntSortedMap#clear()
+     */
+    public void clear() {
+        m_tsize = 0;
+        m_fsize = 0;
+    }
+
+    /**
+     * @@see prefuse.util.collections.IntSortedMap#containsValue(int)
+     */
+    public boolean containsValue(int value) {
+        for ( int i=0; i<m_tsize; ++i ) {
+            if ( m_true[i] == value )
+                return true;
+        }
+        for ( int i=0; i<m_fsize; ++i ) {
+            if ( m_false[i] == value )
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * @@see prefuse.util.collections.IntSortedMap#valueIterator(boolean)
+     */
+    public IntIterator valueIterator(boolean ascending) {
+        if ( m_lo != ascending ) {
+            return new ValueIterator(m_false, m_fsize, m_true, m_tsize);
+        } else {
+            return new ValueIterator(m_true, m_tsize, m_false, m_fsize);
+        }
+    }
+
+    public class ValueIterator extends IntIterator {
+
+        private int m_expSize;
+        private int[] m_vals2, m_curVals;
+        private int   m_size2, m_curSize;
+        private int   m_cur;
+        
+        public ValueIterator(int[] vals1, int size1, int[] vals2, int size2) {
+            m_curVals = vals1;
+            m_curSize = size1;
+            m_vals2 = vals2;
+            m_size2 = size2;
+            m_expSize = size();
+        }
+        
+        public int nextInt() {
+            if ( m_expSize != size() )
+                throw new ConcurrentModificationException();
+            
+            if ( m_cur < m_curSize ) {
+                return advance();
+            } else if ( m_curVals != m_vals2 && m_size2 > 0 ) {
+                m_curVals = m_vals2;
+                m_curSize = m_size2;
+                m_cur = 0;
+                return advance();
+            } else {
+                throw new NoSuchElementException();
+            }
+        }
+        private int advance() {
+            int val;
+            while ( (val=m_curVals[m_cur++]) == Integer.MIN_VALUE );
+            return val;
+        }
+        public boolean hasNext() {
+            return m_cur < m_curSize || (m_curVals != m_vals2 && m_size2 > 0);
+        }
+    }
+    
+    public class KeyIterator extends AbstractLiteralIterator {
+
+        private int m_expSize;
+        private boolean m_key2, m_curKey;
+        private int   m_size2, m_curSize;
+        private int   m_cur;
+        
+        public KeyIterator(boolean key1, int size1, boolean key2, int size2) {
+            m_curKey = key1;
+            m_curSize = size1;
+            m_key2 = key2;
+            m_size2 = size2;
+            m_expSize = size();
+        }
+
+        public boolean isBooleanSupported() {
+            return true;
+        }
+        
+        public boolean nextBoolean() {
+            if ( m_expSize != size() )
+                throw new ConcurrentModificationException();
+            
+            if ( m_cur < m_curSize ) {
+                ++m_cur;
+                return m_curKey;
+            } else if ( m_curKey != m_key2 && m_size2 > 0 ) {
+                m_curKey = m_key2;
+                m_curSize = m_size2;
+                m_cur = 1;
+                return m_curKey;
+            } else {
+                throw new NoSuchElementException();
+            }
+        }
+        
+        public boolean hasNext() {
+            return m_cur < m_curSize || (m_curKey != m_key2 && m_size2 > 0);
+        }
+
+        public Object next() {
+            return ( nextBoolean() ? Boolean.TRUE : Boolean.FALSE );
+        }
+    }
+    
+} // end of class BooleanIntListMap
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a359 3
+        public void remove() {
+        	throw new UnsupportedOperationException();
+        }
+d401 1
+a404 3
+        public void remove() {
+        	throw new UnsupportedOperationException();
+        }
+@
+
+
+1.1.2.3
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@@
+
+

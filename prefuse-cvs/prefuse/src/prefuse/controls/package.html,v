@@ -1,0 +1,138 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.43;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.32;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.32;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.24.09.07.09;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.24.18.46.26;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.01.19.22.44;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@<body>
+<p>Control modules for incorporating interaction in prefuse Displays.
+Examples include clicking a node to make it the new focus, dragging nodes to
+change their position, and performing pan and zoom operations. To add
+one of these controls to a visualization, create a new instance of
+the desired control and register it using the
+{@@link prefuse.Display#addControlListener(Control)} method of the
+{@@link prefuse.Display} class. Custom Controls can easily be constructed
+by implementing the {@@link prefuse.controls.Control} interface, or, more
+conveniently, by subclassing the {@@link prefuse.controls.ControlAdapter}
+class.</p>
+</body>@
+
+
+1.1
+log
+@file package.html was initially added on branch beta.
+@
+text
+@d1 12
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 9
+<body>
+The controls package contains a series of ControlListeners that can be used to
+add different interactive behaviors to a prefuse visualization. Examples
+include clicking a node to make it the new focus, dragging nodes to
+change their position, and performing pan and zoom operations. To add
+one of these controls to a visualization, create a new instance of
+the desired control and add it as a ControlListener to a prefuse Display 
+instance.
+</body>@
+
+
+1.1.2.2
+log
+@Added javadoc overview and package text.
+@
+text
+@d2 3
+a4 2
+<p>Control modules for incorporating interaction in prefuse Displays.
+Examples include clicking a node to make it the new focus, dragging nodes to
+d7 2
+a8 5
+the desired control and register it using the
+{@@link prefuse.Display#addControlListener(Control)} method of the
+{@@link prefuse.Display} class. Custom Controls can easily be constructed
+by implementint the {@@link Control} interface, or, more conviently, by
+subclassing the {@@link ControlAdapter} class.</p>
+@
+
+
+1.1.2.3
+log
+@Javadoc fixes, other clean-up
+@
+text
+@d9 1
+a9 1
+by implementing the {@@link Control} interface, or, more conveniently, by
+@
+
+
+1.1.2.4
+log
+@Javadoc'd.
+@
+text
+@d9 2
+a10 3
+by implementing the {@@link prefuse.controls.Control} interface, or, more
+conveniently, by subclassing the {@@link prefuse.controls.ControlAdapter}
+class.</p>
+@
+
+

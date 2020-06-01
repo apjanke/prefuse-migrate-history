@@ -1,0 +1,197 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.42;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.19;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.45;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.action.animate;
+
+import prefuse.action.Action;
+
+/**
+ * Animator that toggles rendering quality to allow for smooth animations but
+ * high quality rendering of still images. At the beginning of an animation,
+ * high quality rendering (if enabled) is disabled, and at the end the original
+ * setting is restored.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class QualityControlAnimator extends Action {
+
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        if ( m_vis == null ) return;
+        if ( frac == 0.0 || frac == 1.0 ) {
+            boolean quality = frac >= 1.0;
+            for ( int i=0; i<m_vis.getDisplayCount(); ++i ) {
+                m_vis.getDisplay(i).setHighQuality(quality);
+            }
+            qualityValue(quality);
+        }
+    }
+    
+    /**
+     * Callback procedure that subclasses can override to execute
+     * custom quality control measures.
+     * @@param quality true if high quality is desired, false otherwise
+     */
+    protected void qualityValue(boolean quality) {
+        // do nothing
+    }
+
+} // end of class QualityControlAnimator
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d10 1
+a10 1
+ *
+d18 2
+a19 5
+    @@Override
+	public void run(double frac) {
+        if ( m_vis == null ) {
+			return;
+		}
+d28 1
+a28 1
+
+@
+
+
+1.1
+log
+@file QualityControlAnimator.java was initially added on branch beta.
+@
+text
+@d1 38
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 33
+package prefuse.action.animate;
+
+import prefuse.action.Action;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class QualityControlAnimator extends Action {
+
+    /**
+     * @@see prefuse.action.Action#run(double)
+     */
+    public void run(double frac) {
+        if ( m_vis == null ) return;
+        if ( frac == 0.0 || frac == 1.0 ) {
+            boolean quality = frac >= 1.0;
+            for ( int i=0; i<m_vis.getDisplayCount(); ++i ) {
+                m_vis.getDisplay(i).setHighQuality(quality);
+            }
+            qualityValue(quality);
+        }
+    }
+    
+    /**
+     * Callback procedure that subclasses can override to execute
+     * custom quality control measures.
+     * @@param quality true if high quality is desired, false otherwise
+     */
+    protected void qualityValue(boolean quality) {
+        // do nothing
+    }
+
+} // end of class QualityControlAnimator
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@a5 5
+ * Animator that toggles rendering quality to allow for smooth animations but
+ * high quality rendering of still images. At the beginning of an animation,
+ * high quality rendering (if enabled) is disabled, and at the end the original
+ * setting is restored.
+ * 
+@
+
+
+1.1.2.3
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d11 1
+a11 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

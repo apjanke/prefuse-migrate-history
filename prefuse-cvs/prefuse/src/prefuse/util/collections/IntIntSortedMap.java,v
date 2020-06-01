@@ -1,0 +1,202 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.02.02.19.01.51;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.collections;
+
+/**
+ * Sorted map that maps from an int key to an int value.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface IntIntSortedMap extends IntSortedMap {
+
+    public int firstKey();
+
+    public int lastKey();
+
+    public boolean containsKey(int key);
+    
+    public IntIterator valueRangeIterator(int fromKey, boolean fromInc, 
+                                          int toKey,   boolean toInc);
+    
+    public LiteralIterator keyIterator();
+    
+    public LiteralIterator keyRangeIterator(int fromKey, boolean fromInc, 
+                                            int toKey,   boolean toInc);
+
+    public int get(int key);
+
+    public int remove(int key);
+    
+    public int remove(int key, int value);
+
+    public int put(int key, int value);
+    
+    public int getLast(int key);
+    
+    public int getNextValue(int key, int value);
+    
+    public int getPreviousValue(int key, int value);
+    
+} // end of interface IntIntSortedMap
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d5 1
+a5 1
+ *
+d15 2
+a16 2
+
+    public IntIterator valueRangeIterator(int fromKey, boolean fromInc,
+d18 1
+a18 1
+
+d20 2
+a21 2
+
+    public LiteralIterator keyRangeIterator(int fromKey, boolean fromInc,
+d27 1
+a27 1
+
+d31 1
+a31 1
+
+d33 1
+a33 1
+
+d35 1
+a35 1
+
+d37 1
+a37 1
+
+@
+
+
+1.1
+log
+@file IntIntSortedMap.java was initially added on branch beta.
+@
+text
+@d1 38
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 38
+package prefuse.util.collections;
+
+
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public interface IntIntSortedMap extends IntSortedMap {
+
+    public int firstKey();
+
+    public int lastKey();
+
+    public boolean containsKey(int key);
+    
+    public IntIterator valueRangeIterator(int fromKey, boolean fromInc, 
+                                          int toKey,   boolean toInc);
+    
+    public LiteralIterator keyIterator();
+    
+    public LiteralIterator keyRangeIterator(int fromKey, boolean fromInc, 
+                                            int toKey,   boolean toInc);
+
+    public int get(int key);
+
+    public int remove(int key);
+    
+    public int remove(int key, int value);
+
+    public int put(int key, int value);
+    
+    public int getLast(int key);
+    
+    public int getNextValue(int key, int value);
+    
+    public int getPreviousValue(int key, int value);
+    
+} // end of interface IntIntSortedMap
+@
+
+
+1.1.2.2
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d3 2
+d6 1
+a6 3
+ * Sorted map that maps from an int key to an int value.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

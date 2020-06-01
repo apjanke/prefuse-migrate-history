@@ -1,0 +1,189 @@
+head	1.6;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.6
+date	2004.03.24.01.57.26;	author jheer;	state dead;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.12.17.41.05;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.11.19.11.12;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.08.21.31.49;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.06.00.51.03;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.6
+log
+@New filters added plus more
+@
+text
+@package edu.berkeley.guir.prefuse.action;
+
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.EdgeItem;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.NodeItem;
+import edu.berkeley.guir.prefuse.graph.Edge;
+import edu.berkeley.guir.prefuse.graph.TreeNode;
+
+/**
+ * The TreeEdgeFilter determines which edges to visualize based on the nodes
+ *  selected for visualization and the underlying tree structure. By default,
+ *  garbage collection on edge items is performed.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class TreeEdgeFilter extends Filter {
+    
+    private boolean m_edgesVisible;
+    
+    /**
+     * Filters tree edges, connecting filtered graph nodes into a
+     * tree structure. Filtered edges are visible by default.
+     */
+    public TreeEdgeFilter() {
+        this(true);
+    } //
+    
+    /**
+     * Filters tree edges, connecting filtered graph nodes into a
+     * tree structure. DefaultEdge visibility can be controlled.
+     * @@param edgesVisible determines whether or not the filtered
+     *  edges are visible in the display.
+     */
+    public TreeEdgeFilter(boolean edgesVisible) {
+        super(ItemRegistry.DEFAULT_EDGE_CLASS, true);
+        m_edgesVisible = edgesVisible;
+    } //
+    
+	public void run(ItemRegistry registry, double frac) {
+		Iterator nodeIter = registry.getNodeItems();
+		while ( nodeIter.hasNext() ) {
+			NodeItem nitem  = (NodeItem)nodeIter.next();
+			TreeNode node   = (TreeNode)registry.getEntity(nitem);
+            
+            if ( node.getChildCount() > 0 ) {
+                Iterator iter = node.getChildEdges();
+                while ( iter.hasNext() ) {
+                    Edge e = (Edge)iter.next();
+                    TreeNode c = (TreeNode)e.getAdjacentNode(node);
+                    if ( registry.isVisible(c) ) {
+                        EdgeItem eitem = registry.getEdgeItem(e,true);
+                        nitem.addChild(eitem);
+                        if ( !m_edgesVisible ) eitem.setVisible(false);
+                    }
+                }
+            }
+		}
+        
+        // optionally perform garbage collection
+        super.run(registry, frac);
+	} //
+
+} // end of class TreeEdgeFilter
+@
+
+
+1.5
+log
+@More work on external entities
+@
+text
+@@
+
+
+1.4
+log
+@Major refactoring of abstract graph data structures
+@
+text
+@d61 3
+@
+
+
+1.3
+log
+@Moved garbage collection into abstract Filter
+@
+text
+@d33 1
+a33 1
+     * tree structure. Edge visibility can be controlled.
+d47 13
+a59 12
+			TreeNode parent = node.getParent();
+			
+			while ( parent != null && !registry.isVisible(parent) )
+				parent = parent.getParent();
+			if ( parent == null ) continue;
+
+			Edge edge = ( parent==node.getParent() ? 
+					      parent.getEdge(node) : new Edge(parent, node) );
+			EdgeItem e = registry.getEdgeItem(edge, true);
+            NodeItem p = registry.getNodeItem(parent);
+            p.addChild(e);
+            if ( !m_edgesVisible ) e.setVisible(false);
+@
+
+
+1.2
+log
+@Updated edge filters to support invisible edge creation
+@
+text
+@d13 2
+a14 3
+ *  selected for visualization and the underlying tree structure.
+ * 
+ * Apr 25, 2003 - jheer - Created class
+d19 1
+a19 1
+public class TreeEdgeFilter extends AbstractAction {
+d38 1
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d18 1
+a18 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+d21 21
+a41 1
+
+d58 1
+@
+

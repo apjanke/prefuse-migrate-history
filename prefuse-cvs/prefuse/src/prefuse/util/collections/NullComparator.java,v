@@ -1,0 +1,65 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.4
+	Root_java_1_5:1.1
+	beta:1.1.0.2
+	beta-20080113:1.1
+	beta-20071021:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2006.07.14.04.53.16;	author jheer;	state Exp;
+branches
+	1.1.4.1;
+next	;
+
+1.1.4.1
+date	2008.01.23.23.55.38;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Fixed Sort class cast error for non-Table TupleSets.
+Thanks to Chris for catching the bug!
+@
+text
+@package prefuse.util.collections;
+
+import java.util.Comparator;
+
+/**
+ * A do-nothing comparator that simply treats all objects as equal.
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class NullComparator implements Comparator {
+
+	public int compare(Object o1, Object o2) {
+		return 0;
+	}
+
+} // end of class NullComparator
+@
+
+
+1.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d9 1
+a9 1
+public class NullComparator<E> implements Comparator<E> {
+d11 1
+a11 1
+	public int compare(E a, E b) {
+@
+

@@ -1,0 +1,1166 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.1
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2006.04.14.06.57.11;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.05;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.02.02.19.01.52;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.07.00.42.53;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.41;	author jogiles;	state Exp;
+branches;
+next	2.1.4.2;
+
+2.1.4.2
+date	2008.03.12.04.42.26;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Added filtered iteration of members to AggregateItem
+Added member-based aggregate lookup to AggregateItemTable
+@
+text
+@/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.visual;
+
+import java.util.HashSet;
+import java.util.Iterator;
+
+import prefuse.Visualization;
+import prefuse.data.Schema;
+import prefuse.data.Table;
+import prefuse.data.Tuple;
+import prefuse.data.event.EventConstants;
+import prefuse.data.util.Index;
+import prefuse.util.collections.IntIterator;
+import prefuse.visual.tuple.TableAggregateItem;
+
+/**
+ * VisualTable instance that maintains visual items representing aggregates
+ * of items. This class maintains both a collection of AggregateItems and
+ * a mapping between AggregateItems and the VisualItems contained within
+ * those aggregates.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class AggregateTable extends VisualTable {
+
+    /**
+     * Table storing the 1->Many aggregation mappings
+     */
+    protected Table m_aggregated;
+    
+    /**
+     * Create a new AggregateTable.
+     * @@param vis the Visualization associated with the table
+     * @@param group the data group the table contents belongs to
+     */
+    public AggregateTable(Visualization vis, String group) {
+        this(vis, group, VisualItem.SCHEMA);
+    }
+
+    /**
+     * Create a new AggregateTable.
+     * @@param vis the Visualization associated with the table
+     * @@param group the data group the table contents belongs to
+     * @@param schema the Schema to use for this table
+     */
+    public AggregateTable(Visualization vis, String group, Schema schema) {
+        super(vis, group, schema, TableAggregateItem.class);
+        m_aggregated = AGGREGATED_SCHEMA.instantiate();
+        m_aggregated.index(AGGREGATE);
+        m_aggregated.index(MEMBER_HASH);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the size of the aggregate represented at the given table row.
+     * Returns the number of visual items contained in the aggregation.
+     * @@return the aggregate size for the given row
+     */
+    public int getAggregateSize(int row) {
+        int size = 0;
+        AggregatedIterator ati = new AggregatedIterator(row);
+        for ( ; ati.hasNext(); ++size, ati.next() );
+        return size;
+    }
+    
+    /**
+     * Add an item to the aggregation at the given row.
+     * @@param row the row index of the aggregate
+     * @@param member the item to add to the aggregation
+     */
+    public void addToAggregate(int row, VisualItem member) {
+        validRowCheck(row, true);
+        if ( !aggregateContains(row, member) ) {
+            int ar = m_aggregated.addRow();
+            m_aggregated.setInt(ar, AGGREGATE, row);
+            m_aggregated.setInt(ar, MEMBER_HASH, getHashCode(member));
+            m_aggregated.set(ar, MEMBER, member);
+            fireTableEvent(row, row,
+                    EventConstants.ALL_COLUMNS, EventConstants.UPDATE);
+        }
+    }
+    
+    /**
+     * Remove an item from the aggregation at the given row
+     * @@param row the row index of the aggregate
+     * @@param member the item to remove from the aggregation
+     */
+    public void removeFromAggregate(int row, VisualItem member) {
+        validRowCheck(row, true);
+        int ar = getAggregatedRow(row, member);
+        if ( ar >= 0 ) {
+            m_aggregated.removeRow(ar);
+            fireTableEvent(row, row,
+                EventConstants.ALL_COLUMNS, EventConstants.UPDATE);
+        }
+    }
+    
+    /**
+     * Remove all items contained in the aggregate at the given row
+     * @@param row the row index of the aggregate
+     */
+    public void removeAllFromAggregate(int row) {
+        clearAggregateMappings(row, true);
+    }
+    
+    /**
+     * Clears all aggregates mappings for the aggregate at the given row,
+     * optionally issuing a table update.
+     * @@param row the table row of the aggregate
+     * @@param update indicates whether or not to fire a table update
+     */
+    protected void clearAggregateMappings(int row, boolean update) {
+        Index index = m_aggregated.index(AGGREGATE);
+        boolean fire = false;
+        for ( IntIterator rows = index.rows(row); rows.hasNext(); ) {
+            int r = rows.nextInt();
+            // this removal maneuver is ok because we know we are
+            // pulling row values directly from an index
+            // with intervening iterators, remove might throw an exception
+            rows.remove();
+            m_aggregated.removeRow(r);
+            fire = true;
+        }
+        if ( update && fire ) 
+            fireTableEvent(row, row,
+                EventConstants.ALL_COLUMNS, EventConstants.UPDATE);
+    }
+    
+    /**
+     * Indicates if an item is a member of the aggregate at the given row
+     * @@param row the table row of the aggregate
+     * @@param member the item to check from containment
+     * @@return true if the item is in the aggregate, false otherwise
+     */
+    public boolean aggregateContains(int row, VisualItem member) {
+        return getAggregatedRow(row, member) >= 0;
+    }
+    
+    /**
+     * Get the row index to the aggregate mapping table for the given
+     * aggregate and contained VisualItem.
+     * @@param row the table row of the aggregate
+     * @@param member the VisualItem to look up
+     * @@return the row index into the internal aggregate mapping table for the
+     * mapping between the given aggregate row and given VisualItem
+     */
+    protected int getAggregatedRow(int row, VisualItem member) {
+        Index index = m_aggregated.index(MEMBER_HASH);
+        int hash = getHashCode(member);
+        int ar = index.get(hash);
+        if ( ar < 0 ) {
+            return -1;
+        } else if ( m_aggregated.getInt(ar, AGGREGATE) == row ) {
+            return ar;
+        } else {
+            for ( IntIterator rows = index.rows(hash); rows.hasNext(); ) {
+                ar = rows.nextInt();
+                if ( m_aggregated.getInt(ar, AGGREGATE) == row )
+                    return ar;
+            }
+            return -1;
+        }
+    }
+    
+    /**
+     * Get all VisualItems within the aggregate at the given table row.
+     * @@param row the table row of the aggregate
+     * @@return an iterator over the items in the aggregate
+     */
+    public Iterator aggregatedTuples(int row) {
+        return new AggregatedIterator(row);
+    }
+    
+    /**
+     * Get an iterator over all AggregateItems that contain the given Tuple.
+     * @@param t the input tuple
+     * @@return an iterator over all AggregateItems that contain the input Tuple
+     */
+    public Iterator getAggregates(Tuple t) {
+        int hash = getHashCode(t);
+        IntIterator iit = m_aggregated.getIndex(MEMBER_HASH).rows(hash);
+        HashSet set = new HashSet();
+        while ( iit.hasNext() ) {
+            int r = iit.nextInt();
+            set.add(getTuple(m_aggregated.getInt(r, AGGREGATE)));
+        }
+        return set.iterator();
+    }
+    
+    /**
+     * Get a hashcode that uniquely identifies a particular tuple
+     * @@param t the tuple to compute the hash for
+     * @@return a unique identifier for the tuple
+     */
+    protected int getHashCode(Tuple t) {
+        // this works for now because hashCode is not overloaded on
+        // the provided Tuple implementations
+        return t.hashCode();
+    }
+    
+    /**
+     * Check a row for validity, optionally throwing an exception when an
+     * invalid row is found.
+     * @@param row the row to check
+     * @@param throwException indicates if an exception should be thrown when an
+     * invalid row is encountered
+     * @@return true if the row was valid, false otherwise
+     */
+    protected boolean validRowCheck(int row, boolean throwException) {
+        if ( isValidRow(row) ) {
+            return true;
+        } else if ( throwException ) {
+            throw new IllegalArgumentException("Invalid row value: "+row);
+        } else {
+            return false;
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Table Listener Interception
+    
+    /**
+     * Clear all aggregate mappings for a row when it is deleted.
+     */
+    protected void fireTableEvent(int row0, int row1, int col, int type) {
+        if ( col==EventConstants.ALL_COLUMNS && type==EventConstants.DELETE ) {
+            for ( int r=row0; r<=row1; ++r )
+                clearAggregateMappings(r, false);
+        }
+        super.fireTableEvent(row0, row1, col, type);
+    }
+    
+    
+    // ------------------------------------------------------------------------
+    // Aggregated Iterator
+    
+    /**
+     * Iterator instance that iterates over the items contained in an aggregate.
+     */
+    protected class AggregatedIterator implements Iterator {
+        private IntIterator m_rows;
+        private Tuple m_next = null;
+
+        public AggregatedIterator(int row) {
+            Index index = m_aggregated.index(AGGREGATE);
+            m_rows = index.rows(row);
+            advance();
+        }
+        public boolean hasNext() {
+            return m_next != null;
+        }
+        public Object next() {
+            Tuple retval = m_next;
+            advance();
+            return retval;
+        }
+        private void advance() {
+            while ( m_rows.hasNext() ) {
+                int ar = m_rows.nextInt();
+                Tuple t = (Tuple)m_aggregated.get(ar, MEMBER);
+                if ( t.isValid() ) {
+                    m_next = t;
+                    return;
+                } else {
+                    m_aggregated.removeRow(ar);
+                }
+            }
+            m_next = null;
+        }
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Aggregated Table Schema
+    
+    protected static final String AGGREGATE = "aggregate";
+    protected static final String MEMBER_HASH = "hash";
+    protected static final String MEMBER = "member";
+    protected static final Schema AGGREGATED_SCHEMA = new Schema();
+    static {
+        AGGREGATED_SCHEMA.addColumn(AGGREGATE, int.class);
+        AGGREGATED_SCHEMA.addColumn(MEMBER_HASH, int.class);
+        AGGREGATED_SCHEMA.addColumn(MEMBER, Tuple.class);
+    }
+    
+} // end of class AggregateTable
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d24 1
+a24 1
+ *
+d27 1
+a27 16
+public abstract class AggregateTable <T extends AggregateItem<T, V>, V extends VisualItem<?>> extends VisualTable<T, T> {
+
+	public static <V extends VisualItem<?>> AggregateTable<TableAggregateItem<V>, V> createAggregateTable(Visualization vis, String group) {
+		return createAggregateTable(vis, group, VisualItem.SCHEMA);
+	}
+
+	public static <V extends VisualItem<?>> AggregateTable<TableAggregateItem<V>, V> createAggregateTable(Visualization vis, String group, Schema schema) {
+		return new AggregateTable<TableAggregateItem<V>, V>(vis, group, schema) {
+
+			@@Override
+			public TableAggregateItem<V> createTupleInstance() {
+				return new TableAggregateItem<V>();
+			}
+
+		};
+	}
+d32 2
+a33 2
+    protected Table<? extends Tuple<?>> m_aggregated;
+
+d50 2
+a51 2
+        super(vis, group, schema);
+        m_aggregated = Table.createTable(AGGREGATED_SCHEMA);
+d55 1
+a55 1
+
+d57 1
+a57 1
+
+d65 2
+a66 3
+        for(V v : new AggregatedIterable(row)) {
+        	size++;
+        }
+d69 1
+a69 1
+
+d75 1
+a75 1
+    public void addToAggregate(int row, VisualItem<?> member) {
+d86 1
+a86 1
+
+d92 1
+a92 1
+    public void removeFromAggregate(int row, VisualItem<?> member) {
+d101 1
+a101 1
+
+d109 1
+a109 1
+
+d128 2
+a129 2
+        if ( update && fire ) {
+			fireTableEvent(row, row,
+a130 1
+		}
+d132 1
+a132 1
+
+d139 1
+a139 1
+    public boolean aggregateContains(int row, VisualItem<?> member) {
+d142 1
+a142 1
+
+d151 1
+a151 1
+    protected int getAggregatedRow(int row, VisualItem<?> member) {
+d162 2
+a163 3
+                if ( m_aggregated.getInt(ar, AGGREGATE) == row ) {
+					return ar;
+				}
+d168 1
+a168 1
+
+d174 2
+a175 2
+    public Iterable<V> aggregatedTuples(int row) {
+        return new AggregatedIterable(row);
+d177 1
+a177 1
+
+d183 1
+a183 1
+    public Iterable<Tuple<?>> getAggregates(Tuple<?> t) {
+d186 1
+a186 1
+        HashSet<Tuple<?>> set = new HashSet<Tuple<?>>();
+d191 1
+a191 1
+        return set;
+d193 1
+a193 1
+
+d199 1
+a199 1
+    protected int getHashCode(Tuple<?> t) {
+d204 1
+a204 1
+
+d222 1
+a222 1
+
+d225 1
+a225 1
+
+d229 1
+a229 2
+    @@Override
+	protected void fireTableEvent(int row0, int row1, int col, int type) {
+d231 2
+a232 3
+            for ( int r=row0; r<=row1; ++r ) {
+				clearAggregateMappings(r, false);
+			}
+d236 2
+a237 2
+
+
+d240 1
+a240 1
+
+d244 3
+a246 1
+    protected class AggregatedIterable implements Iterable<V> {
+d248 1
+a248 4
+        private final IntIterator m_rows;
+        private V m_next = null;
+
+        public AggregatedIterable(int row) {
+d251 25
+a276 31
+		public Iterator<V> iterator() {
+			// TODO: TIDY THIS CLASS UP!!!
+			return new Iterator<V>() {
+				{advance();}
+		        public boolean hasNext() {
+		            return m_next != null;
+		        }
+		        public V next() {
+		            V retval = m_next;
+		            advance();
+		            return retval;
+		        }
+		        private void advance() {
+		            while ( m_rows.hasNext() ) {
+		                int ar = m_rows.nextInt();
+		                V t = (V)m_aggregated.get(ar, MEMBER);
+		                if ( t.isValid() ) {
+		                    m_next = t;
+		                    return;
+		                } else {
+		                    m_aggregated.removeRow(ar);
+		                }
+		            }
+		            m_next = null;
+		        }
+		        public void remove() {
+		            throw new UnsupportedOperationException();
+		        }
+
+			};
+		}
+d278 1
+a278 1
+
+d281 1
+a281 1
+
+d291 1
+a291 1
+
+@
+
+
+2.1.4.2
+log
+@richer return type for getAggregates()
+@
+text
+@a8 1
+import java.util.Set;
+d197 1
+a197 1
+     * Get a Set of all AggregateItems which contain the input Tuple.
+d199 1
+a199 1
+     * @@return a Set of all AggregateItems which contain the input Tuple
+d201 1
+a201 1
+    public Set<Tuple<?>> getAggregates(Tuple<?> t) {
+d204 1
+a204 1
+        Set<Tuple<?>> set = new HashSet<Tuple<?>>();
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d7 1
+d179 16
+@
+
+
+1.1
+log
+@file AggregateTable.java was initially added on branch beta.
+@
+text
+@d1 275
+@
+
+
+1.1.2.1
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@a0 193
+/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.visual;
+
+import java.util.Iterator;
+
+import prefuse.Visualization;
+import prefuse.data.Schema;
+import prefuse.data.Table;
+import prefuse.data.event.EventConstants;
+import prefuse.data.index.Index;
+import prefuse.data.tuple.Tuple;
+import prefuse.util.collections.IntIterator;
+import prefuse.visual.tuple.AggregateItemTupleManager;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public class AggregateTable extends VisualTable {
+
+	protected Table m_aggregated;
+	
+	public AggregateTable(Visualization vis, String group) {
+		this(vis, group, VisualItem.SCHEMA);
+	}
+	
+	public AggregateTable(Visualization vis, String group, Schema schema) {
+		super(vis, group, schema, AggregateItemTupleManager.class);
+		m_aggregated = AGGREGATED_SCHEMA.instantiate();
+		m_aggregated.index(AGGREGATE);
+		m_aggregated.index(MEMBER_HASH);
+	}
+	
+	// ------------------------------------------------------------------------
+	
+	public int getAggregateSize(int row) {
+		int size = 0;
+		AggregatedIterator ati = new AggregatedIterator(row);
+		for ( ; ati.hasNext(); ++size, ati.next() );
+		return size;
+	}
+	
+	public void addToAggregate(int row, Tuple member) {
+		validRowCheck(row, true);
+		if ( !aggregateContains(row, member) ) {
+			int ar = m_aggregated.addRow();
+			m_aggregated.setInt(ar, AGGREGATE, row);
+			m_aggregated.setInt(ar, MEMBER_HASH, getHashCode(member));
+			m_aggregated.set(ar, MEMBER, member);
+			fireTableEvent(row, row,
+					EventConstants.ALL_COLUMNS, EventConstants.UPDATE);
+		}
+	}
+	
+	public void removeFromAggregate(int row, Tuple member) {
+		validRowCheck(row, true);
+		int ar = getAggregatedRow(row, member);
+		if ( ar >= 0 ) {
+			m_aggregated.removeRow(ar);
+			fireTableEvent(row, row,
+				EventConstants.ALL_COLUMNS, EventConstants.UPDATE);
+		}
+	}
+	
+	public void removeAllFromAggregate(int row) {
+		clearAggregateMappings(row, true);
+	}
+	
+	protected void clearAggregateMappings(int row, boolean update) {
+		Index index = m_aggregated.index(AGGREGATE);
+		boolean fire = false;
+		for ( IntIterator rows = index.rows(row); rows.hasNext(); ) {
+			int r = rows.nextInt();
+			// this removal maneuver is ok because we know we are
+			// pulling row values directly from an index
+			// with intervening iterators, remove might throw an exception
+			rows.remove();
+			m_aggregated.removeRow(r);
+			fire = true;
+		}
+		if ( update && fire ) 
+			fireTableEvent(row, row,
+				EventConstants.ALL_COLUMNS, EventConstants.UPDATE);
+	}
+	
+	public boolean aggregateContains(int row, Tuple member) {
+		return getAggregatedRow(row, member) >= 0;
+	}
+	
+	protected int getAggregatedRow(int row, Tuple member) {
+		Index index = m_aggregated.index(MEMBER_HASH);
+		int hash = getHashCode(member);
+		int ar = index.get(hash);
+		if ( ar < 0 ) {
+			return -1;
+		} else if ( m_aggregated.getInt(ar, AGGREGATE) == row ) {
+			return ar;
+		} else {
+			for ( IntIterator rows = index.rows(hash); rows.hasNext(); ) {
+				ar = rows.nextInt();
+				if ( m_aggregated.getInt(ar, AGGREGATE) == row )
+					return ar;
+			}
+			return -1;
+		}
+	}
+	
+	public Iterator aggregatedTuples(int row) {
+		return new AggregatedIterator(row);
+	}
+	
+	protected int getHashCode(Tuple t) {
+		// this works for now because hashCode is not overloaded on
+		// the provided Tuple implementations
+		return t.hashCode();
+	}
+	
+	protected boolean validRowCheck(int row, boolean throwException) {
+		if ( isValidRow(row) ) {
+			return true;
+		} else if ( throwException ) {
+			throw new IllegalArgumentException("Invalid row value: "+row);
+		} else {
+			return false;
+		}
+	}
+	
+	// ------------------------------------------------------------------------
+	// Table Listener Interception
+	
+	protected void fireTableEvent(int row0, int row1, int col, int type) {
+		if ( col==EventConstants.ALL_COLUMNS && type==EventConstants.DELETE ) {
+			for ( int r=row0; r<=row1; ++r )
+				clearAggregateMappings(r, false);
+		}
+		super.fireTableEvent(row0, row1, col, type);
+	}
+	
+	
+	// ------------------------------------------------------------------------
+	// Aggregated Iterator
+	
+	protected class AggregatedIterator implements Iterator {
+		private IntIterator m_rows;
+		private Tuple m_next = null;
+
+		public AggregatedIterator(int row) {
+			Index index = m_aggregated.index(AGGREGATE);
+			m_rows = index.rows(row);
+			advance();
+		}
+		public boolean hasNext() {
+			return m_next != null;
+		}
+		public Object next() {
+			Tuple retval = m_next;
+			advance();
+			return retval;
+		}
+		private void advance() {
+			while ( m_rows.hasNext() ) {
+				int ar = m_rows.nextInt();
+				Tuple t = (Tuple)m_aggregated.get(ar, MEMBER);
+				if ( t.isValid() ) {
+					m_next = t;
+					return;
+				} else {
+					m_aggregated.removeRow(ar);
+				}
+			}
+			m_next = null;
+		}
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+	}
+	
+	// ------------------------------------------------------------------------
+	// Aggregated Table Schema
+	
+	protected static final String AGGREGATE = "aggregate";
+	protected static final String MEMBER_HASH = "hash";
+	protected static final String MEMBER = "member";
+	protected static final Schema AGGREGATED_SCHEMA = new Schema();
+	static {
+		AGGREGATED_SCHEMA.addColumn(AGGREGATE, int.class);
+		AGGREGATED_SCHEMA.addColumn(MEMBER_HASH, int.class);
+		AGGREGATED_SCHEMA.addColumn(MEMBER, Tuple.class);
+	}
+	
+} // end of class AggregateTable
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d23 125
+a147 125
+    protected Table m_aggregated;
+    
+    public AggregateTable(Visualization vis, String group) {
+        this(vis, group, VisualItem.SCHEMA);
+    }
+    
+    public AggregateTable(Visualization vis, String group, Schema schema) {
+        super(vis, group, schema, AggregateItemTupleManager.class);
+        m_aggregated = AGGREGATED_SCHEMA.instantiate();
+        m_aggregated.index(AGGREGATE);
+        m_aggregated.index(MEMBER_HASH);
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    public int getAggregateSize(int row) {
+        int size = 0;
+        AggregatedIterator ati = new AggregatedIterator(row);
+        for ( ; ati.hasNext(); ++size, ati.next() );
+        return size;
+    }
+    
+    public void addToAggregate(int row, Tuple member) {
+        validRowCheck(row, true);
+        if ( !aggregateContains(row, member) ) {
+            int ar = m_aggregated.addRow();
+            m_aggregated.setInt(ar, AGGREGATE, row);
+            m_aggregated.setInt(ar, MEMBER_HASH, getHashCode(member));
+            m_aggregated.set(ar, MEMBER, member);
+            fireTableEvent(row, row,
+                    EventConstants.ALL_COLUMNS, EventConstants.UPDATE);
+        }
+    }
+    
+    public void removeFromAggregate(int row, Tuple member) {
+        validRowCheck(row, true);
+        int ar = getAggregatedRow(row, member);
+        if ( ar >= 0 ) {
+            m_aggregated.removeRow(ar);
+            fireTableEvent(row, row,
+                EventConstants.ALL_COLUMNS, EventConstants.UPDATE);
+        }
+    }
+    
+    public void removeAllFromAggregate(int row) {
+        clearAggregateMappings(row, true);
+    }
+    
+    protected void clearAggregateMappings(int row, boolean update) {
+        Index index = m_aggregated.index(AGGREGATE);
+        boolean fire = false;
+        for ( IntIterator rows = index.rows(row); rows.hasNext(); ) {
+            int r = rows.nextInt();
+            // this removal maneuver is ok because we know we are
+            // pulling row values directly from an index
+            // with intervening iterators, remove might throw an exception
+            rows.remove();
+            m_aggregated.removeRow(r);
+            fire = true;
+        }
+        if ( update && fire ) 
+            fireTableEvent(row, row,
+                EventConstants.ALL_COLUMNS, EventConstants.UPDATE);
+    }
+    
+    public boolean aggregateContains(int row, Tuple member) {
+        return getAggregatedRow(row, member) >= 0;
+    }
+    
+    protected int getAggregatedRow(int row, Tuple member) {
+        Index index = m_aggregated.index(MEMBER_HASH);
+        int hash = getHashCode(member);
+        int ar = index.get(hash);
+        if ( ar < 0 ) {
+            return -1;
+        } else if ( m_aggregated.getInt(ar, AGGREGATE) == row ) {
+            return ar;
+        } else {
+            for ( IntIterator rows = index.rows(hash); rows.hasNext(); ) {
+                ar = rows.nextInt();
+                if ( m_aggregated.getInt(ar, AGGREGATE) == row )
+                    return ar;
+            }
+            return -1;
+        }
+    }
+    
+    public Iterator aggregatedTuples(int row) {
+        return new AggregatedIterator(row);
+    }
+    
+    protected int getHashCode(Tuple t) {
+        // this works for now because hashCode is not overloaded on
+        // the provided Tuple implementations
+        return t.hashCode();
+    }
+    
+    protected boolean validRowCheck(int row, boolean throwException) {
+        if ( isValidRow(row) ) {
+            return true;
+        } else if ( throwException ) {
+            throw new IllegalArgumentException("Invalid row value: "+row);
+        } else {
+            return false;
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Table Listener Interception
+    
+    protected void fireTableEvent(int row0, int row1, int col, int type) {
+        if ( col==EventConstants.ALL_COLUMNS && type==EventConstants.DELETE ) {
+            for ( int r=row0; r<=row1; ++r )
+                clearAggregateMappings(r, false);
+        }
+        super.fireTableEvent(row0, row1, col, type);
+    }
+    
+    
+    // ------------------------------------------------------------------------
+    // Aggregated Iterator
+    
+    protected class AggregatedIterator implements Iterator {
+        private IntIterator m_rows;
+        private Tuple m_next = null;
+d149 44
+a192 44
+        public AggregatedIterator(int row) {
+            Index index = m_aggregated.index(AGGREGATE);
+            m_rows = index.rows(row);
+            advance();
+        }
+        public boolean hasNext() {
+            return m_next != null;
+        }
+        public Object next() {
+            Tuple retval = m_next;
+            advance();
+            return retval;
+        }
+        private void advance() {
+            while ( m_rows.hasNext() ) {
+                int ar = m_rows.nextInt();
+                Tuple t = (Tuple)m_aggregated.get(ar, MEMBER);
+                if ( t.isValid() ) {
+                    m_next = t;
+                    return;
+                } else {
+                    m_aggregated.removeRow(ar);
+                }
+            }
+            m_next = null;
+        }
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+    
+    // ------------------------------------------------------------------------
+    // Aggregated Table Schema
+    
+    protected static final String AGGREGATE = "aggregate";
+    protected static final String MEMBER_HASH = "hash";
+    protected static final String MEMBER = "member";
+    protected static final Schema AGGREGATED_SCHEMA = new Schema();
+    static {
+        AGGREGATED_SCHEMA.addColumn(AGGREGATE, int.class);
+        AGGREGATED_SCHEMA.addColumn(MEMBER_HASH, int.class);
+        AGGREGATED_SCHEMA.addColumn(MEMBER, Tuple.class);
+    }
+    
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@a18 5
+ * VisualTable instance that maintains visual items representing aggregates
+ * of items. This class maintains both a collection of AggregateItems and
+ * a mapping between AggregateItems and the VisualItems contained within
+ * those aggregates.
+ * 
+a22 3
+    /**
+     * Table storing the 1->Many aggregation mappings
+     */
+a24 5
+    /**
+     * Create a new AggregateTable.
+     * @@param vis the Visualization associated with the table
+     * @@param group the data group the table contents belongs to
+     */
+d28 1
+a28 7
+
+    /**
+     * Create a new AggregateTable.
+     * @@param vis the Visualization associated with the table
+     * @@param group the data group the table contents belongs to
+     * @@param the Schema to use for this table
+     */
+a37 5
+    /**
+     * Get the size of the aggregate represented at the given table row.
+     * Returns the number of visual items contained in the aggregation.
+     * @@return the aggregate size for the given row
+     */
+d45 1
+a45 6
+    /**
+     * Add an item to the aggregation at the given row.
+     * @@param row the row index of the aggregate
+     * @@param member the item to add to the aggregation
+     */
+    public void addToAggregate(int row, VisualItem member) {
+d57 1
+a57 6
+    /**
+     * Remove an item from the aggregation at the given row
+     * @@param row the row index of the aggregate
+     * @@param member the item to remove from the aggregation
+     */
+    public void removeFromAggregate(int row, VisualItem member) {
+a66 4
+    /**
+     * Remove all items contained in the aggregate at the given row
+     * @@param row the row index of the aggregate
+     */
+a70 6
+    /**
+     * Clears all aggregates mappings for the aggregate at the given row,
+     * optionally issuing a table update.
+     * @@param row the table row of the aggregate
+     * @@param update indicates whether or not to fire a table update
+     */
+d88 1
+a88 7
+    /**
+     * Indicates if an item is a member of the aggregate at the given row
+     * @@param row the table row of the aggregate
+     * @@param member the item to check from containment
+     * @@return true if the item is in the aggregate, false otherwise
+     */
+    public boolean aggregateContains(int row, VisualItem member) {
+d92 1
+a92 9
+    /**
+     * Get the row index to the aggregate mapping table for the given
+     * aggregate and contained VisualItem.
+     * @@param row the table row of the aggregate
+     * @@param member the VisualItem to look up
+     * @@return the row index into the internal aggregate mapping table for the
+     * mapping between the given aggregate row and given VisualItem
+     */
+    protected int getAggregatedRow(int row, VisualItem member) {
+a109 5
+    /**
+     * Get all VisualItems within the aggregate at the given table row.
+     * @@param row the table row of the aggregate
+     * @@return an iterator over the items in the aggregate
+     */
+a113 5
+    /**
+     * Get a hashcode that uniquely identifies a particular tuple
+     * @@param t the tuple to compute the hash for
+     * @@return a unique identifier for the tuple
+     */
+a119 8
+    /**
+     * Check a row for validity, optionally throwing an exception when an
+     * invalid row is found.
+     * @@param row the row to check
+     * @@param throwException indicates if an exception should be thrown when an
+     * invalid row is encountered
+     * @@return true if the row was valid, false otherwise
+     */
+a132 3
+    /**
+     * Clear all aggregate mappings for a row when it is deleted.
+     */
+a144 3
+    /**
+     * Iterator instance that iterates over the items contained in an aggregate.
+     */
+@
+
+
+1.1.2.4
+log
+@Javadoc'd.
+@
+text
+@d13 1
+a14 1
+import prefuse.data.util.Index;
+d46 1
+a46 1
+     * @@param schema the Schema to use for this table
+@
+
+
+1.1.2.5
+log
+@Standardized @@author tag contents
+Added toggle for enabling/disabling damage/redraw
+EdgeRenderer now cleanly pulls edge widths from the size field
+Refactored TupleManager to a single reusable class
+@
+text
+@d16 1
+a16 1
+import prefuse.visual.tuple.TableAggregateItem;
+d24 1
+a24 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d49 1
+a49 1
+        super(vis, group, schema, TableAggregateItem.class);
+@
+
+
+1.1.2.6
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@a11 1
+import prefuse.data.Tuple;
+d13 1
+@
+
+

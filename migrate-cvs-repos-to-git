@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+modules="enronic prefuse prefuse-apps prefuse-extras timeline vizster"
+
+rm -rf data
+mkdir -p data
+
+#for module in $modules; do
+#  mkdir git-repos/$module
+#  GIT="git -C git-repos/$module"
+#  $GIT init
+#  ./cvs2svn/cvs2git --blobfile=data/$module-blob.dat --dumpfile=data/$module-dump.dat prefuse-cvs/$module
+#  $GIT fast-import --export-marks=data/$module-marks.dat < data/$module-blob.dat
+#done
+
+./cvs2svn/cvs2git --blobfile=data/prefuse-cvs-blob.data --dumpfile=data/prefuse-cvs-dump.dat prefuse-cvs
+git -C git-repos/prefuse-cvs fast-import --export-marks=data/prefuse-cvs-marks.dat < data/prefuse-cvs-blob.dat
+
+echo "All done. Your git repos are in git-repos/."

@@ -1,0 +1,911 @@
+head	1.2;
+access;
+symbols
+	java_1_5:1.2.0.4
+	Root_java_1_5:1.2
+	beta:1.2.0.2
+	beta-20080113:1.2
+	beta-20071021:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2006.03.06.00.33.33;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2006.03.01.08.19.53;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Updated DataLib to support both TupleSet and iterator sources
+@
+text
+@/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.util;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+
+import prefuse.data.Table;
+import prefuse.data.Tuple;
+import prefuse.data.column.ColumnMetadata;
+import prefuse.data.tuple.TupleSet;
+import prefuse.util.collections.DefaultLiteralComparator;
+
+/**
+ * Functions for processing an iterator of tuples, including the creation
+ * of arrays of particular tuple data values and summary
+ * statistics (min, max, median, mean, standard deviation).
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class DataLib {
+
+    /**
+     * Get an array containing all data values for a given tuple iteration
+     * and field.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@return an array containing the data values
+     */
+    public static Object[] toArray(Iterator tuples, String field) {
+        Object[] array = new Object[100];
+        int i=0;
+        for ( ; tuples.hasNext(); ++i ) {
+            if ( i >= array.length )
+                array = ArrayLib.resize(array, 3*array.length/2);
+            array[i] = ((Tuple)tuples.next()).get(field);
+        }
+        return ArrayLib.trim(array, i);
+    }
+
+    /**
+     * Get an array of doubles containing all column values for a given table
+     * and field. The {@@link Table#canGetDouble(String)} method must return
+     * true for the given column name, otherwise an exception will be thrown.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@return an array of doubles containing the column values
+     */
+    public static double[] toDoubleArray(Iterator tuples, String field) {
+        double[] array = new double[100];
+        int i=0;
+        for ( ; tuples.hasNext(); ++i ) {
+            if ( i >= array.length )
+                array = ArrayLib.resize(array, 3*array.length/2);
+            array[i] = ((Tuple)tuples.next()).getDouble(field);
+        }
+        return ArrayLib.trim(array, i);
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get a sorted array containing all column values for a given tuple
+     * iterator and field.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@return an array containing the column values sorted
+     */
+    public static Object[] ordinalArray(Iterator tuples, String field) {
+        return DataLib.ordinalArray(tuples, field,
+                            DefaultLiteralComparator.getInstance());
+    }
+
+    /**
+     * Get a sorted array containing all column values for a given table and
+     * field.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@param cmp a comparator for sorting the column contents
+     * @@return an array containing the column values sorted
+     */
+    public static Object[] ordinalArray(Iterator tuples, String field,
+                                        Comparator cmp)
+    {
+        // get set of all unique values
+        HashSet set = new HashSet();
+        while ( tuples.hasNext() )
+            set.add(((Tuple)tuples.next()).get(field));
+        
+        // sort the unique values
+        Object[] o = set.toArray();
+        Arrays.sort(o, cmp);
+        return o;
+    }
+    
+    /**
+     * Get a sorted array containing all column values for a given tuple
+     * iterator and field.
+     * @@param tuples a TupleSet
+     * @@param field the column / data field name
+     * @@return an array containing the column values sorted
+     */
+    public static Object[] ordinalArray(TupleSet tuples, String field) {
+        return ordinalArray(tuples, field,
+                            DefaultLiteralComparator.getInstance());
+    }
+
+    /**
+     * Get a sorted array containing all column values for a given table and
+     * field.
+     * @@param tuples a TupleSet
+     * @@param field the column / data field name
+     * @@param cmp a comparator for sorting the column contents
+     * @@return an array containing the column values sorted
+     */
+    public static Object[] ordinalArray(TupleSet tuples, String field,
+                                        Comparator cmp)
+    {
+        if ( tuples instanceof Table ) {
+            ColumnMetadata md = ((Table)tuples).getMetadata(field);
+            return md.getOrdinalArray();
+        } else {
+            return ordinalArray(tuples.tuples(), field, cmp);
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get map mapping from column values (as Object instances) to their
+     * ordinal index in a sorted array.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@return a map mapping column values to their position in a sorted
+     * order of values
+     */
+    public static Map ordinalMap(Iterator tuples, String field) {
+        return ordinalMap(tuples, field,
+                DefaultLiteralComparator.getInstance());
+    }
+
+    /**
+     * Get map mapping from column values (as Object instances) to their
+     * ordinal index in a sorted array.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@param cmp a comparator for sorting the column contents
+     * @@return a map mapping column values to their position in a sorted
+     * order of values
+     */
+    public static Map ordinalMap(Iterator tuples, String field, Comparator cmp)
+    {
+        Object[] o = ordinalArray(tuples, field, cmp);
+        
+        // map the values to the non-negative numbers
+        HashMap map = new HashMap();
+        for ( int i=0; i<o.length; ++i )
+            map.put(o[i], new Integer(i));
+        return map;
+    }
+    
+    /**
+     * Get map mapping from column values (as Object instances) to their
+     * ordinal index in a sorted array.
+     * @@param tuples a TupleSet
+     * @@param field the column / data field name
+     * @@return a map mapping column values to their position in a sorted
+     * order of values
+     */
+    public static Map ordinalMap(TupleSet tuples, String field) {
+        return ordinalMap(tuples, field,
+                          DefaultLiteralComparator.getInstance());
+    }
+
+    /**
+     * Get map mapping from column values (as Object instances) to their
+     * ordinal index in a sorted array.
+     * @@param tuples a TupleSet
+     * @@param field the column / data field name
+     * @@param cmp a comparator for sorting the column contents
+     * @@return a map mapping column values to their position in a sorted
+     * order of values
+     */
+    public static Map ordinalMap(TupleSet tuples, String field, Comparator cmp)
+    {
+        if ( tuples instanceof Table ) {
+            ColumnMetadata md = ((Table)tuples).getMetadata(field);
+            return md.getOrdinalMap();
+        } else {
+            return ordinalMap(tuples.tuples(), field, cmp);
+        }
+    }
+
+    // ------------------------------------------------------------------------    
+    
+    /**
+     * Get the number of values in a data column. Duplicates will be counted.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@return the number of values
+     */
+    public static int count(Iterator tuples, String field) {
+        int i = 0;
+        for ( ; tuples.hasNext(); ++i, tuples.next() );
+        return i;
+    }
+
+    /**
+     * Get the number of distinct values in a data column.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@return the number of distinct values
+     */
+    public static int uniqueCount(Iterator tuples, String field) {
+        HashSet set = new HashSet();
+        while ( tuples.hasNext() )
+            set.add(((Tuple)tuples.next()).get(field));
+        return set.size();
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the Tuple with the minimum data field value.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@return the Tuple with the minimum data field value
+     */
+    public static Tuple min(Iterator tuples, String field) {
+        return min(tuples, field, DefaultLiteralComparator.getInstance());
+    }
+
+    /**
+     * Get the Tuple with the minimum data field value.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@param cmp a comparator for sorting the column contents
+     * @@return the Tuple with the minimum data field value
+     */
+    public static Tuple min(Iterator tuples, String field, Comparator cmp) {
+        Tuple t = null, tmp;
+        Object min = null;
+        if ( tuples.hasNext() ) {
+            t = (Tuple)tuples.next();
+            min = t.get(field);
+        }
+        while ( tuples.hasNext() ) {
+            tmp = (Tuple)tuples.next();
+            Object obj = tmp.get(field);
+            if ( cmp.compare(obj,min) < 0 ) {
+                t = tmp;
+                min = obj;
+            }
+        }
+        return t;
+    }
+
+    /**
+     * Get the Tuple with the minimum data field value.
+     * @@param tuples a TupleSet
+     * @@param field the column / data field name
+     * @@return the Tuple with the minimum data field value
+     */
+    public static Tuple min(TupleSet tuples, String field, Comparator cmp) {
+        if ( tuples instanceof Table ) {
+            Table table = (Table)tuples;
+            ColumnMetadata md = table.getMetadata(field);
+            return table.getTuple(md.getMinimumRow());
+        } else {
+            return min(tuples.tuples(), field, cmp);
+        }
+    }
+    
+    /**
+     * Get the Tuple with the minimum data field value.
+     * @@param tuples a TupleSet
+     * @@param field the column / data field name
+     * @@return the Tuple with the minimum data field value
+     */
+    public static Tuple min(TupleSet tuples, String field) {
+        return min(tuples, field, DefaultLiteralComparator.getInstance());
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the Tuple with the maximum data field value.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@return the Tuple with the maximum data field value
+     */
+    public static Tuple max(Iterator tuples, String field) {
+        return max(tuples, field, DefaultLiteralComparator.getInstance());
+    }
+
+    /**
+     * Get the Tuple with the maximum data field value.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@param cmp a comparator for sorting the column contents
+     * @@return the Tuple with the maximum data field value
+     */
+    public static Tuple max(Iterator tuples, String field, Comparator cmp) {
+        Tuple t = null, tmp;
+        Object min = null;
+        if ( tuples.hasNext() ) {
+            t = (Tuple)tuples.next();
+            min = t.get(field);
+        }
+        while ( tuples.hasNext() ) {
+            tmp = (Tuple)tuples.next();
+            Object obj = tmp.get(field);
+            if ( cmp.compare(obj,min) > 0 ) {
+                t = tmp;
+                min = obj;
+            }
+        }
+        return t;
+    }
+
+    /**
+     * Get the Tuple with the maximum data field value.
+     * @@param tuples a TupleSet
+     * @@param field the column / data field name
+     * @@return the Tuple with the maximum data field value
+     */
+    public static Tuple max(TupleSet tuples, String field, Comparator cmp) {
+        if ( tuples instanceof Table ) {
+            Table table = (Table)tuples;
+            ColumnMetadata md = table.getMetadata(field);
+            return table.getTuple(md.getMaximumRow());
+        } else {
+            return max(tuples.tuples(), field, cmp);
+        }
+    }
+    
+    /**
+     * Get the Tuple with the maximum data field value.
+     * @@param tuples a TupleSet
+     * @@param field the column / data field name
+     * @@return the Tuple with the maximum data field value
+     */
+    public static Tuple max(TupleSet tuples, String field) {
+        return max(tuples, field, DefaultLiteralComparator.getInstance());
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the Tuple with the median data field value.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@return the Tuple with the median data field value
+     */
+    public static Tuple median(Iterator tuples, String field) {
+        return median(tuples, field, DefaultLiteralComparator.getInstance());
+    }
+
+    /**
+     * Get the Tuple with the median data field value.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@param cmp a comparator for sorting the column contents
+     * @@return the Tuple with the median data field value
+     */
+    public static Tuple median(Iterator tuples, String field, Comparator cmp) {
+        Object[] t = new Tuple[100];
+        int i=0;
+        for ( ; tuples.hasNext(); ++i ) {
+            if ( i >= t.length )
+                t = ArrayLib.resize(t, 3*t.length/2);
+            t[i] = (Tuple)tuples.next();
+        }
+        ArrayLib.trim(t, i);
+        
+        Object[] v = new Object[t.length];
+        int[] idx = new int[t.length];
+        for ( i=0; i<t.length; ++i ) {
+            idx[i] = i;
+            v[i] = ((Tuple)t[i]).get(field);
+        }
+    
+        ArrayLib.sort(v, idx, cmp);
+        return (Tuple)t[idx[idx.length/2]];
+    }
+
+    /**
+     * Get the Tuple with the median data field value.
+     * @@param tuples a TupleSet
+     * @@param field the column / data field name
+     * @@return the Tuple with the median data field value
+     */
+    public static Tuple median(TupleSet tuples, String field, Comparator cmp) {
+        if ( tuples instanceof Table ) {
+            Table table = (Table)tuples;
+            ColumnMetadata md = table.getMetadata(field);
+            return table.getTuple(md.getMedianRow());
+        } else {
+            return median(tuples.tuples(), field, cmp);
+        }
+    }
+    
+    /**
+     * Get the Tuple with the median data field value.
+     * @@param tuples a TupleSet
+     * @@param field the column / data field name
+     * @@return the Tuple with the median data field value
+     */
+    public static Tuple median(TupleSet tuples, String field) {
+        return median(tuples, field, DefaultLiteralComparator.getInstance());
+    }
+    
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Get the mean value of a tuple data value. If any tuple does not have the
+     * named field or the field is not a numeric data type, NaN will be returned.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@return the mean value, or NaN if a non-numeric data type is encountered
+     */
+    public static double mean(Iterator tuples, String field) {
+        try {
+            int count = 0;
+            double sum = 0;
+            
+            while ( tuples.hasNext() ) {
+                sum += ((Tuple)tuples.next()).getDouble(field);
+                ++count;
+            }
+            return sum/count;
+        } catch ( Exception e ) {
+            return Double.NaN;
+        }
+    }
+    
+    /**
+     * Get the standard deviation of a tuple data value. If any tuple does not
+     * have the named field or the field is not a numeric data type, NaN will be
+     * returned.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@return the standard deviation value, or NaN if a non-numeric data type
+     * is encountered
+     */
+    public static double deviation(Iterator tuples, String field) {
+        return deviation(tuples, field, DataLib.mean(tuples, field));
+    }    
+    
+    /**
+     * Get the standard deviation of a tuple data value. If any tuple does not
+     * have the named field or the field is not a numeric data type, NaN will be
+     * returned.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@param mean the mean of the column, used to speed up accurate
+     * deviation calculation
+     * @@return the standard deviation value, or NaN if a non-numeric data type
+     * is encountered
+     */
+    public static double deviation(Iterator tuples, String field, double mean) {
+        try {
+            int count = 0;
+            double sumsq = 0;
+            double x;
+            
+            while ( tuples.hasNext() ) {
+                x = ((Tuple)tuples.next()).getDouble(field) - mean;
+                sumsq += x*x;
+                ++count;
+            }
+            return Math.sqrt(sumsq/count);
+        } catch ( Exception e ) {
+            return Double.NaN;
+        }
+    }
+
+    /**
+     * Get the sum of a tuple data value. If any tuple does not have the named
+     * field or the field is not a numeric data type, NaN will be returned.
+     * @@param tuples an iterator over tuples
+     * @@param field the column / data field name
+     * @@return the sum, or NaN if a non-numeric data type is encountered
+     */
+    public static double sum(Iterator tuples, String field) {
+        try {
+            double sum = 0;
+            
+            while ( tuples.hasNext() ) {
+                sum += ((Tuple)tuples.next()).getDouble(field);
+            }
+            return sum;
+        } catch ( Exception e ) {
+            return Double.NaN;
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    
+    /**
+     * Infer the data field type across all tuples in a TupleSet.
+     * @@param tuples the TupleSet to analyze
+     * @@param field the data field to type check
+     * @@return the inferred data type
+     * @@throws IllegalArgumentException if incompatible types are used
+     */
+    public static Class inferType(TupleSet tuples, String field) {
+        if ( tuples instanceof Table ) {
+            return ((Table)tuples).getColumnType(field);
+        } else {
+            Class type = null, type2 = null;
+            Iterator iter = tuples.tuples();
+            while ( iter.hasNext() ) {
+                Tuple t = (Tuple)iter.next();
+                if ( type == null ) {
+                    type = t.getColumnType(field);
+                } else if ( !type.equals(type2=t.getColumnType(field)) ) {
+                    if ( type2.isAssignableFrom(type) ) {
+                        type = type2;
+                    } else if ( !type.isAssignableFrom(type2) ) {
+                        throw new IllegalArgumentException(
+                           "The data field ["+field+"] does not have " +
+                           "a consistent type across provided Tuples");    
+                    }
+                }
+            }
+            return type;
+        }
+    }
+    
+} // end of class DataLib
+@
+
+
+1.2.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@a6 1
+import java.util.ArrayList;
+d11 1
+a12 1
+import java.util.Set;
+d24 1
+a24 1
+ *
+d36 7
+a42 4
+    public static Object[] toArray(Iterable<? extends Tuple<?>> tuples, String field) {
+    	ArrayList<Object> list = new ArrayList<Object>(100);
+        for (Tuple<?> t : tuples) {
+        	list.add(t.get(field));
+d44 1
+a44 1
+        return list.toArray();
+d55 1
+a55 1
+    public static double[] toDoubleArray(Iterable<? extends Tuple<?>> tuples, String field) {
+d58 4
+a61 5
+        for (Tuple<?> t : tuples ) {
+            if ( i >= array.length ) {
+				array = ArrayLib.resize(array, 3*array.length/2);
+			}
+            array[i++] = t.getDouble(field);
+d67 1
+a67 1
+
+d75 1
+a75 1
+    public static Object[] ordinalArray(Iterable<? extends Tuple<?>> tuples, String field) {
+d88 2
+a89 2
+    public static Object[] ordinalArray(Iterable<? extends Tuple<?>> tuples, String field,
+                                        Comparator<Object> cmp)
+d92 4
+a95 5
+        Set<Object> set = new HashSet<Object>();
+        for (Tuple<?> t : tuples ) {
+			set.add(t.get(field));
+		}
+
+d101 1
+a101 1
+
+d109 1
+a109 1
+    public static Object[] ordinalArray(TupleSet<? extends Tuple<?>> tuples, String field) {
+d122 2
+a123 2
+    public static Object[] ordinalArray(TupleSet<? extends Tuple<?>> tuples, String field,
+                                        Comparator<Object> cmp)
+d126 1
+a126 1
+            ColumnMetadata md = ((Table<? extends Tuple<?>>)tuples).getMetadata(field);
+d134 1
+a134 1
+
+d143 1
+a143 1
+    public static Map<Object, Integer> ordinalMap(Iterable<? extends Tuple<?>> tuples, String field) {
+d157 1
+a157 1
+    public static Map<Object, Integer> ordinalMap(Iterable<? extends Tuple<?>> tuples, String field, Comparator<Object> cmp)
+d160 1
+a160 1
+
+d162 3
+a164 4
+        Map<Object,Integer> map = new HashMap<Object,Integer>();
+        for ( int i=0; i<o.length; ++i ) {
+			map.put(o[i], i);
+		}
+d167 1
+a167 1
+
+d176 1
+a176 1
+    public static Map<Object, Integer> ordinalMap(TupleSet<? extends Tuple<?>> tuples, String field) {
+d190 1
+a190 1
+    public static Map<Object, Integer> ordinalMap(TupleSet<? extends Tuple<?>> tuples, String field, Comparator<Object> cmp)
+d193 1
+a193 1
+            ColumnMetadata md = ((Table<?>)tuples).getMetadata(field);
+d200 2
+a201 2
+    // ------------------------------------------------------------------------
+
+d208 1
+a208 1
+    public static int count(Iterable<? extends Tuple<?>> tuples, String field) {
+d210 1
+a210 3
+        for ( Tuple<?> t : tuples) {
+        	i++;
+		}
+d220 4
+a223 5
+    public static int uniqueCount(Iterable<? extends Tuple<?>> tuples, String field) {
+        Set<Object> set = new HashSet<Object>();
+        for ( Tuple<?> t : tuples ) {
+			set.add(t.get(field));
+		}
+d228 1
+a228 1
+
+d235 1
+a235 1
+    public static Tuple<?> min(Iterable<? extends Tuple<?>> tuples, String field) {
+d246 2
+a247 2
+    public static Tuple<?> min(Iterable<? extends Tuple<?>> tuples, String field, Comparator<Object> cmp) {
+        Tuple<?> tmp = null;
+d249 11
+a259 11
+        for(Tuple<?> t : tuples) {
+        	if(tmp == null) {
+        		min = t.get(field);
+        		tmp = t;
+        	} else {
+        		Object obj = t.get(field);
+        		if(cmp.compare(obj,min) < 0) {
+        			tmp = t;
+        			min = obj;
+        		}
+        	}
+d261 1
+a261 1
+        return tmp;
+d270 1
+a270 1
+    public static Tuple<?> min(TupleSet<? extends Tuple<?>> tuples, String field, Comparator<Object> cmp) {
+d272 1
+a272 1
+            Table<? extends Tuple<?>> table = (Table<? extends Tuple<?>>)tuples;
+d279 1
+a279 1
+
+d286 1
+a286 1
+    public static Tuple<?> min(TupleSet<? extends Tuple<?>> tuples, String field) {
+d289 1
+a289 1
+
+d291 1
+a291 1
+
+d298 1
+a298 1
+    public static Tuple<?> max(Iterable<? extends Tuple<?>> tuples, String field) {
+d309 14
+a322 15
+    public static Tuple<?> max(Iterable<? extends Tuple<?>> tuples, String field, Comparator<Object> cmp) {
+        Tuple<?> tmp = null;
+        Object max = null;
+        for(Tuple<?> t : tuples) {
+        	if(tmp == null) {
+            	max = t.get(field);
+            	tmp = t;
+        	} else {
+                Object obj = t.get(field);
+                if ( cmp.compare(obj,max) > 0 ) {
+                    max = obj;
+                    tmp = t;
+                }
+
+        	}
+d324 1
+a324 1
+        return tmp;
+d333 1
+a333 1
+    public static Tuple<?> max(TupleSet<? extends Tuple<?>> tuples, String field, Comparator<Object> cmp) {
+d335 1
+a335 1
+            Table<? extends Tuple<?>> table = (Table<? extends Tuple<?>>)tuples;
+d342 1
+a342 1
+
+d349 1
+a349 1
+    public static Tuple<?> max(TupleSet<? extends Tuple<?>> tuples, String field) {
+d352 1
+a352 1
+
+d354 1
+a354 1
+
+d361 1
+a361 1
+    public static Tuple<?> median(Iterable<? extends Tuple<?>> tuples, String field) {
+d372 1
+a372 1
+    public static Tuple<?> median(Iterable<? extends Tuple<?>> tuples, String field, Comparator<Object> cmp) {
+d375 4
+a378 5
+        for(Tuple<?> tuple : tuples) {
+            if ( i >= t.length ) {
+				t = ArrayLib.resize(t, 3*t.length/2);
+			}
+            t[i++] = tuple;
+d381 1
+d386 1
+a386 1
+            v[i] = ((Tuple<?>)t[i]).get(field);
+d388 1
+a388 1
+
+d390 1
+a390 1
+        return (Tuple<?>)t[idx[idx.length/2]];
+d399 1
+a399 1
+    public static Tuple<?> median(TupleSet<? extends Tuple<?>> tuples, String field, Comparator<Object> cmp) {
+d401 1
+a401 1
+            Table<? extends Tuple<?>> table = (Table<? extends Tuple<?>>)tuples;
+d408 1
+a408 1
+
+d415 1
+a415 1
+    public static Tuple<?> median(TupleSet<? extends Tuple<?>> tuples, String field) {
+d418 1
+a418 1
+
+d420 1
+a420 1
+
+d428 1
+a428 1
+    public static double mean(Iterable<? extends Tuple<?>> tuples, String field) {
+d432 4
+a435 4
+
+            for(Tuple<?> tuple : tuples) {
+                sum += tuple.getDouble(field);
+                count++;
+d442 1
+a442 1
+
+d452 1
+a452 1
+    public static double deviation(Iterable<? extends Tuple<?>> tuples, String field) {
+d454 2
+a455 2
+    }
+
+d467 1
+a467 1
+    public static double deviation(Iterable<? extends Tuple<?>> tuples, String field, double mean) {
+d472 3
+a474 2
+            for(Tuple<?> t : tuples) {
+                x = t.getDouble(field) - mean;
+d476 1
+a476 1
+                count++;
+d491 1
+a491 1
+    public static double sum(Iterable<? extends Tuple<?>> tuples, String field) {
+d494 3
+a496 2
+            for(Tuple<?> t : tuples) {
+                sum += t.getDouble(field);
+d505 1
+a505 1
+
+d513 1
+a513 1
+    public static Class<?> inferType(TupleSet<? extends Tuple<?>> tuples, String field) {
+d515 1
+a515 1
+            return ((Table<? extends Tuple<?>>)tuples).getColumnType(field);
+d517 4
+a520 2
+            Class<?> type = null, type2 = null;
+            for (Tuple<?> t : tuples.tuples() ) {
+d529 1
+a529 1
+                           "a consistent type across provided Tuples");
+d536 1
+a536 1
+
+@
+
+
+1.1
+log
+@Added new DataParser format(Object) functionality
+Added DataParser instance to AbstractColumn
+Added CSVTableWriter
+Deleted Columns class, replaced with DataLib
+Updated assignment Actions to work over arbitrary TupleSets (not just Tables)
+@
+text
+@d16 2
+d51 1
+a51 1
+     * @@param t the data table
+d66 2
+d101 31
+d133 2
+d144 2
+a145 2
+        return DataLib.ordinalMap(tuples, field,
+                          DefaultLiteralComparator.getInstance());
+d167 32
+d200 2
+d227 2
+d236 1
+a236 1
+        return DataLib.min(tuples, field, DefaultLiteralComparator.getInstance());
+d265 28
+d299 1
+a299 1
+        return DataLib.max(tuples, field, DefaultLiteralComparator.getInstance());
+d328 28
+d362 1
+a362 1
+        return DataLib.median(tuples, field, DefaultLiteralComparator.getInstance());
+d394 28
+d504 33
+@
+

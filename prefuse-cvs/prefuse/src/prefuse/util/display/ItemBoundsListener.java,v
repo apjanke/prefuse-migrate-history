@@ -1,0 +1,168 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2006.01.16.20.07.42;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2006.01.16.20.07.42;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.30.09.08.07;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.43;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.util.display;
+
+import prefuse.Display;
+
+/**
+ * Listener interface for monitoring changes to the space occupied by
+ * VisualItems within the space of a Display.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface ItemBoundsListener {
+
+    /**
+     * Signals a change in the total bounds occupied by VisualItems in
+     * a particular Display.
+     * @@param d the Display whose item bounds has changed
+     */
+    public void itemBoundsChanged(Display d);
+    
+} // end of interface ItemBoundsListener
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d12 1
+a12 1
+ *
+d23 1
+a23 1
+
+@
+
+
+1.1
+log
+@file ItemBoundsListener.java was initially added on branch beta.
+@
+text
+@d1 24
+@
+
+
+1.1.2.1
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@a0 24
+/**
+ * Copyright (c) 2004-2006 Regents of the University of California.
+ * See "license-prefuse.txt" for licensing terms.
+ */
+package prefuse.util.display;
+
+import prefuse.Display;
+
+/**
+ * Listener interface for monitoring changes to the space occupied by
+ * VisualItems within the space of a Display.
+ * 
+ * @@author <a href="http://jheer.org">jeffrey heer</a> prefuse(AT)jheer.org
+ */
+public interface ItemBoundsListener {
+
+	/**
+	 * Signals a change in the total bounds occupied by VisualItems in
+	 * a particular Display.
+	 * @@param d the Display whose item bounds has changed
+	 */
+	public void itemBoundsChanged(Display d);
+	
+} // end of interface ItemBoundsListener
+@
+
+
+1.1.2.2
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d17 7
+a23 7
+    /**
+     * Signals a change in the total bounds occupied by VisualItems in
+     * a particular Display.
+     * @@param d the Display whose item bounds has changed
+     */
+    public void itemBoundsChanged(Display d);
+    
+@
+
+
+1.1.2.3
+log
+@Much more javadoc
+@
+text
+@d13 1
+a13 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+@
+
+

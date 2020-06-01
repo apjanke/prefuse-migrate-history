@@ -1,0 +1,130 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.23.22.08.47;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file SourceTupleSet.java was initially added on branch beta.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 70
+package prefuse.visual;
+
+import java.util.Iterator;
+
+import prefuse.data.event.TupleSetListener;
+import prefuse.data.tuple.DefaultTupleSet;
+import prefuse.data.tuple.Tuple;
+import prefuse.data.tuple.TupleSet;
+
+public class SourceTupleSet extends DefaultTupleSet
+    implements TupleSetListener
+{
+    private TupleSet m_visual;
+    
+    public SourceTupleSet(TupleSet visualItemSet) {
+        m_visual = visualItemSet;
+        Iterator tuples = m_visual.tuples();
+        while ( tuples.hasNext() ) {
+            VisualItem item = (VisualItem)tuples.next();
+            addInternal(item.getVisualization().getSourceTuple(item));
+        }
+        m_visual.addTupleSetListener(this);
+    }
+    
+    public Tuple addTuple(Tuple t) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Tuple setTuple(Tuple t) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean removeTuple(Tuple t) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
+    
+    // ----------------------------------------------------
+    
+    public void tupleSetChanged(TupleSet tset, Tuple[] add, Tuple[] rem) {
+        if ( tset != m_visual )
+            return;
+        
+        Tuple[] sadd = null, srem = null;
+        
+        if ( add != null ) {
+            sadd = new Tuple[add.length];
+            for ( int i=0; i<add.length; ++i ) {
+                VisualItem item = (VisualItem)add[i];
+                Tuple t = item.getVisualization().getSourceTuple(item);
+                addInternal(t);
+                sadd[i] = t;
+            }
+        }
+        if ( rem != null ) {
+            srem = new Tuple[rem.length];
+            for ( int i=0; i<rem.length; ++i ) {
+                VisualItem item = (VisualItem)rem[i];
+                Tuple t = item.getVisualization().getSourceTuple(item);
+                removeInternal(t);
+                srem[i] = t;
+            }
+        }
+        fireTupleEvent(sadd, srem);
+    }
+    
+} // end of class SourceTupleSet
+@
+
+
+1.1.2.2
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@@
+
+

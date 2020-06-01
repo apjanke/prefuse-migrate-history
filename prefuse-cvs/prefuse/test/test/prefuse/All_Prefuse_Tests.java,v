@@ -1,0 +1,131 @@
+head	2.2;
+access;
+symbols
+	java_1_5:2.2.0.4
+	Root_java_1_5:2.2
+	beta:2.2.0.2
+	beta-20080113:2.2
+	beta-20071021:2.2
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.2
+date	2006.03.06.00.31.55;	author jheer;	state Exp;
+branches;
+next	2.1;
+
+2.1
+date	2006.02.27.03.59.11;	author jheer;	state Exp;
+branches;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.50;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.16.20;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.16.20;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.2
+log
+@Added ExpressionParser unit tests
+@
+text
+@package test.prefuse;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+public class All_Prefuse_Tests {
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite("Test for test.prefuse");
+        //$JUnit-BEGIN$
+        suite.addTest(test.prefuse.data.All_PrefuseData_Tests.suite());
+        suite.addTest(test.prefuse.data.column.All_PrefuseDataColumn_Tests.suite());
+        suite.addTest(test.prefuse.data.expression.All_PrefuseDataExpression_Tests.suite());
+        suite.addTest(test.prefuse.data.io.All_PrefuseDataIO_Tests.suite());
+        suite.addTest(test.prefuse.data.util.All_PrefuseDataUtil_Tests.suite());
+        suite.addTest(test.prefuse.visual.All_PrefuseVisual_Tests.suite());
+        //$JUnit-END$
+        return suite;
+    }
+
+}
+@
+
+
+2.1
+log
+@Fixes and test cases for Visualizations and VisualItems.
+Revisited reset, removeGroup, getSourceData, and getSourceTuple.
+Added getSourceXXX methods to VisualItem
+Added new test cases
+@
+text
+@d13 1
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d15 1
+@
+
+
+1.1
+log
+@file All_Prefuse_Tests.java was initially added on branch beta.
+@
+text
+@d1 19
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 19
+package test.prefuse;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+public class All_Prefuse_Tests {
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite("Test for test.prefuse");
+        //$JUnit-BEGIN$
+        suite.addTest(test.prefuse.data.All_PrefuseData_Tests.suite());
+        suite.addTest(test.prefuse.data.column.All_PrefuseDataColumn_Tests.suite());
+        suite.addTest(test.prefuse.data.io.All_PrefuseDataIO_Tests.suite());
+        suite.addTest(test.prefuse.data.util.All_PrefuseDataUtil_Tests.suite());
+        //$JUnit-END$
+        return suite;
+    }
+
+}
+@
+

@@ -1,0 +1,203 @@
+head	1.8;
+access;
+symbols
+	alpha:1.7.0.2
+	Root_alpha:1.7
+	prefuse-alpha-20051229:1.7
+	P20050401_Alpha_PreCHI:1.7;
+locks; strict;
+comment	@# @;
+
+
+1.8
+date	2006.02.11.06.38.43;	author jheer;	state dead;
+branches;
+next	1.7;
+
+1.7
+date	2004.03.25.04.35.38;	author jheer;	state Exp;
+branches
+	1.7.4.1;
+next	1.6;
+
+1.6
+date	2004.03.24.01.57.26;	author jheer;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2004.03.23.03.55.41;	author jheer;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2004.03.15.03.33.29;	author jheer;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.07.18.02.10;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.06.00.50.41;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+1.7.4.1
+date	2005.12.30.09.16.19;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.8
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefusex.layout;
+
+import java.awt.geom.Rectangle2D;
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+import edu.berkeley.guir.prefuse.action.assignment.Layout;
+
+/**
+ * Performs a random layout of graph nodes within the layout's bounds.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class RandomLayout extends Layout {
+
+    public void run(ItemRegistry registry, double frac) {
+        Rectangle2D b = getLayoutBounds(registry);
+        double x, y;
+        double w = b.getWidth();
+        double h = b.getHeight();
+        Iterator nodeIter = registry.getNodeItems();
+        while ( nodeIter.hasNext() ) {
+            VisualItem item = (VisualItem)nodeIter.next();
+            x = b.getX() + Math.random()*w;
+            y = b.getY() + Math.random()*h;
+            setLocation(item,null,x,y);
+        }
+    } //
+
+} // end of class RandomLayout
+@
+
+
+1.7
+log
+@A whole lot of update
+@
+text
+@@
+
+
+1.7.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.6
+log
+@New filters added plus more
+@
+text
+@d28 1
+a28 2
+            item.updateLocation(x,y);
+            item.setLocation(x,y);
+@
+
+
+1.5
+log
+@Major refactor
+@
+text
+@d8 1
+a8 1
+import edu.berkeley.guir.prefuse.action.Layout;
+@
+
+
+1.4
+log
+@Updated Javadoc
+@
+text
+@d6 1
+a6 1
+import edu.berkeley.guir.prefuse.GraphItem;
+d25 1
+a25 1
+            GraphItem item = (GraphItem)nodeIter.next();
+@
+
+
+1.3
+log
+@Updated to use provided bounds
+@
+text
+@d11 1
+a11 2
+ * Performs a random layout of graph nodes within the layout's bounds and
+ * (optionally) a specified margin;
+@
+
+
+1.2
+log
+@Updated naming of layout convenience routines
+@
+text
+@a18 9
+    private int m_margin = 0;
+    
+    public RandomLayout() {
+    } //
+    
+    public RandomLayout(int margin) {
+        m_margin = margin;
+    } //
+    
+d22 2
+a23 2
+        double w = b.getWidth() - 2*m_margin;
+        double h = b.getHeight() - 2*m_margin;
+d27 2
+a28 2
+            x = m_margin + Math.random()*w;
+            y = m_margin + Math.random()*h;
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d29 1
+a29 1
+        Rectangle2D b = getBounds(registry);
+@
+

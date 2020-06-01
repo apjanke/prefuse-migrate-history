@@ -1,0 +1,53 @@
+head	1.1;
+access;
+symbols
+	java_1_5:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2008.02.24.00.22.30;	author amarsden;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2008.02.24.00.22.30;	author amarsden;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file ShapeBuilder.java was initially added on branch java_1_5.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Refactored the shape work to allow for custom ShapeBuilders. VisualItem.SHAPE has been replaced with VisualItem.SHAPEBUILDER.
+@
+text
+@a0 13
+package prefuse;
+
+import java.awt.Shape;
+
+public interface ShapeBuilder {
+
+	Shape createEmptyShape();
+	
+	Shape createShape(double x, double y, double width, double height);
+	
+	void updateShape(Shape shape, double x, double y, double width, double height);
+	
+}
+@
+

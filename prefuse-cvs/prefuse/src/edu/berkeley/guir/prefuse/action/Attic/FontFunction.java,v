@@ -1,0 +1,114 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2004.03.24.01.57.25;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.23.19.34.05;	author jheer;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.27.21.35.18;	author jheer;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@New filters added plus more
+@
+text
+@package edu.berkeley.guir.prefuse.action;
+
+import java.awt.Font;
+import java.util.Iterator;
+
+import edu.berkeley.guir.prefuse.VisualItem;
+import edu.berkeley.guir.prefuse.ItemRegistry;
+
+/**
+ * Simple <code>FontFunction</code> that blindly returns a null 
+ * <code>Font</code> for all items. Subclasses should override the 
+ * <code>getFont()</code> method to provide custom Font assignment
+ * for VisualItems.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class FontFunction extends AbstractAction {
+
+	public void run(ItemRegistry registry, double frac) {
+		Iterator itemIter = registry.getItems();
+		while ( itemIter.hasNext() ) {
+			VisualItem item = (VisualItem)itemIter.next();
+			Font font = getFont(item);
+			item.setFont(font);
+		}
+	} //
+	
+	public Font getFont(VisualItem item) {
+		return null;
+	} //
+
+} // end of class FontFunction
+@
+
+
+1.3
+log
+@More Javadoc updates
+@
+text
+@@
+
+
+1.2
+log
+@Major refactor
+@
+text
+@a14 2
+ * Jul 10, 2003 - jheer - Created class
+ * 
+d16 1
+a16 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+@
+
+
+1.1
+log
+@Major commit of updated architecture
+@
+text
+@d6 1
+a6 1
+import edu.berkeley.guir.prefuse.GraphItem;
+d13 1
+a13 1
+ * for GraphItems.
+d25 1
+a25 1
+			GraphItem item = (GraphItem)itemIter.next();
+d31 1
+a31 1
+	public Font getFont(GraphItem item) {
+@
+

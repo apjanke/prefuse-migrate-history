@@ -1,0 +1,125 @@
+head	1.4;
+access;
+symbols
+	alpha:1.3.0.2
+	Root_alpha:1.3
+	prefuse-alpha-20051229:1.3
+	P20050401_Alpha_PreCHI:1.3;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2006.02.12.18.23.42;	author jheer;	state dead;
+branches;
+next	1.3;
+
+1.3
+date	2004.03.23.03.54.55;	author jheer;	state Exp;
+branches
+	1.3.4.1;
+next	1.2;
+
+1.2
+date	2004.03.16.03.05.17;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.01.08.21.09.59;	author jheer;	state Exp;
+branches;
+next	;
+
+1.3.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefuse.render;
+
+import edu.berkeley.guir.prefuse.VisualItem;
+
+/**
+ * The RendererFactory is responsible for providing the proper Renderer
+ * instance for drawing a given VisualItem.
+ * 
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public interface RendererFactory {
+
+	/**
+	 * Return the appropriate renderer to draw the given VisualItem.
+	 * @@param item the item for which to retrieve the renderer
+	 * @@return the Renderer for the given VisualItem
+	 */
+	public Renderer getRenderer(VisualItem item);
+
+} // end of interface RendererFactory
+@
+
+
+1.3
+log
+@Major refactor
+@
+text
+@@
+
+
+1.3.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.2
+log
+@More Javadoc updates
+@
+text
+@d3 1
+a3 1
+import edu.berkeley.guir.prefuse.GraphItem;
+d7 1
+a7 1
+ * instance for drawing a given GraphItem.
+d15 1
+a15 1
+	 * Return the appropriate renderer to draw the given GraphItem.
+d17 1
+a17 1
+	 * @@return the Renderer for the given GraphItem
+d19 1
+a19 1
+	public Renderer getRenderer(GraphItem item);
+@
+
+
+1.1
+log
+@Initial import
+@
+text
+@d6 2
+a7 3
+ * Factory interface from which to retrieve GraphItem renderers.
+ * 
+ * Apr 22, 2003 - jheer - Created class
+d10 1
+a10 1
+ * @@author Jeffrey Heer <a href="mailto:jheer@@acm.org">jheer@@acm.org</a>
+@
+

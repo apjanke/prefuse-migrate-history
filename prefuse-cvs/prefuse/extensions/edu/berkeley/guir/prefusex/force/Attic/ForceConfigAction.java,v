@@ -1,0 +1,106 @@
+head	1.3;
+access;
+symbols
+	alpha:1.2.0.2
+	Root_alpha:1.2
+	prefuse-alpha-20051229:1.2
+	P20050401_Alpha_PreCHI:1.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.02.11.06.38.43;	author jheer;	state dead;
+branches;
+next	1.2;
+
+1.2
+date	2005.01.21.02.16.42;	author jheer;	state Exp;
+branches
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2005.01.14.23.12.22;	author jheer;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package edu.berkeley.guir.prefusex.force;
+
+import java.awt.event.ActionEvent;
+
+import javax.swing.AbstractAction;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+/**
+ * Brings up a dialog allowing users to configure a force simulation.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class ForceConfigAction extends AbstractAction {
+
+    private JDialog dialog;
+    
+    public ForceConfigAction(JFrame frame, ForceSimulator fsim) {
+        dialog = new JDialog(frame, false);
+        dialog.setTitle("Configure Force Simulator");
+        JPanel forcePanel = new ForcePanel(fsim);
+        dialog.getContentPane().add(forcePanel);
+        dialog.pack();
+    } //
+    
+    /**
+     * @@see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        dialog.setVisible(true);
+    } //
+
+} // end of class ForceConfigAction
+@
+
+
+1.2
+log
+@Fixed e-mail address in comment
+@
+text
+@@
+
+
+1.2.4.1
+log
+@Initial commit of prefuse beta
+@
+text
+@@
+
+
+1.1
+log
+@Added an action for configuring a force simulator
+@
+text
+@d14 1
+a14 1
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> vizster(AT)jheer.org
+@
+

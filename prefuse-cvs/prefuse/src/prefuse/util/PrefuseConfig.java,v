@@ -1,0 +1,738 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.45;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.31;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.31;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.16.20.07.41;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.01.23.22.08.47;	author jheer;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.01.23.23.07.18;	author jheer;	state Exp;
+branches;
+next	1.1.2.5;
+
+1.1.2.5
+date	2006.01.30.09.08.06;	author jheer;	state Exp;
+branches;
+next	1.1.2.6;
+
+1.1.2.6
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	1.1.2.7;
+
+1.1.2.7
+date	2006.02.07.00.42.29;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.36;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util;
+
+import java.io.IOException;
+import java.util.Properties;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+
+import prefuse.util.io.IOLib;
+
+/**
+ * <p>Runtime configuration settings for the prefuse framework. Maintains a set
+ * of hardwired configuration settings that can be overrriden by creating a
+ * text proeprties file containing custom values. By default, prefuse will
+ * look for the file "prefuse.conf" in the current working directory for
+ * configuration name/value pairs. The framework can be instructed to look for
+ * a different file by putting the full path to the file into the
+ * "prefuse.config" System property (for example by using a -D flag at the
+ * Java runtime command line).</p>
+ * 
+ * <p>
+ * Some of the supported configuration properties include:
+ * <ul>
+ * <li><code>activity.threadPriority</code> - the thread priority of the
+ * ActivityManager thread. The value should be between 1 and 10, with 5 being
+ * the standard Java default. The default prefuse setting is 6.</li>
+ * <li><code>data.io.worker.threadPriority</code> - the thread priority of
+ * asynchronous database worker threads. The default prefuse setting is 5
+ * (same as the Java thread default).</li>
+ * <li><code>data.filter.optimizeThreshold</code> - the minimum number of items
+ * that must be contained in a table for optimized query plans to be
+ * considered. The default value is 300.</li>
+ * <li><code>util.logdir</code> - the directory in which to write prefuse log
+ * files. The default is "null" which defaults logging output to standard
+ * output.</li> 
+ * <li><code>util.logfile</code> - the filename pattern to use for naming
+ * prefuse log files. The default is "prefuse_log_%g.txt", where the %g
+ * indicates a unique number for the log file.</li>
+ * </ul>
+ * </p>
+ * 
+ * <p>
+ * Application creators are welcome to add their own custom properties
+ * to the configuration files and use the PrefuseConfig instance to
+ * access those properties. This class is a singleton, accessed through
+ * a static accessor method.
+ * </p>
+ *  
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class PrefuseConfig extends Properties {
+
+    private static final Logger s_logger 
+        = Logger.getLogger(PrefuseConfig.class.getName());
+    
+    private static final PrefuseConfig s_config = new PrefuseConfig();
+    
+    /**
+     * Get the global PrefuseConfig instance.
+     * @@return the configuration instance
+     */
+    public static PrefuseConfig getConfig() {
+        return s_config;
+    }
+    
+    private PrefuseConfig() {
+        setDefaults();
+        
+        String configFile;
+        try {
+            configFile = System.getProperty("prefuse.config");
+        } catch ( Exception e ) {
+            // in applet mode, we could run afoul of the security manager
+            configFile = null;
+        }
+        if ( configFile == null )
+            configFile = "prefuse.conf";
+        try {
+            load(IOLib.streamFromString(configFile));
+            s_logger.info("Loaded config file: "+configFile);
+        } catch ( Exception e ) {
+            // do nothing, just go with the defaults
+        }
+        
+        // direct logging file directory, as set by config properties
+        // default of java.util.Logger is to output to standard error
+        String logdir = getProperty("util.logdir");
+        String logfile = getProperty("util.logfile");
+        if ( logdir != null ) {
+            try {
+                Logger logger = Logger.getLogger("prefuse");
+                logger.setUseParentHandlers(false);
+                Handler fileHandler = new FileHandler(logdir+"/"+logfile);
+                fileHandler.setFormatter(new SimpleFormatter());
+                logger.addHandler(fileHandler);
+            } catch ( IOException e ) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    /**
+     * Get a prefuse configuration property.
+     * @@param key the name of the property to lookup
+     * @@return the property value, or null if the key is not found
+     */
+    public static String get(String key) {
+        return s_config.getProperty(key);
+    }
+
+    /**
+     * Get a prefuse configuration property as an integer.
+     * @@param key the name of the property to lookup
+     * @@return the property value, or the minimum possible
+     * integer value if the key is not found or parsing
+     * of the number fails.
+     */
+    public static int getInt(String key) {
+        String val = s_config.getProperty(key);
+        try {
+            return Integer.parseInt(val);
+        } catch ( NumberFormatException nfe ) {
+            return Integer.MIN_VALUE;
+        }
+    }
+
+    /**
+     * Get a prefuse configuration property as a long.
+     * @@param key the name of the property to lookup
+     * @@return the property value, or the minimum possible
+     * long value if the key is not found or parsing
+     * of the number fails.
+     */
+    public static long getLong(String key) {
+        String val = s_config.getProperty(key);
+        try {
+            return Long.parseLong(val);
+        } catch ( NumberFormatException nfe ) {
+            return Long.MIN_VALUE;
+        }
+    }
+    
+    /**
+     * Get a prefuse configuration property as a float.
+     * @@param key the name of the property to lookup
+     * @@return the property value, or a Float.NaN
+     * value if the key is not found or parsing
+     * of the number fails.
+     */
+    public static float getFloat(String key) {
+        String val = s_config.getProperty(key);
+        try {
+            return Float.parseFloat(val);
+        } catch ( NumberFormatException nfe ) {
+            return Float.NaN;
+        }
+    }
+    
+    /**
+     * Get a prefuse configuration property as a double.
+     * @@param key the name of the property to lookup
+     * @@return the property value, or a Double.NaN
+     * value if the key is not found or parsing
+     * of the number fails.
+     */
+    public static double getDouble(String key) {
+        String val = s_config.getProperty(key);
+        try {
+            return Double.parseDouble(val);
+        } catch ( NumberFormatException nfe ) {
+            return Double.NaN;
+        }
+    }
+    
+    /**
+     * Get a prefuse configuration property as a boolean.
+     * @@param key the name of the property to lookup
+     * @@return the property value. False is returned
+     * if the key is not found or does not parse to
+     * a true/false value.
+     */
+    public static boolean getBoolean(String key) {
+        String val = s_config.getProperty(key);
+        return "true".equalsIgnoreCase(val);
+    }
+    
+    /**
+     * Sets default values for Prefuse properties
+     */
+    private void setDefaults() {        
+        setProperty("size.scale2D", "0.5");
+        setProperty("activity.threadPriority", "6");
+        setProperty("data.delimiter", ".");
+        setProperty("data.graph.nodeGroup", "nodes");
+        setProperty("data.graph.edgeGroup", "edges");
+        setProperty("data.visual.fieldPrefix", "_");
+        setProperty("data.io.worker.threadPriority", 
+                String.valueOf(Thread.NORM_PRIORITY));
+        
+        // prefuse will only attempt to optimize filtering operations
+        // on tables with more rows than this threshold value
+        setProperty("data.filter.optimizeThreshold", "300");
+        
+        // setProperty("data.graph.nodeKey", null); // intentionally null
+        setProperty("data.graph.sourceKey", "source");
+        setProperty("data.graph.targetKey", "target");
+        setProperty("data.tree.sourceKey", "parent");
+        setProperty("data.tree.targetKey", "child");
+        setProperty("visualization.allItems", "_all_");
+        setProperty("visualization.focusItems", "_focus_");
+        setProperty("visualization.selectedItems", "_selected_");
+        setProperty("visualization.searchItems", "_search_");
+        
+        // setProperty("util.logdir", null); // intentionally null
+        setProperty("util.logfile", "prefuse_log_%g.txt");
+    }
+    
+} // end of class PrefuseConfig
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d21 1
+a21 1
+ *
+d36 1
+a36 1
+ * output.</li>
+d42 1
+a42 1
+ *
+d49 1
+a49 1
+ *
+d54 1
+a54 1
+    private static final Logger s_logger
+d56 1
+a56 1
+
+d58 1
+a58 1
+
+d66 1
+a66 1
+
+d69 1
+a69 1
+
+d77 2
+a78 3
+        if ( configFile == null ) {
+			configFile = "prefuse.conf";
+		}
+d85 1
+a85 1
+
+d102 1
+a102 1
+
+d143 1
+a143 1
+
+d159 1
+a159 1
+
+d175 1
+a175 1
+
+d187 1
+a187 1
+
+d191 1
+a191 1
+    private void setDefaults() {
+d198 1
+a198 1
+        setProperty("data.io.worker.threadPriority",
+d200 1
+a200 1
+
+d204 1
+a204 1
+
+d214 1
+a214 1
+
+d218 1
+a218 1
+
+@
+
+
+1.1
+log
+@file PrefuseConfig.java was initially added on branch beta.
+@
+text
+@d1 219
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 117
+package prefuse.util;
+
+import java.util.Properties;
+import java.util.logging.Logger;
+
+import prefuse.util.io.IOLib;
+
+/**
+ * @@author <a href="http://jheer.org">jeffrey heer</a> - prefuse(AT)jheer.org
+ */
+public class PrefuseConfig extends Properties {
+
+    private static final Logger s_logger 
+        = Logger.getLogger(PrefuseConfig.class.getName());
+    
+    private static final PrefuseConfig s_config = new PrefuseConfig();
+    
+    public static PrefuseConfig getConfig() {
+        return s_config;
+    }
+    
+    private PrefuseConfig() {
+        setDefaults();
+        
+        String configFile;
+        try {
+            configFile = System.getProperty("prefuse.config");
+        } catch ( Exception e ) {
+            // in applet mode, we could run afoul of the security manager
+            configFile = null;
+        }
+        if ( configFile == null )
+            configFile = "prefuse.conf";
+        try {
+            load(IOLib.streamFromString(configFile));
+            s_logger.info("Loaded config file: "+configFile);
+        } catch ( Exception e ) {
+            // do nothing, just go with the defaults
+        }
+    }
+    
+    public static String get(String key) {
+        return s_config.getProperty(key);
+    }
+    
+    public static int getInt(String key) {
+        String val = s_config.getProperty(key);
+        try {
+            return Integer.parseInt(val);
+        } catch ( NumberFormatException nfe ) {
+            return Integer.MIN_VALUE;
+        }
+    }
+    
+    public static long getLong(String key) {
+        String val = s_config.getProperty(key);
+        try {
+            return Long.parseLong(val);
+        } catch ( NumberFormatException nfe ) {
+            return Long.MIN_VALUE;
+        }
+    }
+    
+    public static float getFloat(String key) {
+        String val = s_config.getProperty(key);
+        try {
+            return Float.parseFloat(val);
+        } catch ( NumberFormatException nfe ) {
+            return Float.MIN_VALUE;
+        }
+    }
+    
+    public static double getDouble(String key) {
+        String val = s_config.getProperty(key);
+        try {
+            return Double.parseDouble(val);
+        } catch ( NumberFormatException nfe ) {
+            return Double.MIN_VALUE;
+        }
+    }
+    
+    public static boolean getBoolean(String key) {
+        String val = s_config.getProperty(key);
+        return "true".equalsIgnoreCase(val);
+    }
+    
+    /**
+     * Sets default values for Prefuse properties
+     */
+    private void setDefaults() {
+        setProperty("size.scale2D", "0.5");
+        setProperty("activity.threadPriority", "6");
+        setProperty("data.delimiter", ".");
+        setProperty("data.graph.nodeTable", "nodes");
+        setProperty("data.graph.edgeTable", "edges");
+        setProperty("data.visual.fieldPrefix", "_");
+        setProperty("data.io.worker.threadPriority", 
+                String.valueOf(Thread.NORM_PRIORITY));
+        
+        // prefuse will only attempt to optimize filtering operations
+        // on tables with more rows than this threshold value
+        setProperty("data.filter.optimizeThreshold", "300");
+        
+        // left here to indicate this value is intentionally null
+        // setProperty("data.graph.nodeKey", null);
+        setProperty("data.graph.sourceKey", "source");
+        
+        setProperty("data.graph.targetKey", "target");
+        setProperty("data.tree.sourceKey", "parent");
+        setProperty("data.tree.targetKey", "children");
+        setProperty("visualization.allItems", "__all");
+        setProperty("visualization.focusItems", "__focus");
+        setProperty("visualization.selectedItems", "__selected");
+        setProperty("visualization.searchItems", "__search");
+    }
+    
+} // end of class PrefuseConfig
+@
+
+
+1.1.2.2
+log
+@Table method refactoring. Added PredicateChain, included in ColorFunction, SizeFunction, and RendererFactory. Added ItemBoundsListener, included in GraphView demo. Updated ColorMap to use int representation, moved palette creators to ColorLib. Added minExtent to JRangeSlider. Fixed round-off rendering glitches int optimized rendering, added RenderingAccuracy test class. Updated PrefuseConfig to support logging output to file system. Added DelmitedTextTableWriter. Added CompositeTupleSet. Added directionality to edges, increased support to EdgeRenderer, including reversed directionality.
+@
+text
+@a2 1
+import java.io.IOException;
+a3 2
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+a4 1
+import java.util.logging.SimpleFormatter;
+a39 16
+        
+        // direct logging file directory, as set by config properties
+        // default of java.util.Logger is to output to standard error
+        String logdir = getProperty("util.logdir");
+        String logfile = getProperty("util.logfile");
+        if ( logdir != null ) {
+        	try {
+        		Logger logger = Logger.getLogger("prefuse");
+        		logger.setUseParentHandlers(false);
+        		Handler fileHandler = new FileHandler(logdir+"/"+logfile);
+        		fileHandler.setFormatter(new SimpleFormatter());
+        		logger.addHandler(fileHandler);
+        	} catch ( IOException e ) {
+        		e.printStackTrace();
+        	}
+        }
+d90 1
+a90 1
+    private void setDefaults() {    	
+d104 2
+a105 1
+        // setProperty("data.graph.nodeKey", null); // intentionally null
+d107 1
+a114 3
+        
+    	// setProperty("util.logdir", null); // intentionally null
+    	setProperty("util.logfile", "prefuse_log_%g.txt");
+@
+
+
+1.1.2.3
+log
+@Added support for aggregates as a visual data type (AggregateItem, AggregateTable).
+Added listener callback to DataSourceWorker.
+Reworked graph representation to use an internal table of adjacency lists (the "links" table).
+Added spanning tree functionality for all graph instances.
+Reworked RadialTreeLayout. Updated PolarLocationAnimator to use an externally defined set for linear Cartesian interpolation cases.
+Fixed out-of-order row manager indexing bug in CascadedTable -- all row indexing is now complete once a table insert event is fired.
+Made filterRows() public in CascadedTable.
+Reorganized visual data support classes to prefuse.visual.tuple package.
+@
+text
+@d114 2
+a115 2
+        setProperty("data.graph.nodeGroup", "nodes");
+        setProperty("data.graph.edgeGroup", "edges");
+@
+
+
+1.1.2.4
+log
+@Replaced all tab characters with 4 spaces.
+Ensured UNIX style line endings.
+@
+text
+@d50 9
+a58 9
+            try {
+                Logger logger = Logger.getLogger("prefuse");
+                logger.setUseParentHandlers(false);
+                Handler fileHandler = new FileHandler(logdir+"/"+logfile);
+                fileHandler.setFormatter(new SimpleFormatter());
+                logger.addHandler(fileHandler);
+            } catch ( IOException e ) {
+                e.printStackTrace();
+            }
+d110 1
+a110 1
+    private void setDefaults() {        
+d134 2
+a135 2
+        // setProperty("util.logdir", null); // intentionally null
+        setProperty("util.logfile", "prefuse_log_%g.txt");
+@
+
+
+1.1.2.5
+log
+@Much more javadoc
+@
+text
+@d13 1
+a13 38
+ * <p>Runtime configuration settings for the prefuse framework. Maintains a set
+ * of hardwired configuration settings that can be overrriden by creating a
+ * text proeprties file containing custom values. By default, prefuse will
+ * look for the file "prefuse.conf" in the current working directory for
+ * configuration name/value pairs. The framework can be instructed to look for
+ * a different file by putting the full path to the file into the
+ * "prefuse.config" System property (for example by using a -D flag at the
+ * Java runtime command line).</p>
+ * 
+ * <p>
+ * Some of the supported configuration properties include:
+ * <ul>
+ * <li><code>activity.threadPriority</code> - the thread priority of the
+ * ActivityManager thread. The value should be between 1 and 10, with 5 being
+ * the standard Java default. The default prefuse setting is 6.</li>
+ * <li><code>data.io.worker.threadPriority</code> - the thread priority of
+ * asynchronous database worker threads. The default prefuse setting is 5
+ * (same as the Java thread default).</li>
+ * <li><code>data.filter.optimizeThreshold</code> - the minimum number of items
+ * that must be contained in a table for optimized query plans to be
+ * considered. The default value is 300.</li>
+ * <li><code>util.logdir</code> - the directory in which to write prefuse log
+ * files. The default is "null" which defaults logging output to standard
+ * output.</li> 
+ * <li><code>util.logfile</code> - the filename pattern to use for naming
+ * prefuse log files. The default is "prefuse_log_%g.txt", where the %g
+ * indicates a unique number for the log file.</li>
+ * </ul>
+ * </p>
+ * 
+ * <p>
+ * Application creators are welcome to add their own custom properties
+ * to the configuration files and use the PrefuseConfig instance to
+ * access those properties. This class is a singleton, accessed through
+ * a static accessor method.
+ * </p>
+ *  
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a21 4
+    /**
+     * Get the global PrefuseConfig instance.
+     * @@return the configuration instance
+     */
+a61 5
+    /**
+     * Get a prefuse configuration property.
+     * @@param key the name of the property to lookup
+     * @@return the property value, or null if the key is not found
+     */
+d65 1
+a65 8
+
+    /**
+     * Get a prefuse configuration property as an integer.
+     * @@param key the name of the property to lookup
+     * @@return the property value, or the minimum possible
+     * integer value if the key is not found or parsing
+     * of the number fails.
+     */
+d74 1
+a74 8
+
+    /**
+     * Get a prefuse configuration property as a long.
+     * @@param key the name of the property to lookup
+     * @@return the property value, or the minimum possible
+     * long value if the key is not found or parsing
+     * of the number fails.
+     */
+a83 7
+    /**
+     * Get a prefuse configuration property as a float.
+     * @@param key the name of the property to lookup
+     * @@return the property value, or a Float.NaN
+     * value if the key is not found or parsing
+     * of the number fails.
+     */
+d89 1
+a89 1
+            return Float.NaN;
+a92 7
+    /**
+     * Get a prefuse configuration property as a double.
+     * @@param key the name of the property to lookup
+     * @@return the property value, or a Double.NaN
+     * value if the key is not found or parsing
+     * of the number fails.
+     */
+d98 1
+a98 1
+            return Double.NaN;
+a101 7
+    /**
+     * Get a prefuse configuration property as a boolean.
+     * @@param key the name of the property to lookup
+     * @@return the property value. False is returned
+     * if the key is not found or does not parse to
+     * a true/false value.
+     */
+@
+
+
+1.1.2.6
+log
+@Javadoc'd.
+@
+text
+@d209 1
+a209 1
+        setProperty("data.tree.targetKey", "child");
+@
+
+
+1.1.2.7
+log
+@Intermediate commit in run-up to release.
+Upgraded Tuple, Node, and Edge to the data package.
+Renamed "Function" classes to "Action" classes.
+Added Shape to VisualItem Schema.
+Added ShapeActions, moved Shape constants to Constants interface.
+Added Background image handling to the Display class.
+Added social network data file.
+@
+text
+@d210 4
+a213 4
+        setProperty("visualization.allItems", "_all_");
+        setProperty("visualization.focusItems", "_focus_");
+        setProperty("visualization.selectedItems", "_selected_");
+        setProperty("visualization.searchItems", "_search_");
+@
+
+

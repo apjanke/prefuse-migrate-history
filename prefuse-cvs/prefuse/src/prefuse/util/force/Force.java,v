@@ -1,0 +1,393 @@
+head	2.1;
+access;
+symbols
+	java_1_5:2.1.0.4
+	Root_java_1_5:2.1
+	beta:2.1.0.2
+	beta-20080113:2.1
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.1
+date	2008.01.13.22.39.16;	author jheer;	state Exp;
+branches
+	2.1.4.1;
+next	2.0;
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.15;	author jheer;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2006.02.01.19.22.43;	author jheer;	state Exp;
+branches;
+next	;
+
+2.1.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.1
+log
+@Fixed javadoc comments
+@
+text
+@package prefuse.util.force;
+
+/**
+ * Interface for force functions in a force simulation.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public interface Force {
+
+    /**
+     * Initialize this force function.
+     * @@param fsim the encompassing ForceSimulator
+     */
+    public void init(ForceSimulator fsim);
+
+    /**
+     * Returns the number of parameters (e.g., gravitational constant or
+     * spring force coefficient) affecting this force function. 
+     * @@return the number of parameters
+     */
+    public int getParameterCount();
+
+    /**
+     * Returns the specified, numbered parameter.
+     * @@param i the index of the parameter to return
+     * @@return the parameter value
+     */
+    public float getParameter(int i);
+    
+    /**
+     * Get the suggested minimum value for a parameter. This value is not
+     * strictly enforced, but is used by interface components that allow force
+     * parameters to be varied.
+     * @@param param the parameter index
+     * @@return the suggested minimum value.
+     */
+    public float getMinValue(int param);
+    
+    /**
+     * Get the suggested maximum value for a parameter. This value is not
+     * strictly enforced, but is used by interface components that allow force
+     * parameters to be varied.
+     * @@param param the parameter index
+     * @@return the suggested maximum value.
+     */
+    public float getMaxValue(int param);
+    
+    /**
+     * Gets the text name of the requested parameter.
+     * @@param i the index of the parameter
+     * @@return a String containing the name of this parameter
+     */
+    public String getParameterName(int i);
+
+    /**
+     * Sets the specified parameter value.
+     * @@param i the index of the parameter
+     * @@param val the new value of the parameter
+     */
+    public void setParameter(int i, float val);
+    
+    /**
+     * Set the suggested minimum value for a parameter. This value is not
+     * strictly enforced, but is used by interface components that allow force
+     * parameters to be varied.
+     * @@param i the parameter index
+     * @@param val the suggested minimum value to use
+     */
+    public void setMinValue(int i, float val);
+    
+    /**
+     * Set the suggested maximum value for a parameter. This value is not
+     * strictly enforced, but is used by interface components that allow force
+     * parameters to be varied.
+     * @@param i the parameter index
+     * @@param val the suggested maximum value to use
+     */
+    public void setMaxValue(int i, float val);
+    
+    /**
+     * Indicates if this force function will compute forces
+     * on Spring instances.
+     * @@return true if this force function processes Spring instances 
+     */
+    public boolean isSpringForce();
+    
+    /**
+     * Indicates if this force function will compute forces
+     * on ForceItem instances
+     * @@return true if this force function processes Force instances 
+     */
+    public boolean isItemForce();
+    
+    /**
+     * Updates the force calculation on the given ForceItem
+     * @@param item the ForceItem on which to compute updated forces
+     */
+    public void getForce(ForceItem item);
+    
+    /**
+     * Updates the force calculation on the given Spring. The ForceItems
+     * attached to Spring will have their force values updated appropriately.
+     * @@param spring the Spring on which to compute updated forces
+     */
+    public void getForce(Spring spring);
+    
+} // end of interface Force
+@
+
+
+2.1.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d18 1
+a18 1
+     * spring force coefficient) affecting this force function.
+d29 1
+a29 1
+
+d38 1
+a38 1
+
+d47 1
+a47 1
+
+d61 1
+a61 1
+
+d70 1
+a70 1
+
+d76 1
+d79 1
+a79 1
+
+d83 1
+a83 1
+     * @@return true if this force function processes Spring instances
+d86 1
+a86 1
+
+d90 1
+a90 1
+     * @@return true if this force function processes Force instances
+d93 1
+a93 1
+
+d99 1
+a99 1
+
+d106 1
+a106 1
+
+@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@d76 1
+a76 1
+     * @@return the suggested maximum value to use
+@
+
+
+1.1
+log
+@file Force.java was initially added on branch beta.
+@
+text
+@d1 107
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 80
+package prefuse.util.force;
+
+/**
+ * Represents a function for computing a force in a force simulation.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public interface Force {
+
+    /**
+     * Initialize this force function.
+     * @@param fsim the encompassing ForceSimulator
+     */
+    public void init(ForceSimulator fsim);
+
+    /**
+     * Returns the number of parameters (e.g., gravitational constant or
+     * spring force coefficient) affecting this force function. 
+     * @@return the number of parameters
+     */
+    public int getParameterCount();
+
+    /**
+     * Returns the specified, numbered parameter.
+     * @@param i the index of the parameter to return
+     * @@return the parameter value
+     */
+    public float getParameter(int i);
+    
+    // TODO: document these
+    public float getMinValue(int i);
+    public float getMaxValue(int i);
+    
+    /**
+     * Gets the text name of the requested parameter.
+     * @@param i the index of the parameter
+     * @@return a String containing the name of this parameter
+     */
+    public String getParameterName(int i);
+
+    /**
+     * Sets the specified parameter value.
+     * @@param i the index of the parameter
+     * @@param val the new value of the parameter
+     */
+    public void setParameter(int i, float val);
+    
+    // TODO: document these
+    public void setMinValue(int i, float val);
+    public void setMaxValue(int i, float val);
+    
+    /**
+     * Indicates if this force function will compute forces
+     * on Spring instances.
+     * @@return true if this force function processes Spring instances 
+     */
+    public boolean isSpringForce();
+    
+    /**
+     * Indicates if this force function will compute forces
+     * on ForceItem instances
+     * @@return true if this force function processes Force instances 
+     */
+    public boolean isItemForce();
+    
+    /**
+     * Updates the force calculation on the given ForceItem
+     * @@param item the ForceItem on which to compute updated forces
+     */
+    public void getForce(ForceItem item);
+    
+    /**
+     * Updates the force calculation on the given Spring. The ForceItems
+     * attached to Spring will have their force values updated appropriately.
+     * @@param spring the Spring on which to compute updated forces
+     */
+    public void getForce(Spring spring);
+    
+} // end of interface Force
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d4 1
+a4 1
+ * Interface for force functions in a force simulation.
+d6 2
+a7 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+d31 3
+a33 17
+    /**
+     * Get the suggested minimum value for a parameter. This value is not
+     * strictly enforced, but is used by interface components that allow force
+     * parameters to be varied.
+     * @@param i the parameter index
+     * @@return the suggested minimum value.
+     */
+    public float getMinValue(int param);
+    
+    /**
+     * Get the suggested maximum value for a parameter. This value is not
+     * strictly enforced, but is used by interface components that allow force
+     * parameters to be varied.
+     * @@param i the parameter index
+     * @@return the suggested maximum value.
+     */
+    public float getMaxValue(int param);
+d49 1
+a49 7
+    /**
+     * Set the suggested minimum value for a parameter. This value is not
+     * strictly enforced, but is used by interface components that allow force
+     * parameters to be varied.
+     * @@param i the parameter index
+     * @@param val the suggested minimum value to use
+     */
+a50 8
+    
+    /**
+     * Set the suggested maximum value for a parameter. This value is not
+     * strictly enforced, but is used by interface components that allow force
+     * parameters to be varied.
+     * @@param i the parameter index
+     * @@return the suggested maximum value to use
+     */
+@
+
+
+1.1.2.3
+log
+@Javadoc'd.
+@
+text
+@d34 1
+a34 1
+     * @@param param the parameter index
+d43 1
+a43 1
+     * @@param param the parameter index
+@
+
+

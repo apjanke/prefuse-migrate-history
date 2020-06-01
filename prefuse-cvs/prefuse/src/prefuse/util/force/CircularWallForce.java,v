@@ -1,0 +1,316 @@
+head	2.0;
+access;
+symbols
+	java_1_5:2.0.0.4
+	Root_java_1_5:2.0
+	beta:2.0.0.2
+	beta-20080113:2.0
+	beta-20071021:2.0
+	beta-20060220:2.0
+	beta-20060209:2.0;
+locks; strict;
+comment	@# @;
+
+
+2.0
+date	2006.02.12.18.23.46;	author jheer;	state Exp;
+branches
+	2.0.4.1;
+next	1.1;
+
+1.1
+date	2005.12.30.09.13.30;	author jheer;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.30.09.13.30;	author jheer;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2006.01.27.09.05.15;	author jheer;	state Exp;
+branches;
+next	;
+
+2.0.4.1
+date	2008.01.23.23.55.37;	author jogiles;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+2.0
+log
+@Merge beta branch back onto main trunk
+@
+text
+@package prefuse.util.force;
+
+/**
+ * Uses a gravitational force model to act as a circular "wall". Can be used to
+ * construct circles which either attract or repel items.
+ *
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+ */
+public class CircularWallForce extends AbstractForce {
+
+    private static String[] pnames = new String[] { "GravitationalConstant" };
+    
+    public static final float DEFAULT_GRAV_CONSTANT = -0.1f;
+    public static final float DEFAULT_MIN_GRAV_CONSTANT = -1.0f;
+    public static final float DEFAULT_MAX_GRAV_CONSTANT = 1.0f;
+    public static final int GRAVITATIONAL_CONST = 0;
+    
+    private float x, y, r;
+
+    /**
+     * Create a new CircularWallForce.
+     * @@param gravConst the gravitational constant to use
+     * @@param x the center x-coordinate of the circle
+     * @@param y the center y-coordinate of the circle
+     * @@param r the radius of the circle
+     */
+    public CircularWallForce(float gravConst, 
+        float x, float y, float r) 
+    {
+        params = new float[] { gravConst };
+        minValues = new float[] { DEFAULT_MIN_GRAV_CONSTANT };
+        maxValues = new float[] { DEFAULT_MAX_GRAV_CONSTANT };
+        this.x = x; this.y = y;
+        this.r = r;
+    }
+    
+    /**
+     * Create a new CircularWallForce with default gravitational constant.
+     * @@param x the center x-coordinate of the circle
+     * @@param y the center y-coordinate of the circle
+     * @@param r the radius of the circle
+     */
+    public CircularWallForce(float x, float y, float r) {
+        this(DEFAULT_GRAV_CONSTANT,x,y,r);
+    }
+    
+    /**
+     * Returns true.
+     * @@see prefuse.util.force.Force#isItemForce()
+     */
+    public boolean isItemForce() {
+        return true;
+    }
+    
+    /**
+     * @@see prefuse.util.force.AbstractForce#getParameterNames()
+     */
+    protected String[] getParameterNames() {
+        return pnames;
+    }
+    
+    /**
+     * @@see prefuse.util.force.Force#getForce(prefuse.util.force.ForceItem)
+     */
+    public void getForce(ForceItem item) {
+        float[] n = item.location;
+        float dx = x-n[0];
+        float dy = y-n[1];
+        float d = (float)Math.sqrt(dx*dx+dy*dy);
+        float dr = r-d;
+        float c = dr > 0 ? -1 : 1;
+        float v = c*params[GRAVITATIONAL_CONST]*item.mass / (dr*dr);
+        if ( d == 0.0 ) {
+            dx = ((float)Math.random()-0.5f) / 50.0f;
+            dy = ((float)Math.random()-0.5f) / 50.0f;
+            d  = (float)Math.sqrt(dx*dx+dy*dy);
+        }
+        item.force[0] += v*dx/d;
+        item.force[1] += v*dy/d;
+        //System.out.println(dx/d+","+dy/d+","+dr+","+v);
+    }
+
+} // end of class CircularWallForce
+@
+
+
+2.0.4.1
+log
+@First import of a Java 1.5-targetted version of prefuse.
+@
+text
+@d12 1
+a12 1
+
+d17 2
+a18 2
+
+    private final float x, y, r;
+d27 2
+a28 2
+    public CircularWallForce(float gravConst,
+        float x, float y, float r)
+d36 1
+a36 1
+
+d46 1
+a46 1
+
+d51 1
+a51 2
+    @@Override
+	public boolean isItemForce() {
+d54 1
+a54 1
+
+d58 1
+a58 2
+    @@Override
+	protected String[] getParameterNames() {
+d61 1
+a61 1
+
+d65 1
+a65 2
+    @@Override
+	public void getForce(ForceItem item) {
+@
+
+
+1.1
+log
+@file CircularWallForce.java was initially added on branch beta.
+@
+text
+@d1 83
+@
+
+
+1.1.2.1
+log
+@Initial commit of prefuse beta
+@
+text
+@a0 64
+package prefuse.util.force;
+
+/**
+ * Uses a gravitational force model to act as a circular "wall". Can be used to
+ * construct circles which either attract or repel items.
+ *
+ * @@version 1.0
+ * @@author <a href="http://jheer.org">Jeffrey Heer</a> prefuse(AT)jheer.org
+ */
+public class CircularWallForce extends AbstractForce {
+
+    private static String[] pnames = new String[] { "GravitationalConstant" };
+    
+    public static final float DEFAULT_GRAV_CONSTANT = -0.1f;
+    public static final float DEFAULT_MIN_GRAV_CONSTANT = -1.0f;
+    public static final float DEFAULT_MAX_GRAV_CONSTANT = 1.0f;
+    public static final int GRAVITATIONAL_CONST = 0;
+    
+    private float x, y, r;
+
+    public CircularWallForce(float gravConst, 
+        float x, float y, float r) 
+    {
+        params = new float[] { gravConst };
+        minValues = new float[] { DEFAULT_MIN_GRAV_CONSTANT };
+        maxValues = new float[] { DEFAULT_MAX_GRAV_CONSTANT };
+        this.x = x; this.y = y;
+        this.r = r;
+    } //
+    
+    public CircularWallForce(float x, float y, float r) {
+        this(DEFAULT_GRAV_CONSTANT,x,y,r);
+    } //
+    
+    public boolean isItemForce() {
+        return true;
+    } //
+    
+    protected String[] getParameterNames() {
+        return pnames;
+    } //
+    
+    /* (non-Javadoc)
+     * @@see edu.berkeley.guir.prefusex.force.Force#getForce(edu.berkeley.guir.prefusex.force.ForceItem)
+     */
+    public void getForce(ForceItem item) {
+        float[] n = item.location;
+        float dx = x-n[0];
+        float dy = y-n[1];
+        float d = (float)Math.sqrt(dx*dx+dy*dy);
+        float dr = r-d;
+        float c = dr > 0 ? -1 : 1;
+        float v = c*params[GRAVITATIONAL_CONST]*item.mass / (dr*dr);
+        if ( d == 0.0 ) {
+            dx = ((float)Math.random()-0.5f) / 50.0f;
+            dy = ((float)Math.random()-0.5f) / 50.0f;
+            d  = (float)Math.sqrt(dx*dx+dy*dy);
+        }
+        item.force[0] += v*dx/d;
+        item.force[1] += v*dy/d;
+        //System.out.println(dx/d+","+dy/d+","+dr+","+v);
+    } //
+
+} // end of class CircularWallForce
+@
+
+
+1.1.2.2
+log
+@Lots of javadoc
+@
+text
+@d7 2
+a8 1
+ * @@author <a href="http://jheer.org">jeffrey heer</a>
+a20 7
+    /**
+     * Create a new CircularWallForce.
+     * @@param gravConst the gravitational constant to use
+     * @@param x the center x-coordinate of the circle
+     * @@param y the center y-coordinate of the circle
+     * @@param r the radius of the circle
+     */
+d29 1
+a29 1
+    }
+a30 6
+    /**
+     * Create a new CircularWallForce with default gravitational constant.
+     * @@param x the center x-coordinate of the circle
+     * @@param y the center y-coordinate of the circle
+     * @@param r the radius of the circle
+     */
+d33 1
+a33 1
+    }
+a34 4
+    /**
+     * Returns true.
+     * @@see prefuse.util.force.Force#isItemForce()
+     */
+d37 1
+a37 1
+    }
+a38 3
+    /**
+     * @@see prefuse.util.force.AbstractForce#getParameterNames()
+     */
+d41 1
+a41 1
+    }
+d43 2
+a44 2
+    /**
+     * @@see prefuse.util.force.Force#getForce(prefuse.util.force.ForceItem)
+d62 1
+a62 1
+    }
+@
+
+
